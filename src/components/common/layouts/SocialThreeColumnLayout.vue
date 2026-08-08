@@ -36,10 +36,10 @@ const centerStyle = computed(() => (
 <style scoped>
 .social-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
-  gap: clamp(1rem, 1.5vw, 1.5rem);
-  height: calc(100dvh - var(--navbar-h) - (2 * var(--content-pad)));
-  max-height: calc(100dvh - var(--navbar-h) - (2 * var(--content-pad)));
+  grid-template-columns: minmax(0, var(--app-social-side-width)) minmax(0, 1fr) minmax(0, var(--app-social-side-width));
+  gap: var(--app-page-gutter);
+  height: calc(100dvh - var(--app-navbar-height) - (2 * var(--app-page-gutter)));
+  max-height: calc(100dvh - var(--app-navbar-height) - (2 * var(--app-page-gutter)));
   overflow: hidden;
 }
 
@@ -76,7 +76,7 @@ const centerStyle = computed(() => (
 
 @media (max-width: 80rem) {
   .social-layout:not(.social-layout--single) {
-    grid-template-columns: minmax(15rem, 1fr) minmax(0, 3fr);
+    grid-template-columns: minmax(15rem, var(--app-social-side-width)) minmax(0, 1fr);
   }
 
   .social-layout__side--right {
@@ -84,7 +84,7 @@ const centerStyle = computed(() => (
   }
 }
 
-@media (max-width: 52rem) {
+@media (max-width: 60rem) {
   .social-layout:not(.social-layout--single) {
     display: block;
     width: 100%;
@@ -106,7 +106,7 @@ const centerStyle = computed(() => (
     max-width: 100vw;
     height: auto;
     overflow: visible;
-    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+    padding-block-end: var(--app-mobile-nav-clearance);
   }
 }
 </style>

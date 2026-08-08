@@ -1,7 +1,7 @@
 /* Cross-platform interface foundations: accessible defaults shared by every view. */
 :root {
-  --app-focus-ring: #4c1d95;
-  --app-focus-offset: 3px;
+  --app-focus-ring: var(--app-color-focus);
+  --app-focus-offset: var(--app-space-1);
   font-size: 100%;
   text-size-adjust: 100%;
 }
@@ -12,9 +12,9 @@ html {
 
 body {
   min-width: 20rem;
-  color: var(--text-color, #1f2937);
-  background: var(--surface-ground, #f8fafc);
-  line-height: 1.5;
+  color: var(--app-color-text);
+  background: var(--app-color-page);
+  line-height: var(--app-line-height-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -44,27 +44,27 @@ textarea {
 }
 
 ::selection {
-  color: #1f1435;
-  background: var(--tt-selection-color, rgba(157, 138, 255, 0.35));
+  color: var(--app-color-on-brand);
+  background: color-mix(in srgb, var(--app-color-brand) 45%, transparent);
 }
 
 :focus-visible {
-  outline: 3px solid var(--app-focus-ring);
+  outline: max(2px, 0.1875rem) solid var(--app-focus-ring);
   outline-offset: var(--app-focus-offset);
 }
 
 .skip-link {
   position: fixed;
   z-index: 10000;
-  inset-block-start: 0.75rem;
-  inset-inline-start: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  color: #fff;
-  background: #4c1d95;
-  box-shadow: 0 0.5rem 1.5rem rgba(31, 20, 53, 0.25);
+  inset-block-start: var(--app-space-3);
+  inset-inline-start: var(--app-space-3);
+  padding: var(--app-space-3) var(--app-space-4);
+  border-radius: var(--app-radius-sm);
+  color: var(--app-color-on-brand);
+  background: var(--app-color-brand);
+  box-shadow: var(--app-shadow-md);
   transform: translateY(-175%);
-  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1);
+  transition: transform var(--app-duration-normal) var(--app-ease-standard);
 }
 
 .skip-link:focus-visible {
@@ -80,7 +80,7 @@ textarea {
 .p-dropdown,
 .p-multiselect,
 .p-calendar .p-inputtext {
-  min-height: 2.75rem;
+  min-height: var(--app-control-height);
 }
 
 .p-button {
@@ -95,7 +95,7 @@ textarea {
 .p-card,
 .p-panel,
 .p-dialog {
-  border-radius: var(--tt-radius-xl, 1rem);
+  border-radius: var(--app-radius-xl);
 }
 
 .p-dialog {
@@ -118,7 +118,7 @@ textarea {
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: .75rem;
+  gap: var(--app-space-3);
   flex-wrap: wrap;
 }
 
@@ -132,7 +132,7 @@ textarea {
 .table-actions,
 .filter-actions {
   min-inline-size: 0;
-  gap: .75rem;
+  gap: var(--app-space-3);
   flex-wrap: wrap;
 }
 
@@ -171,24 +171,24 @@ form .p-field,
 form .field > label,
 form .p-field > label {
   display: inline-block;
-  margin-block-end: .45rem;
-  color: var(--text-color);
-  font-weight: 600;
+  margin-block-end: var(--app-space-2);
+  color: var(--app-color-text);
+  font-weight: var(--app-font-weight-semibold);
 }
 
 /* Shared form language for legacy views and the new form primitives. */
 .app-form,
 form.p-fluid {
-  --form-control-height: 2.875rem;
+  --form-control-height: var(--app-control-height);
   display: grid;
-  gap: 1.25rem;
+  gap: var(--app-space-5);
   width: 100%;
 }
 
 .app-form .grid,
 form.p-fluid.grid {
   margin: 0;
-  row-gap: .25rem;
+  row-gap: var(--app-space-1);
 }
 
 .app-form .field,
@@ -197,17 +197,17 @@ form.p-fluid .field,
 form.p-fluid .p-field {
   display: grid;
   align-content: start;
-  gap: .45rem;
+  gap: var(--app-space-2);
   margin: 0;
-  padding: .5rem;
+  padding: var(--app-space-2);
 }
 
 .app-form label,
 form.p-fluid label {
-  color: var(--text-color);
-  font-size: .875rem;
-  font-weight: 650;
-  line-height: 1.35;
+  color: var(--app-color-text);
+  font-size: var(--app-font-size-sm);
+  font-weight: var(--app-font-weight-semibold);
+  line-height: var(--app-line-height-ui);
 }
 
 .app-form :is(.p-inputtext, .p-dropdown, .p-multiselect, .p-calendar, .p-inputnumber, .p-password, textarea),
@@ -226,14 +226,14 @@ form.p-fluid textarea {
 .app-form :is(.p-error, [role="alert"]),
 form.p-fluid :is(.p-error, [role="alert"]) {
   margin: 0;
-  color: var(--red-500, #dc2626);
-  font-size: .8125rem;
+  color: var(--app-color-danger);
+  font-size: var(--app-font-size-xs);
   line-height: 1.4;
 }
 
 .app-form :is(.p-inputtext, textarea):focus,
 form.p-fluid :is(.p-inputtext, textarea):focus {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 22%, transparent);
+  box-shadow: var(--app-shadow-focus);
 }
 
 .app-form :is(.p-checkbox, .p-radiobutton) + label,
@@ -242,10 +242,10 @@ form.p-fluid :is(.p-checkbox, .p-radiobutton) + label {
 }
 
 .app-form__section {
-  padding: clamp(1rem, 2vw, 1.5rem);
-  border: 1px solid var(--surface-border);
-  border-radius: var(--tt-radius-lg, .875rem);
-  background: color-mix(in srgb, var(--surface-card) 96%, var(--surface-ground));
+  padding: var(--app-page-gutter);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-color-surface);
 }
 
 .app-form__actions {
@@ -254,10 +254,10 @@ form.p-fluid :is(.p-checkbox, .p-radiobutton) + label {
   z-index: 3;
   display: flex;
   justify-content: flex-end;
-  gap: .75rem;
-  padding: 1rem;
-  border-block-start: 1px solid var(--surface-border);
-  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  gap: var(--app-space-3);
+  padding: var(--app-space-4);
+  border-block-start: 1px solid var(--app-color-border);
+  background: color-mix(in srgb, var(--app-color-surface) 94%, transparent);
   backdrop-filter: blur(12px);
 }
 

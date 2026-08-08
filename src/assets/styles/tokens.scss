@@ -1,61 +1,166 @@
-/* Design tokens - global CSS variables */
+/*
+ * PFPHEdS design tokens
+ *
+ * `--app-*` variables are the public application contract. Theme-dependent
+ * values intentionally reference PrimeVue variables so switching the linked
+ * light/dim stylesheet updates every shared component without JavaScript.
+ */
 :root {
-  /* Brand colors */
-  --brand-yellow: #F3C300;
-  --brand-yellow-600: #D49F3F;
-  --brand-green: #3ECF8E;
-  --brand-green-600: #2DD4BF;
-  --text-900: #111827;
-  --text-700: #374151;
-  --text-600: #6b7280;
-  --text-500: #9CA3AF;
-
-  /* Layout & spacing */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
+  /* Brand and semantic colors */
+  --app-color-brand: #f3c300;
+  --app-color-brand-hover: #d9ad00;
+  --app-color-brand-active: #bf9800;
+  --app-color-on-brand: #172033;
+  --app-color-text: var(--text-color, #172033);
+  --app-color-text-muted: var(--text-color-secondary, #586475);
+  --app-color-page: var(--surface-ground, #eef1f0);
+  --app-color-section: var(--surface-section, #f5f6f3);
+  --app-color-surface: var(--surface-card, #fbfbf8);
+  --app-color-overlay: var(--surface-overlay, #fff);
+  --app-color-border: var(--surface-border, #d8deda);
+  --app-color-hover: var(--surface-hover, #e8ece9);
+  --app-color-info: var(--blue-600, #2563eb);
+  --app-color-info-soft: var(--blue-50, #eff6ff);
+  --app-color-success: var(--green-600, #15803d);
+  --app-color-success-soft: var(--green-50, #f0fdf4);
+  --app-color-warning: var(--orange-600, #c2410c);
+  --app-color-warning-soft: var(--orange-50, #fff7ed);
+  --app-color-danger: var(--red-600, #dc2626);
+  --app-color-danger-soft: var(--red-50, #fef2f2);
+  --app-color-focus: #775f00;
 
   /* Typography */
-  --font-size-base: 1rem;
-  --font-size-sm: 0.875rem;
-  --font-size-lg: 1.125rem;
-  --font-weight-bold: 700;
-  --font-weight-extrabold: 800;
-  --line-tight: 1.15;
+  --app-font-family: var(--font-family, 'Poppins', sans-serif);
+  --app-font-size-xs: 0.75rem;
+  --app-font-size-sm: 0.875rem;
+  --app-font-size-md: 1rem;
+  --app-font-size-lg: 1.125rem;
+  --app-font-size-xl: 1.375rem;
+  --app-font-size-2xl: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+  --app-font-size-page-title: clamp(1.625rem, 1.3rem + 1.3vw, 2.25rem);
+  --app-font-weight-regular: 400;
+  --app-font-weight-medium: 500;
+  --app-font-weight-semibold: 600;
+  --app-font-weight-bold: 700;
+  --app-line-height-tight: 1.15;
+  --app-line-height-ui: 1.35;
+  --app-line-height-body: 1.55;
+  --app-text-measure: 65ch;
 
-  /* Form controls */
-  --input-height: 3.2rem;
-  --input-radius: var(--radius-md);
-  --focus-ring: 0 0 0 0.2rem rgba(62, 207, 142, 0.25);
+  /* Spacing */
+  --app-space-0: 0;
+  --app-space-1: 0.25rem;
+  --app-space-2: 0.5rem;
+  --app-space-3: 0.75rem;
+  --app-space-4: 1rem;
+  --app-space-5: 1.25rem;
+  --app-space-6: 1.5rem;
+  --app-space-8: 2rem;
+  --app-space-10: 2.5rem;
+  --app-space-12: 3rem;
+  --app-page-gutter: clamp(1rem, 2vw, 1.5rem);
+  --app-section-gap: clamp(1.25rem, 2vw, 2rem);
+
+  /* Shape and elevation */
+  --app-radius-sm: 0.5rem;
+  --app-radius-md: 0.75rem;
+  --app-radius-lg: 0.875rem;
+  --app-radius-xl: 1rem;
+  --app-radius-pill: 999px;
+  --app-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.05);
+  --app-shadow-sm: 0 2px 8px rgb(15 23 42 / 0.08);
+  --app-shadow-md: 0 12px 32px rgb(15 23 42 / 0.12);
+  --app-shadow-focus: 0 0 0 3px color-mix(in srgb, var(--app-color-focus) 28%, transparent);
+
+  /* Controls */
+  --app-control-height-sm: 2.5rem;
+  --app-control-height: 2.75rem;
+  --app-control-height-lg: 3.2rem;
+  --app-control-padding-block: 0.625rem;
+  --app-control-padding-inline: 0.875rem;
+  --app-control-radius: var(--app-radius-md);
+  --app-touch-target: 2.75rem;
+
+  /* Layout */
+  --app-navbar-height: var(--navbar-h, 4rem);
+  --app-page-max: 120rem;
+  --app-content-max: 72rem;
+  --app-reading-max: 65ch;
+  --app-sidebar-min: 16rem;
+  --app-sidebar-max: 18.75rem;
+  --app-social-side-width: clamp(16rem, 18vw, 20rem);
+  --app-social-side-left: var(--app-social-side-width);
+  --app-social-side-right: var(--app-social-side-width);
+  --app-mobile-nav-clearance: calc(5rem + env(safe-area-inset-bottom));
+
+  /* Motion */
+  --app-duration-fast: 120ms;
+  --app-duration-normal: 180ms;
+  --app-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Compatibility aliases during incremental migration */
+  --brand-yellow: var(--app-color-brand);
+  --brand-yellow-600: var(--app-color-brand-hover);
+  --brand-green: var(--app-color-success);
+  --brand-green-600: var(--app-color-success);
+  --radius-sm: var(--app-radius-sm);
+  --radius-md: var(--app-radius-md);
+  --radius-lg: var(--app-radius-xl);
+  --space-1: var(--app-space-1);
+  --space-2: var(--app-space-2);
+  --space-3: var(--app-space-3);
+  --space-4: var(--app-space-4);
+  --space-6: var(--app-space-6);
+  --font-size-base: var(--app-font-size-md);
+  --font-size-sm: var(--app-font-size-sm);
+  --font-size-lg: var(--app-font-size-lg);
+  --font-weight-bold: var(--app-font-weight-bold);
+  --font-weight-extrabold: var(--app-font-weight-bold);
+  --line-tight: var(--app-line-height-tight);
+  --input-height: var(--app-control-height-lg);
+  --input-radius: var(--app-control-radius);
+  --focus-ring: var(--app-shadow-focus);
 }
 
-/* a11y helpers */
 .sr-only {
   position: absolute !important;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0, 0, 0, 0);
-  white-space: nowrap; border: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-/* Typography utilities */
 .h1 {
   margin: 0;
-  font-weight: var(--font-weight-extrabold, 800);
+  color: var(--app-color-text);
+  font-size: var(--app-font-size-page-title);
+  font-weight: var(--app-font-weight-bold);
   letter-spacing: -0.015em;
-  line-height: var(--line-tight, 1.15);
-  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+  line-height: var(--app-line-height-tight);
+  text-wrap: balance;
 }
 
 .h2 {
   margin: 0;
-  font-weight: var(--font-weight-bold, 700);
+  color: var(--app-color-text);
+  font-size: var(--app-font-size-2xl);
+  font-weight: var(--app-font-weight-bold);
   letter-spacing: -0.01em;
-  line-height: var(--line-tight, 1.15);
-  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  line-height: var(--app-line-height-tight);
+  text-wrap: balance;
+}
+
+.app-tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 40rem) {
+  :root {
+    --app-page-gutter: 1rem;
+    --app-section-gap: 1.25rem;
+  }
 }

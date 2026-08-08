@@ -63,31 +63,31 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
   overflow: hidden;
 }
 .skip-link:focus {
-  left: var(--space-4, 1rem);
-  top: var(--space-4, 1rem);
+  left: var(--app-space-4);
+  top: var(--app-space-4);
   width: auto;
   height: auto;
-  background: #fff;
-  color: #111;
-  padding: var(--space-2, .5rem) var(--space-3, .75rem);
-  border-radius: var(--radius-sm, 8px);
-  box-shadow: 0 0 0 2px #111;
+  background: var(--app-color-brand);
+  color: var(--app-color-on-brand);
+  padding: var(--app-space-2) var(--app-space-3);
+  border-radius: var(--app-radius-sm);
+  box-shadow: var(--app-shadow-focus);
   z-index: 1000;
 }
 
 .admin-layout {
   display: grid;
-  grid-template-columns: minmax(16rem, 18.75rem) minmax(0, 1fr);
-  gap: var(--space-6, 1.5rem);
-  padding: var(--space-6, 1.5rem);
-  height: calc(100dvh - var(--navbar-h, 64px) - (2 * var(--space-6, 1.5rem)));
+  grid-template-columns: minmax(var(--app-sidebar-min), var(--app-sidebar-max)) minmax(0, 1fr);
+  gap: var(--app-space-6);
+  padding: var(--app-page-gutter);
+  height: calc(100dvh - var(--app-navbar-height) - (2 * var(--app-page-gutter)));
   overflow: hidden;
 }
 
 .admin-layout.has-feed {
   display: grid;
-  grid-template-columns: 280px 1fr 320px;
-  gap: var(--space-6, 1.5rem);
+  grid-template-columns: minmax(0, var(--app-social-side-width)) minmax(0, 1fr) minmax(0, var(--app-social-side-width));
+  gap: var(--app-space-6);
 }
 
 .admin-layout.no-sidebar {
@@ -96,17 +96,17 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
 
 .admin-layout.is-wide:not(.has-feed):not(.no-sidebar) {
   grid-template-columns: minmax(14rem, 16rem) minmax(0, 1fr);
-  gap: var(--space-4, 1rem);
-  padding-inline: var(--space-4, 1rem);
+  gap: var(--app-space-4);
+  padding-inline: var(--app-space-4);
 }
 
-@media (max-width: 1279px) {
+@media (max-width: 80rem) {
   .admin-layout.has-feed {
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: minmax(15rem, var(--app-social-side-width)) minmax(0, 1fr);
   }
   .feed-right { display: none; }
 }
-@media (max-width: 959px) {
+@media (max-width: 60rem) {
   .admin-layout.has-feed {
     display: block;
   }
@@ -124,9 +124,9 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
 
 @media (max-width: 1100px) {
   .admin-layout {
-    gap: var(--space-4, 1rem);
-    padding: var(--space-4, 1rem);
-    height: calc(100dvh - var(--navbar-h, 64px) - (2 * var(--space-4, 1rem)));
+    gap: var(--app-space-4);
+    padding: var(--app-space-4);
+    height: calc(100dvh - var(--app-navbar-height) - (2 * var(--app-space-4)));
   }
 }
 
@@ -134,7 +134,7 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
   .admin-layout:not(.has-feed):not(.no-sidebar) {
     grid-template-columns: minmax(0, 1fr);
     height: auto;
-    min-height: calc(100dvh - var(--navbar-h, 64px));
+    min-height: calc(100dvh - var(--app-navbar-height));
     overflow: visible;
   }
 
@@ -162,8 +162,8 @@ const hasFeed = computed(() => !!slots.left || !!slots.right)
   position: sticky;
   top: 0;
   z-index: 5;
-  padding-bottom: var(--space-3, .75rem);
-  margin-bottom: var(--space-3, .75rem);
+  padding-block-end: var(--app-space-3);
+  margin-block-end: var(--app-space-3);
 }
 
 .feed-left,

@@ -10,6 +10,6 @@ defineProps({ label: { type: String, default: 'Chargement en cours…' } })
 </script>
 
 <style scoped>
-.loading-state { display:flex; align-items:center; justify-content:center; gap:.75rem; min-height:8rem; padding:2rem; color:var(--text-color-secondary); }
-.loading-state i { color:var(--primary-color); font-size:1.25rem; }
+.loading-state { display:flex; align-items:center; justify-content:center; gap:var(--app-space-3); min-height:8rem; padding:var(--app-space-8); color:var(--app-color-text-muted); }
+.loading-state i { color:var(--app-color-brand); font-size:var(--app-font-size-xl); }
 </style>

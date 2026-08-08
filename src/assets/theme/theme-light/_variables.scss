@@ -14,16 +14,16 @@ $colors: (
 );
 
 //reused color variables
-$shade000:#ffffff !default;    //surface
-$shade100:#f9fafb !default;    //header background
-$shade200:#f3f4f6 !default;    //hover background
-$shade300:#e5e7eb !default;    //border, divider
-$shade400:#d1d5db !default;    //input border
-$shade500:#9ca3af !default;    //input icon
-$shade600:#6b7280 !default;    //text secondary color
-$shade700:#4b5563 !default;    //text color
-$shade800:#374151 !default;    //unused
-$shade900:#1f2937 !default;    //unused
+$shade000:#fbfbf8 !default;    //surface
+$shade100:#f5f6f3 !default;    //header background
+$shade200:#e8ece9 !default;    //hover background
+$shade300:#d8deda !default;    //border, divider
+$shade400:#bdc5c0 !default;    //input border
+$shade500:#7b867f !default;    //input icon
+$shade600:#586475 !default;    //text secondary color
+$shade700:#172033 !default;    //text color
+$shade800:#111827 !default;    //strong text
+$shade900:#0b1220 !default;    //highest contrast
 
 //global
 $fontFamily:'Poppins', sans-serif !default;
@@ -904,12 +904,12 @@ $fullCalendarEventTextColor:$primaryTextColor !default;
     --content-padding:#{$panelContentPadding};
     --inline-spacing:#{$inlineSpacing};
     --border-radius:#{$borderRadius};
-    --surface-ground:#EFF3F8;
-    --surface-section:#ffffff;
-    --surface-card:#ffffff;
+    --surface-ground:#eef1f0;
+    --surface-section:#f5f6f3;
+    --surface-card:#fbfbf8;
     --surface-overlay:#ffffff;
-    --surface-border:#dfe7ef;
-    --surface-hover:#f6f9fc;
+    --surface-border:#d8deda;
+    --surface-hover:#e8ece9;
     --focus-ring: #{$focusShadow};
     --maskbg: #{$maskBg};
     --highlight-bg: #{$highlightBg};

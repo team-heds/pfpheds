@@ -20,10 +20,12 @@ defineEmits(['action'])
 </script>
 
 <style scoped>
-.system-state { display:grid; justify-items:center; gap:.5rem; padding:2.5rem 1.5rem; text-align:center; color:var(--text-color-secondary); }
-.system-state__icon { display:grid; place-items:center; width:3rem; height:3rem; border-radius:50%; background:var(--surface-ground); color:var(--primary-color); font-size:1.25rem; }
-.system-state__title { margin:.25rem 0 0; color:var(--text-color); font-size:1rem; }
-.system-state__description { max-width:34rem; margin:0; line-height:1.55; }
-.system-state__action { min-height:2.75rem; margin-top:.5rem; padding:.625rem 1rem; border:0; border-radius:.75rem; background:var(--primary-color); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
-.system-state__action:focus-visible { outline:2px solid var(--primary-color); outline-offset:3px; }
+.system-state { display:grid; justify-items:center; gap:var(--app-space-2); padding:var(--app-space-10) var(--app-space-6); text-align:center; color:var(--app-color-text-muted); }
+.system-state__icon { display:grid; place-items:center; width:var(--app-space-12); height:var(--app-space-12); border-radius:var(--app-radius-pill); background:var(--app-color-section); color:var(--app-color-brand); font-size:var(--app-font-size-xl); }
+.system-state__title { margin:var(--app-space-1) 0 0; color:var(--app-color-text); font-size:var(--app-font-size-md); }
+.system-state__description { max-width:var(--app-reading-max); margin:0; line-height:var(--app-line-height-body); text-wrap:pretty; }
+.system-state__action { min-height:var(--app-touch-target); margin-block-start:var(--app-space-2); padding:var(--app-control-padding-block) var(--app-space-4); border:0; border-radius:var(--app-control-radius); background:var(--app-color-brand); color:var(--app-color-on-brand); font:inherit; font-weight:var(--app-font-weight-semibold); cursor:pointer; }
+.system-state__action:hover { background:var(--app-color-brand-hover); }
+.system-state__action:focus-visible { outline:max(2px, .1875rem) solid var(--app-color-focus); outline-offset:var(--app-space-1); }
+@media(max-width:40rem){.system-state{padding:var(--app-space-8) var(--app-space-4)}.system-state__action{width:100%}}
 </style>

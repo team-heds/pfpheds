@@ -20,6 +20,7 @@ const sidebars = {
       label: 'Frontend',
       collapsed: false,
       items: [
+        'components/design-tokens',
         'frontend/bootstrap',
         'frontend/component-library-overview',
         'frontend/component-library-layout',
