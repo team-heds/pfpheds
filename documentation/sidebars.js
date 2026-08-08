@@ -119,6 +119,7 @@ const sidebars = {
         'testing/overview',
         'testing/scripts',
         'testing/diagnostic-tools',
+        'testing/password-recovery-recette',
       ],
     },
     {
