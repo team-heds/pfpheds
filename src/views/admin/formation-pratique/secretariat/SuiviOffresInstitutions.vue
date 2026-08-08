@@ -6,7 +6,7 @@
         <i class="pi pi-angle-right text-400 mx-2"></i>
         <span class="text-600">Secrétariat</span>
         <i class="pi pi-angle-right text-400 mx-2"></i>
-        <span class="text-900 font-medium">Suivi Envoi Offres</span>
+        <span class="text-900 font-medium">Suivi offres et propositions</span>
       </div>
 
       <!-- Header -->
@@ -15,8 +15,8 @@
           <div class="flex align-items-center gap-3">
             <i class="pi pi-send text-primary text-3xl"></i>
             <div>
-              <h1 class="text-2xl font-bold text-900 m-0">Suivi Envoi des Offres</h1>
-              <p class="text-600 m-0 mt-1">Détecté automatiquement depuis les places</p>
+              <h1 class="text-2xl font-bold text-900 m-0">Suivi des offres et propositions</h1>
+              <p class="text-600 m-0 mt-1">Offres et propositions rapprochées par institution</p>
             </div>
           </div>
           <div class="flex align-items-center gap-3 flex-wrap">
@@ -52,6 +52,14 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <div v-if="reconciliation.anomalies.length" class="surface-card p-3 border-round shadow-2 mb-3" role="status">
+        <div class="flex align-items-center gap-2">
+          <i class="pi pi-exclamation-triangle text-orange-400"></i>
+          <span class="font-semibold">{{ reconciliation.anomalies.length }} anomalie(s) de correspondance à corriger.</span>
+        </div>
+        <span class="text-sm text-600">Ces enregistrements ne sont pas attribués à une autre institution et ne faussent pas les totaux.</span>
       </div>
 
       <!-- Stats par année × PFP (vue globale quand pas de filtre) -->
@@ -124,7 +132,7 @@
           <template #header>
             <div class="flex justify-content-between align-items-center">
               <span class="text-xl text-900 font-bold">Institutions ({{ filteredInstitutions.length }})</span>
-              <span class="text-sm text-500">Vert = valeur PFP renseignée · Rouge = manquant</span>
+              <span class="text-sm text-500">Vert = proposition reçue · Rouge = proposition manquante</span>
             </div>
           </template>
           <template #empty>
@@ -208,13 +216,14 @@ import Dropdown from 'primevue/dropdown'
 import Tag from 'primevue/tag'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
+import { getReconciliationMetric, reconcileOfferProposals } from '@/service/offerProposalMatchingService'
 
 const toast = useToast()
 const dt = ref(null)
 const loading = ref(false)
 
 const institutions = ref([])
-const placesByInstitution = ref({})
+const places = ref([])
 
 const searchQuery = ref('')
 const selectedYear = ref(null)
@@ -243,6 +252,21 @@ const cantonOptions = computed(() =>
   [...new Set(institutions.value.map(i => i.Canton).filter(Boolean))].sort()
 )
 
+const reconciliation = computed(() => reconcileOfferProposals({
+  institutions: institutions.value,
+  places: places.value,
+  years: years.map(year => year.value),
+  pfpTypes: PFP_FIELDS
+}))
+
+const institutionById = computed(() => new Map(
+  reconciliation.value.institutions.map(institution => [institution.institutionId, institution])
+))
+
+function getInstitution(institutionId) {
+  return institutionById.value.get(String(institutionId ?? '').trim())
+}
+
 // Colonnes actives selon les filtres année/PFP
 const activeColumns = computed(() => {
   const yrs = selectedYear.value ? [years.find(y => y.value === selectedYear.value)] : years
@@ -258,39 +282,31 @@ const activeColumns = computed(() => {
 
 // Est-ce qu'une institution a une valeur pour year+pfp ?
 function hasSent(institutionId, year, pfp) {
-  const places = placesByInstitution.value[institutionId] || []
-  return places.some(place => {
-    const val = place[pfp]?.[year]
-    return val != null && val !== ''
-  })
+  return getReconciliationMetric(getInstitution(institutionId), year, pfp).hasProposal
 }
 
-// Total des offres pour year+pfp
+// Total des propositions pour year+pfp
 function getTotal(institutionId, year, pfp) {
-  const places = placesByInstitution.value[institutionId] || []
-  let total = 0
-  for (const place of places) {
-    const val = place[pfp]?.[year]
-    if (val != null && val !== '') total += Number(val) || 0
-  }
-  return total
+  return getReconciliationMetric(getInstitution(institutionId), year, pfp).proposals
 }
 
 function getTooltip(institutionId, year, pfp) {
-  const places = placesByInstitution.value[institutionId] || []
-  if (!places.length) return 'Aucune place enregistrée'
-  if (!hasSent(institutionId, year, pfp)) return `Aucune valeur ${pfp} pour cette année`
-  return `Total ${pfp} : ${getTotal(institutionId, year, pfp)}`
+  const institution = getInstitution(institutionId)
+  if (!institution?.placeCount) return 'Aucune place enregistrée'
+  const metric = getReconciliationMetric(institution, year, pfp)
+  if (!metric.hasProposal) return `Aucune proposition ${pfp} pour cette année`
+  return `Propositions : ${metric.proposals} · Offres : ${metric.offers}`
 }
 
 function getPlaceCount(institutionId) {
-  return (placesByInstitution.value[institutionId] || []).length
+  return getInstitution(institutionId)?.placeCount || 0
 }
 
 // Stats globales par année (sans filtre PFP)
 function globalYearStats(year) {
-  const total = institutions.value.length
-  const sent = institutions.value.filter(i =>
+  const reconciled = reconciliation.value.institutions
+  const total = reconciled.length
+  const sent = reconciled.filter(i =>
     PFP_FIELDS.some(pfp => hasSent(i.InstitutionId, year, pfp))
   ).length
   const pct = total ? Math.round((sent / total) * 100) : 0
@@ -299,8 +315,9 @@ function globalYearStats(year) {
 
 // Stats par année ET pfp
 function pfpYearStats(year, pfp) {
-  const total = institutions.value.length
-  const sent = institutions.value.filter(i => hasSent(i.InstitutionId, year, pfp)).length
+  const reconciled = reconciliation.value.institutions
+  const total = reconciled.length
+  const sent = reconciled.filter(i => hasSent(i.InstitutionId, year, pfp)).length
   const pct = total ? Math.round((sent / total) * 100) : 0
   return { total, sent, pct }
 }
@@ -314,7 +331,7 @@ function filteredColStats(col) {
 }
 
 const filteredInstitutions = computed(() => {
-  let list = [...institutions.value]
+  let list = [...reconciliation.value.institutions]
 
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
@@ -341,18 +358,13 @@ async function loadAll() {
   try {
     const [instRes, placesRes] = await Promise.all([
       supabase.from('institutions').select('InstitutionId, Name, Locality, Canton, Category, MailChef').order('Name'),
-      supabase.from('places').select('PlaceId, InstitutionId, PFP1A, PFP1B, PFP2, PFP3, PFP4')
+      supabase.from('places').select('PlaceId, InstitutionId, PFP1A, PFP1B, PFP2, PFP3, PFP4, pfp1a_proposition, pfp1b_proposition, pfp2_proposition, pfp3_proposition, pfp4_proposition')
     ])
     if (instRes.error) throw instRes.error
     if (placesRes.error) throw placesRes.error
 
     institutions.value = instRes.data || []
-    const grouped = {}
-    for (const place of placesRes.data || []) {
-      if (!grouped[place.InstitutionId]) grouped[place.InstitutionId] = []
-      grouped[place.InstitutionId].push(place)
-    }
-    placesByInstitution.value = grouped
+    places.value = placesRes.data || []
   } catch (e) {
     console.error('Erreur chargement:', e)
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les données', life: 3000 })
@@ -377,7 +389,15 @@ function exportExcel() {
     }
   }
 
-  const header1 = ['Institution', 'Localité', 'Canton', 'Nb places', 'Email contact', ...allCols.map(c => c.label), ...allCols.map(c => `Total ${c.label}`)]
+  const header1 = [
+    'Institution',
+    'Localité',
+    'Canton',
+    'Nb places',
+    'Email contact',
+    ...allCols.map(c => `Proposition reçue ${c.label}`),
+    ...allCols.map(c => `Total propositions ${c.label}`)
+  ]
   const rows1 = filteredInstitutions.value.map(i => [
     i.Name || '',
     i.Locality || '',
@@ -406,13 +426,13 @@ function exportExcel() {
   XLSX.utils.book_append_sheet(wb, ws1, 'Suivi par institution')
 
   // Feuille 2 : Résumé par année × PFP
-  const header2 = ['Année', 'PFP', 'Institutions avec offres', 'Total institutions', '% complétude', 'Total offres']
+  const header2 = ['Année', 'PFP', 'Institutions avec proposition', 'Total institutions', '% complétude', 'Total propositions']
   const rows2 = []
   for (const yr of years) {
     for (const pfp of PFP_FIELDS) {
       const stats = pfpYearStats(yr.value, pfp)
-      const totalOffres = institutions.value.reduce((sum, i) => sum + getTotal(i.InstitutionId, yr.value, pfp), 0)
-      rows2.push([yr.label, pfp, stats.sent, stats.total, `${stats.pct}%`, totalOffres])
+      const totalPropositions = reconciliation.value.institutions.reduce((sum, i) => sum + getTotal(i.InstitutionId, yr.value, pfp), 0)
+      rows2.push([yr.label, pfp, stats.sent, stats.total, `${stats.pct}%`, totalPropositions])
     }
   }
   const ws2 = XLSX.utils.aoa_to_sheet([header2, ...rows2])
@@ -421,7 +441,7 @@ function exportExcel() {
 
   // Feuilles 3-5 : une par année
   for (const yr of years) {
-    const headerYr = ['Institution', 'Localité', 'Canton', 'Nb places', 'Email', ...PFP_FIELDS, 'Total offres', 'Statut']
+    const headerYr = ['Institution', 'Localité', 'Canton', 'Nb places', 'Email', ...PFP_FIELDS, 'Total propositions', 'Statut']
     const rowsYr = filteredInstitutions.value.map(i => {
       const pfpValues = PFP_FIELDS.map(pfp => getTotal(i.InstitutionId, yr.value, pfp))
       const totalRow = pfpValues.reduce((a, b) => a + b, 0)
@@ -475,6 +495,22 @@ function exportExcel() {
   const ws3 = XLSX.utils.aoa_to_sheet([header3, ...rows3])
   ws3['!cols'] = [{ wch: 35 }, { wch: 18 }, { wch: 8 }, { wch: 32 }, { wch: 30 }, { wch: 24 }]
   XLSX.utils.book_append_sheet(wb, ws3, 'À relancer')
+
+  if (reconciliation.value.anomalies.length) {
+    const anomalyRows = reconciliation.value.anomalies.map(anomaly => [
+      anomaly.type,
+      anomaly.institutionId || '',
+      anomaly.placeId || '',
+      anomaly.field || '',
+      anomaly.year || ''
+    ])
+    const wsAnomalies = XLSX.utils.aoa_to_sheet([
+      ['Type', 'InstitutionId', 'PlaceId', 'Champ', 'Année'],
+      ...anomalyRows
+    ])
+    wsAnomalies['!cols'] = [{ wch: 30 }, { wch: 24 }, { wch: 24 }, { wch: 24 }, { wch: 14 }]
+    XLSX.utils.book_append_sheet(wb, wsAnomalies, 'Anomalies')
+  }
 
   const fileName = `suivi-offres-${new Date().toISOString().slice(0, 10)}.xlsx`
   XLSX.writeFile(wb, fileName)
