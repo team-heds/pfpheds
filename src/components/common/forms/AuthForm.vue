@@ -35,8 +35,8 @@
       <ErrorInline v-if="passwordError" :id="ids.passwordError" :message="passwordErrorText" />
     </div>
 
-    <div class="auth-form__options mb-4">
-      <div class="auth-form__remember">
+    <div class="flex align-items-center justify-content-between mb-4">
+      <div class="flex align-items-center">
         <Checkbox v-model="modelRemember" :inputId="ids.remember" binary class="mr-2" />
         <label :for="ids.remember" class="text-sm">Se souvenir de moi</label>
       </div>
@@ -110,23 +110,20 @@ const ids = {
 .link-forgot {
   background: transparent;
   border: 0;
-  color: var(--app-color-text);
-  font-weight: var(--app-font-weight-bold);
+  color: var(--text-600);
+  font-weight: 700;
   cursor: pointer;
   padding: 0;
 }
-.link-forgot:hover { color:var(--app-color-brand); }
+.link-forgot:hover { opacity: 0.85; }
 .link-forgot:disabled { opacity: 0.5; cursor: not-allowed; }
-.link-forgot:focus-visible { outline:max(2px,.1875rem) solid var(--app-color-focus); outline-offset:var(--app-space-1); }
-
-.auth-form__options { display:flex; align-items:center; justify-content:space-between; gap:var(--app-space-4); }
-.auth-form__remember { display:flex; align-items:center; min-width:0; }
+.link-forgot:focus-visible { outline: 2px solid #111; outline-offset: 2px; }
 
 :deep(.p-inputtext),
 :deep(.p-password-input) {
-  border-radius: var(--app-control-radius);
-  height: var(--app-control-height-lg);
-  font-size: var(--app-font-size-md);
+  border-radius: var(--input-radius);
+  height: var(--input-height);
+  font-size: var(--font-size-base);
 }
 :deep(.p-inputtext) { width: 100%; }
 :deep(.p-password) { width: 100%; }
@@ -134,11 +131,6 @@ const ids = {
 
 :deep(.p-inputtext:focus),
 :deep(.p-password-input:focus) {
-  box-shadow: var(--app-shadow-focus);
-}
-
-@media(max-width:40rem){
-  .auth-form__options{align-items:flex-start;flex-direction:column;gap:var(--app-space-3)}
-  .link-forgot{min-height:var(--app-touch-target);display:inline-flex;align-items:center;text-align:start}
+  box-shadow: var(--focus-ring);
 }
 </style>

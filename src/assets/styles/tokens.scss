@@ -99,10 +99,14 @@
   --app-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 
   /* Compatibility aliases during incremental migration */
-  --brand-yellow: var(--app-color-brand);
-  --brand-yellow-600: var(--app-color-brand-hover);
-  --brand-green: var(--app-color-success);
-  --brand-green-600: var(--app-color-success);
+  --brand-yellow: #F3C300;
+  --brand-yellow-600: #D49F3F;
+  --brand-green: #3ECF8E;
+  --brand-green-600: #2DD4BF;
+  --text-900: #111827;
+  --text-700: #374151;
+  --text-600: #6b7280;
+  --text-500: #9CA3AF;
   --radius-sm: var(--app-radius-sm);
   --radius-md: var(--app-radius-md);
   --radius-lg: var(--app-radius-xl);
@@ -115,11 +119,11 @@
   --font-size-sm: var(--app-font-size-sm);
   --font-size-lg: var(--app-font-size-lg);
   --font-weight-bold: var(--app-font-weight-bold);
-  --font-weight-extrabold: var(--app-font-weight-bold);
+  --font-weight-extrabold: 800;
   --line-tight: var(--app-line-height-tight);
   --input-height: var(--app-control-height-lg);
   --input-radius: var(--app-control-radius);
-  --focus-ring: var(--app-shadow-focus);
+  --focus-ring: 0 0 0 0.2rem rgba(62, 207, 142, 0.25);
 }
 
 .sr-only {
@@ -136,22 +140,18 @@
 
 .h1 {
   margin: 0;
-  color: var(--app-color-text);
-  font-size: var(--app-font-size-page-title);
-  font-weight: var(--app-font-weight-bold);
+  font-weight: var(--font-weight-extrabold, 800);
   letter-spacing: -0.015em;
-  line-height: var(--app-line-height-tight);
-  text-wrap: balance;
+  line-height: var(--line-tight, 1.15);
+  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
 }
 
 .h2 {
   margin: 0;
-  color: var(--app-color-text);
-  font-size: var(--app-font-size-2xl);
-  font-weight: var(--app-font-weight-bold);
+  font-weight: var(--font-weight-bold, 700);
   letter-spacing: -0.01em;
-  line-height: var(--app-line-height-tight);
-  text-wrap: balance;
+  line-height: var(--line-tight, 1.15);
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
 }
 
 .app-tabular-nums {
