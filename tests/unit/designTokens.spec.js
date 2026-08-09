@@ -45,11 +45,12 @@ describe('design token contract', () => {
     expect(lightVariables).toMatch(/--surface-card:\s*#ffffff/)
   })
 
-  it('preserves the production geometry and responsive breakpoints', () => {
+  it('keeps stable social sidebars until the three-column layout no longer fits', () => {
     const social = read('src/components/common/layouts/SocialThreeColumnLayout.vue')
     const admin = read('src/components/admin/layouts/AdminLayout.vue')
-    expect(social).toContain('minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr)')
-    expect(social).toContain('@media (max-width: 80rem)')
+    expect(social).toContain('--social-side-column: clamp(15rem, 20vw, 25.5rem)')
+    expect(social).toContain('minmax(30rem, 1fr)')
+    expect(social).toContain('@media (max-width: 63.99rem)')
     expect(social).toContain('@media (max-width: 52rem)')
     expect(admin).toContain('grid-template-columns: 280px 1fr 320px')
     expect(admin).toContain('@media (max-width: 1279px)')
@@ -58,5 +59,14 @@ describe('design token contract', () => {
 
   it('keeps the PrimeIcons font stylesheet in the application bundle', () => {
     expect(read('src/assets/styles/styles.scss')).toMatch(/@import\s+["']primeicons\/primeicons\.css["']/)
+  })
+
+  it.each([
+    'src/views/institutions/Institution.vue',
+    'src/components/common/filters/FiltreMap.vue',
+  ])('%s uses the shared social layout instead of a duplicate responsive grid', (file) => {
+    const source = read(file)
+    expect(source).toContain('<SocialThreeColumnLayout')
+    expect(source).not.toContain('grid-template-columns: 1fr 3fr 1fr')
   })
 })
