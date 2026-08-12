@@ -115,6 +115,7 @@ declare module 'vue' {
     InfoRepondantEtudiants: typeof import('./components/admin/details/InfoRepondantEtudiants.vue')['default']
     InfoRepondantSignature: typeof import('./components/admin/details/InfoRepondantSignature.vue')['default']
     InputIcon: typeof import('primevue/inputicon')['default']
+    InputNumber: typeof import('primevue/inputnumber')['default']
     InputText: typeof import('primevue/inputtext')['default']
     InstitutionForm: typeof import('./components/admin/forms/InstitutionForm.vue')['default']
     InstitutionFormModif: typeof import('./components/admin/forms/InstitutionFormModif.vue')['default']

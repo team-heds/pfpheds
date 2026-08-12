@@ -67,7 +67,7 @@ Le détail complet de chacun de ces 6 points suit dans les sections ci-dessous. 
 ### Écrans et flux complémentaires (hors menu admin principal, mais actifs dans les routes)
 
 - Historique des stages PFP de l'étudiant (`/historique_pfp`)
-- Documents PFP (`/documents_pfp`)
+- Documents PFP (`/documents`)
 - Consultation d'une institution en détail, y compris vue publique (`/institution/:id`, `/institution_details/:id`)
 - Formulaires de création/modification d'institution (`/institution_form`, `/institution_form_modif/:id`)
 - Affectation de stage étudiant (deux variantes trouvées : générale et "BA24" — probablement une version par cohorte/promotion, à clarifier lequel est le flux actif)

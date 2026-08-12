@@ -210,11 +210,11 @@ export default {
     upcomingEvents() {
       const now = new Date();
       const userId = this.user.id;
-      
+
       if (!userId || !this.eventStore.events) {
         return [];
       }
-      
+
       // Filtrer les événements où l'utilisateur est inscrit
       const userEvents = this.eventStore.events.filter(event => {
         // Vérification inscription utilisateur (compatibilité formats)
@@ -251,9 +251,9 @@ export default {
     formatEventDate(date) {
       if (!date) return '';
       if (typeof date === 'string') date = new Date(date);
-      return date.toLocaleDateString('fr-CH', { 
+      return date.toLocaleDateString('fr-CH', {
         weekday: 'short',
-        month: '2-digit', 
+        month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit'
@@ -284,13 +284,13 @@ export default {
           prenom: '',
           photoURL: ''
         };
-        
+
         // Pour Firebase, on récupère depuis Firebase DB
         if (this.authStore.isFirebaseUser) {
           const db = getDatabase();
           const userRef = dbRef(db, `Users/${currentUser.uid}`);
           const snapshot = await get(userRef);
-        
+
           if (snapshot.exists()) {
             const userData = snapshot.val();
             userInfo = {
@@ -312,30 +312,30 @@ export default {
         // Appeler la fonction d'inscription du store
         await this.eventStore.toggleRegistration(event.id, userInfo);
         console.log('✅ Inscription réussie - L\'événement apparaîtra dans "Événements à venir"');
-        
+
         // Rafraîchir les événements pour mettre à jour la liste
         await this.eventStore.fetchEvents();
-        
+
         // Fermer le dialog après inscription
         this.showEventDetail = false;
-        
+
         // Afficher un toast de succès
         if (this.$refs.toast) {
-          this.$refs.toast.add({ 
-            severity: 'success', 
-            summary: 'Inscription réussie !', 
-            detail: 'L\'événement apparaît maintenant dans vos événements à venir', 
-            life: 4000 
+          this.$refs.toast.add({
+            severity: 'success',
+            summary: 'Inscription réussie !',
+            detail: 'L\'événement apparaît maintenant dans vos événements à venir',
+            life: 4000
           });
         }
       } catch (error) {
         console.error('Erreur lors de l\'inscription:', error);
         if (this.$refs.toast) {
-          this.$refs.toast.add({ 
-            severity: 'error', 
-            summary: 'Erreur', 
-            detail: 'Impossible de s\'inscrire à l\'événement', 
-            life: 4000 
+          this.$refs.toast.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Impossible de s\'inscrire à l\'événement',
+            life: 4000
           });
         }
       }
@@ -377,7 +377,7 @@ export default {
         .select('forname, family_name, avatar_url, email')
         .eq('user_id', userId)
         .maybeSingle();
-      
+
       if (error) {
         console.error('❌ Erreur chargement profil:', error);
         // Fallback sur l'email de l'utilisateur connecté
@@ -393,7 +393,7 @@ export default {
         };
         return;
       }
-      
+
       if (profileData) {
         const photoURL = profileData.avatar_url || defaultAvatar;
         this.user = {
@@ -403,7 +403,7 @@ export default {
           email: profileData.email || '',
           id: userId
         };
-        
+
         // Forcer la mise à jour de l'UI
         this.$forceUpdate();
       } else {
@@ -423,12 +423,12 @@ export default {
     async fetchRecentConversations() {
       const currentUser = this.authStore.user;
       if (!currentUser) return;
-      
+
       // Pour Firebase uniquement (Supabase n'a pas cette fonctionnalité pour l'instant)
       if (!this.authStore.isFirebaseUser) {
         return;
       }
-      
+
       const userId = currentUser.uid;
       const db = getDatabase();
       const conversationsRef = dbRef(db, 'conversations');
@@ -474,44 +474,44 @@ export default {
     async onAvatarSelected(event) {
       const file = event.target.files[0];
       if (!file) return;
-      
+
       const currentUser = this.authStore.user;
       if (!currentUser) {
         this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Utilisateur non connecté.', life: 4000 });
         return;
       }
-      
+
       // Vérifier que c'est une image
       if (!file.type.startsWith('image/')) {
         this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez sélectionner une image.', life: 4000 });
         return;
       }
-      
+
       // Vérifier la taille (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'L\'image ne doit pas dépasser 5MB.', life: 4000 });
         return;
       }
-      
+
       this.$refs.toast.add({ severity: 'info', summary: 'Upload en cours', detail: 'Upload de votre photo...', life: 2000 });
-      
+
       try {
         if (this.authStore.isFirebaseUser) {
           // Upload vers Firebase Storage
           const userId = currentUser.uid;
           const storage = getStorage();
           const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
-          
+
           await uploadBytes(avatarRef, file);
           const photoURL = await getDownloadURL(avatarRef);
-          
+
           const db = getDatabase();
           const userRef = dbRef(db, `Users/${userId}`);
           await update(userRef, { PhotoURL: photoURL });
-          
+
           this.user.PhotoURL = photoURL;
           this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
-          
+
         } else if (this.authStore.isSupabaseUser) {
           // Upload vers Supabase Storage (bucket "avatars")
           const userId = currentUser.id;
@@ -531,7 +531,7 @@ export default {
           // Mettre à jour le profil utilisateur avec l'URL publique
           const { error: updateError } = await supabase
             .from('user_profiles')
-            .update({ 
+            .update({
               avatar_url: photoURL,
               updated_at: new Date().toISOString()
             })
@@ -544,14 +544,14 @@ export default {
           this.user.PhotoURL = photoURL || this.user.PhotoURL;
           this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
         }
-        
+
       } catch (error) {
         console.error("❌ Erreur lors de l'upload de l'avatar :", error);
-        this.$refs.toast.add({ 
-          severity: 'error', 
-          summary: 'Erreur', 
-          detail: 'Erreur lors de l\'upload : ' + (error?.message || error), 
-          life: 6000 
+        this.$refs.toast.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Erreur lors de l\'upload : ' + (error?.message || error),
+          life: 6000
         });
       }
     },
@@ -567,7 +567,7 @@ export default {
       }
     },
     goToDocumentPFP() {
-      this.$router.push("/documents_pfp");
+      this.$router.push("/documents");
     },
     goToTools() {
       this.$router.push("/outils");
@@ -590,7 +590,7 @@ export default {
   async mounted() {
     // Initialiser l'état d'authentification
     await this.authStore.checkAuthState();
-    
+
     const currentUser = this.authStore.user;
     if (currentUser) {
       if (this.authStore.isFirebaseUser) {
@@ -604,7 +604,7 @@ export default {
         await this.fetchUserProfileSupabase(currentUser.id);
       }
     }
-    
+
     // Initialiser le store des événements
     this.eventStore.listenEvents();
   }

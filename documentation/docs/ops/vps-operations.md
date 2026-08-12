@@ -64,6 +64,21 @@ sudo docker logs supabase-db-1          # PostgreSQL
 sudo docker exec supabase-caddy-1 cat /etc/caddy/Caddyfile
 ```
 
+## Réécriture SPA requise
+
+Le frontend utilise `createWebHistory()`. Dans le bloc de site qui sert
+`/var/www/pfpheds-frontend`, Caddy doit donc renvoyer `index.html` pour toute
+route frontend qui ne correspond pas à un fichier statique. Sans cette règle,
+un accès direct ou un rechargement sur `/documents` renvoie une erreur HTTP 404.
+
+Conserver les handlers API existants, puis ajouter cette règle avant
+`file_server` :
+
+```caddy
+try_files {path} /index.html
+file_server
+```
+
 ## Recharger Caddy après une modification de config
 
 ```bash

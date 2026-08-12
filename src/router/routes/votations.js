@@ -21,7 +21,8 @@ export default [
   { path: '/stage_repartition', component: () => import('@/components/admin/details/StageRepartitionBA2.vue'), name: 'StageRepartitionBA2', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/management_pfpencours2', component: () => import('@/components/admin/details/ManagementPFPEnCours.vue'), name: 'ManagementPFPEnCours', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/historique_pfp', component: () => import('@/views/home/HistoryView.vue'), name: 'HistoriquePFP', meta: { requiresAuth: true } },
-  { path: '/documents_pfp', component: () => import('@/views/home/DocumentsView.vue'), name: 'DocumentsPFP', meta: { requiresAuth: true } },
+  { path: '/documents', component: () => import('@/views/home/DocumentsView.vue'), name: 'DocumentsPFP', meta: { requiresAuth: true } },
+
 
   // Validation & réception
   { path: '/validation', component: () => import('@/views/admin/validation/ValidationView.vue'), name: 'ValidationView', meta: { requiresAuth: true, need: 'admin' } },
