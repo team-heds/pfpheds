@@ -1,6 +1,6 @@
 <template>
   <div class="modal-overlay">
-    <div class="modal-content">
+    <form class="modal-content" @submit.prevent="handleSave">
       <h4>Ajouter un nouveau fichier ou lien</h4>
 
       <!-- CHOIX : Téléverser un fichier OU fournir un lien URL -->
@@ -14,7 +14,7 @@
       <!-- Nom du document (commun aux deux modes) -->
       <label>
         Nom du fichier / lien :
-        <input v-model="localFile.name" type="text" />
+        <input v-model="localFile.name" type="text" required />
       </label>
 
       <br /><br />
@@ -29,21 +29,57 @@
 
       <!-- Sinon, on propose l'upload d'un fichier -->
       <div v-else>
-        <label>
-          Sélectionner le fichier :
-          <input type="file" @change="handleFileChange" />
-        </label>
+        <p id="file-upload-label" class="file-upload-label">Sélectionner le fichier :</p>
+        <div
+          class="file-dropzone"
+          :class="{ 'is-dragging': isDragging, 'has-file': selectedFile }"
+          role="button"
+          tabindex="0"
+          aria-labelledby="file-upload-label"
+          @click="openFilePicker"
+          @keydown.enter.prevent="openFilePicker"
+          @keydown.space.prevent="openFilePicker"
+          @dragenter.prevent="isDragging = true"
+          @dragover.prevent="isDragging = true"
+          @dragleave.prevent="isDragging = false"
+          @drop.prevent="handleFileDrop"
+        >
+          <input
+            ref="fileInput"
+            type="file"
+            class="file-input"
+            tabindex="-1"
+            @change="handleFileChange"
+          />
+          <i class="pi pi-upload file-upload-icon" aria-hidden="true"></i>
+          <template v-if="selectedFile">
+            <span class="file-upload-title">{{ selectedFile.name }}</span>
+            <span class="file-upload-meta">{{ formatFileSize(selectedFile.size) }} · Cliquez ou déposez un fichier pour le remplacer</span>
+          </template>
+          <template v-else>
+            <span class="file-upload-title">Glissez-déposez un fichier ici</span>
+            <span class="file-upload-meta">ou cliquez pour le sélectionner</span>
+          </template>
+        </div>
+        <button
+          v-if="selectedFile"
+          type="button"
+          class="clear-file-button"
+          @click="clearSelectedFile"
+        >
+          Retirer le fichier
+        </button>
       </div>
 
       <div class="modal-actions">
-        <button @click="handleSave" class="p-button p-component">
+        <button type="submit" class="p-button p-component">
           Sauvegarder
         </button>
-        <button @click="handleClose" class="p-button p-component p-button-secondary">
+        <button type="button" @click="handleClose" class="p-button p-component p-button-secondary">
           Annuler
         </button>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
@@ -66,12 +102,35 @@ const useExternalLink = vueRef(false)
 
 // Variable pour stocker le fichier sélectionné
 const selectedFile = vueRef(null)
+const fileInput = vueRef(null)
+const isDragging = vueRef(false)
+
+const setSelectedFile = (file) => {
+  if (file) selectedFile.value = file
+}
+
+const openFilePicker = () => {
+  fileInput.value?.click()
+}
 
 const handleFileChange = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    selectedFile.value = file
-  }
+  setSelectedFile(event.target.files[0])
+}
+
+const handleFileDrop = (event) => {
+  isDragging.value = false
+  setSelectedFile(event.dataTransfer.files[0])
+}
+
+const clearSelectedFile = () => {
+  selectedFile.value = null
+  if (fileInput.value) fileInput.value.value = ''
+}
+
+const formatFileSize = (size) => {
+  if (size < 1024) return `${size} o`
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} Ko`
+  return `${(size / (1024 * 1024)).toFixed(1)} Mo`
 }
 
 const handleClose = () => {
@@ -79,11 +138,6 @@ const handleClose = () => {
 }
 
 const handleSave = async () => {
-  // Vérifier que le champ "name" n'est pas vide
-  if (!localFile.value.name) {
-    alert("Veuillez saisir un nom.")
-    return
-  }
 
   // SI l'utilisateur veut utiliser un lien externe
   if (useExternalLink.value) {
@@ -176,6 +230,76 @@ const handleSave = async () => {
   border-radius: 4px;
   width: 300px;
   color: #fff;
+}
+
+.file-upload-label {
+  margin: 0 0 0.5rem;
+}
+
+.file-dropzone {
+  display: flex;
+  min-height: 8rem;
+  padding: 1rem;
+  border: 2px dashed rgba(255, 255, 255, 0.45);
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.file-dropzone:hover,
+.file-dropzone.is-dragging {
+  border-color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.file-dropzone.has-file {
+  border-style: solid;
+  border-color: #70d6ff;
+}
+
+.file-dropzone:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-upload-icon {
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.file-upload-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.file-upload-meta {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.clear-file-button {
+  display: block;
+  margin: 0.5rem 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.clear-file-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .modal-actions {
