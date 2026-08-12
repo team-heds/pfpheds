@@ -450,13 +450,13 @@
             placeholder="Résumé rapide (optionnel)..."
           />
           <div class="flex justify-content-end mt-2">
-            <Button label="Enregistrer l'état" icon="pi pi-check" size="small" @click="saveCellData" />
+           <!-- <Button label="Enregistrer l'état" icon="pi pi-check" size="small" @click="saveCellData" />-->
           </div>
         </div>
 
         <!-- Ajouter un événement à l'historique -->
         <div class="surface-card p-3 border-round border-1 surface-border">
-          <label class="font-semibold block mb-2">Ajouter un événement</label>
+          <label class="font-semibold block mb-2">Description du changement</label>
           <div class="flex flex-column gap-2">
             <Dropdown
               v-model="newEvent.type_evenement"
@@ -527,7 +527,19 @@
         </div>
 
         <div class="flex justify-content-end mt-1">
-          <Button label="Fermer" severity="secondary" @click="closeCellDialog" />
+          <Button label="Fermer" class="mr-2" severity="secondary" @click="closeCellDialog" />
+          <span
+            v-tooltip="!historyAddedForCurrentDialog ? historyValidationTooltip : null"
+            class="inline-flex"
+          >
+            <Button
+              label="Valider"
+              icon="pi pi-check"
+              size="small"
+              :disabled="!historyAddedForCurrentDialog"
+              @click="saveCellData"
+            />
+          </span>
         </div>
       </div>
     </Dialog>
@@ -563,7 +575,7 @@
 
         <!-- Ajouter un événement à l'historique -->
         <div class="surface-card p-3 border-round border-1 surface-border">
-          <label class="font-semibold block mb-2">Ajouter un événement</label>
+          <label class="font-semibold block mb-2">Description du changement</label>
           <div class="flex flex-column gap-2">
             <Dropdown
               v-model="newEvent.type_evenement"
@@ -636,7 +648,18 @@
 
         <div class="flex justify-content-end mt-1">
           <Button label="Annuler" class="mr-2" severity="secondary" @click="closeLesedFeaturesDialog" />
-          <Button label="Valider" icon="pi pi-check" size="small" @click="saveLesedFeaturesData" />
+          <span
+            v-tooltip="!historyAddedForCurrentDialog ? historyValidationTooltip : null"
+            class="inline-flex"
+          >
+            <Button
+              label="Valider"
+              icon="pi pi-check"
+              size="small"
+              :disabled="!historyAddedForCurrentDialog"
+              @click="saveLesedFeaturesData"
+            />
+          </span>
         </div>
       </div>
     </Dialog>
@@ -662,7 +685,7 @@
 
         <!-- Ajout évt. historique - Echec stage -->
         <div class="surface-card p-3 border-round border-1 surface-border">
-          <label class="font-semibold block mb-2">Ajouter un événement</label>
+          <label class="font-semibold block mb-2">Description du changement</label>
           <div class="flex flex-column gap-2">
             <Dropdown
               v-model="newEvent.type_evenement"
@@ -734,7 +757,18 @@
 
         <div class="flex justify-content-end mt-1">
           <Button label="Annuler" class="mr-2" severity="secondary" @click="closeEchecFeaturesDialog" />
-          <Button label="Valider" icon="pi pi-check" size="small" @click="saveEchecFeaturesData" />
+          <span
+            v-tooltip="!historyAddedForCurrentDialog ? historyValidationTooltip : null"
+            class="inline-flex"
+          >
+            <Button
+              label="Valider"
+              icon="pi pi-check"
+              size="small"
+              :disabled="!historyAddedForCurrentDialog"
+              @click="saveEchecFeaturesData"
+            />
+          </span>
         </div>
       </div>
     </Dialog>
@@ -763,7 +797,7 @@
 
         <!-- Ajout évt. historique - SAE -->
         <div class="surface-card p-3 border-round border-1 surface-border">
-          <label class="font-semibold block mb-2">Ajouter un événement</label>
+          <label class="font-semibold block mb-2">Description du changement</label>
           <div class="flex flex-column gap-2">
             <Dropdown
               v-model="newEvent.type_evenement"
@@ -835,12 +869,18 @@
 
         <div class="flex justify-content-end mt-1">
           <Button class="mr-2" label="Fermer" severity="secondary" @click="closeSAEFeaturesDialog" />
-          <Button
-            label="Valider"
-            icon="pi pi-check"
-            size="small"
-            @click="saveSAEFeaturesData"
-          />
+          <span
+            v-tooltip="!historyAddedForCurrentDialog ? historyValidationTooltip : null"
+            class="inline-flex"
+          >
+            <Button
+              label="Valider"
+              icon="pi pi-check"
+              size="small"
+              :disabled="!historyAddedForCurrentDialog"
+              @click="saveSAEFeaturesData"
+            />
+          </span>
         </div>
       </div>
     </Dialog>
@@ -928,6 +968,8 @@ const editingInfo = ref(null)
 const editingStudent = ref(null)
 const editingField = ref(null)
 const editingEchecRow = ref(null)
+const historyAddedForCurrentDialog = ref(false)
+const historyValidationTooltip = "Vous devez ajouter la description du changement à l'historique avant de pouvoir enregistrer l'état."
 const dialogTitle = ref('')
 const infoDialogTitle = ref('')
 
@@ -1079,6 +1121,7 @@ const addHistoriqueEvent = async () => {
     if (error) throw error
 
     historiqueList.value.unshift(data)
+    historyAddedForCurrentDialog.value = true
     resetNewEvent()
     toast.add({ severity: 'success', summary: 'Ajouté', detail: "Événement ajouté à l'historique", life: 2000 })
   } catch (e) {
@@ -1517,12 +1560,14 @@ const openCellDialog = (student, field) => {
 
   editingCell.value = { ...student[field] }
   dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  historyAddedForCurrentDialog.value = false
   resetNewEvent()
   showCellDialog.value = true
 }
 
 const closeCellDialog = () => {
   showCellDialog.value = false
+  historyAddedForCurrentDialog.value = false
   editingCell.value = null
   editingStudent.value = null
   editingField.value = null
@@ -1540,12 +1585,14 @@ const openLesedFeaturesDialog = (student, field) => {
 
   editingCell.value = { ...student[field] }
   dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  historyAddedForCurrentDialog.value = false
   resetNewEvent()
   showLesedFeaturesDialog.value = true
 }
 
 const closeLesedFeaturesDialog = () => {
   showLesedFeaturesDialog.value = false
+  historyAddedForCurrentDialog.value = false
   editingCell.value = null
   editingStudent.value = null
   editingField.value = null
@@ -1568,12 +1615,14 @@ const openEchecFeaturesDialog = (student, field, echecRow) => {
     commentaire: echecRow?.commentaire_arret || ''
   }
   dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  historyAddedForCurrentDialog.value = false
   resetNewEvent()
   showEchecFeaturesDialog.value = true
 }
 
 const closeEchecFeaturesDialog = () => {
   showEchecFeaturesDialog.value = false
+  historyAddedForCurrentDialog.value = false
   editingCell.value = null
   editingStudent.value = null
   editingField.value = null
@@ -1672,12 +1721,14 @@ const openSAEFeaturesDialog = (student, field) => {
 
   editingCell.value = { ...student[field] }
   dialogTitle.value = `${student.etudiant} - ${fieldLabels[field]}`
+  historyAddedForCurrentDialog.value = false
   resetNewEvent()
   showSAEFeaturesDialog.value = true
 }
 
 const closeSAEFeaturesDialog = () => {
   showSAEFeaturesDialog.value = false
+  historyAddedForCurrentDialog.value = false
   editingCell.value = null
   editingStudent.value = null
   editingField.value = null
