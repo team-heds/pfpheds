@@ -5,17 +5,19 @@
 
       <!-- Nom du fichier -->
       <label>
-        Nom du fichier :
-        <input v-model="localFile.name" type="text" required />
+        Nom du fichier : <br />
+        <input className="w-full" v-model="localFile.name" type="text" required />
       </label>
-      <br />
+
+      <br /><br />
 
       <!-- URL actuelle (utilisée s’il n’y a pas d’upload) -->
       <label>
-        URL :
-        <input v-model="localFile.url" type="text" />
+        URL : <br />
+        <input className="w-full" v-model="localFile.url" type="text" />
       </label>
-      <br />
+
+      <br /><br />
 
       <!-- Possibilité de remplacer le fichier actuel par un nouveau upload -->
       <p id="file-upload-label" class="file-upload-label">Ou téléverser un nouveau fichier pour remplacer l'actuel :</p>
@@ -60,7 +62,7 @@
       </button>
 
       <div class="modal-actions">
-        <button type="submit" class="p-button p-component">
+        <button type="submit" class="p-button p-component mr-2">
           Sauvegarder
         </button>
         <button type="button" @click="handleClose" class="p-button p-component p-button-secondary">
@@ -146,17 +148,17 @@ const handleSave = async () => {
   if (selectedFile.value) {
     try {
       console.log('📤 [EditFileDocPFP] Upload vers Firebase Storage...')
-      
+
       // Créer un nom de fichier unique avec timestamp
       const timestamp = Date.now()
       const fileName = `${timestamp}_${selectedFile.value.name}`
       const filePath = `documentPFP/${fileName}`
-      
+
       console.log('📁 [EditFileDocPFP] Upload vers:', filePath)
-      
+
       // Créer la référence Firebase Storage
       const fileRef = storageRef(storage, filePath)
-      
+
       // Upload le fichier vers Firebase Storage
       const snapshot = await uploadBytes(fileRef, selectedFile.value, {
         contentType: selectedFile.value.type,
@@ -165,17 +167,17 @@ const handleSave = async () => {
           uploadedAt: new Date().toISOString()
         }
       })
-      
+
       console.log('✅ [EditFileDocPFP] Fichier uploadé:', snapshot.metadata.fullPath)
-      
+
       // Obtenir l'URL de téléchargement
       const downloadURL = await getDownloadURL(fileRef)
-      
+
       console.log('🔗 [EditFileDocPFP] URL du fichier:', downloadURL)
 
       // On met à jour l'URL dans localFile
       localFile.url = downloadURL
-      
+
     } catch (error) {
       console.error("❌ [EditFileDocPFP] Erreur lors de l'upload du fichier :", error)
       alert(`Erreur d'upload: ${error.message || error}`)
@@ -201,7 +203,7 @@ const handleClose = () => {
   width: 100%;
   height: 100%;
   /* Couche translucide en fond */
-  background-color: rgba(0, 0, 0, 0.5); 
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;

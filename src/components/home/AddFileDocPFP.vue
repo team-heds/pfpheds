@@ -3,27 +3,13 @@
     <form class="modal-content" @submit.prevent="handleSave">
       <h4>Ajouter un nouveau fichier ou lien</h4>
 
-      <!-- CHOIX : Téléverser un fichier OU fournir un lien URL -->
-      <label>
-        <input type="checkbox" v-model="useExternalLink" />
-        Utiliser seulement une URL externe
-      </label>
-
-      <br /><br />
-
-      <!-- Nom du document (commun aux deux modes) -->
-      <label>
-        Nom du fichier / lien :
-        <input v-model="localFile.name" type="text" required />
-      </label>
-
-      <br /><br />
+      <br />
 
       <!-- Si l'utilisateur coche "Utiliser une URL", on affiche un champ "URL" -->
       <div v-if="useExternalLink">
         <label>
           URL du lien :
-          <input v-model="localFile.url" type="text" placeholder="https://..." />
+          <input className="w-full" v-model="localFile.url" type="text" placeholder="https://..." />
         </label>
       </div>
 
@@ -71,8 +57,27 @@
         </button>
       </div>
 
+      <br />
+
+
+      <!-- Nom du document (commun aux deux modes) -->
+      <label>
+        Nom du fichier / lien :
+        <input v-model="localFile.name" type="text" required />
+      </label>
+
+      <br /><br />
+
+      <!-- CHOIX : Téléverser un fichier OU fournir un lien URL -->
+      <label>
+        <input type="checkbox" v-model="useExternalLink" />
+        Utiliser seulement une URL externe
+      </label>
+
+
+
       <div class="modal-actions">
-        <button type="submit" class="p-button p-component">
+        <button type="submit" class="p-button p-component mr-2">
           Sauvegarder
         </button>
         <button type="button" @click="handleClose" class="p-button p-component p-button-secondary">
@@ -167,17 +172,17 @@ const handleSave = async () => {
 
   try {
     console.log('📤 [AddFileDocPFP] Upload vers Firebase Storage...')
-    
+
     // Créer un nom de fichier unique avec timestamp
     const timestamp = Date.now()
     const fileName = `${timestamp}_${selectedFile.value.name}`
     const filePath = `documentPFP/${fileName}`
-    
+
     console.log('📁 [AddFileDocPFP] Upload vers:', filePath)
-    
+
     // Créer la référence Firebase Storage
     const fileRef = storageRef(storage, filePath)
-    
+
     // Upload le fichier vers Firebase Storage
     const snapshot = await uploadBytes(fileRef, selectedFile.value, {
       contentType: selectedFile.value.type,
@@ -186,12 +191,12 @@ const handleSave = async () => {
         uploadedAt: new Date().toISOString()
       }
     })
-    
+
     console.log('✅ [AddFileDocPFP] Fichier uploadé:', snapshot.metadata.fullPath)
-    
+
     // Obtenir l'URL de téléchargement
     const downloadURL = await getDownloadURL(fileRef)
-    
+
     console.log('🔗 [AddFileDocPFP] URL du fichier:', downloadURL)
 
     // Construire l'objet "newFile" avec la downloadURL
@@ -203,7 +208,7 @@ const handleSave = async () => {
 
     // Émettre vers le parent
     emits('save', newFile)
-    
+
   } catch (error) {
     console.error("❌ [AddFileDocPFP] Erreur lors de l'upload du fichier :", error)
     alert(`Erreur d'upload: ${error.message || error}`)

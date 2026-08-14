@@ -173,6 +173,30 @@ export const useDocumentStore = defineStore('documents', {
       }
     },
 
+    async deleteFiles(fileIds) {
+      if (!fileIds.length) return true
+
+      this.loading = true
+      this.error = null
+
+      try {
+        const { error } = await supabase
+          .from('file_physio_files')
+          .delete()
+          .in('id', fileIds)
+
+        if (error) throw error
+        await this.loadFoldersTree()
+        return true
+      } catch (e) {
+        this.error = e.message
+        console.error('[DocumentStore] Erreur suppression groupée:', e)
+        throw e
+      } finally {
+        this.loading = false
+      }
+    },
+
     async addFile(newFile, targetFolderId, targetSubFolderId = null) {
       this.loading = true
       this.error = null

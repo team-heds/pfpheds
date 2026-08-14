@@ -24,9 +24,17 @@
         </div>
       </div>
 
+      <!-- Documents - Selected documents - "X fichiers sélectionnés" -->
       <div v-if="selectedDocumentIds.size" class="documents-selection-bar" role="status">
         <strong>{{ selectedDocumentIds.size }} fichier{{ selectedDocumentIds.size > 1 ? 's' : '' }} sélectionné{{ selectedDocumentIds.size > 1 ? 's' : '' }}</strong>
-        <div><button type="button" @click="openSelectedDocuments">Ouvrir la sélection</button><button type="button" @click="clearDocumentSelection">Désélectionner</button></div>
+        <div>
+          <button type="button" @click="openSelectedDocuments">Ouvrir la sélection</button>
+          <button type="button" @click="clearDocumentSelection">Désélectionner</button>
+          <button v-if="isAdmin" type="button" class="delete-selected-button" @click="openBulkDeleteModal">
+            <i class="pi pi-trash" aria-hidden="true"></i>
+            Supprimer
+          </button>
+        </div>
       </div>
 
       <!-- Documents Grid -->
@@ -35,7 +43,7 @@
           <div class="folder-content-card">
             <!-- Folder Header (cliquable) -->
             <button type="button"
-              class="folder-header-row clickable" 
+              class="folder-header-row clickable"
               @click="toggleFolder(folder.id)"
               :class="{ 'folder-open': isFolderOpen(folder.id) }"
               :aria-expanded="isFolderOpen(folder.id)"
@@ -46,8 +54,8 @@
                 </div>
                 <h3 class="folder-title-text">{{ folder.name }}</h3>
               </div>
-              <i 
-                class="pi toggle-icon" 
+              <i
+                class="pi toggle-icon"
                 :class="isFolderOpen(folder.id) ? 'pi-chevron-up' : 'pi-chevron-down'"
               ></i>
             </button>
@@ -66,7 +74,7 @@
                       {{ sub.files.length }} fichier{{ sub.files.length > 1 ? 's' : '' }}
                     </span>
                   </div>
-                  
+
                   <div v-if="sub.files && sub.files.length > 0" class="files-list-container">
                     <div v-for="file in sub.files" :key="file.id" class="file-item-row">
                       <input type="checkbox" :aria-label="`Sélectionner ${file.name}`" :checked="selectedDocumentIds.has(file.id)" @change="toggleDocumentSelection(file.id)" />
@@ -97,12 +105,12 @@
                       </div>
                     </div>
                   </div>
-                  
+
                   <div v-else class="empty-state-message">
                     <i class="pi pi-inbox"></i>
                     <span>Aucun fichier disponible</span>
                   </div>
-                  
+
                   <button
                     v-if="isAdmin"
                     @click="openAddModalForSubFolder(folder.id, sub.id)"
@@ -147,12 +155,12 @@
                   </div>
                 </div>
               </div>
-              
+
               <div v-else class="empty-state-message">
                 <i class="pi pi-inbox"></i>
                 <span>Aucun fichier disponible</span>
               </div>
-              
+
               <button
                 v-if="isAdmin"
                 @click="openAddModalForFolder(folder.id)"
@@ -165,6 +173,48 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale de confirmation de suppression individuelle -->
+  <div v-if="showSingleDeleteModal" class="confirm-modal-overlay" @click.self="closeSingleDeleteModal">
+    <div
+      class="confirm-modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="single-delete-title"
+      @keydown.esc="closeSingleDeleteModal"
+    >
+      <h2 id="single-delete-title">Confirmer la suppression</h2>
+      <p>Voulez-vous vraiment supprimer ce fichier ?</p>
+      <div class="confirm-modal-actions">
+        <button type="button" :disabled="isDeletingSingleDocument" @click="closeSingleDeleteModal">Annuler</button>
+        <button type="button" class="delete-selected-button" :disabled="isDeletingSingleDocument" @click="confirmSingleDocumentDeletion">
+          <i class="pi pi-trash" aria-hidden="true"></i>
+          {{ isDeletingSingleDocument ? 'Suppression…' : 'Supprimer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale de confirmation de suppression groupée -->
+  <div v-if="showBulkDeleteModal" class="confirm-modal-overlay" @click.self="closeBulkDeleteModal">
+    <div
+      class="confirm-modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bulk-delete-title"
+      @keydown.esc="closeBulkDeleteModal"
+    >
+      <h2 id="bulk-delete-title">Confirmer la suppression</h2>
+      <p>{{ bulkDeleteConfirmationMessage }}</p>
+      <div class="confirm-modal-actions">
+        <button type="button" :disabled="isDeletingSelectedDocuments" @click="closeBulkDeleteModal">Annuler</button>
+        <button type="button" class="delete-selected-button" :disabled="isDeletingSelectedDocuments" @click="deleteSelectedDocuments">
+          <i class="pi pi-trash" aria-hidden="true"></i>
+          {{ isDeletingSelectedDocuments ? 'Suppression…' : 'Supprimer' }}
+        </button>
       </div>
     </div>
   </div>
@@ -231,6 +281,11 @@ const targetSubFolderId = ref(null)
 // Computed pour utiliser les folders du store
 const folders = computed(() => documentStore.folders)
 const selectedDocumentIds = ref(new Set())
+const showSingleDeleteModal = ref(false)
+const isDeletingSingleDocument = ref(false)
+const singleDocumentIdToDelete = ref(null)
+const showBulkDeleteModal = ref(false)
+const isDeletingSelectedDocuments = ref(false)
 const allDocumentFiles = computed(() => folders.value.flatMap(folder => [
   ...(folder.files || []),
   ...(folder.subFolders || []).flatMap(subFolder => subFolder.files || []),
@@ -244,14 +299,45 @@ const clearDocumentSelection = () => { selectedDocumentIds.value = new Set() }
 const openSelectedDocuments = () => {
   allDocumentFiles.value.filter(file => selectedDocumentIds.value.has(file.id)).forEach(file => window.open(file.url, '_blank', 'noopener,noreferrer'))
 }
+const bulkDeleteConfirmationMessage = computed(() => {
+  const count = selectedDocumentIds.value.size
+  return count === 1
+    ? 'Voulez-vous vraiment supprimer ce fichier ?'
+    : `Voulez-vous vraiment supprimer ces ${count} fichiers ?`
+})
+const openBulkDeleteModal = () => {
+  if (selectedDocumentIds.value.size) showBulkDeleteModal.value = true
+}
+const closeBulkDeleteModal = () => {
+  if (!isDeletingSelectedDocuments.value) showBulkDeleteModal.value = false
+}
+const deleteSelectedDocuments = async () => {
+  const fileIds = [...selectedDocumentIds.value]
+  if (!fileIds.length) {
+    closeBulkDeleteModal()
+    return
+  }
+
+  isDeletingSelectedDocuments.value = true
+  try {
+    await documentStore.deleteFiles(fileIds)
+    clearDocumentSelection()
+    showBulkDeleteModal.value = false
+    console.log(`✅ [DocumentsView] ${fileIds.length} fichier(s) supprimé(s)`)
+  } catch (error) {
+    console.error('❌ [DocumentsView] Erreur suppression groupée:', error)
+  } finally {
+    isDeletingSelectedDocuments.value = false
+  }
+}
 
 // Vérification des droits admin depuis Supabase
 const checkAdminRights = async () => {
   try {
     console.log('🔍 [DocumentsView] Vérification droits admin...')
-    
+
     const user = authStore.user
-    
+
     if (!user) {
       console.log('ℹ️ [DocumentsView] Aucun utilisateur connecté (mode public)')
       debugInfo.value = 'Mode Lecture'
@@ -261,35 +347,35 @@ const checkAdminRights = async () => {
 
     console.log('👤 [DocumentsView] Utilisateur:', user.email)
     debugInfo.value = `User: ${user.email}`
-    
+
     // Vérifier si l'utilisateur est admin dans user_profiles
     const { data, error } = await supabase
       .from('user_profiles')
       .select('role, email')
       .eq('user_id', user.id)
       .maybeSingle()
-    
+
     if (error) {
       console.warn('⚠️ [DocumentsView] Erreur profil (mode lecture activé):', error.message)
       debugInfo.value = 'Mode Lecture'
       isAdmin.value = false
       return
     }
-    
+
     if (!data) {
       console.log('ℹ️ [DocumentsView] Pas de profil (mode lecture)')
       debugInfo.value = 'Mode Lecture'
       isAdmin.value = false
       return
     }
-    
+
     // Vérifier si le rôle est admin ou editor
     const hasAdminRights = data.role === 'admin' || data.role === 'editor'
     isAdmin.value = hasAdminRights
     debugInfo.value = hasAdminRights ? `Admin: ${data.role}` : 'Mode Lecture'
-    
+
     console.log('✅ [DocumentsView] Mode:', hasAdminRights ? 'Admin' : 'Lecture')
-    
+
   } catch (err) {
     console.warn('⚠️ [DocumentsView] Erreur vérification (mode lecture):', err.message)
     debugInfo.value = 'Mode Lecture'
@@ -316,10 +402,10 @@ watch(
 onMounted(async () => {
   try {
     console.log('🚀 [DocumentsView] Chargement des documents...')
-    
+
     // Charger les documents en premier (accessible à tous)
     await documentStore.loadFoldersTree()
-    
+
     // Ouvrir tous les dossiers par défaut pour que les documents soient visibles
     if (documentStore.folders && documentStore.folders.length > 0) {
       documentStore.folders.forEach(folder => {
@@ -327,10 +413,10 @@ onMounted(async () => {
       })
       console.log('✅ [DocumentsView] Dossiers ouverts:', openFolders.value.size)
     }
-    
+
     // Vérifier les droits admin en parallèle (non bloquant)
     checkAdminRights()
-    
+
     console.log('✅ [DocumentsView] Documents chargés')
   } catch (error) {
     console.error('❌ [DocumentsView] Erreur chargement:', error)
@@ -362,14 +448,35 @@ const saveFileEdit = async (editedFile) => {
 }
 
 // --- Gestion de la suppression ---
-const deleteFile = async (fileId) => {
-  if (!confirm("Voulez-vous vraiment supprimer ce fichier ?")) return
-  
+const deleteFile = (fileId) => {
+  singleDocumentIdToDelete.value = fileId
+  showSingleDeleteModal.value = true
+}
+
+const closeSingleDeleteModal = () => {
+  if (!isDeletingSingleDocument.value) {
+    showSingleDeleteModal.value = false
+    singleDocumentIdToDelete.value = null
+  }
+}
+
+const confirmSingleDocumentDeletion = async () => {
+  if (!singleDocumentIdToDelete.value) return
+
+  isDeletingSingleDocument.value = true
   try {
+    const fileId = singleDocumentIdToDelete.value
     await documentStore.deleteFile(fileId)
+    selectedDocumentIds.value = new Set(
+      [...selectedDocumentIds.value].filter(selectedId => selectedId !== fileId)
+    )
     console.log("✅ [DocumentsView] Fichier supprimé")
+    showSingleDeleteModal.value = false
+    singleDocumentIdToDelete.value = null
   } catch (error) {
     console.error("❌ [DocumentsView] Erreur suppression fichier:", error)
+  } finally {
+    isDeletingSingleDocument.value = false
   }
 }
 
@@ -413,7 +520,103 @@ const saveNewFile = async (newFile) => {
   padding: 2rem 1.5rem 8rem;
 }
 .documents-breadcrumb{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;color:var(--text-color-secondary)}.documents-breadcrumb a{color:var(--primary-color);text-decoration:none}.folder-header-row{width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left}.folder-header-row:focus-visible{outline:3px solid var(--primary-color);outline-offset:-3px}
-.documents-selection-bar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem;padding:.75rem 1rem;border:1px solid var(--surface-border);border-radius:.75rem;background:var(--surface-card)}.documents-selection-bar div{display:flex;gap:.5rem}.documents-selection-bar button{min-height:2.5rem;padding:.5rem .75rem;border:1px solid var(--surface-border);border-radius:.5rem;background:var(--surface-ground);color:var(--text-color);font:inherit;cursor:pointer}@media(max-width:640px){.documents-selection-bar{align-items:stretch;flex-direction:column}.documents-selection-bar div{flex-direction:column}}
+.documents-selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.75rem;
+  background: var(--surface-card);
+}
+
+.documents-selection-bar div,
+.confirm-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.documents-selection-bar button,
+.confirm-modal-actions button {
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.5rem;
+  background: var(--surface-ground);
+  color: var(--text-color);
+  font: inherit;
+  cursor: pointer;
+}
+
+.documents-selection-bar .delete-selected-button,
+.confirm-modal-actions .delete-selected-button {
+  border-color: var(--red-500, #ef4444);
+  background: var(--red-500, #ef4444);
+  color: #fff;
+}
+
+.documents-selection-bar button:focus-visible,
+.confirm-modal-actions button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.confirm-modal-overlay {
+  position: fixed;
+  z-index: 1100;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.confirm-modal-content {
+  width: 100%;
+  max-width: 28rem;
+  padding: 1.5rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.75rem;
+  background: var(--surface-card);
+  color: var(--text-color);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.25);
+}
+
+.confirm-modal-content h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+}
+
+.confirm-modal-content p {
+  margin: 0;
+  color: var(--text-color-secondary);
+}
+
+.confirm-modal-actions {
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.confirm-modal-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 640px) {
+  .documents-selection-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .documents-selection-bar div {
+    flex-direction: column;
+  }
+}
 
 /* Header Section */
 .page-header-section {
