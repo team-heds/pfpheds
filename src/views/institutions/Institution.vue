@@ -5,11 +5,11 @@
     </div>
     <Navbar />
     <!-- Layout principal avec sidebars et contenu central -->
-    <div class="institutions-layout">
+    <SocialThreeColumnLayout>
       <!-- Sidebar Gauche -->
-      <div class="sidebar-left">
+      <template #left>
         <LeftSidebar />
-      </div>
+      </template>
 
       <!-- Contenu Principal scrollable -->
       <div class="main-content institution-center-scrollable">
@@ -101,10 +101,10 @@
       </div>
 
       <!-- Sidebar Droite -->
-      <div class="sidebar-right">
+      <template #right>
         <FilterSidebar :key="filterResetKey" :cantons="cantonsList" @filters-changed="handleSidebarFilters" />
-      </div>
-    </div>
+      </template>
+    </SocialThreeColumnLayout>
   </div>
 </template>
 
@@ -121,6 +121,7 @@ import FilterSidebar from '@/components/common/filters/FilterSidebar.vue'
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import filterData from '@/components/common/filters/filter.json'
 import EmptyState from '@/components/common/states/EmptyState.vue'
+import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 
 export default {
   name: 'InstitutionPage',
@@ -133,7 +134,8 @@ export default {
     Tag,
     LeftSidebar,
     HeaderIcons,
-    EmptyState
+    EmptyState,
+    SocialThreeColumnLayout
   },
   data() {
     return {
@@ -302,47 +304,10 @@ export default {
 </script>
 
 <style scoped>
-/* Layout principal pour les institutions avec sidebars */
-.institutions-layout {
-  display: grid;
-  grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu central, sidebar droite */
-  gap: 1.5rem;
-  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
-  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
-  overflow: hidden;
-}
-
-/* Sidebar Gauche et Droite */
-.sidebar-left,
-.sidebar-right {
-  height: 100%;
-  overflow-y: hidden; /* Sidebars statiques */
-}
-
 /* Contenu Principal */
 .main-content {
   height: 100%;
   overflow-y: auto; /* Scroll central uniquement */
-}
-
-/* Responsive pour le layout global */
-@media (max-width: 1024px) {
-  .institutions-layout {
-    grid-template-columns: 1fr 2fr;
-  }
-  .sidebar-right {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .institutions-layout {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  .sidebar-left {
-    display: none;
-  }
 }
 
 /* Section de contenu */

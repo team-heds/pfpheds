@@ -1,13 +1,13 @@
 <!-- src/components/FilterMap.vue -->
 <template>
-  <div class="map-layout">
+  <SocialThreeColumnLayout>
     <div v-if="isMobile">
       <HeaderIcons />
     </div>
     <!-- Sidebar Gauche -->
-    <div class="sidebar-left">
+    <template #left>
       <LeftSidebar />
-    </div>
+    </template>
 
     <!-- Contenu Principal -->
     <div class="main-content">
@@ -100,13 +100,13 @@
     </div>
 
     <!-- Sidebar Droite : intégration du composant de filtre composite -->
-    <div class="sidebar-right">
+    <template #right>
       <FilterSidebare
         :cantons="availableCantons"
         @filters-changed="handleFiltersChange"
       />
-    </div>
-  </div>
+    </template>
+  </SocialThreeColumnLayout>
 </template>
 
 <script setup>
@@ -122,6 +122,7 @@ import Button from 'primevue/button';
 import FilterSidebare from './FilterSidebar.vue';
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import { usePlacesStore } from '@/stores/placesStore';
+import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 
 // Import du fichier filter.json (contenant les IDPlace et leurs §s)
 import filterData from './filter.json';
@@ -313,47 +314,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Layout global pour la carte avec sidebars */
-.map-layout {
-  display: grid;
-  grid-template-columns: 1fr 3fr 1fr; /* Sidebar gauche, contenu central, sidebar droite */
-  gap: 1.5rem;
-  min-height: 100vh;
-}
-
-/* Sidebar Gauche */
-.sidebar-left {
-  overflow-y: auto;
-}
-
 /* Contenu principal */
 .main-content {
   overflow-y: auto;
-}
-
-/* Sidebar Droite */
-.sidebar-right {
-  overflow-y: auto;
-}
-
-/* Responsive : ajustements pour tablettes et mobiles */
-@media (max-width: 1024px) {
-  .map-layout {
-    grid-template-columns: 1fr 2fr;
-  }
-  .sidebar-right {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .map-layout {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  .sidebar-left {
-    display: none;
-  }
 }
 
 /* Styles pour la carte */
