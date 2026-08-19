@@ -8,6 +8,7 @@ Cette page sert de mémo court pour lancer le projet au quotidien. Pour l'instal
 
 | Besoin | Commande |
 | --- | --- |
+| Frontend + backend | `npm run dev:full` |
 | Frontend Vue/Vite | `npm run dev` |
 | Backend Express | `npm --prefix backend run dev` |
 | Documentation | `npm run docs:dev` |
@@ -17,6 +18,23 @@ Cette page sert de mémo court pour lancer le projet au quotidien. Pour l'instal
 | Tests unitaires | `npm run test:unit` |
 
 ## Lancement local recommandé
+
+Après avoir installé les dépendances des deux projets puis créé et configuré `backend/.env`, lancer les deux services dans un seul terminal :
+
+```powershell
+npm ci
+npm --prefix backend ci
+Copy-Item backend/.env.example backend/.env
+```
+
+```powershell
+npm run dev:full
+```
+
+La commande s'arrête immédiatement avec une instruction claire si `backend/.env` ou les dépendances du backend sont absents.
+Le frontend utilise obligatoirement `http://localhost:5180` et le backend `http://localhost:3000` ; si un port est déjà occupé, arrêter l'ancien processus avant de relancer.
+
+Pour les lancer séparément :
 
 Terminal 1 :
 

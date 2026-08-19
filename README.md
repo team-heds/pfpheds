@@ -44,23 +44,28 @@ Prérequis :
 Installation :
 
 ```bash
-npm install
+npm ci
+npm --prefix backend ci
 ```
 
 Lancement local :
 
 ```bash
-npm run dev
+npm run dev:full
 ```
 
-Application frontend :
+Cette commande démarre ensemble :
 
-- Vite sert l’application sur le port configuré par le projet.
+- le frontend Vite sur `http://localhost:5180` ;
+- le backend Express sur le port `3000`.
+
+Elle nécessite les dépendances du backend ainsi qu'un fichier `backend/.env` configuré à partir de `backend/.env.example`.
 
 ## Scripts utiles
 
 ```bash
 npm run dev
+npm run dev:full
 npm run build
 npm run preview
 npm run lint
