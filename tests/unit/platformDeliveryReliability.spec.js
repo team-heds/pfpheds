@@ -27,6 +27,7 @@ describe('platform delivery reliability contract', () => {
     expect(worker).toContain('caches.delete(cacheName)')
     expect(worker).not.toContain("cacheName: 'static-resources'")
     expect(main).not.toContain("navigator.serviceWorker.register('/sw.js')")
+    expect(main).toContain('installServiceWorkerUpdateReload()')
     expect(main).not.toContain("from 'firebase/auth'")
     expect(main).not.toContain("from '@/firebase'")
   })

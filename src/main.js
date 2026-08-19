@@ -14,10 +14,13 @@ import router from './router';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import { bootstrapApplication } from '@/service/appBootstrap';
+import { installServiceWorkerUpdateReload } from '@/service/serviceWorkerUpdates';
 
 import '@/assets/styles/styles.scss';
 import 'primeflex/primeflex.css';
 import '@/assets/styles/platform-foundations.scss';
+
+installServiceWorkerUpdateReload();
 
 const app = createApp(App);
 const pinia = createPinia();
