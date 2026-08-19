@@ -68,6 +68,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5180,
+    strictPort: true,
     // Git worktrees can share node_modules with the main checkout. Vite resolves
     // font URLs to that real path, so explicitly allow the resolved dependency
     // directory while preserving the default workspace allow-list.
