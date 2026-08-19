@@ -288,16 +288,17 @@ onMounted(async () => {
 }
 
 .desktop-nav {
-  width: 100%;
-  padding-inline: clamp(1rem, 5vw, 10rem);
+  display: flex;
+  flex-direction: column;
+  padding-inline: clamp(2rem, 8vw, 10rem);
 }
 
 .navbar-container {
   --navbar-control-size: 44px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: clamp(1rem, 2.5vw, 3rem);
+  justify-content: space-between;
   width: 100%;
   min-width: 0;
   padding-block: 1rem;
@@ -330,10 +331,9 @@ onMounted(async () => {
 }
 
 .navbar-primary-scroll {
-  min-width: 0;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-width: none;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .navbar-primary-scroll::-webkit-scrollbar {
@@ -344,18 +344,17 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.5rem, 1.2vw, 1.5rem);
+  gap: 2rem;
   width: max-content;
-  min-width: 100%;
   margin: 0;
-  padding: 0.35rem;
+  padding: 1rem;
   list-style: none;
 }
 
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: clamp(0.5rem, 1vw, 1rem);
+  gap: 2rem;
 }
 
 /* La navigation mobile dédiée prend le relais. */
@@ -370,17 +369,27 @@ onMounted(async () => {
   }
 
   .navbar-container {
+    display: grid;
     grid-template-columns: 1fr auto;
     gap: 0.5rem 1rem;
   }
 
   .navbar-primary-scroll {
+    position: static;
     grid-column: 1 / -1;
     grid-row: 2;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    transform: none;
   }
 
   .center-menu {
     justify-content: center;
+    gap: clamp(0.5rem, 4vw, 2rem);
+    min-width: 100%;
+    padding: 0.35rem;
   }
 
   .navbar-actions {

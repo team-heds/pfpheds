@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
+import { realpathSync } from 'node:fs'
 
-import { defineConfig } from 'vite'
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import { VitePWA } from 'vite-plugin-pwa';
@@ -33,6 +34,15 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5180,
+    // Git worktrees can share node_modules with the main checkout. Vite resolves
+    // font URLs to that real path, so explicitly allow the resolved dependency
+    // directory while preserving the default workspace allow-list.
+    fs: {
+      allow: [
+        searchForWorkspaceRoot(process.cwd()),
+        realpathSync(fileURLToPath(new URL('./node_modules', import.meta.url))),
+      ],
+    },
     hmr: false, // DÉSACTIVER COMPLÈTEMENT LE HMR (rechargement manuel uniquement)
     watch: {
       usePolling: false,
