@@ -58,8 +58,23 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function isExpiredSessionError(authError) {
+    const code = String(authError?.code || '').toLowerCase();
     const message = String(authError?.message || '').toLowerCase();
-    return message.includes('invalid') || message.includes('expired') || message.includes('jwt');
+    return code.includes('refresh_token') || code.includes('session_not_found') ||
+      message.includes('invalid') || message.includes('expired') || message.includes('jwt') ||
+      message.includes('refresh token not found');
+  }
+
+  async function discardInvalidSupabaseSession() {
+    // A rejected refresh token belongs only to this browser session. Supabase
+    // recommends local scope so other devices remain signed in.
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (_) {
+      // The in-memory state must still be cleared if the auth endpoint is down.
+    }
+    applySupabaseSession(null);
+    initialized.value = true;
   }
 
   function refreshSessionSingleFlight() {
@@ -68,6 +83,9 @@ export const useAuthStore = defineStore('auth', () => {
     refreshPromise = (async () => {
       const { data, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError || !data?.session) {
+        if (isExpiredSessionError(refreshError)) {
+          await discardInvalidSupabaseSession();
+        }
         throw refreshError || new Error('Session refresh failed');
       }
       applySupabaseSession(data.session);
@@ -264,33 +282,39 @@ export const useAuthStore = defineStore('auth', () => {
     if (authCheckPromise) return authCheckPromise;
 
     authCheckPromise = (async () => {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
 
-      let currentSession = sessionData?.session || null;
-      if (!currentSession) {
-        applySupabaseSession(null);
+        let currentSession = sessionData?.session || null;
+        if (!currentSession) {
+          applySupabaseSession(null);
+          initialized.value = true;
+          return null;
+        }
+
+        const expiresAt = Number(currentSession.expires_at || 0);
+        const secondsUntilExpiry = expiresAt - Math.floor(Date.now() / 1000);
+        if (expiresAt && secondsUntilExpiry < 300) {
+          currentSession = await refreshSessionSingleFlight();
+        }
+
+        const { data: userData, error: getUserError } = await supabase.auth.getUser();
+        if (getUserError) {
+          if (!isExpiredSessionError(getUserError)) throw getUserError;
+          currentSession = await refreshSessionSingleFlight();
+        } else if (userData?.user) {
+          currentSession = { ...currentSession, user: userData.user };
+        }
+
+        applySupabaseSession(currentSession);
         initialized.value = true;
+        return currentSession;
+      } catch (sessionFailure) {
+        if (!isExpiredSessionError(sessionFailure)) throw sessionFailure;
+        await discardInvalidSupabaseSession();
         return null;
       }
-
-      const expiresAt = Number(currentSession.expires_at || 0);
-      const secondsUntilExpiry = expiresAt - Math.floor(Date.now() / 1000);
-      if (expiresAt && secondsUntilExpiry < 300) {
-        currentSession = await refreshSessionSingleFlight();
-      }
-
-      const { data: userData, error: getUserError } = await supabase.auth.getUser();
-      if (getUserError) {
-        if (!isExpiredSessionError(getUserError)) throw getUserError;
-        currentSession = await refreshSessionSingleFlight();
-      } else if (userData?.user) {
-        currentSession = { ...currentSession, user: userData.user };
-      }
-
-      applySupabaseSession(currentSession);
-      initialized.value = true;
-      return currentSession;
     })().finally(() => {
       authCheckPromise = null;
     });

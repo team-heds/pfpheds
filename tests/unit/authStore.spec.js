@@ -39,7 +39,7 @@ vi.mock('@/supabase', () => ({
     auth: {
       signUp: (...args) => mockSupabaseSignUp(...args),
       signInWithPassword: (...args) => mockSupabaseSignIn(...args),
-      signOut: () => mockSupabaseSignOut(),
+      signOut: (...args) => mockSupabaseSignOut(...args),
       getUser: () => mockSupabaseGetUser(),
       getSession: () => mockSupabaseGetSession(),
       refreshSession: () => mockSupabaseRefreshSession(),
@@ -156,6 +156,27 @@ describe('authStore', () => {
 
       expect(store.session).toEqual(previousSession)
       expect(store.user).toEqual(previousSession.user)
+    })
+
+    it('supprime uniquement la session locale lorsqu’un refresh token est invalide', async () => {
+      const staleSession = { user: { id: 'u1' }, access_token: 'stale-token' }
+      store.session = staleSession
+      store.user = staleSession.user
+      store.authProvider = 'supabase'
+      mockSupabaseGetSession.mockResolvedValue({
+        data: { session: null },
+        error: Object.assign(new Error('Invalid Refresh Token: Refresh Token Not Found'), {
+          code: 'refresh_token_not_found',
+        }),
+      })
+      mockSupabaseSignOut.mockResolvedValue({ error: null })
+
+      await expect(store.checkAuthState()).resolves.toBeNull()
+
+      expect(mockSupabaseSignOut).toHaveBeenCalledWith({ scope: 'local' })
+      expect(store.session).toBeNull()
+      expect(store.user).toBeNull()
+      expect(store.authProvider).toBeNull()
     })
 
     it('sérialise les rafraîchissements de session', async () => {

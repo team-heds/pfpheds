@@ -69,9 +69,19 @@ router.beforeEach(async (to, from, next) => {
   if (to.path === '/reset-password' || to.path === '/new-password') {
     return next();
   }
+
+  if (AUTH_BYPASS) {
+    if (to.path === '/') return next('/home');
+    return next();
+  }
+
+  // Resolve Supabase auth before querying protected dynamic-route metadata.
+  // Anonymous login pages must never generate a misleading 401 here.
+  await authStore.initializeAuth();
+  const user = authStore.user;
   
   // 🔥 Charger les routes dynamiques depuis Supabase au premier appel
-  if (!dynamicRoutesLoaded) {
+  if (user && !dynamicRoutesLoaded) {
     debugRouter('🔄 Chargement des routes dynamiques depuis Supabase...');
     try {
       await ensureDynamicRoutes();
@@ -88,12 +98,6 @@ router.beforeEach(async (to, from, next) => {
     }
   }
   
-  if (AUTH_BYPASS) {
-    if (to.path === '/') return next('/home');
-    return next();
-  }
-
-  await authStore.initializeAuth();
   // Initialiser le roleStore si nécessaire
 if (!roleStore.initialized) {
   await roleStore.init({
@@ -102,8 +106,6 @@ if (!roleStore.initialized) {
   });
 }
   
-  const user = authStore.user;
-
   // Gestion spécifique pour la route "/"
   if (to.path === '/') {
     if (user) {
