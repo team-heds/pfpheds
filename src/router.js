@@ -6,6 +6,10 @@ import { useRoleStore } from '@/stores/role';
 import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
 import { withTimeout } from '@/service/appBootstrap';
 import routes from '@/router/routes/index';
+import {
+  finishNavigationMeasurement,
+  startNavigationMeasurement,
+} from '@/service/navigationPerformanceService';
 
 const DEFAULT_NEED = 'authenticated';
 routes.forEach(r => {
@@ -35,6 +39,7 @@ const ROUTER_DEBUG = import.meta.env.VITE_DEBUG_ROUTER === 'true';
 const debugRouter = (...args) => {
   if (ROUTER_DEBUG) console.log(...args);
 };
+let activeNavigationMeasurement = null;
 
 async function ensureDynamicRoutes() {
   if (dynamicRoutesLoaded) return;
@@ -59,6 +64,7 @@ async function ensureDynamicRoutes() {
 }
 
 router.beforeEach(async (to, from, next) => {
+  activeNavigationMeasurement = startNavigationMeasurement(to, from);
   const authStore = useAuthStore();
   const roleStore = useRoleStore();
   debugRouter(`🧭 Navigation vers: ${to.path} depuis: ${from.path}`);
@@ -213,6 +219,11 @@ if (need) {
   } else {
     return next(); // Aucune authentification requise, autorisez l'accès
   }
+});
+
+router.afterEach((_to, _from, failure) => {
+  finishNavigationMeasurement(activeNavigationMeasurement, { failed: Boolean(failure) });
+  activeNavigationMeasurement = null;
 });
 
 export default router;

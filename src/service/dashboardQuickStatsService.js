@@ -122,11 +122,10 @@ export async function fetchQuickStatsWithTrends(days = 7) {
     const previousDate = new Date()
     previousDate.setDate(previousDate.getDate() - days)
     
-    const [current, previous] = await Promise.all([
-      fetchQuickStats(),
-      // Stats période précédente (si on a des timestamps)
-      fetchQuickStats() // À améliorer avec vraie comparaison
-    ])
+    // Les tables ne sont pas encore historisées. Une seconde lecture identique
+    // doublait le trafic sans produire une vraie période précédente.
+    const current = await fetchQuickStats()
+    const previous = current
     
     // Calculer les tendances
     const trends = {}

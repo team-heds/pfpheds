@@ -4,6 +4,33 @@
  */
 
 import { supabase } from '@/supabase'
+import { SUPABASE_SELECTS } from '@/service/supabaseContracts'
+
+function createEmptyCohortStats() {
+  return { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] }
+}
+
+export function createEmptyPfpStats(total = 0) {
+  return {
+    PFP1A: createEmptyCohortStats(),
+    PFP1B: createEmptyCohortStats(),
+    global: { total, byStatus: {} }
+  }
+}
+
+function parseCapacity(rawCapacity, year) {
+  if (!rawCapacity) return 0
+  let capacity = rawCapacity
+  if (typeof capacity === 'string') {
+    try {
+      capacity = JSON.parse(capacity)
+    } catch {
+      return 0
+    }
+  }
+  const count = Number.parseInt(capacity?.[year], 10)
+  return Number.isFinite(count) && count > 0 ? count : 0
+}
 
 /**
  * Récupère les statistiques des places par cohorte PFP
@@ -19,35 +46,23 @@ export async function getPfpCohortStats() {
     try {
       const { data, error: placesError } = await supabase
         .from('places')
-        .select('PlaceId, PFP1A, PFP1B, InstitutionId')
+        .select(SUPABASE_SELECTS.pfpStatsPlaces)
       
       if (placesError) {
         console.warn('[pfpStatsService] Erreur places:', placesError.message)
         // Return empty stats gracefully
-        return {
-          PFP1A: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
-          PFP1B: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
-          global: { total: 0, byStatus: {} }
-        }
+        return createEmptyPfpStats()
       }
       places = data || []
     } catch (queryErr) {
       console.warn('[pfpStatsService] Exception places:', queryErr)
-      return {
-        PFP1A: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
-        PFP1B: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
-        global: { total: 0, byStatus: {} }
-      }
+      return createEmptyPfpStats()
     }
     
     // Si pas de places, retourner des stats vides
     if (!places || places.length === 0) {
       console.warn('[pfpStatsService] Aucune place trouvée')
-      return {
-        PFP1A: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
-        PFP1B: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
-        global: { total: 0, byStatus: {} }
-      }
+      return createEmptyPfpStats()
     }
     
     // Récupérer toutes les institutions séparément
@@ -55,7 +70,7 @@ export async function getPfpCohortStats() {
     try {
       const { data, error: instError } = await supabase
         .from('institutions')
-        .select('InstitutionId, Name, Canton, Locality')
+        .select(SUPABASE_SELECTS.pfpStatsInstitutions)
       if (instError) console.warn('[pfpStatsService] Erreur institutions:', instError.message)
       institutions = data || []
     } catch (instErr) {
@@ -96,8 +111,9 @@ export async function getPfpCohortStats() {
       const canton = institution?.Canton || 'Non défini'
       
       // Traiter PFP1A
-      if (place.PFP1A && place.PFP1A[currentYear]) {
-        const count = parseInt(place.PFP1A[currentYear])
+      const pfp1aCapacity = parseCapacity(place.PFP1A, currentYear)
+      if (pfp1aCapacity) {
+        const count = pfp1aCapacity
         
         if (!isNaN(count) && count >= 1) {
           // Total par cohorte (multiplié par le nombre de places)
@@ -120,8 +136,9 @@ export async function getPfpCohortStats() {
       }
       
       // Traiter PFP1B
-      if (place.PFP1B && place.PFP1B[currentYear]) {
-        const count = parseInt(place.PFP1B[currentYear])
+      const pfp1bCapacity = parseCapacity(place.PFP1B, currentYear)
+      if (pfp1bCapacity) {
+        const count = pfp1bCapacity
         if (!isNaN(count) && count >= 1) {
           // Total par cohorte (multiplié par le nombre de places)
           stats.PFP1B.total += count
@@ -144,8 +161,9 @@ export async function getPfpCohortStats() {
     })
     
     // Générer topCantons pour chaque cohorte (tri décroissant)
-    ['PFP1A', 'PFP1B'].forEach(cohort => {
-      stats[cohort].topCantons = Object.entries(stats[cohort].byCantons)
+    for (const cohort of ['PFP1A', 'PFP1B']) {
+      const cohortStats = stats[cohort] || (stats[cohort] = createEmptyCohortStats())
+      cohortStats.topCantons = Object.entries(cohortStats.byCantons)
         .map(([canton, data]) => ({
           label: canton,
           value: data.total,
@@ -154,17 +172,13 @@ export async function getPfpCohortStats() {
           color: getCantonColor(canton)
         }))
         .sort((a, b) => b.value - a.value)
-    })
+    }
     
     return stats
     
   } catch (error) {
     console.error('❌ Erreur getPfpCohortStats:', error)
-    return {
-      PFP1A: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
-      PFP1B: { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] },
-      global: { total: 0, byStatus: {} }
-    }
+    return createEmptyPfpStats()
   }
 }
 
@@ -195,7 +209,7 @@ export async function getStudentsByCohort(cohort) {
   try {
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('user_id, email, display_name, forname, family_name, pfp_cohort')
+      .select(SUPABASE_SELECTS.pfpStudents)
       .eq('pfp_cohort', cohort)
       .order('family_name')
     
@@ -216,21 +230,23 @@ export async function getStudentsByCohort(cohort) {
 export async function getPfpAssignmentRate() {
   try {
     const stats = await getPfpCohortStats()
+    const pfp1a = stats?.PFP1A || createEmptyCohortStats()
+    const pfp1b = stats?.PFP1B || createEmptyCohortStats()
     
     return {
       PFP1A: {
-        rate: stats.PFP1A.total > 0 
-          ? Math.round((stats.PFP1A.assigned / stats.PFP1A.total) * 100) 
+        rate: pfp1a.total > 0
+          ? Math.round((pfp1a.assigned / pfp1a.total) * 100)
           : 0,
-        assigned: stats.PFP1A.assigned,
-        total: stats.PFP1A.total
+        assigned: pfp1a.assigned,
+        total: pfp1a.total
       },
       PFP1B: {
-        rate: stats.PFP1B.total > 0 
-          ? Math.round((stats.PFP1B.assigned / stats.PFP1B.total) * 100) 
+        rate: pfp1b.total > 0
+          ? Math.round((pfp1b.assigned / pfp1b.total) * 100)
           : 0,
-        assigned: stats.PFP1B.assigned,
-        total: stats.PFP1B.total
+        assigned: pfp1b.assigned,
+        total: pfp1b.total
       }
     }
   } catch (error) {

@@ -306,6 +306,7 @@ import ErrorState from '@/components/common/states/ErrorState.vue'
 import { useKpiManager } from '@/composables/useKpiManager'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentDirectoryService'
+import { SUPABASE_SELECTS } from '@/service/supabaseContracts'
 
 const router = useRouter()
 
@@ -508,10 +509,10 @@ const loadExtraStats = async () => {
       getAllStudents(),
       supabase
         .from('places')
-        .select('PlaceId,InstitutionId,NomPlace,fileurl,CreatedAt,UpdatedAt'),
+        .select(SUPABASE_SELECTS.dashboardPlaces),
       supabase
         .from('student_result_vote')
-        .select('id,status,pfp_type,pfp_validee,pfp_echec,pfp_arret,assigned_place_id,created_at,updated_at')
+        .select(SUPABASE_SELECTS.dashboardVotes)
     ])
 
     if (placesRes.error) throw placesRes.error
@@ -615,12 +616,12 @@ const loadRecentActivities = async () => {
     const [sessionsRes, placesRes, studentDirectory] = await Promise.all([
       supabase
         .from('votation_sessions')
-        .select('id,pfp_type,target_class,status,is_priority,opened_at,closed_at')
+        .select(SUPABASE_SELECTS.dashboardSessions)
         .order('opened_at', { ascending: false })
         .limit(5),
       supabase
         .from('places')
-        .select('PlaceId,NomPlace,CreatedAt')
+        .select(SUPABASE_SELECTS.dashboardRecentPlaces)
         .order('CreatedAt', { ascending: false })
         .limit(5),
       getAllStudents()
