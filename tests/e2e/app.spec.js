@@ -25,37 +25,30 @@ test.describe('Application – chargement initial', () => {
 
 test.describe('Formulaire de login', () => {
   test('les champs email et mot de passe sont présents', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForTimeout(1500)
-    // Chercher des inputs de type email/password ou des champs de formulaire
-    const inputs = page.locator('input')
-    const count = await inputs.count()
-    expect(count).toBeGreaterThanOrEqual(1)
+    await page.goto('/home')
+    await expect(page.locator('input[type="email"]')).toBeVisible()
+    await expect(page.locator('input[type="password"]')).toBeVisible()
   })
 
   test('un message d\'erreur apparaît avec des identifiants invalides', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForTimeout(1500)
+    await page.goto('/home')
 
     // Remplir les champs s'ils existent
     const emailInput = page.locator('input[type="email"], input[placeholder*="mail" i], input[placeholder*="email" i]').first()
     const passwordInput = page.locator('input[type="password"]').first()
 
-    if (await emailInput.isVisible() && await passwordInput.isVisible()) {
-      await emailInput.fill('test@invalid.com')
-      await passwordInput.fill('wrongpassword')
+    await expect(emailInput).toBeVisible()
+    await expect(passwordInput).toBeVisible()
+    await emailInput.fill('test@invalid.com')
+    await passwordInput.fill('wrongpassword')
 
-      // Chercher un bouton de soumission
-      const submitBtn = page.locator('button[type="submit"], button:has-text("Connexion"), button:has-text("Se connecter")').first()
-      if (await submitBtn.isVisible()) {
-        await submitBtn.click()
-        await page.waitForTimeout(3000)
-        // On ne devrait PAS être redirigé vers /feed ou /admin
-        const url = page.url()
-        expect(url).not.toContain('/feed')
-        expect(url).not.toContain('/admin/dashboard')
-      }
-    }
+    const submitBtn = page.locator('button[type="submit"], button:has-text("Connexion"), button:has-text("Se connecter")').first()
+    await expect(submitBtn).toBeVisible()
+    await submitBtn.click()
+    await page.waitForTimeout(3000)
+
+    expect(page.url()).not.toContain('/feed')
+    expect(page.url()).not.toContain('/admin/dashboard')
   })
 })
 

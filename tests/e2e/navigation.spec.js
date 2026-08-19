@@ -145,7 +145,8 @@ test.describe('Performance — métriques avancées', () => {
   })
 
   test('pas de fuites mémoire évidentes après navigation', async ({ page }) => {
-    await page.goto('/')
+    await page.goto('/home')
+    await page.waitForURL(/\/home$/)
     await page.waitForTimeout(1000)
 
     const memBefore = await page.evaluate(() => {
@@ -157,7 +158,8 @@ test.describe('Performance — métriques avancées', () => {
     for (let i = 0; i < 3; i++) {
       await page.goto('/calendar')
       await page.waitForTimeout(500)
-      await page.goto('/')
+      await page.goto('/home')
+      await page.waitForURL(/\/home$/)
       await page.waitForTimeout(500)
     }
 
