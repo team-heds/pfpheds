@@ -16,6 +16,13 @@
         <FormStatus status="loading" title="Chargement du profil" message="Les informations de l’étudiant sont en cours de chargement." />
       </div>
 
+      <ErrorState
+        v-else-if="loadError"
+        title="Impossible de charger cet étudiant"
+        :description="loadError"
+        @retry="loadStudentData"
+      />
+
       <!-- Form -->
       <form v-else id="student-edit-form" class="app-form" @submit.prevent="saveStudent">
         <FormSection title="Identité et inscription" description="Modifiez les informations principales de l’étudiant." icon="pi pi-user-edit">
@@ -96,7 +103,7 @@
         type="submit"
         form="student-edit-form"
         :loading="saving"
-        :disabled="loading"
+        :disabled="loading || !!loadError"
       />
     </template>
   </Dialog>
@@ -115,6 +122,7 @@ import { supabase } from '@/supabase'
 import FormSection from '@/components/common/forms/FormSection.vue'
 import FormField from '@/components/common/forms/FormField.vue'
 import FormStatus from '@/components/common/forms/FormStatus.vue'
+import ErrorState from '@/components/common/states/ErrorState.vue'
 
 const props = defineProps({
   visible: {
@@ -131,6 +139,7 @@ const emit = defineEmits(['update:visible', 'student-updated'])
 
 const toast = useToast()
 const loading = ref(false)
+const loadError = ref(null)
 const saving = ref(false)
 const errors = ref({})
 const submitStatus = ref('idle')
@@ -163,6 +172,7 @@ watch(() => props.visible, async (newVal) => {
 
 const loadStudentData = async () => {
   loading.value = true
+  loadError.value = null
   errors.value = {}
   
   try {
@@ -197,6 +207,7 @@ const loadStudentData = async () => {
 
   } catch (error) {
     console.error('Erreur lors du chargement de l\'étudiant:', error)
+    loadError.value = error?.message || 'Vérifiez votre connexion puis réessayez.'
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -253,17 +264,23 @@ const saveStudent = async () => {
 
   try {
     // Mettre à jour user_profiles
-    const { error: profileError } = await supabase
+    const profilePayload = {
+      forname: formData.value.forname,
+      family_name: formData.value.family_name,
+      email: formData.value.email,
+      classe: formData.value.class
+    }
+    const { data: persistedProfile, error: profileError } = await supabase
       .from('user_profiles')
-      .update({
-        forname: formData.value.forname,
-        family_name: formData.value.family_name,
-        email: formData.value.email,
-        classe: formData.value.class
-      })
+      .update(profilePayload)
       .eq('user_id', props.studentId)
+      .select('user_id, forname, family_name, email, classe')
+      .maybeSingle()
 
     if (profileError) throw profileError
+    if (!persistedProfile || Object.entries(profilePayload).some(([key, value]) => persistedProfile[key] !== value)) {
+      throw new Error('Le profil n’a pas été enregistré intégralement.')
+    }
 
     // Mettre à jour ou insérer dans StudentsPhysio
     const physioData = {
@@ -280,14 +297,26 @@ const saveStudent = async () => {
       .select()
 
     // Si aucune ligne retournée, faire un INSERT
-    if (!updateError && (!updateResult || updateResult.length === 0)) {
-      const { error: insertError } = await supabase
+    let persistedPhysio = updateResult?.[0] || null
+    if (!updateError && !persistedPhysio) {
+      const { data: insertedPhysio, error: insertError } = await supabase
         .from('StudentsPhysio')
         .insert({ user_id: props.studentId, ...physioData })
+        .select('user_id, class, sae, cas_particulier')
+        .single()
       
       if (insertError) throw insertError
+      persistedPhysio = insertedPhysio
     } else if (updateError) {
       throw updateError
+    }
+
+    const physioMatches = persistedPhysio
+      && persistedPhysio.class === physioData.class
+      && String(persistedPhysio.sae) === String(physioData.sae)
+      && (persistedPhysio.cas_particulier || '') === physioData.cas_particulier
+    if (!physioMatches) {
+      throw new Error('Les données de formation pratique n’ont pas été enregistrées intégralement.')
     }
 
     // Émettre l'événement AVANT de fermer le dialog
@@ -337,6 +366,7 @@ const resetForm = () => {
   errors.value = {}
   submitStatus.value = 'idle'
   submitMessage.value = ''
+  loadError.value = null
 }
 
 const closeDialog = () => {
