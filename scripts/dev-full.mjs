@@ -10,6 +10,12 @@ if (!existsSync('backend/.env')) {
   process.exit(1)
 }
 
+if (!existsSync('backend/node_modules/express')) {
+  console.error('[dev:full] Les dépendances du backend ne sont pas installées.')
+  console.error('[dev:full] Exécutez: npm --prefix backend ci')
+  process.exit(1)
+}
+
 const services = [
   { name: 'frontend', args: ['run', 'dev'] },
   { name: 'backend', args: ['--prefix', 'backend', 'run', 'dev'] },

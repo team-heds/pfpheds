@@ -44,7 +44,8 @@ Prérequis :
 Installation :
 
 ```bash
-npm install
+npm ci
+npm --prefix backend ci
 ```
 
 Lancement local :
@@ -58,7 +59,7 @@ Cette commande démarre ensemble :
 - le frontend Vite sur le port configuré par le projet ;
 - le backend Express sur le port `3000`.
 
-Elle nécessite un fichier `backend/.env` configuré à partir de `backend/.env.example`.
+Elle nécessite les dépendances du backend ainsi qu'un fichier `backend/.env` configuré à partir de `backend/.env.example`.
 
 ## Scripts utiles
 

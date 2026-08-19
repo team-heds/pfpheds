@@ -19,13 +19,19 @@ Cette page sert de mémo court pour lancer le projet au quotidien. Pour l'instal
 
 ## Lancement local recommandé
 
-Après avoir créé et configuré `backend/.env`, lancer les deux services dans un seul terminal :
+Après avoir installé les dépendances des deux projets puis créé et configuré `backend/.env`, lancer les deux services dans un seul terminal :
+
+```powershell
+npm ci
+npm --prefix backend ci
+Copy-Item backend/.env.example backend/.env
+```
 
 ```powershell
 npm run dev:full
 ```
 
-La commande s'arrête immédiatement avec une instruction claire si `backend/.env` est absent.
+La commande s'arrête immédiatement avec une instruction claire si `backend/.env` ou les dépendances du backend sont absents.
 
 Pour les lancer séparément :
 
