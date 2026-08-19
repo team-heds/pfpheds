@@ -3,6 +3,13 @@ const express = require('express')
 const cors = require('cors')
 const rateLimit = require('express-rate-limit')
 const supabase = require('./supabaseClient')
+const { supabaseAdmin } = require('./supabaseClient')
+const { createHealthRouter, createSupabaseReadinessCheck } = require('./observability/health')
+const { logStructured, upstreamErrorContext } = require('./observability/logger')
+const {
+  createRequestContextMiddleware,
+  normalizedRoute
+} = require('./observability/requestContext')
 const {
   authenticate,
   requireAdmin,
@@ -61,11 +68,13 @@ const corsOptions = {
     return callback(new Error(`CORS blocked for origin: ${origin}`))
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+  exposedHeaders: ['X-Request-ID'],
   credentials: true
 }
 
 // CORS and JSON parsing MUST be before routes
+app.use(createRequestContextMiddleware())
 app.use(cors(corsOptions))
 // Express 5 uses path-to-regexp v6 which doesn't support '*' patterns.
 // Use a regex to match all paths for CORS preflight handling.
@@ -81,16 +90,16 @@ app.use(
   })
 )
 
-// Debug middleware (seulement en développement)
-if (process.env.NODE_ENV !== 'production') {
-  app.use((req, res, next) => {
-    console.log(`[DEBUG] ${req.method} ${req.url}`)
-    next()
-  })
-}
-
 // Keep only operational health probes public. Every business API route below requires a valid JWT.
 app.get('/api/ping', (_req, res) => res.send('pingpong'))
+app.use(
+  '/health',
+  createHealthRouter({
+    checkDependency: createSupabaseReadinessCheck(supabaseAdmin, {
+      timeoutMs: Math.max(250, Math.min(Number(process.env.READINESS_TIMEOUT_MS) || 1500, 5000))
+    })
+  })
+)
 // Password recovery must remain anonymous, but is isolated behind a dedicated
 // server-side limiter and always returns the same public response.
 app.use('/api/auth/password-recovery', createPasswordRecoveryRequestRouter())
@@ -131,16 +140,6 @@ app.use('/api/integrations/github', requireAnyPermission('editor'), githubRoutes
 
 // (OpenAI not required for CareConvers stateful routes)
 
-// Health check endpoint pour Docker/Kubernetes
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
-  })
-})
-
 // Test route for praticiens_formateurs
 app.get('/api/chapters', async (req, res) => {
   const { data, error } = await supabase.from('chapters').select('*')
@@ -151,9 +150,18 @@ app.get('/api/chapters', async (req, res) => {
 // Mount CareConvers stateful /api/chat routes
 registerCareConversStoreRoutes(app)
 
-app.use((error, _req, res, _next) => {
+app.use((error, req, res, _next) => {
   void _next
-  console.error('[API] Request failed:', error.message)
+  logStructured(
+    'error',
+    upstreamErrorContext(error, {
+      requestId: req.id,
+      service: 'api',
+      operation: 'request-handler',
+      method: req.method,
+      route: normalizedRoute(req)
+    })
+  )
   if (
     error.name === 'MulterError' ||
     /Type de fichier non autorisé|Type d’image non autorisé/.test(error.message)

@@ -168,6 +168,17 @@ test('only operational probes are public', async () => {
     })
     assert.equal(response.status, 200)
     assert.equal(await response.text(), 'pingpong')
+
+    const live = await fetch(`http://127.0.0.1:${port}/health/live`, {
+      headers: { 'X-Request-ID': 'health-probe-1' }
+    })
+    assert.equal(live.status, 200)
+    assert.equal(live.headers.get('x-request-id'), 'health-probe-1')
+    assert.equal((await live.json()).status, 'healthy')
+
+    const compatible = await fetch(`http://127.0.0.1:${port}/health`)
+    assert.equal(compatible.status, 200)
+    assert.equal((await compatible.json()).status, 'healthy')
   } finally {
     await new Promise((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve()))
