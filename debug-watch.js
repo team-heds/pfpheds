@@ -1,4 +1,4 @@
-// Script de diagnostic pour identifier les fichiers qui déclenchent des rechargements
+// Script de diagnostic pour identifier les fichiers qui déclenchent des rechargements 
 import chokidar from 'chokidar';
 
 const watcher = chokidar.watch('.', {
