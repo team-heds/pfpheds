@@ -1,14 +1,15 @@
 <template>
   <main class="reset-page">
     <section class="reset-shell" aria-labelledby="reset-title">
-      <div class="reset-brand">
+      <header class="reset-brand">
         <img
-          src="/assets/images/FR-DE_HEdS_rvb_neg.png"
-          alt="Haute école de santé"
+          :src="darkMode
+            ? '/assets/images/FR-DE_HEdS_rvb_neg.png'
+            : '/assets/images/FR-DE_HEdS.png'"
+          alt="Haute école de santé HES-SO Valais-Wallis"
           class="reset-logo"
         />
-        <p>Retrouvez l’accès à votre espace de formation en quelques étapes sécurisées.</p>
-      </div>
+      </header>
 
       <div class="reset-content">
         <header class="reset-heading">
@@ -212,6 +213,7 @@ import InlineMessage from 'primevue/inlinemessage'
 import InputText from 'primevue/inputtext'
 import Password from 'primevue/password'
 import { supabase } from '@/supabase.js'
+import { useLayout } from '@/layout/composables/layout'
 import {
   createPasswordRecoveryService,
   PASSWORD_RECOVERY_ERROR_CODES,
@@ -219,7 +221,10 @@ import {
 import { getPasswordRuleStates, validateNewPassword } from '@/utils/passwordResetValidation'
 
 const router = useRouter()
+const { layoutConfig } = useLayout()
 const recoveryService = createPasswordRecoveryService(supabase.auth)
+
+const darkMode = computed(() => layoutConfig.colorScheme.value !== 'light')
 
 const state = ref('checking')
 const loading = ref(false)
@@ -404,46 +409,33 @@ async function goToLogin() {
   min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: clamp(1.5rem, 4vw, 4rem);
-  background: var(--surface-ground, #0b213f);
-  font-family: var(--font-family, 'Poppins', sans-serif);
+  padding: clamp(1.25rem, 4vw, 3rem) var(--app-page-gutter, 1.5rem);
+  background: var(--app-color-page, var(--surface-ground, #0b213f));
+  color: var(--app-color-text, var(--text-color, #f8fafc));
+  font-family: var(--app-font-family, var(--font-family, 'Poppins', sans-serif));
 }
 
 .reset-shell {
-  width: min(100%, 80rem);
+  width: min(100%, 34rem);
   display: grid;
-  grid-template-columns: minmax(18rem, 1fr) minmax(24rem, 1fr);
-  gap: clamp(3rem, 8vw, 8rem);
-  align-items: center;
+  gap: clamp(1.5rem, 4vh, 2.5rem);
 }
 
 .reset-brand {
-  display: grid;
-  justify-items: center;
-  gap: 1.5rem;
-  color: #fff;
-  text-align: center;
+  display: flex;
+  justify-content: center;
 }
 
 .reset-logo {
-  width: min(100%, 24rem);
+  width: min(100%, 18rem);
   height: auto;
   object-fit: contain;
 }
 
-.reset-brand p {
-  max-width: 31rem;
-  margin: 0;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 1rem;
-  line-height: 1.65;
-}
-
 .reset-content {
-  width: min(100%, 32rem);
-  justify-self: center;
+  min-width: 0;
   display: grid;
-  gap: 1.5rem;
+  gap: var(--app-space-5, 1.25rem);
 }
 
 .reset-heading {
@@ -454,29 +446,29 @@ async function goToLogin() {
 .reset-heading h1,
 .reset-card h2 {
   margin: 0;
-  color: var(--text-color, #f8fafc);
+  color: var(--app-color-text, var(--text-color, #1f2937));
   letter-spacing: -0.025em;
 }
 
 .reset-heading h1 {
-  max-width: 14ch;
-  font-size: clamp(2rem, 4vw, 3.75rem);
+  max-width: 18ch;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 1.12;
   text-wrap: balance;
 }
 
 .reset-heading p {
   max-width: 48ch;
   margin: 0;
-  color: var(--text-color-secondary, #cbd5e1);
-  line-height: 1.65;
+  color: var(--app-color-text-muted, var(--text-color-secondary, #64748b));
+  line-height: var(--app-line-height-body, 1.55);
 }
 
 .reset-card {
-  background: var(--surface-card, #fff);
-  border-radius: 1rem;
-  box-shadow: 0 1.5rem 3.5rem rgba(2, 12, 27, 0.24);
+  background: var(--app-color-surface, var(--surface-card, #fff));
+  border-radius: var(--app-radius-xl, 1rem);
+  box-shadow: var(--app-shadow-md, 0 0.75rem 2rem rgba(2, 12, 27, 0.18));
   padding: clamp(1.25rem, 3vw, 2rem);
 }
 
@@ -497,7 +489,7 @@ async function goToLogin() {
 .intro p,
 .form-row small {
   margin: 0;
-  color: var(--text-color-secondary, #64748b);
+  color: var(--app-color-text-muted, var(--text-color-secondary, #64748b));
   line-height: 1.55;
 }
 
@@ -515,18 +507,18 @@ async function goToLogin() {
 }
 
 .state-icon--loading {
-  color: var(--primary-color, #f3c300);
-  background: color-mix(in srgb, var(--primary-color, #f3c300) 13%, transparent);
+  color: var(--app-color-focus, #775f00);
+  background: color-mix(in srgb, var(--app-color-brand, #f3c300) 18%, transparent);
 }
 
 .state-icon--warning {
-  color: #b45309;
-  background: #fff7ed;
+  color: var(--app-color-warning, #c2410c);
+  background: var(--app-color-warning-soft, #fff7ed);
 }
 
 .state-icon--success {
-  color: #047857;
-  background: #ecfdf5;
+  color: var(--app-color-success, #15803d);
+  background: var(--app-color-success-soft, #f0fdf4);
 }
 
 .intro {
@@ -546,28 +538,28 @@ async function goToLogin() {
   gap: 0.75rem 1rem;
   padding: 1rem;
   border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--primary-color, #6229ff) 7%, white);
+  background: color-mix(in srgb, var(--app-color-brand, #f3c300) 12%, var(--app-color-surface, white));
 }
 
 .rule-item {
   display: flex;
   gap: 0.5rem;
   align-items: center;
-  color: var(--text-color-secondary, #5f6572);
+  color: var(--app-color-text-muted, var(--text-color-secondary, #5f6572));
   font-weight: 600;
   font-size: 0.875rem;
 }
 
 .rule-item i {
-  color: var(--primary-color, #6229ff);
+  color: var(--app-color-focus, #775f00);
 }
 
 .rule-item.is-valid {
-  color: #157347;
+  color: var(--app-color-success, #15803d);
 }
 
 .rule-item.is-valid i {
-  color: #157347;
+  color: var(--app-color-success, #15803d);
 }
 
 .form-row {
@@ -578,12 +570,12 @@ async function goToLogin() {
 }
 
 label {
-  color: var(--text-color, #1f2937);
+  color: var(--app-color-text, var(--text-color, #1f2937));
   font-weight: 700;
 }
 
 .match-valid {
-  color: #047857 !important;
+  color: var(--app-color-success, #15803d) !important;
   font-weight: 600;
 }
 
@@ -597,7 +589,7 @@ label {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: var(--text-color-secondary, #64748b);
+  color: var(--app-color-text-muted, var(--text-color-secondary, #64748b));
   font-size: 0.8rem;
   font-weight: 600;
 }
@@ -607,7 +599,7 @@ label {
   content: '';
   height: 1px;
   flex: 1;
-  background: var(--surface-border, #e2e8f0);
+  background: var(--app-color-border, var(--surface-border, #e2e8f0));
 }
 
 :deep(.p-password-input),
@@ -625,24 +617,26 @@ label {
 
 :deep(.p-inputtext:focus),
 :deep(.p-password-input:focus) {
-  box-shadow: var(--focus-ring, 0 0 0 0.2rem rgba(62, 207, 142, 0.25));
+  box-shadow: var(--app-shadow-focus, var(--focus-ring));
+  border-color: var(--app-color-focus, #775f00);
 }
 
 :deep(.p-button:not(.p-button-text)) {
   min-height: 3.1rem;
   border: 0;
   border-radius: 0.75rem;
-  background: linear-gradient(135deg, #f3c300 0%, #d49f3f 100%);
-  color: #222;
+  background: var(--app-color-brand, #f3c300);
+  color: var(--app-color-on-brand, #172033);
   font-weight: 700;
-  box-shadow: 0 0.5rem 1.25rem rgba(212, 159, 63, 0.18);
+  box-shadow: var(--app-shadow-sm, 0 0.25rem 0.75rem rgba(2, 12, 27, 0.12));
   transition-property: transform, box-shadow, opacity;
   transition-duration: 150ms;
 }
 
 :deep(.p-button:not(.p-button-text):hover:not(:disabled)) {
   transform: translateY(-1px);
-  box-shadow: 0 0.75rem 1.5rem rgba(212, 159, 63, 0.24);
+  background: var(--app-color-brand-hover, #d9ad00);
+  box-shadow: var(--app-shadow-md, 0 0.75rem 2rem rgba(2, 12, 27, 0.16));
 }
 
 :deep(.p-button:not(.p-button-text):active:not(:disabled)) {
@@ -650,8 +644,12 @@ label {
 }
 
 :deep(.p-button:focus-visible) {
-  outline: 2px solid currentColor;
+  outline: 2px solid var(--app-color-focus, #775f00);
   outline-offset: 3px;
+}
+
+:deep(.p-button.p-button-text) {
+  color: var(--app-color-text, var(--text-color, #1f2937));
 }
 
 :deep(.p-inline-message) {
@@ -661,34 +659,10 @@ label {
 
 .reset-support {
   margin: 0;
-  color: var(--text-color-secondary, #cbd5e1);
+  color: var(--app-color-text-muted, var(--text-color-secondary, #64748b));
   font-size: 0.8rem;
   line-height: 1.5;
   text-align: center;
-}
-
-@media (max-width: 56rem) {
-  .reset-shell {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-  }
-
-  .reset-brand {
-    gap: 1rem;
-  }
-
-  .reset-logo {
-    width: min(100%, 15rem);
-  }
-
-  .reset-brand p {
-    display: none;
-  }
-
-  .reset-heading {
-    text-align: center;
-    justify-items: center;
-  }
 }
 
 @media (max-width: 34rem) {
@@ -698,11 +672,15 @@ label {
   }
 
   .reset-shell {
-    gap: 1.75rem;
+    gap: 1.5rem;
+  }
+
+  .reset-logo {
+    width: min(100%, 13rem);
   }
 
   .reset-heading h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
 
   .rules-panel {

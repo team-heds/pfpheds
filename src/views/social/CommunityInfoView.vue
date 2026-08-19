@@ -28,7 +28,6 @@
     </template>
   </SocialThreeColumnLayout>
 
-  <MobileBottomNav :scrollTarget="mainFeedRef" />
   <Toast />
 </template>
 
@@ -38,7 +37,6 @@ import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import Navbar from "@/components/common/utils/Navbar.vue";
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
-import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import MainFeedSupabase from '@/components/social/library/MainFeedSupabase.vue';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/supabase.js';
@@ -53,7 +51,6 @@ export default {
     Navbar,
     LeftSidebar,
     RightSidebar,
-    MobileBottomNav,
     MainFeedSupabase,
     Button,
     Toast,

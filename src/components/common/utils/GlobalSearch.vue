@@ -691,6 +691,15 @@ onUnmounted(() => {
   background-color: var(--surface-hover) !important;
 }
 
+.search-navbar-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.search-navbar-btn:active {
+  transform: scale(0.96);
+}
+
 /* === INPUT WRAPPER === */
 .search-input-wrapper {
   margin-bottom: 1rem;
@@ -1085,6 +1094,18 @@ onUnmounted(() => {
   .keyboard-shortcuts {
     flex-direction: column;
     gap: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-navbar-btn,
+  .result-arrow {
+    transition: none;
+  }
+
+  .result-category,
+  .search-history {
+    animation: none;
   }
 }
 

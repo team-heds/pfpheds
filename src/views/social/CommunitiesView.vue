@@ -105,7 +105,6 @@
 
     <ConfirmDialog />
     <Toast />
-    <MobileBottomNav :scrollTarget="mainFeedRef" />
   </div>
 </template>
 
@@ -118,7 +117,6 @@ import Navbar from '@/components/common/utils/Navbar.vue'
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import RightSidebar from '@/components/social/library/RightSidebar.vue'
 import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
-import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase.js'
 import Card from 'primevue/card'
@@ -155,7 +153,6 @@ export default {
     LeftSidebar,
     RightSidebar,
     SocialThreeColumnLayout,
-    MobileBottomNav,
     Card,
     DataTable,
     Column,

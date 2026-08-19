@@ -1,24 +1,24 @@
 <template>
-  <div class="relative overflow-hidden flex flex-column justify-content-center">
+  <header class="navbar-shell">
     <!-- Effets de fond -->
     <div class="bg-circle opacity-50" :style="{ top: '-200px', left: '-700px' }"></div>
     <div class="bg-circle hidden lg:flex" :style="{ top: '50px', right: '-800px', transform: 'rotate(60deg)' }"></div>
 
-    <!-- Ô£à Navbar Desktop -->
+    <!-- Navigation desktop et tablette -->
     <div class="landing-wrapper desktop-nav">
-      <div class="flex align-items-center py-4 px-1 navbar-container">
+      <nav class="navbar-container" aria-label="Navigation principale">
 
-        <!-- Ô£à Logo (gauche) -->
-        <div class="flex-shrink-0 px-4">
-          <a class="cursor-pointer" @click="navigateTo('/feed')">
-            <img src="/pictoHEdS.png" alt="Logo" style="height: 44px; width: 44px; border-radius: 12px;" />
-          </a>
+        <!-- Logo (gauche) -->
+        <div class="navbar-brand">
+          <router-link class="navbar-brand__link" to="/feed" aria-label="HEdS — Accueil">
+            <img src="/pictoHEdS.png" alt="" class="navbar-brand__image" />
+          </router-link>
         </div>
 
-        <!-- Ô£à Menu principal (centre) -->
-        <div class="flex-auto flex justify-content-center align-items-center">
-          <ul class="list-none p-3 m-0 flex align-items-center select-none flex-row cursor-pointer center-menu">
-            <li class="mx-3" v-for="item in filteredMenuItems" :key="item.title">
+        <!-- Menu principal (centre) -->
+        <div class="navbar-primary-scroll">
+          <ul class="center-menu">
+            <li v-for="item in filteredMenuItems" :key="item.title">
               <ButtonNavbar
                 :icon="item.icon"
                 :bgColor="'var(--surface-overlay)'"
@@ -26,18 +26,18 @@
                 :iconColor="'var(--primary-color)'"
                 @click="navigateTo(item.link)"
                 :title="item.title"
+                :aria-label="item.title"
+                :active="isMenuItemActive(item)"
               />
             </li>
           </ul>
         </div>
 
-        <!-- Ô£à Barre de recherche et autres boutons (droite) -->
-        <div class="flex-shrink-0 flex align-items-center px-4">
+        <!-- Recherche et actions (droite) -->
+        <div class="navbar-actions" aria-label="Actions utilisateur">
 
           <!-- ­ƒöì Global Search -->
-          <GlobalSearch
-          class="mx-3"
-          />
+          <GlobalSearch />
 
           <!-- ­ƒô® Messages
           <ButtonNavbar
@@ -60,8 +60,8 @@
             :hoverBgColor="'var(--surface-hover)'"
             :iconColor="'var(--primary-color)'"
             @click="navigateTo('/feed')"
-            class="mx-3"
             title="Notifications"
+            aria-label="Notifications"
           />
 
           <!-- ÔÜÖ´©Å Param├¿tres -->
@@ -72,19 +72,19 @@
             :hoverBgColor="'var(--surface-hover)'"
             :iconColor="'var(--primary-color)'"
             @click="openSettingsDialog"
-            class="mx-3"
-            title="Param├¿tres"
+            title="Paramètres"
+            aria-label="Ouvrir les paramètres"
           />
 
-          <!-- ­ƒÄ¿ Switch Color -->
-          <SwitchColor class="mx-3" title="Th├¿me" />
+          <!-- Thème -->
+          <SwitchColor />
 
         </div>
-      </div>
+      </nav>
     </div>
 
     <!-- Ô£à Fen├¬tre de dialogue Param├¿tres -->
-    <Dialog v-model:visible="isSettingsDialogVisible" modal header="Paramètre" :style="{ width: '20rem' }">
+    <Dialog v-model:visible="isSettingsDialogVisible" modal header="Paramètres" :style="{ width: 'min(20rem, calc(100vw - 2rem))' }">
       <div class="flex flex-column gap-3">
         <Button label="Profil" icon="pi pi-user" class="w-full p-button-outlined" @click="navigateToProfile" />
         <Button label="Paramètres" icon="pi pi-cog" class="w-full p-button-outlined" @click="navigateTo('/admin/settings')" />
@@ -94,7 +94,7 @@
       <br>
       @Copyright HEdS
     </Dialog>
-  </div>
+  </header>
 </template>
 
 <script setup>
@@ -193,6 +193,14 @@ const navigateTo = (path) => {
   }
 };
 
+const resolveMenuLink = (item) => item.isVotation ? getVotationLink() : item.link;
+
+const isMenuItemActive = (item) => {
+  const target = resolveMenuLink(item);
+  if (target === '/feed') return route.path === '/feed';
+  return route.path === target || route.path.startsWith(`${target}/`);
+};
+
 const navigateToProfile = () => {
   const currentUser = authStore.user;
   if (currentUser) {
@@ -273,37 +281,117 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Ô£à Ajustements pour la navbar */
-.desktop-nav {
-  display: flex;
-  flex-direction: column;
-  padding-left: 10rem;
-  padding-right: 10rem;
+.navbar-shell {
+  position: relative;
+  z-index: 20;
+  min-width: 0;
 }
 
-
+.desktop-nav {
+  width: 100%;
+  padding-inline: clamp(1rem, 5vw, 10rem);
+}
 
 .navbar-container {
-  padding-left: 4rem;
-  padding-right: 4rem;
+  --navbar-control-size: 44px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(1rem, 2.5vw, 3rem);
+  width: 100%;
+  min-width: 0;
+  padding-block: 1rem;
+}
+
+.navbar-brand,
+.navbar-actions {
+  flex-shrink: 0;
+}
+
+.navbar-brand__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--navbar-control-size);
+  height: var(--navbar-control-size);
+  border-radius: 12px;
+}
+
+.navbar-brand__link:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.navbar-brand__image {
+  display: block;
+  width: var(--navbar-control-size);
+  height: var(--navbar-control-size);
+  border-radius: 12px;
+}
+
+.navbar-primary-scroll {
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+}
+
+.navbar-primary-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .center-menu {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 1.2vw, 1.5rem);
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
 }
 
-/* Ô£à Ajustements pour mobile */
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 1rem);
+}
+
+/* La navigation mobile dédiée prend le relais. */
 @media (max-width: 768px) {
   .desktop-nav { display: none; }
 }
 
-/* Ajustements pour les appareils plus petits */
-@media (max-width: 992px) {
+/* Sur les tablettes étroites, les destinations restent visibles sur une seconde ligne. */
+@media (min-width: 769px) and (max-width: 900px) {
+  .desktop-nav {
+    padding-inline: 1rem;
+  }
+
   .navbar-container {
-    padding-left: 2rem;
-    padding-right: 2rem;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem 1rem;
+  }
+
+  .navbar-primary-scroll {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .center-menu {
+    justify-content: center;
+  }
+
+  .navbar-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+@media (forced-colors: active) {
+  .navbar-brand__link:focus-visible {
+    outline-color: CanvasText;
   }
 }
 </style>
