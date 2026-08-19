@@ -1,34 +1,32 @@
 <template>
   <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
-    <section class="text-white text-center py-5 rounded-lg mb-5">
-      <h1 class="text-5xl font-bold">Modifier l'utilisateur</h1>
-    </section>
-
-    <div class="card p-4 shadow-lg">
-      <form @submit.prevent="updateUser" class="app-form p-fluid grid">
-        <div class="p-field col-6">
-          <label for="prenom">Prénom</label>
-          <InputText id="prenom" v-model="prenom" required />
-        </div>
-        <div class="p-field col-6">
-          <label for="nom">Nom</label>
-          <InputText id="nom" v-model="nom" required />
-        </div>
-        <div class="p-field col-6">
-          <label for="role">Rôle</label>
-          <Dropdown id="role" v-model="role" :options="roles" optionLabel="label" placeholder="Sélectionner un rôle" required />
-        </div>
-        <div class="p-field col-6">
-          <label for="email">Email</label>
-          <InputText id="email" v-model="email" type="email" required />
-        </div>
-        <div class="p-field col-6">
-          <label for="institution">Institution</label>
-          <InputText id="institution" v-model="institution" />
-        </div>
-        <Button type="submit" label="Mettre à jour" class="p-button-primary" />
+    <FormShell title="Modifier l’utilisateur" description="Mettez à jour son identité, son rôle et son institution." :busy="saving || loading">
+      <FormStatus v-if="loading" status="loading" message="Chargement du compte…" />
+      <form v-else id="edit-user-form" @submit.prevent="updateUser" class="app-form p-fluid">
+        <FormSection title="Identité et affectation" icon="pi pi-user-edit">
+          <FormField for-id="prenom" label="Prénom" required v-slot="field">
+            <InputText v-bind="field.controlAttrs" v-model="prenom" autocomplete="given-name" required />
+          </FormField>
+          <FormField for-id="nom" label="Nom" required v-slot="field">
+            <InputText v-bind="field.controlAttrs" v-model="nom" autocomplete="family-name" required />
+          </FormField>
+          <FormField for-id="role" label="Rôle" required v-slot="field">
+            <Dropdown v-bind="field.controlAttrs" v-model="role" :options="roles" optionLabel="label" optionValue="value" placeholder="Sélectionner un rôle" required />
+          </FormField>
+          <FormField for-id="email" label="Email" required :error="emailError" v-slot="field">
+            <InputText v-bind="field.controlAttrs" v-model="email" type="email" autocomplete="email" required />
+          </FormField>
+          <FormField for-id="institution" label="Institution" optional-label="Facultatif" span="12" v-slot="field">
+            <InputText v-bind="field.controlAttrs" v-model="institution" />
+          </FormField>
+        </FormSection>
+        <FormStatus :status="formStatus" :message="formMessage" />
       </form>
-    </div>
+      <template #actions>
+        <Button type="button" label="Annuler" severity="secondary" outlined @click="$router.back()" :disabled="saving" />
+        <Button type="submit" form="edit-user-form" label="Enregistrer les modifications" icon="pi pi-check" :loading="saving" :disabled="loading" />
+      </template>
+    </FormShell>
   </div>
 </template>
 
@@ -38,13 +36,21 @@ import { ref, get, set } from "firebase/database";
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
+import FormShell from '@/components/common/forms/FormShell.vue';
+import FormSection from '@/components/common/forms/FormSection.vue';
+import FormField from '@/components/common/forms/FormField.vue';
+import FormStatus from '@/components/common/forms/FormStatus.vue';
 
 export default {
   name: 'NewUserFormModif',
   components: {
     InputText,
     Dropdown,
-    Button
+    Button,
+    FormShell,
+    FormSection,
+    FormField,
+    FormStatus
   },
   props: {
     userId: String
@@ -56,6 +62,11 @@ export default {
       role: '',
       email: '',
       institution: '',
+      loading: true,
+      saving: false,
+      emailError: '',
+      formStatus: 'idle',
+      formMessage: '',
       roles: [
         { label: 'Admin', value: 'admin' },
         { label: 'PF', value: 'PF' },
@@ -77,20 +88,36 @@ export default {
           this.institution = userData.Institution || '';
         } else {
           console.error('Utilisateur non trouvé');
-          // Gérer le cas où l'utilisateur n'est pas trouvé
+          this.formStatus = 'error';
+          this.formMessage = 'Ce compte est introuvable.';
         }
       } catch (error) {
         console.error('Erreur de chargement des données de l’utilisateur', error);
-        // Gérer les erreurs de chargement des données
+        this.formStatus = 'error';
+        this.formMessage = 'Le compte n’a pas pu être chargé.';
       }
     } else {
       console.error('Aucun ID d’utilisateur fourni');
-      // Gérer le cas où aucun ID d'utilisateur n'est fourni
+      this.formStatus = 'error';
+      this.formMessage = 'Aucun compte n’a été sélectionné.';
     }
+    this.loading = false;
   },
   methods: {
     async updateUser() {
+      this.emailError = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email) ? '' : 'Saisissez une adresse email valide.';
+      if (this.emailError) {
+        this.formStatus = 'error';
+        this.formMessage = 'Corrigez le champ signalé avant d’enregistrer.';
+        await this.$nextTick();
+        document.querySelector('#edit-user-form [aria-invalid="true"]')?.focus();
+        return;
+      }
+
       if (confirm('Êtes-vous sûr de vouloir mettre à jour cet utilisateur ?')) {
+        this.saving = true;
+        this.formStatus = 'loading';
+        this.formMessage = 'Enregistrement des modifications…';
         try {
           const userRef = ref(db, 'Users/' + this.userId);
           await set(userRef, {
@@ -102,10 +129,15 @@ export default {
           });
 
           // Rediriger vers la liste des utilisateurs
+          this.formStatus = 'success';
+          this.formMessage = 'Les modifications ont été enregistrées.';
           this.$router.push({ name: 'UserList' });
         } catch (error) {
           console.error('Erreur de mise à jour de l’utilisateur', error);
-          // Gérer les erreurs de mise à jour
+          this.formStatus = 'error';
+          this.formMessage = 'La mise à jour a échoué. Réessayez.';
+        } finally {
+          this.saving = false;
         }
       }
     }

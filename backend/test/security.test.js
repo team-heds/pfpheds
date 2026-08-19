@@ -49,12 +49,42 @@ test('frontend source contains no service-role or hardcoded Google API key', () 
   assert.doesNotMatch(source, /AIza[0-9A-Za-z_-]{30,}/)
 })
 
+test('student audiences are never inferred directly in frontend list queries', () => {
+  const root = path.resolve(__dirname, '..', '..', 'src')
+  const files = []
+  const walk = (directory) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const target = path.join(directory, entry.name)
+      if (entry.isDirectory()) walk(target)
+      else if (/\.(js|vue|mjs)$/.test(entry.name)) files.push(target)
+    }
+  }
+  walk(root)
+  const source = files.map((file) => fs.readFileSync(file, 'utf8')).join('\n')
+
+  assert.doesNotMatch(source, /role\.eq\.EtudiantPhysio/)
+  assert.doesNotMatch(source, /filter\(['"]permissions['"][^\n]*EtudiantPhysio/)
+  assert.doesNotMatch(source, /studentsphysio_with_profiles/)
+})
+
 test('every business API is behind the global JWT middleware', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8')
   const authIndex = source.indexOf("app.use('/api', authenticate)")
   const firstBusinessRoute = source.indexOf("app.use('/api/institutions'")
   assert.ok(authIndex > 0, 'global API authentication middleware is required')
   assert.ok(authIndex < firstBusinessRoute, 'global authentication must run before business routes')
+})
+
+test('password recovery is the only explicit public business route before JWT auth', () => {
+  const source = fs.readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8')
+  const publicRecovery = source.indexOf(
+    "app.use('/api/auth/password-recovery', createPasswordRecoveryRequestRouter())"
+  )
+  const authIndex = source.indexOf("app.use('/api', authenticate)")
+
+  assert.ok(publicRecovery > 0, 'the password recovery endpoint must be mounted')
+  assert.ok(publicRecovery < authIndex, 'password recovery must be callable without a JWT')
+  assert.match(source, /createPasswordRecoveryRequestRouter/)
 })
 
 test('every admin frontend route declares authentication and a permission or redirects', () => {
@@ -107,6 +137,8 @@ test('sensitive API routes reject anonymous requests', async () => {
       ['/api/ftp/diagnostic', 'GET'],
       ['/api/chat', 'POST'],
       ['/api/admin/users', 'POST'],
+      ['/api/audiences/students', 'GET'],
+      ['/api/audiences/si-teachers', 'GET'],
       ['/api/integrations/vimeo/videos', 'GET'],
       ['/api/integrations/github/status', 'GET'],
       ['/api/resultat-votation/student/test-user/PFP1A/2026', 'GET']
@@ -146,4 +178,24 @@ test('only operational probes are public', async () => {
 test('the production reverse proxy is trusted by exactly one hop', () => {
   const app = require('../index')
   assert.equal(app.get('trust proxy'), 1)
+})
+
+test('the trusted backend can read track roles without exposing them to browser roles', () => {
+  const migration = fs.readFileSync(
+    path.resolve(
+      __dirname,
+      '..',
+      '..',
+      'supabase',
+      'migrations',
+      '20260806_restore_server_role_track_access.sql'
+    ),
+    'utf8'
+  )
+
+  assert.match(
+    migration,
+    /grant\s+select\s+on\s+table\s+public\.user_track_roles\s+to\s+service_role/i
+  )
+  assert.doesNotMatch(migration, /to\s+(anon|authenticated)\b/i)
 })

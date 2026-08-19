@@ -1,5 +1,6 @@
 const STUDENT_TOKENS = new Set(['student', 'etudiant', 'etudiantphysio', 'studentphysio'])
 const SI_TEACHER_TOKENS = new Set(['enseignantsoins'])
+const GENERIC_ROLE_TOKENS = new Set(['', 'user', 'authenticated', 'member'])
 const ARCHIVED_TOKENS = new Set(['archivedstudent', 'studentarchived', 'archiveetudiant'])
 
 export function normalizeAudienceToken(value) {
@@ -38,17 +39,29 @@ function audienceTokens(profile) {
     .filter(Boolean)
 }
 
+function belongsToAudience(profile, expectedTokens) {
+  if (!isActiveProfile(profile)) return false
+
+  const roleToken = normalizeAudienceToken(profile?.role)
+  if (expectedTokens.has(roleToken)) return true
+  if (!GENERIC_ROLE_TOKENS.has(roleToken)) return false
+
+  return normalizePermissions(profile?.permissions)
+    .map(normalizeAudienceToken)
+    .some(token => expectedTokens.has(token))
+}
+
 export function isActiveProfile(profile) {
   if (!profile || profile.is_active === false) return false
   return !audienceTokens(profile).some(token => ARCHIVED_TOKENS.has(token))
 }
 
 export function isStudentProfile(profile) {
-  return isActiveProfile(profile) && audienceTokens(profile).some(token => STUDENT_TOKENS.has(token))
+  return belongsToAudience(profile, STUDENT_TOKENS)
 }
 
 export function isSITeacherProfile(profile) {
-  return isActiveProfile(profile) && audienceTokens(profile).some(token => SI_TEACHER_TOKENS.has(token))
+  return belongsToAudience(profile, SI_TEACHER_TOKENS)
 }
 
 export const filterStudentProfiles = profiles => (profiles || []).filter(isStudentProfile)

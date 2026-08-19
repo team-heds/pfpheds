@@ -1,0 +1,10 @@
+services:
+  auth:
+    environment:
+      # Recovery links and email OTPs expire server-side after one hour.
+      GOTRUE_MAILER_OTP_EXP: "3600"
+      # Keep recovery callbacks and email content versioned with the application.
+      GOTRUE_SITE_URL: "https://hedsvs.ch"
+      GOTRUE_URI_ALLOW_LIST: "https://hedsvs.ch/reset-password*,https://www.hedsvs.ch/reset-password*"
+      GOTRUE_MAILER_SUBJECTS_RECOVERY: "Réinitialiser votre mot de passe HEdS"
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: "https://hedsvs.ch/auth-email-templates/password-recovery.html"

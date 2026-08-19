@@ -19,6 +19,7 @@ vi.mock('firebase/auth', () => ({
 }))
 
 vi.mock('@/firebase', () => ({
+  isFirebaseEnabled: true,
   auth: {
     signOut: () => mockFirebaseSignOut(),
   }
@@ -28,7 +29,6 @@ vi.mock('@/firebase', () => ({
 const mockSupabaseSignUp = vi.fn()
 const mockSupabaseSignIn = vi.fn()
 const mockSupabaseSignOut = vi.fn()
-const mockSupabaseResetPassword = vi.fn()
 const mockSupabaseGetUser = vi.fn()
 const mockSupabaseGetSession = vi.fn()
 const mockSupabaseRefreshSession = vi.fn()
@@ -40,7 +40,6 @@ vi.mock('@/supabase', () => ({
       signUp: (...args) => mockSupabaseSignUp(...args),
       signInWithPassword: (...args) => mockSupabaseSignIn(...args),
       signOut: () => mockSupabaseSignOut(),
-      resetPasswordForEmail: (...args) => mockSupabaseResetPassword(...args),
       getUser: () => mockSupabaseGetUser(),
       getSession: () => mockSupabaseGetSession(),
       refreshSession: () => mockSupabaseRefreshSession(),
@@ -50,6 +49,11 @@ vi.mock('@/supabase', () => ({
       }),
     }
   }
+}))
+
+const mockPasswordRecoveryRequest = vi.fn()
+vi.mock('@/service/passwordRecoveryRequestService', () => ({
+  requestPasswordRecovery: (...args) => mockPasswordRecoveryRequest(...args),
 }))
 
 const { useAuthStore } = await import('@/stores/authStore')
@@ -98,6 +102,29 @@ describe('authStore', () => {
 
     it('isSupabaseUser retourne false par défaut', () => {
       expect(store.isSupabaseUser).toBe(false)
+    })
+
+    it('ne considère jamais une session Firebase comme une session applicative', () => {
+      store.user = { uid: 'legacy-firebase-user' }
+      store.authProvider = 'firebase'
+
+      expect(store.isFirebaseUser).toBe(false)
+      expect(store.isSupabaseUser).toBe(false)
+    })
+  })
+
+  describe('restauration de session', () => {
+    it('restaure exclusivement la session Supabase', async () => {
+      const user = { id: 'supabase-user', email: 'admin@hevs.ch' }
+      const session = { user, access_token: 'supabase-token', expires_at: 4_102_444_800 }
+      mockSupabaseGetUser.mockResolvedValue({ data: { user }, error: null })
+      mockSupabaseGetSession.mockResolvedValue({ data: { session }, error: null })
+
+      await store.checkAuthState()
+
+      expect(store.user).toEqual(user)
+      expect(store.session).toEqual(session)
+      expect(store.authProvider).toBe('supabase')
     })
   })
 
@@ -162,23 +189,28 @@ describe('authStore', () => {
 
   // ─── Supabase resetPassword ───
   describe('resetPasswordSupabase', () => {
-    it('envoie un email de reset', async () => {
-      mockSupabaseResetPassword.mockResolvedValue({ error: null })
+    it.each([
+      'etudiant.connu@hevs.ch',
+      'adresse.inconnue@example.invalid'
+    ])('ne révèle pas côté client si %s existe', async (email) => {
+      mockPasswordRecoveryRequest.mockResolvedValue(undefined)
 
-      await store.resetPasswordSupabase('test@hevs.ch')
+      await store.resetPasswordSupabase(email)
 
-      expect(mockSupabaseResetPassword).toHaveBeenCalled()
+      expect(mockPasswordRecoveryRequest).toHaveBeenCalledWith(email)
       expect(store.loading).toBe(false)
       expect(store.error).toBeNull()
     })
 
     it('gère les erreurs', async () => {
-      mockSupabaseResetPassword.mockResolvedValue({
-        error: { message: 'User not found' }
-      })
+      mockPasswordRecoveryRequest.mockRejectedValue(
+        Object.assign(new Error('unavailable'), {
+          code: 'password_recovery_unavailable'
+        })
+      )
 
       await expect(store.resetPasswordSupabase('x@y.z')).rejects.toThrow()
-      expect(store.error).toBe('User not found')
+      expect(store.error).toBe('password_recovery_unavailable')
     })
   })
 

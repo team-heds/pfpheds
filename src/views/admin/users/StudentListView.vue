@@ -11,6 +11,9 @@
         v-model:filters="filters"
         filterDisplay="menu"
         :loading="loading"
+        responsiveLayout="scroll"
+        scrollable
+        scrollHeight="calc(100dvh - 20rem)"
         :globalFilterFields="['Nom', 'Prenom', 'Classe', 'Mail']"
         showGridlines
       >
@@ -193,6 +196,7 @@
 
 <script>
 import studentsService from '@/service/studentsService';
+import { getAllStudents } from '@/service/studentDirectoryService';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
@@ -342,14 +346,7 @@ export default {
       const startTime = performance.now();
       
       try {
-        // ⚡ OPTIMISATION: Requêtes parallèles pour accélérer le chargement
-        const [students, { data: physioData }] = await Promise.all([
-          studentsService.getAllStudents(),
-          supabase.from('StudentsPhysio').select('user_id, repondant_hes')
-        ]);
-
-        // ⚡ OPTIMISATION: Map pour lookup rapide O(1)
-        const physioByUserId = new Map((physioData || []).map(sp => [sp.user_id, sp]));
+        const students = await getAllStudents();
 
         // ⚡ OPTIMISATION: Pré-calcul en une seule passe avec mutation directe
         const len = students.length;
@@ -364,9 +361,7 @@ export default {
           s.__searchKey = parts.join(' ').toLowerCase();
           // Flag pour loading
           s.updating = false;
-          // Répondant HES
-          const physio = physioByUserId.get(s.id);
-          s.repondant_hes = physio?.repondant_hes || null;
+          s.repondant_hes = s.repondant_hes || null;
         }
         
         this.etudiants = students;
@@ -754,7 +749,7 @@ export default {
   letter-spacing: 0.5px;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .pfp-badge {
@@ -785,5 +780,12 @@ export default {
 
 .text-gray-400 {
   color: #9ca3af;
+}
+
+@media (max-width: 48rem) {
+  .filter-menu { padding:.75rem; }
+  :deep(.p-datatable-wrapper) { max-width:calc(100vw - 1.5rem); }
+  :deep(.p-paginator) { justify-content:flex-start; overflow-x:auto; flex-wrap:nowrap; }
+  .pfp-badge-large { min-width:0; padding:.4rem .7rem; }
 }
 </style>

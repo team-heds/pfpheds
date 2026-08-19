@@ -1,25 +1,19 @@
 <template>
   <div class="surface-section px-4 py-8 md:px-6 lg:px-8">
-    <div class="text-center">
-      <h1 class="text-5xl font-bold mb-4">Nouvel enseignant</h1>
-    </div>
-    <form @submit.prevent="addNewEnseignant" class="app-form p-fluid grid">
-      <div class="field mb-4 col-6">
-        <label for="prenom" class="block text-xl mb-2">Prénom</label>
-        <InputText id="prenom" v-model="prenom" required class="w-full" />
-      </div>
-      <div class="field mb-4 col-6">
-        <label for="nom" class="block text-xl mb-2">Nom</label>
-        <InputText id="nom" v-model="nom" required class="w-full" />
-      </div>
-      <div class="field mb-4 col-12">
-        <label for="email" class="block text-xl mb-2">Email</label>
-        <InputText id="email" v-model="email" required type="email" class="w-full" />
-      </div>
-      <div class="text-center mt-5 col-12">
-        <Button type="submit" label="Ajouter" class="p-button-primary w-full lg:w-auto" />
-      </div>
-    </form>
+    <FormShell title="Nouvel enseignant" description="Créez un profil enseignant avec ses coordonnées principales." :busy="saving">
+      <form id="teacher-create-form" @submit.prevent="addNewEnseignant" class="app-form p-fluid">
+        <FormSection title="Identité" icon="pi pi-user-plus">
+          <FormField for-id="prenom" label="Prénom" required v-slot="field"><InputText v-bind="field.controlAttrs" v-model="prenom" autocomplete="given-name" required /></FormField>
+          <FormField for-id="nom" label="Nom" required v-slot="field"><InputText v-bind="field.controlAttrs" v-model="nom" autocomplete="family-name" required /></FormField>
+          <FormField for-id="email" label="Email" required span="12" :error="emailError" v-slot="field"><InputText v-bind="field.controlAttrs" v-model="email" type="email" autocomplete="email" required /></FormField>
+        </FormSection>
+        <FormStatus :status="formStatus" :message="formMessage" />
+      </form>
+      <template #actions>
+        <Button type="button" label="Annuler" severity="secondary" outlined @click="$router.back()" :disabled="saving" />
+        <Button type="submit" form="teacher-create-form" label="Créer l’enseignant" icon="pi pi-check" :loading="saving" />
+      </template>
+    </FormShell>
   </div>
 </template>
 
@@ -27,22 +21,45 @@
 import { getDatabase, ref as dbRef, get, set } from "firebase/database";
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import FormShell from '@/components/common/forms/FormShell.vue';
+import FormSection from '@/components/common/forms/FormSection.vue';
+import FormField from '@/components/common/forms/FormField.vue';
+import FormStatus from '@/components/common/forms/FormStatus.vue';
 
 export default {
   name: 'EnseignantForm',
   components: {
     InputText,
-    Button
+    Button,
+    FormShell,
+    FormSection,
+    FormField,
+    FormStatus
   },
   data() {
     return {
       prenom: '',
       nom: '',
-      email: ''
+      email: '',
+      saving: false,
+      emailError: '',
+      formStatus: 'idle',
+      formMessage: ''
     };
   },
   methods: {
     async addNewEnseignant() {
+      this.emailError = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email) ? '' : 'Saisissez une adresse email valide.';
+      if (this.emailError) {
+        this.formStatus = 'error';
+        this.formMessage = 'Corrigez le champ signalé avant de créer le profil.';
+        await this.$nextTick();
+        document.querySelector('#teacher-create-form [aria-invalid="true"]')?.focus();
+        return;
+      }
+      this.saving = true;
+      this.formStatus = 'loading';
+      this.formMessage = 'Création du profil enseignant…';
       try {
         const db = getDatabase();
         const enseignantsRef = dbRef(db, 'Enseignants');
@@ -66,37 +83,19 @@ export default {
         this.email = '';
 
         // Rediriger vers la liste des enseignants
+        this.formStatus = 'success';
+        this.formMessage = 'Le profil enseignant a été créé.';
         this.$router.push({ name: 'EnseignantList' });
       } catch (error) {
         console.error('Erreur d’ajout du nouvel enseignant', error);
+        this.formStatus = 'error';
+        this.formMessage = 'Le profil n’a pas pu être créé. Réessayez.';
+      } finally {
+        this.saving = false;
       }
     }
   }
 };
 </script>
 
-<style scoped>
-.surface-section {
-  background-color: #ffffff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.text-center {
-  text-align: center;
-}
-
-.field {
-  margin-bottom: 1.5rem;
-}
-
-.p-button-primary {
-  background-color: #007bff;
-  border: none;
-}
-
-.p-button-primary:hover {
-  background-color: #0056b3;
-}
-</style>
+<style scoped></style>

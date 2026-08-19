@@ -881,5 +881,9 @@ function listenUserRole() {
   .iv-content { margin-top: 1rem; padding: 0 .75rem 3rem; }
   .iv-nav { width: 100%; }
   .iv-nav__btn { flex: 1; justify-content: center; font-size: .8rem; padding: .5rem .75rem; }
+  .iv-card { padding: 1.1rem; }
+  .iv-map__canvas { height: min(60dvh, 22rem); }
+  .iv-hero__addr { align-items:flex-start; }
+  .iv-pill { min-height:2.25rem; }
 }
 </style>

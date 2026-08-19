@@ -25,7 +25,8 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { supabase } from '@/supabase';
 import { auth, isFirebaseEnabled } from '@/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { requestPasswordRecovery } from '@/service/passwordRecoveryRequestService';
 
 export const useAuthStore = defineStore('auth', () => {
   const AUTH_BYPASS = import.meta.env.VITE_DISABLE_AUTH === 'true';
@@ -46,7 +47,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Getters
   const isLoggedIn = computed(() => AUTH_BYPASS || !!user.value);
-  const isFirebaseUser = computed(() => authProvider.value === 'firebase');
+  // Firebase reste disponible pour quelques données historiques, mais ne constitue
+  // plus jamais un fournisseur d'authentification de la plateforme.
+  const isFirebaseUser = computed(() => false);
   const isSupabaseUser = computed(() => AUTH_BYPASS || authProvider.value === 'supabase');
 
   // Actions Firebase
@@ -178,13 +181,9 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true;
     error.value = null;
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
-      if (resetError) throw resetError;
+      await requestPasswordRecovery(email);
     } catch (e) {
-      error.value = e.message;
-      console.error('Supabase reset password error:', e.message);
+      error.value = e.code || 'password_recovery_unavailable';
       throw e;
     } finally {
       loading.value = false;
@@ -228,24 +227,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     const timestamp = new Date().toLocaleTimeString();
-
-    // Vérifier Firebase avec une promesse pour attendre la restauration de session
-    const firebaseUser = isFirebaseEnabled && auth
-      ? await new Promise((resolve) => {
-          const unsubscribe = onAuthStateChanged(auth, (firebaseCurrentUser) => {
-            unsubscribe();
-            resolve(firebaseCurrentUser);
-          });
-        })
-      : null;
-
-    if (firebaseUser) {
-      user.value = firebaseUser;
-      authProvider.value = 'firebase';
-      session.value = null;
-      lastSessionCheck.value = Date.now();
-      return;
-    }
 
     // Vérifier Supabase avec gestion d'erreur
     try {
@@ -366,21 +347,19 @@ export const useAuthStore = defineStore('auth', () => {
     if (AUTH_BYPASS) return;
     // Gérer tous les événements qui indiquent une session active
     if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && newSession) {
-      // Ne pas écraser si Firebase est déjà connecté
-      if (authProvider.value !== 'firebase') {
-        session.value = newSession;
-        user.value = newSession.user;
-        authProvider.value = 'supabase';
+      // Supabase est l'unique source d'authentification de la plateforme.
+      session.value = newSession;
+      user.value = newSession.user;
+      authProvider.value = 'supabase';
         
-        if (event === 'SIGNED_IN') {
-          // 🆕 CRÉATION AUTOMATIQUE DU PROFIL (DÉSACTIVÉ TEMPORAIREMENT)
-          try {
-              // await userProfileAutoCreation.createUserProfileFromAuth(newSession.user, 'supabase');
-            // await userProfileAutoCreation.updateLastLogin(newSession.user.id);
-          } catch (error) {
-            console.error('❌ Erreur création automatique profil:', error);
-            // L\'erreur ne bloque pas la connexion
-          }
+      if (event === 'SIGNED_IN') {
+        // 🆕 CRÉATION AUTOMATIQUE DU PROFIL (DÉSACTIVÉ TEMPORAIREMENT)
+        try {
+            // await userProfileAutoCreation.createUserProfileFromAuth(newSession.user, 'supabase');
+          // await userProfileAutoCreation.updateLastLogin(newSession.user.id);
+        } catch (error) {
+          console.error('❌ Erreur création automatique profil:', error);
+          // L\'erreur ne bloque pas la connexion
         }
       }
     } else if (event === 'SIGNED_OUT') {
@@ -391,25 +370,6 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
   });
-
-  // Firebase auth state change
-  if (isFirebaseEnabled && auth) {
-    onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        // Ne pas écraser si Supabase est déjà connecté
-        if (authProvider.value !== 'supabase') {
-          user.value = firebaseUser;
-          authProvider.value = 'firebase';
-          session.value = null; // Firebase n'utilise pas de session comme Supabase
-        }
-      } else {
-        if (authProvider.value === 'firebase') {
-          user.value = null;
-          authProvider.value = null;
-        }
-      }
-    });
-  }
 
   return {
     user,

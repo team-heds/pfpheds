@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: Production quality
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: production-${{ github.ref }}
+  group: production-quality-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -92,6 +92,9 @@ jobs:
       - name: Install presentation dependencies
         run: npm ci --prefix presentation
 
+      - name: Install Playwright Chromium
+        run: npm exec --prefix presentation -- playwright install --with-deps chromium
+
       - name: Validate frontend environment
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -110,41 +113,3 @@ jobs:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_VAPID_PUBLIC: ${{ secrets.VITE_VAPID_PUBLIC }}
         run: npm run build:all
-
-      - name: Package production artifact
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-dist
-          path: dist/
-          if-no-files-found: error
-          retention-days: 1
-
-  deploy:
-    name: Deploy production
-    if: github.event_name == 'push'
-    needs: quality
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://hedsvs.ch
-
-    steps:
-      - name: Download validated artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: production-dist
-          path: dist/
-
-      - name: Deploy via encrypted FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          local-dir: ./dist/
-          server-dir: /
-          timeout: 300000
-          log-level: verbose

@@ -20,6 +20,7 @@ const sidebars = {
       label: 'Frontend',
       collapsed: false,
       items: [
+        'components/design-tokens',
         'frontend/bootstrap',
         'frontend/component-library-overview',
         'frontend/component-library-layout',
@@ -119,6 +120,7 @@ const sidebars = {
         'testing/overview',
         'testing/scripts',
         'testing/diagnostic-tools',
+        'testing/password-recovery-recette',
       ],
     },
     {

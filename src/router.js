@@ -39,6 +39,13 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
   const roleStore = useRoleStore();
   debugRouter(`🧭 Navigation vers: ${to.path} depuis: ${from.path}`);
+
+  // Les callbacks de récupération contiennent un code éphémère. Ils doivent
+  // atteindre leur écran immédiatement, sans dépendre du chargement des routes
+  // dynamiques ni d'une vérification de session ordinaire.
+  if (to.path === '/reset-password' || to.path === '/new-password') {
+    return next();
+  }
   
   // 🔥 Charger les routes dynamiques depuis Supabase au premier appel
   if (!dynamicRoutesLoaded) {
@@ -59,11 +66,6 @@ router.beforeEach(async (to, from, next) => {
     }
   }
   
-  // Ne pas vérifier l'auth pour les pages de reset password (évite de consommer le code PKCE)
-  if (to.path === '/reset-password' || to.path === '/new-password') {
-    return next();
-  }
-
   if (AUTH_BYPASS) {
     if (to.path === '/') return next('/home');
     return next();

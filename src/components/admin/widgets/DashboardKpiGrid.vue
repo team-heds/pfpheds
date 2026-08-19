@@ -10,7 +10,7 @@
         </div>
       </div>
       
-      <div class="flex gap-2">
+      <div class="kpi-grid-header__actions">
         <!-- Mode comparaison -->
         <Button
           :icon="compareMode ? 'pi pi-eye' : 'pi pi-chart-line'"
@@ -598,19 +598,19 @@ onMounted(() => {
   gap: 1rem;
 }
 .kpi-grid-header>div:last-child{display:flex;gap:.5rem;flex-wrap:wrap}
+.kpi-grid-header__actions{justify-content:flex-end}
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  align-items: stretch; /* Étirer tous les items sur la même hauteur */
-  grid-auto-rows: 1fr; /* Toutes les lignes ont la même hauteur */
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(1rem, 1.5vw, 1.5rem);
+  align-items: stretch;
 }
 
 .kpi-grid-item {
   position: relative;
   transition: transform 0.2s ease, opacity 0.2s ease;
-  min-height: 150px;
+  min-height: 11rem;
   display: flex;
   flex-direction: column;
   animation: none;
@@ -647,23 +647,23 @@ onMounted(() => {
 
 /* Tailles des KPI */
 .kpi-grid-item.size-compact {
-  grid-column: span 1;
-}
-
-.kpi-grid-item.size-small {
-  grid-column: span 1;
-}
-
-.kpi-grid-item.size-medium {
-  grid-column: span 2;
-}
-
-.kpi-grid-item.size-large {
   grid-column: span 3;
 }
 
+.kpi-grid-item.size-small {
+  grid-column: span 3;
+}
+
+.kpi-grid-item.size-medium {
+  grid-column: span 6;
+}
+
+.kpi-grid-item.size-large {
+  grid-column: span 8;
+}
+
 .kpi-grid-item.size-xlarge {
-  grid-column: span 4;
+  grid-column: span 12;
 }
 
 .kpi-grid-item.draggable {
@@ -671,7 +671,7 @@ onMounted(() => {
 }
 
 .kpi-grid-item.draggable:hover {
-  transform: scale(1.02);
+  transform: translateY(-2px);
   z-index: 10;
 }
 
@@ -828,14 +828,30 @@ onMounted(() => {
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+@media (max-width: 1400px) {
+  .kpi-grid-item.size-compact,
+  .kpi-grid-item.size-small {
+    grid-column: span 4;
   }
-  
+
+  .kpi-grid-item.size-medium {
+    grid-column: span 6;
+  }
+
   .kpi-grid-item.size-large,
   .kpi-grid-item.size-xlarge {
-    grid-column: span 2;
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 1100px) {
+  .kpi-grid-item.size-compact,
+  .kpi-grid-item.size-small {
+    grid-column: span 6;
+  }
+
+  .kpi-grid-item.size-medium {
+    grid-column: span 12;
   }
 }
 
@@ -845,16 +861,14 @@ onMounted(() => {
   }
   .kpi-grid-header>div,.kpi-grid-header>div:last-child{width:100%}.kpi-grid-header>div:last-child :deep(.p-button){flex:1 1 calc(50% - .5rem)}
   
-  .kpi-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .kpi-grid-item.size-compact,
   .kpi-grid-item.size-small,
   .kpi-grid-item.size-medium,
   .kpi-grid-item.size-large,
   .kpi-grid-item.size-xlarge {
-    grid-column: span 1;
+    grid-column: span 12;
   }
+
+  .kpi-grid-header__actions { justify-content: flex-start; }
 }
 </style>

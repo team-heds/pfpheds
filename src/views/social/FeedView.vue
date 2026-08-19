@@ -168,4 +168,11 @@ export default {
 }
 
 /* Le scroll global est géré par #app (App.vue) et la zone centrale */
+@media (max-width: 52rem) {
+  .main-feed {
+    height: auto;
+    overflow: visible;
+    padding-inline: clamp(0.5rem, 3vw, 1rem);
+  }
+}
 </style>

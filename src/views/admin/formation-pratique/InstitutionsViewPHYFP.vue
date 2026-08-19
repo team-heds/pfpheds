@@ -1,7 +1,7 @@
 <template>
   <AdminLayout>
     <ConfirmDialog />
-    <div class="p-4">
+    <div class="admin-table-page p-4">
       <div class="breadcrumb-section mb-3">
         <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
         <i class="pi pi-angle-right text-400 mx-2"></i>
@@ -144,6 +144,7 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
 import DataTableToolbar from '@/components/common/tables/DataTableToolbar.vue';
 import { supabase } from '@/supabase';
+import { getAllStudents } from '@/service/studentDirectoryService';
 
 const router = useRouter();
 const institutionsStore = useInstitutionsStore();
@@ -211,18 +212,14 @@ const globalKpis = computed(() => ([
 
 async function loadGlobalKpis() {
   try {
-    const [profilesRes, placesRes, assignmentsRes] = await Promise.all([
-      supabase
-        .from('user_profiles')
-        .select('user_id, is_active, permissions, family_name, forname, email, classe')
-        .filter('permissions', 'cs', '["EtudiantPhysio"]'),
+    const [profiles, placesRes, assignmentsRes] = await Promise.all([
+      getAllStudents(),
       supabase.from('places').select('PlaceId, InstitutionId, NomPlace'),
       supabase.from('student_result_vote').select('id').eq('status', 'published'),
     ])
 
-    const profiles = profilesRes.data || []
     const activeStudents = profiles.filter((p) => p.is_active !== false).length
-    const incompleteFiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.classe).length
+    const incompleteFiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.Classe).length
     const places = placesRes.data || []
     const openPlaces = places.filter((p) => p.InstitutionId && p.NomPlace).length
 
@@ -362,4 +359,12 @@ const goToDetails = (id) => router.push({ name: 'InstitutionView', params: { id 
 
 <style>
 @import '@/assets/styles/fp-dark.css';
+.admin-table-page { min-width:0; }
+.admin-table-page .p-datatable-wrapper { max-width:100%; }
+@media (max-width: 48rem) {
+  .admin-table-page { padding:.75rem !important; }
+  .admin-table-page > .surface-card { padding:1rem !important; }
+  .admin-table-page .p-dropdown { width:100% !important; }
+  .admin-table-page .p-paginator { justify-content:flex-start; overflow-x:auto; flex-wrap:nowrap; }
+}
 </style>

@@ -12,6 +12,72 @@ test('charge la présentation et le sommaire', async ({ page }) => {
   expect(errors).toEqual([])
 })
 
+test('charge la présentation dédiée aux agents IA', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await page.goto('/presentation/agents-ia-developpement/')
+  await expect(page.getByRole('heading', { name: 'Développer avec des agents IA' })).toBeVisible()
+  await page.goto('/presentation/agents-ia-developpement/#/sommaire')
+  await expect(page.getByRole('heading', { name: 'Une méthode de travail, pas un bouton magique' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Du diff à la preuve' })).toBeVisible()
+  expect(errors).toEqual([])
+})
+
+test('les slides agents IA restent dans le viewport', async ({ page }) => {
+  test.setTimeout(120000)
+  await page.setViewportSize({ width: 1600, height: 820 })
+  await page.goto('/presentation/agents-ia-developpement/')
+  await page.waitForFunction(() => window.Reveal?.isReady?.())
+
+  const issues = await page.evaluate(async () => {
+    const deck = window.Reveal
+    const results = []
+
+    for (const item of deck.getSlides()) {
+      const indices = deck.getIndices(item)
+      deck.slide(indices.h, indices.v || 0)
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+      const current = deck.getCurrentSlide()
+      const slideBox = current.getBoundingClientRect()
+      const children = [...current.children].filter((child) => !child.matches('aside.notes'))
+      const boxes = children.map((child) => child.getBoundingClientRect()).filter((box) => box.width > 1 && box.height > 1)
+      const overflowX = current.scrollWidth - current.clientWidth
+      const maxBottom = Math.max(...boxes.map((box) => box.bottom), slideBox.top)
+      const overflowY = maxBottom - slideBox.bottom
+
+      if (overflowX > 6 || overflowY > 18) {
+        results.push({ id: current.id, overflowX: Math.round(overflowX), overflowY: Math.round(overflowY) })
+      }
+    }
+
+    return results
+  })
+
+  expect(issues).toEqual([])
+})
+
+test('captures visuelles des slides agents IA', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 820 })
+  const slides = [
+    ['accueil', 'Développer avec des agents IA'],
+    ['un-bon-prompt-ressemble-a-une-mini-specification', 'Un bon prompt ressemble à une mini-spécification'],
+    ['securite-reduire-ce-que-l-agent-peut-voir-et-faire', 'Sécurité : réduire ce que l’agent peut voir et faire'],
+    ['conclusion', 'L’agent accélère la boucle ; l’équipe garde le jugement'],
+  ]
+
+  for (const [id, heading] of slides) {
+    await page.goto(`/presentation/agents-ia-developpement/#/${id}`)
+    await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+    await page.waitForTimeout(900)
+    await page.screenshot({ path: `test-results/visual-smoke/agents-ia-${id}.png`, fullPage: false })
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/presentation/agents-ia-developpement/#/sommaire')
+  await expect(page.locator('#sommaire')).toBeVisible()
+  await page.screenshot({ path: 'test-results/visual-smoke/agents-ia-mobile.png', fullPage: false })
+})
+
 test('navigue vers un chapitre depuis le sommaire', async ({ page }) => {
   await page.goto('/presentation/#/sommaire')
   await page.getByRole('link', { name: 'Jira et la gestion du travail' }).click()

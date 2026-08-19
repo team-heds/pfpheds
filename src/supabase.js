@@ -1,6 +1,7 @@
 
 
     import { createClient } from '@supabase/supabase-js'
+    import { getPasswordRecoveryCallbackTarget } from '@/service/passwordRecoveryService'
 
     // ✅ Lis les variables d’environnement de Vite
     let supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -19,12 +20,25 @@
     console.error('VITE_SUPABASE_KEY:', supabaseAnonKey)
     }
 
+    // Un modèle d'email ou une ancienne configuration peut renvoyer le callback
+    // vers /home. Corriger l'URL avant de créer le client empêche Supabase de
+    // transformer silencieusement la récupération en connexion ordinaire.
+    const passwordRecoveryTarget = getPasswordRecoveryCallbackTarget(window.location)
+    if (passwordRecoveryTarget) {
+    window.history.replaceState(window.history.state, '', passwordRecoveryTarget)
+    }
+
+    const passwordRecoveryRoutes = new Set(['/reset-password', '/new-password'])
+    const isPasswordRecoveryRoute = passwordRecoveryRoutes.has(window.location.pathname)
+
     // ✅ Crée le client avec options recommandées (Realtime désactivé)
     export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         persistSession: true,       // garde la session même après refresh
         autoRefreshToken: true,     // refresh automatique des tokens
-        detectSessionInUrl: true,   // utile pour login OAuth et reset password
+        // Le callback de récupération est échangé explicitement par ResetPassword.
+        // Cela évite qu'une session ordinaire soit confondue avec une preuve de récupération.
+        detectSessionInUrl: !isPasswordRecoveryRoute,
         storage: window.localStorage, // Force l'utilisation de localStorage (par défaut mais explicite)
         storageKey: 'supabase.auth.token', // Clé de stockage personnalisée
         flowType: 'pkce',           // Plus sécurisé pour les SPAs

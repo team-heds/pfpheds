@@ -106,7 +106,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import Button from 'primevue/button';
 import { useRouter } from 'vue-router';
-import { supabase } from '@/supabase';
+import { getAllStudents } from '@/service/studentDirectoryService';
 
 const router = useRouter();
 
@@ -118,7 +118,7 @@ const roleSearchTerm = ref('');
 const currentPage = ref(0);
 const itemsPerPage = 15;
 
-// Liste des utilisateurs depuis StudentsPhysio
+// Annuaire étudiant filtré et autorisé côté serveur
 const usersList = ref([]);
 
 // Liste des rôles BA disponibles
@@ -128,31 +128,25 @@ const rolesBA = ref([
   { label: 'BA24', value: 'BA24' }
 ]);
 
-// Récupération des utilisateurs étudiants depuis Supabase (StudentsPhysio)
+// Récupération des utilisateurs étudiants depuis l'annuaire serveur
 const fetchUsers = async () => {
   try {
-    const { data, error } = await supabase
-      .from('studentsphysio_with_profiles')
-      .select('user_id, prenom, nom, class')
-      .order('nom', { ascending: true });
-
-    if (error) throw error;
-
-    if (data) {
-      usersList.value = data.map((user) => ({
+    const students = await getAllStudents();
+    usersList.value = students
+      .map((user) => ({
         uid: user.user_id,
-        prenom: user.prenom || 'Inconnu',
-        nom: user.nom || 'Inconnu',
-        prenomNom: `${user.prenom || 'Inconnu'} ${user.nom || 'Inconnu'}`,
-        class: user.class || '',
+        prenom: user.forname || user.Prenom || 'Inconnu',
+        nom: user.family_name || user.Nom || 'Inconnu',
+        prenomNom: `${user.forname || user.Prenom || 'Inconnu'} ${user.family_name || user.Nom || 'Inconnu'}`,
+        class: user.Classe || user.classe || '',
         // Pour compatibilité avec l'ancien système de rôles
         Roles: {
           BA22: user.class === 'BA22',
           BA23: user.class === 'BA23',
           BA24: user.class === 'BA24'
         }
-      }));
-    }
+      }))
+      .sort((a, b) => a.nom.localeCompare(b.nom));
   } catch (error) {
     console.error('Erreur lors de la récupération des étudiants:', error);
   }

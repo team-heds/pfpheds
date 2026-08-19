@@ -35,11 +35,16 @@ const centerStyle = computed(() => (
 
 <style scoped>
 .social-layout {
+  --social-side-column: clamp(15rem, 20vw, 25.5rem);
+  --social-side-inset: clamp(0rem, calc((100vw - 64rem) * 0.0625), 4rem);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
-  gap: 1.5rem;
-  height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
-  max-height: calc(100vh - var(--navbar-h) - (2 * var(--content-pad)));
+  grid-template-columns:
+    minmax(15rem, var(--social-side-column))
+    minmax(30rem, 1fr)
+    minmax(15rem, var(--social-side-column));
+  gap: clamp(1rem, 1.5vw, 1.5rem);
+  height: calc(100dvh - var(--navbar-h) - (2 * var(--content-pad)));
+  max-height: calc(100dvh - var(--navbar-h) - (2 * var(--content-pad)));
   overflow: hidden;
 }
 
@@ -55,6 +60,16 @@ const centerStyle = computed(() => (
 
 .social-layout__side {
   overflow-y: hidden;
+}
+
+.social-layout__side--left :deep(.sidebar),
+.social-layout__side--left :deep(.messaging-card),
+.social-layout__side--left :deep(.upcoming-events-section) {
+  margin-inline-start: var(--social-side-inset);
+}
+
+.social-layout__side--right :deep(.right-sidebar) {
+  margin-inline-end: var(--social-side-inset);
 }
 
 .social-layout__main {
@@ -74,23 +89,9 @@ const centerStyle = computed(() => (
   margin-inline: auto;
 }
 
-@media (max-width: 1366px) {
+@media (max-width: 63.99rem) {
   .social-layout:not(.social-layout--single) {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 2.5fr) minmax(0, 0.8fr);
-    gap: 1rem;
-  }
-}
-
-@media (max-width: 1200px) {
-  .social-layout:not(.social-layout--single) {
-    grid-template-columns: minmax(0, 0.7fr) minmax(0, 2.8fr) minmax(0, 0.7fr);
-    gap: 0.8rem;
-  }
-}
-
-@media (max-width: 1024px) {
-  .social-layout:not(.social-layout--single) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    grid-template-columns: 15rem minmax(0, 1fr);
   }
 
   .social-layout__side--right {
@@ -98,20 +99,29 @@ const centerStyle = computed(() => (
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 52rem) {
   .social-layout:not(.social-layout--single) {
     display: block;
     width: 100%;
     max-width: 100vw;
   }
 
+  .social-layout {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
   .social-layout__side {
     display: none;
   }
 
-  .social-layout__main {
+  .social-layout:not(.social-layout--single) .social-layout__main {
     width: 100%;
     max-width: 100vw;
+    height: auto;
+    overflow: visible;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   }
 }
 </style>

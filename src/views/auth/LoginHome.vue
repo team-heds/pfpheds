@@ -18,7 +18,7 @@
         <div class="w-full" style="max-width: 28rem;">
           <div class="px-1">
             <!-- Contenu - Formulaire Supabase -->
-            <div v-if="activeTab === 'supabase'" class="tab-content">
+            <div class="tab-content">
               <AuthForm
                 :email="email"
                 :password="password"
@@ -35,22 +35,6 @@
               />
             </div>
 
-            <!-- Contenu - Bouton Firebase -->
-            <div v-if="activeTab === 'firebase'" class="tab-content">
-              <div class="text-center mb-4">
-                <p class="text-sm text-600 mb-4">
-                  Connectez-vous pour accéder à la votation PFP
-                </p>
-                <Button
-                  @click="navigateToFirebaseLogin"
-                  class="w-full p-button-raised firebase-button"
-                  label="Connexion Firebase"
-                  icon="pi pi-sign-in"
-                  aria-label="Se connecter avec Firebase (votation)"
-                  :loading="loadingFirebase"
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -68,19 +52,16 @@ import { useAuthStore } from '@/stores/authStore'
 import { useRateLimit } from '@/composables/useRateLimit'
 import { validateEmail, validatePassword } from '@/composables/useInputValidation'
 import { getPostLoginRedirect } from '@/config/adminRedirects'
-import Button from 'primevue/button'
 import Toast from 'primevue/toast'
 import AuthForm from '@/components/common/forms/AuthForm.vue'
 
 // Variables réactives
-const activeTab = ref('supabase') // Onglet actif par défaut
 const email = ref('')
 const password = ref('')
 const rememberMe = ref(false)
 const emailError = ref(false)
 const passwordError = ref(false)
 const loading = ref(false)
-const loadingFirebase = ref(false)
 const resetLoading = ref(false)
 const router = useRouter()
 const toast = useToast()
@@ -185,11 +166,16 @@ const resetPassword = async () => {
       life: 6000
     })
   } catch (error) {
-    console.error('Supabase reset password error:', error)
+    const rateLimited = error?.code === 'password_recovery_rate_limited'
+    console.error('[AUTH] Password recovery request failed.', {
+      category: rateLimited ? 'rate_limited' : 'unavailable'
+    })
     toast.add({
       severity: 'error',
-      summary: 'Erreur',
-      detail: error.message || 'Erreur lors de l\'envoi de l\'email.',
+      summary: rateLimited ? 'Trop de tentatives' : 'Service indisponible',
+      detail: rateLimited
+        ? 'Veuillez patienter avant de demander un nouveau lien.'
+        : 'La demande n’a pas pu être prise en compte. Réessayez dans quelques instants.',
       life: 4000
     })
   } finally {
@@ -197,20 +183,6 @@ const resetPassword = async () => {
   }
 }
 
-// Méthode pour naviguer vers la connexion Firebase
-const navigateToFirebaseLogin = () => {
-  loadingFirebase.value = true
-  toast.add({
-    severity: "info",
-    summary: "Redirection",
-    detail: "Redirection vers la connexion Firebase...",
-    life: 2000,
-  })
-  setTimeout(() => {
-    router.push("/login-firebase")
-    loadingFirebase.value = false
-  }, 1000)
-}
 </script>
 
 <style scoped>

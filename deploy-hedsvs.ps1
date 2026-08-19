@@ -46,6 +46,17 @@ function Assert-FrontendEnvironment {
     if ($missingVariables.Count -gt 0) {
         Write-Error "Variables frontend manquantes: $($missingVariables -join ', '). Le déploiement est interrompu avant le build."
     }
+
+    $apiBaseUrl = [Environment]::GetEnvironmentVariable('VITE_API_BASE_URL', 'Process')
+    $apiUri = $null
+    if (-not [Uri]::TryCreate($apiBaseUrl, [UriKind]::Absolute, [ref]$apiUri)) {
+        Write-Error "VITE_API_BASE_URL doit être une URL absolue pour le déploiement de production."
+    }
+    if ($apiUri.Host -in @('localhost', '127.0.0.1')) {
+        $apiBaseUrl = 'https://api2.hedsvs.ch/api'
+        [Environment]::SetEnvironmentVariable('VITE_API_BASE_URL', $apiBaseUrl, 'Process')
+        Write-Warning "URL API locale remplacée par l'API de production hedsvs.ch"
+    }
 }
 
 function Assert-BuiltSupabaseConfiguration {
@@ -54,12 +65,19 @@ function Assert-BuiltSupabaseConfiguration {
     }
 
     $supabaseUrl = [Environment]::GetEnvironmentVariable('VITE_SUPABASE_URL', 'Process')
+    $apiBaseUrl = [Environment]::GetEnvironmentVariable('VITE_API_BASE_URL', 'Process')
     $compiledAssets = Get-ChildItem -LiteralPath 'dist/assets' -Filter '*.js' -File -Recurse
     $urlFound = $compiledAssets | Select-String -SimpleMatch $supabaseUrl -Quiet
     if (-not $urlFound) {
         Write-Error "La configuration Supabase n'est pas présente dans le bundle compilé. Le déploiement est interrompu."
     }
     Write-Success "Configuration Supabase vérifiée dans le bundle compilé"
+
+    $apiUrlFound = $compiledAssets | Select-String -SimpleMatch $apiBaseUrl -Quiet
+    if (-not $apiUrlFound) {
+        Write-Error "L'URL de l'API de production n'est pas présente dans le bundle compilé."
+    }
+    Write-Success "Configuration API de production vérifiée dans le bundle compilé"
 }
 
 Write-Host "=== DÉPLOIEMENT HEDSVS.CH - SCRIPT AMÉLIORÉ ===" -ForegroundColor Yellow
@@ -313,7 +331,7 @@ sudo chown -R ubuntu:ubuntu $remoteBackendPath
 
 echo '[DEPLOY-BACKEND] Rebuild + up -d de toute la stack Supabase (db, rest, auth, realtime, storage, meta, studio, caddy, backend, push-worker)...'
 cd $remoteSupabasePath
-sudo docker-compose -f docker-compose.yml -f $remoteBackendPath/deployment/supabase-healthchecks.override.yml up -d --build
+sudo docker-compose -f docker-compose.yml -f $remoteBackendPath/deployment/supabase-healthchecks.override.yml -f $remoteBackendPath/deployment/supabase-auth-security.override.yml up -d --build
 
 echo '[DEPLOY-BACKEND] Etat des conteneurs:'
 sudo docker ps --format 'table {{.Names}}\t{{.Status}}'

@@ -8,6 +8,8 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 5183",
     "pdf": "npm run build && node scripts/export-pdf.mjs",
+    "pdf:agents": "npm run build && node scripts/export-pdf.mjs --slug agents-ia-developpement",
+    "pdf:all": "npm run build && node scripts/export-pdf.mjs && node scripts/export-pdf.mjs --slug agents-ia-developpement",
     "test": "playwright test"
   },
   "dependencies": {

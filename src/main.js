@@ -15,12 +15,13 @@ import router from './router';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import { auth, isFirebaseEnabled } from '@/firebase';
+import { bootstrapApplication } from '@/service/appBootstrap';
 
 import '@/assets/styles/styles.scss';
 import 'primeflex/primeflex.css';
 import '@/assets/styles/platform-foundations.scss';
 
-const APP_VERSION = '0.2.3';
+const APP_VERSION = '0.2.9';
 
 if ('serviceWorker' in navigator) {
   const lastVersion = localStorage.getItem('app_version');
@@ -86,15 +87,14 @@ async function bootstrap() {
   const authStore = useAuthStore();
   const userStore = useUserStore();
 
-  try {
-    await authStore.initializeAuth();
-    await userStore.init();
-    await router.isReady();
-  } catch (error) {
-    console.error('Erreur lors du bootstrap applicatif:', error);
-  } finally {
-    app.mount('#app');
-  }
+  await bootstrapApplication({
+    pathname: window.location.pathname,
+    initializeAuth: () => authStore.initializeAuth(),
+    initializeUser: () => userStore.init(),
+    waitForRouter: () => router.isReady(),
+    mount: () => app.mount('#app'),
+    onError: () => console.error('[BOOTSTRAP] Application initialization failed.')
+  });
 }
 
 bootstrap();
