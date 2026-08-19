@@ -3,7 +3,6 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { NetworkFirst, NetworkOnly } from 'workbox-strategies'
-import { ExpirationPlugin } from 'workbox-expiration'
 
 // ── Workbox Precache ──
 // self.__WB_MANIFEST is injected by VitePWA injectManifest
@@ -11,24 +10,35 @@ cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
 
 // ── Runtime Caching ──
-// Supabase API: never cache
+const API_PATH_PREFIXES = [
+  '/api/',
+  '/auth/v1/',
+  '/rest/v1/',
+  '/storage/v1/',
+  '/functions/v1/',
+  '/realtime/v1/',
+]
+
+const isApiRequest = ({ url }) =>
+  API_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix)) ||
+  url.hostname.endsWith('.supabase.co') ||
+  url.hostname === 'api2.hedsvs.ch'
+
+// Auth, API and Supabase data must never be served from a cache. This includes
+// the self-hosted production gateway as well as hosted Supabase projects.
 registerRoute(
-  /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co\/.*$/,
-  new NetworkOnly({ cacheName: 'supabase-api' })
+  isApiRequest,
+  new NetworkOnly()
 )
 
-// Same-origin resources: network first with 3s timeout
+// Only HTML navigations use a runtime cache. Versioned build assets are
+// already handled by the precache manifest, avoiding mixed application
+// bundles after a deployment.
 registerRoute(
-  ({ url }) => url.origin === self.location.origin && !url.pathname.startsWith('/api'),
+  ({ request, url }) => request.mode === 'navigate' && url.origin === self.location.origin,
   new NetworkFirst({
-    cacheName: 'static-resources',
-    networkTimeoutSeconds: 3,
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 50,
-        maxAgeSeconds: 24 * 60 * 60, // 1 day
-      }),
-    ],
+    cacheName: 'navigation-pages',
+    networkTimeoutSeconds: 5,
   })
 )
 

@@ -114,7 +114,10 @@ export default defineConfig({
     }
   },
   esbuild: {
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    // Keep warnings and errors in production so incidents remain observable.
+    // Debug-only statements and debugger instructions are still stripped.
+    drop: process.env.NODE_ENV === 'production' ? ['debugger'] : [],
+    pure: process.env.NODE_ENV === 'production' ? ['console.debug'] : [],
   },
   build: {
     rollupOptions: {
