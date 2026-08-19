@@ -5,9 +5,21 @@ import { registerRoute } from 'workbox-routing'
 import { NetworkFirst, NetworkOnly } from 'workbox-strategies'
 
 // ── Workbox Precache ──
-// self.__WB_MANIFEST is injected by VitePWA injectManifest
+// self.__WB_MANIFEST is injected by VitePWA injectManifest. Its revisions
+// provide a build-specific name for the runtime navigation cache as well.
+const precacheEntries = self.__WB_MANIFEST
+const navigationRevision = precacheEntries.reduce((hash, entry) => {
+  const value = `${typeof entry === 'string' ? entry : entry.url}:${entry.revision || ''}`
+  for (let index = 0; index < value.length; index += 1) {
+    hash = Math.imul(hash ^ value.charCodeAt(index), 16777619)
+  }
+  return hash
+}, 2166136261).toString(36)
+const NAVIGATION_CACHE_PREFIX = 'navigation-pages-'
+const NAVIGATION_CACHE = `${NAVIGATION_CACHE_PREFIX}${navigationRevision}`
+
 cleanupOutdatedCaches()
-precacheAndRoute(self.__WB_MANIFEST)
+precacheAndRoute(precacheEntries)
 
 // ── Runtime Caching ──
 const API_PATH_PREFIXES = [
@@ -37,7 +49,7 @@ registerRoute(
 registerRoute(
   ({ request, url }) => request.mode === 'navigate' && url.origin === self.location.origin,
   new NetworkFirst({
-    cacheName: 'navigation-pages',
+    cacheName: NAVIGATION_CACHE,
     networkTimeoutSeconds: 5,
   })
 )
@@ -49,9 +61,11 @@ self.addEventListener('install', () => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    if (self.registration.active === self) {
-      await self.clients.claim()
-    }
+    const cacheNames = await caches.keys()
+    await Promise.all(cacheNames
+      .filter((cacheName) => cacheName.startsWith(NAVIGATION_CACHE_PREFIX) && cacheName !== NAVIGATION_CACHE)
+      .map((cacheName) => caches.delete(cacheName)))
+    await self.clients.claim()
   })())
 })
 

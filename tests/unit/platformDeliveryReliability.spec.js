@@ -22,7 +22,9 @@ describe('platform delivery reliability contract', () => {
     const main = readSource('src/main.js')
 
     expect(worker).toContain("request.mode === 'navigate'")
-    expect(worker).toContain("cacheName: 'navigation-pages'")
+    expect(worker).toContain("const NAVIGATION_CACHE_PREFIX = 'navigation-pages-'")
+    expect(worker).toContain('cacheName: NAVIGATION_CACHE')
+    expect(worker).toContain('caches.delete(cacheName)')
     expect(worker).not.toContain("cacheName: 'static-resources'")
     expect(main).not.toContain("navigator.serviceWorker.register('/sw.js')")
     expect(main).not.toContain("from 'firebase/auth'")

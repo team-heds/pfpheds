@@ -432,22 +432,30 @@ const isCurrentPeriod = computed(() => {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
 })
 
+const reloadPeriodStats = async () => {
+  statsLoading.value = true
+  dashboardError.value = null
+  try {
+    await loadExtraStats()
+  } catch (error) {
+    dashboardError.value = error?.message || 'Vérifiez votre connexion puis réessayez.'
+  } finally {
+    statsLoading.value = false
+  }
+}
+
 const shiftPeriod = async (delta) => {
   const d = new Date(selectedDate.value)
   if (periodMode.value === 'day') d.setDate(d.getDate() + delta)
   else if (periodMode.value === 'month') d.setMonth(d.getMonth() + delta)
   else d.setFullYear(d.getFullYear() + delta)
   selectedDate.value = d
-  statsLoading.value = true
-  await loadExtraStats()
-  statsLoading.value = false
+  await reloadPeriodStats()
 }
 
 const resetToToday = async () => {
   selectedDate.value = new Date()
-  statsLoading.value = true
-  await loadExtraStats()
-  statsLoading.value = false
+  await reloadPeriodStats()
 }
 
 const navigateTo = (path) => router.push(path)
@@ -457,9 +465,7 @@ const onPeriodChange = async () => {
   else if (periodMode.value === 'year') period.value = '90d'
   else period.value = '30d'
   selectedDate.value = new Date()
-  statsLoading.value = true
-  await loadExtraStats()
-  statsLoading.value = false
+  await reloadPeriodStats()
 }
 
 const refreshAll = async () => {

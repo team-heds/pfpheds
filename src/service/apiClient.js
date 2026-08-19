@@ -4,6 +4,7 @@ import { supabase } from '@/supabase'
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1'])
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504])
 export const API_REQUEST_TIMEOUT_MS = 12_000
+export const AUTH_SESSION_TIMEOUT_MS = 8_000
 const MAX_RETRY_DELAY_MS = 2_000
 
 let sessionRefreshPromise = null
@@ -58,11 +59,36 @@ function createAuthError(message, cause) {
   })
 }
 
-export function refreshSessionSingleFlight() {
-  if (sessionRefreshPromise) return sessionRefreshPromise
+function guardAuthOperation(operation, { signal, timeoutMs = AUTH_SESSION_TIMEOUT_MS } = {}) {
+  let timeoutId
+  let abortHandler
+
+  const guard = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new ApiClientError('Authentication service timed out', {
+      code: 'AUTH_SESSION_TIMEOUT',
+      retryable: true,
+    })), timeoutMs)
+
+    abortHandler = () => reject(new ApiClientError('The request was cancelled', {
+      code: 'REQUEST_ABORTED',
+      retryable: false,
+    }))
+
+    if (signal?.aborted) abortHandler()
+    else signal?.addEventListener('abort', abortHandler, { once: true })
+  })
+
+  return Promise.race([Promise.resolve(operation), guard]).finally(() => {
+    clearTimeout(timeoutId)
+    signal?.removeEventListener('abort', abortHandler)
+  })
+}
+
+export function refreshSessionSingleFlight({ signal } = {}) {
+  if (sessionRefreshPromise) return guardAuthOperation(sessionRefreshPromise, { signal })
 
   sessionRefreshPromise = (async () => {
-    const { data, error } = await supabase.auth.refreshSession()
+    const { data, error } = await guardAuthOperation(supabase.auth.refreshSession())
     if (error || !data?.session?.access_token) {
       throw createAuthError('Unable to refresh the authenticated session', error)
     }
@@ -71,13 +97,13 @@ export function refreshSessionSingleFlight() {
     sessionRefreshPromise = null
   })
 
-  return sessionRefreshPromise
+  return guardAuthOperation(sessionRefreshPromise, { signal })
 }
 
-async function getSession({ forceRefresh = false } = {}) {
-  if (forceRefresh) return refreshSessionSingleFlight()
+async function getSession({ forceRefresh = false, signal } = {}) {
+  if (forceRefresh) return refreshSessionSingleFlight({ signal })
 
-  const { data, error } = await supabase.auth.getSession()
+  const { data, error } = await guardAuthOperation(supabase.auth.getSession(), { signal })
   if (error || !data?.session?.access_token) {
     throw createAuthError('Authentication required', error)
   }
@@ -85,7 +111,7 @@ async function getSession({ forceRefresh = false } = {}) {
   const session = data.session
   const expiresAt = Number(session.expires_at || 0)
   if (expiresAt && expiresAt - Math.floor(Date.now() / 1000) < 60) {
-    return refreshSessionSingleFlight()
+    return refreshSessionSingleFlight({ signal })
   }
 
   return session
@@ -206,7 +232,10 @@ export async function authFetch(input, init = {}) {
   while (true) {
     const request = requestSignal(init.signal, init.timeout ?? API_REQUEST_TIMEOUT_MS)
     try {
-      const headers = await getAuthHeaders(init.headers, { forceRefresh: refreshBeforeRequest })
+      const headers = await getAuthHeaders(init.headers, {
+        forceRefresh: refreshBeforeRequest,
+        signal: request.signal,
+      })
       refreshBeforeRequest = false
       const response = await fetch(input, {
         ...init,
@@ -245,7 +274,7 @@ export const apiClient = axios.create({
 })
 
 apiClient.interceptors.request.use(async (config) => {
-  config.headers = await getAuthHeaders(config.headers)
+  config.headers = await getAuthHeaders(config.headers, { signal: config.signal })
   return config
 })
 
@@ -257,7 +286,7 @@ apiClient.interceptors.response.use(
 
     if (config && isGet && error?.response?.status === 401 && !config.__authRetried) {
       config.__authRetried = true
-      const refreshedSession = await refreshSessionSingleFlight()
+      const refreshedSession = await refreshSessionSingleFlight({ signal: config.signal })
       config.headers = {
         ...(config.headers?.toJSON?.() || config.headers || {}),
         Authorization: `Bearer ${refreshedSession.access_token}`,

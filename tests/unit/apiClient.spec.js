@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockGetSession = vi.fn()
 const mockRefreshSession = vi.fn()
@@ -14,12 +14,17 @@ vi.mock('@/supabase', () => ({
 
 const {
   API_REQUEST_TIMEOUT_MS,
+  AUTH_SESSION_TIMEOUT_MS,
   apiClient,
   authFetch,
   getAuthHeaders,
   normalizeApiError,
   resolveApiBaseUrl,
 } = await import('@/service/apiClient')
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 beforeEach(() => {
   vi.restoreAllMocks()
@@ -66,6 +71,31 @@ describe('resolveApiBaseUrl', () => {
 
   it('configures a bounded axios request timeout', () => {
     expect(apiClient.defaults.timeout).toBe(API_REQUEST_TIMEOUT_MS)
+  })
+
+  it('bounds a stalled Supabase session lookup before sending a request', async () => {
+    vi.useFakeTimers()
+    mockGetSession.mockReturnValue(new Promise(() => {}))
+
+    const assertion = expect(getAuthHeaders()).rejects.toMatchObject({
+      code: 'AUTH_SESSION_TIMEOUT',
+      retryable: true,
+    })
+    await vi.advanceTimersByTimeAsync(AUTH_SESSION_TIMEOUT_MS)
+
+    await assertion
+  })
+
+  it('stops waiting for Supabase auth when the caller aborts', async () => {
+    mockGetSession.mockReturnValue(new Promise(() => {}))
+    const controller = new AbortController()
+
+    const assertion = expect(getAuthHeaders({}, { signal: controller.signal })).rejects.toMatchObject({
+      code: 'REQUEST_ABORTED',
+    })
+    controller.abort()
+
+    await assertion
   })
 
   it('deduplicates concurrent session refreshes', async () => {
