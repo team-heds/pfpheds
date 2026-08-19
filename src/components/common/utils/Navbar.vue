@@ -247,10 +247,15 @@ const updateUserState = async () => {
         console.error('Erreur lors de la récupération des données utilisateur:', error);
       }
     }
-    // Pour les utilisateurs Supabase, charger le profil
+    // Le profil Supabase est initialisé une seule fois au bootstrap puis maintenu
+    // à jour par le store. Ne pas le recharger à chaque navigation.
     else if (authStore.isSupabaseUser) {
-      // Charger le profil utilisateur depuis Supabase
-      await userStore.fetchProfile();
+      if (!userStore.initialized) {
+        await userStore.init({
+          session: authStore.session,
+          sessionResolved: authStore.initialized,
+        });
+      }
       
       const userProfile = userStore.profile;
       
@@ -264,16 +269,16 @@ const updateUserState = async () => {
   }
 };
 
-// Watcher pour recharger le profil quand la route change
-watch(() => route.path, async () => {
-  if (authStore.isSupabaseUser && authStore.user) {
-    await userStore.fetchProfile();
-  }
-});
+// Mettre à jour les droits seulement quand l'identité ou le rôle change.
+// Un changement de route ne doit déclencher aucun appel Supabase.
+watch(
+  () => [authStore.user?.id || authStore.user?.uid, userStore.profile?.role],
+  () => { void updateUserState(); },
+);
 
 onMounted(async () => {
-  // Initialiser l'état d'authentification
-  await authStore.checkAuthState();
+  // Réutilise la session déjà résolue par le bootstrap (sans appel réseau répété).
+  await authStore.initializeAuth();
   
   // Appel initial
   await updateUserState();

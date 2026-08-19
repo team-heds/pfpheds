@@ -31,6 +31,40 @@ function presentationDevAssets() {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Keep optimized dependencies local to each Git worktree. Sharing the
+  // default node_modules/.vite cache makes parallel dev servers invalidate
+  // one another and forces full-page reloads while navigating.
+  cacheDir: '.vite-cache',
+  optimizeDeps: {
+    // These libraries live mostly behind lazy routes. Pre-bundle them at
+    // startup so opening a page never causes Vite to restart the application.
+    include: [
+      'primevue/card',
+      'primevue/calendar',
+      'primevue/progressspinner',
+      'primevue/inputnumber',
+      'primevue/selectbutton',
+      'primevue/divider',
+      'primevue/paginator',
+      'leaflet',
+      'chart.js',
+      'vue-chartjs',
+      '@fullcalendar/core',
+      '@fullcalendar/daygrid',
+      '@fullcalendar/interaction',
+      '@fullcalendar/timegrid',
+      '@fullcalendar/vue3',
+      '@tiptap/core',
+      '@tiptap/starter-kit',
+      '@tiptap/vue-3',
+      'exceljs',
+      'jspdf',
+      'jspdf-autotable',
+      'qrcode',
+      'three',
+      'xlsx',
+    ],
+  },
   server: {
     host: '0.0.0.0',
     port: 5180,
