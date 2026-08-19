@@ -135,3 +135,6 @@ algo/
 
 # Excel test/export files
 *.xlsx
+
+# components.d.ts
+src/components.d.ts
