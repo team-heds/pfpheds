@@ -30,6 +30,9 @@ coverage
 
 *.tsbuildinfo
 
+# Generated automatically by unplugin-vue-components
+/src/components.d.ts
+
 # Secrets et config Firebase
 .env
 .env.local
