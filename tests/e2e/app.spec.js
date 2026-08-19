@@ -1,11 +1,5 @@
 import { test, expect } from '@playwright/test'
 
-// Helper: filtre les erreurs réseau/auth qu'on attend en mode test
-function isIgnorableError(msg) {
-  const ignored = ['supabase', 'fetch', 'network', 'Failed to fetch', 'NetworkError', 'firebase', 'ERR_CONNECTION']
-  return ignored.some(k => msg.toLowerCase().includes(k.toLowerCase()))
-}
-
 // ── Tests E2E de base — vérification que l'app démarre ─────────
 
 test.describe('Application – chargement initial', () => {
@@ -137,32 +131,25 @@ test.describe('Qualité – erreurs JavaScript', () => {
   test('pas d\'erreurs JavaScript critiques au chargement', async ({ page }) => {
     const errors = []
     page.on('pageerror', (error) => {
-      if (!isIgnorableError(error.message)) {
-        errors.push(error.message)
-      }
+      errors.push(error.message)
     })
 
     await page.goto('/')
     await page.waitForTimeout(3000)
 
-    // Pas d'erreurs de syntaxe ou de référence
-    const critical = errors.filter(e => e.includes('SyntaxError') || e.includes('ReferenceError'))
-    expect(critical).toHaveLength(0)
+    expect(errors).toHaveLength(0)
   })
 
   test('pas d\'erreurs critiques sur /calendar', async ({ page }) => {
     const errors = []
     page.on('pageerror', (error) => {
-      if (!isIgnorableError(error.message)) {
-        errors.push(error.message)
-      }
+      errors.push(error.message)
     })
 
     await page.goto('/calendar')
     await page.waitForTimeout(3000)
 
-    const critical = errors.filter(e => e.includes('SyntaxError') || e.includes('ReferenceError'))
-    expect(critical).toHaveLength(0)
+    expect(errors).toHaveLength(0)
   })
 })
 

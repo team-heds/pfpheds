@@ -1,11 +1,5 @@
 import { test, expect } from '@playwright/test'
 
-// Helper: filtre les erreurs réseau/auth qu'on attend en mode test
-function isIgnorableError(msg) {
-  const ignored = ['supabase', 'fetch', 'network', 'Failed to fetch', 'NetworkError', 'firebase', 'ERR_CONNECTION']
-  return ignored.some(k => msg.toLowerCase().includes(k.toLowerCase()))
-}
-
 // ── Navigation avancée et routing guards ──────────────────────
 
 test.describe('Routing guards — pages admin', () => {
@@ -37,17 +31,13 @@ test.describe('Routing guards — pages étudiants', () => {
     test(`${route} redirige ou bloque sans auth`, async ({ page }) => {
       const errors = []
       page.on('pageerror', (error) => {
-        if (!isIgnorableError(error.message)) {
-          errors.push(error.message)
-        }
+        errors.push(error.message)
       })
 
       await page.goto(route)
       await page.waitForTimeout(2000)
 
-      // Pas d'erreurs critiques
-      const critical = errors.filter(e => e.includes('SyntaxError') || e.includes('ReferenceError'))
-      expect(critical).toHaveLength(0)
+      expect(errors).toHaveLength(0)
 
       // La page est visible (pas de crash)
       const body = page.locator('body')
@@ -60,16 +50,13 @@ test.describe('Navigation — liens et redirections', () => {
   test('la navigation vers une route inexistante ne crash pas', async ({ page }) => {
     const errors = []
     page.on('pageerror', (error) => {
-      if (!isIgnorableError(error.message)) {
-        errors.push(error.message)
-      }
+      errors.push(error.message)
     })
 
     await page.goto('/cette-page-nexiste-pas-12345')
     await page.waitForTimeout(2000)
 
-    const critical = errors.filter(e => e.includes('SyntaxError') || e.includes('ReferenceError'))
-    expect(critical).toHaveLength(0)
+    expect(errors).toHaveLength(0)
 
     const body = page.locator('body')
     await expect(body).toBeVisible()
@@ -102,9 +89,7 @@ test.describe('Sécurité — XSS et injection', () => {
   test('les paramètres URL malveillants ne causent pas de XSS', async ({ page }) => {
     const errors = []
     page.on('pageerror', (error) => {
-      if (!isIgnorableError(error.message)) {
-        errors.push(error.message)
-      }
+      errors.push(error.message)
     })
 
     // Tenter une injection XSS via l'URL
@@ -117,9 +102,7 @@ test.describe('Sécurité — XSS et injection', () => {
     })
     expect(dialogTriggered).toBe(false)
 
-    // Pas d'erreurs critiques
-    const critical = errors.filter(e => e.includes('SyntaxError') || e.includes('ReferenceError'))
-    expect(critical).toHaveLength(0)
+    expect(errors).toHaveLength(0)
   })
 
   test('les routes avec paramètres spéciaux ne crashent pas', async ({ page }) => {
