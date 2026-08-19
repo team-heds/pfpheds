@@ -508,7 +508,7 @@ const loadExtraStats = async () => {
       getAllStudents(),
       supabase
         .from('places')
-        .select('PlaceId,InstitutionId,NomPlace,fileURL,fileurl,pdfUrl,created_at,updated_at'),
+        .select('PlaceId,InstitutionId,NomPlace,fileurl,CreatedAt,UpdatedAt'),
       supabase
         .from('student_result_vote')
         .select('id,status,pfp_type,pfp_validee,pfp_echec,pfp_arret,assigned_place_id,created_at,updated_at')
@@ -518,14 +518,14 @@ const loadExtraStats = async () => {
     if (votesRes.error) throw votesRes.error
 
     const profiles = studentDirectory.filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
-    const places = (placesRes.data || []).filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
+    const places = (placesRes.data || []).filter((p) => isInSelectedPeriod(p.UpdatedAt || p.CreatedAt))
     const votesInPeriod = (votesRes.data || []).filter((v) => isInSelectedPeriod(v.updated_at || v.created_at))
     const allVotes = votesRes.data || []
 
     const activeStudents = profiles.filter((p) => p.is_active !== false).length
     const incompleteProfiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.Classe).length
     const openPlaces = places.filter((p) => p.InstitutionId && p.NomPlace).length
-    const withPdf = places.filter((p) => p.fileURL || p.fileurl || p.pdfUrl).length
+    const withPdf = places.filter((p) => p.fileurl).length
     const publishedAssignments = votesInPeriod.filter((v) => v.status === 'published').length
 
     // Statuts PFP = données globales (pas filtrées par période)
@@ -620,8 +620,8 @@ const loadRecentActivities = async () => {
         .limit(5),
       supabase
         .from('places')
-        .select('PlaceId,NomPlace,created_at')
-        .order('created_at', { ascending: false })
+        .select('PlaceId,NomPlace,CreatedAt')
+        .order('CreatedAt', { ascending: false })
         .limit(5),
       getAllStudents()
     ])
@@ -649,8 +649,8 @@ const loadRecentActivities = async () => {
       items.push({
         icon: 'pi pi-map-marker',
         title: `Place créée : ${p.NomPlace || 'Sans nom'}`,
-        time: formatTimeAgo(p.created_at),
-        date: new Date(p.created_at),
+        time: formatTimeAgo(p.CreatedAt),
+        date: new Date(p.CreatedAt),
         to: '/admin/formation-pratique/places',
         bgColor: '#d1fae5',
         iconColor: '#10b981'

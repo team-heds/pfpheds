@@ -7,7 +7,13 @@ export default [
   { path: '/terms_of_use', component: () => import('@/views/home/TermsView.vue'), name: 'TermsOfUse', meta: { requiresAuth: true } },
   { path: '/info_externe', component: () => import('@/views/home/InfoExterneView.vue'), name: 'InfoExterne', meta: { requiresAuth: true } },
   { path: '/history', component: () => import('@/views/home/HistoryView.vue'), name: 'HistoriquePFP', meta: { requiresAuth: true } },
-  { path: '/documents', component: () => import('@/views/home/DocumentsView.vue'), name: 'DocumentsPFP', meta: { requiresAuth: true } },
+  {
+    path: '/documents_pfp',
+    alias: ['/documents', '/document_pfp'],
+    component: () => import('@/views/home/DocumentsView.vue'),
+    name: 'DocumentsPFP',
+    meta: { requiresAuth: true }
+  },
   { path: '/push', component: () => import('@/views/home/PushView.vue'), name: 'PushView', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/push2', component: () => import('@/views/home/PushView.vue'), name: 'PushView2', meta: { requiresAuth: true, need: 'page2.access' } },
   { path: '/role-management', component: () => import('@/views/home/RoleManagement.vue'), name: 'RoleManagement', meta: { requiresAuth: true } },
