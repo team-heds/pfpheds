@@ -19,10 +19,14 @@ describe('platform delivery reliability contract', () => {
 
   it('limits runtime caching to navigations instead of application bundles', () => {
     const worker = readSource('src/sw.js')
+    const main = readSource('src/main.js')
 
     expect(worker).toContain("request.mode === 'navigate'")
     expect(worker).toContain("cacheName: 'navigation-pages'")
     expect(worker).not.toContain("cacheName: 'static-resources'")
+    expect(main).not.toContain("navigator.serviceWorker.register('/sw.js')")
+    expect(main).not.toContain("from 'firebase/auth'")
+    expect(main).not.toContain("from '@/firebase'")
   })
 
   it('revalidates deployment entry points while keeping hashed assets immutable', () => {
