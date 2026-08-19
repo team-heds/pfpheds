@@ -74,6 +74,55 @@ describe('appBootstrap', () => {
     expect(mount).toHaveBeenCalledOnce()
   })
 
+  it('bounds a stalled bootstrap and exposes a retryable timeout', async () => {
+    vi.useFakeTimers()
+    const onError = vi.fn()
+    const mount = vi.fn()
+
+    const bootstrap = bootstrapApplication({
+      pathname: '/home',
+      initializeAuth: vi.fn(() => new Promise(() => {})),
+      initializeUser: vi.fn(),
+      waitForRouter: vi.fn(),
+      mount,
+      onError,
+      timeoutMs: 50,
+    })
+
+    await vi.advanceTimersByTimeAsync(50)
+    const result = await bootstrap
+
+    expect(result.ok).toBe(false)
+    expect(result.error).toMatchObject({
+      code: 'BOOTSTRAP_TIMEOUT',
+      retryable: true,
+    })
+    expect(onError).toHaveBeenCalledWith(result.error, { retry: expect.any(Function) })
+    expect(mount).toHaveBeenCalledOnce()
+    vi.useRealTimers()
+  })
+
+  it('retries initialization without mounting the application twice', async () => {
+    const initializeAuth = vi.fn()
+      .mockRejectedValueOnce(new Error('temporary outage'))
+      .mockResolvedValueOnce(undefined)
+    const mount = vi.fn()
+
+    const result = await bootstrapApplication({
+      pathname: '/home',
+      initializeAuth,
+      initializeUser: vi.fn().mockResolvedValue(undefined),
+      waitForRouter: vi.fn().mockResolvedValue(undefined),
+      mount,
+    })
+
+    const retryResult = await result.retry()
+
+    expect(retryResult.ok).toBe(true)
+    expect(initializeAuth).toHaveBeenCalledTimes(2)
+    expect(mount).toHaveBeenCalledOnce()
+  })
+
   it('matches only the two recovery routes', () => {
     expect(isPasswordRecoveryPath('/reset-password')).toBe(true)
     expect(isPasswordRecoveryPath('/new-password')).toBe(true)

@@ -6,6 +6,13 @@
     </div>
 
     <div v-else class="p-4">
+      <ErrorState
+        v-if="dashboardError"
+        class="mb-3"
+        title="Certaines données du dashboard n’ont pas pu être chargées"
+        :description="dashboardError"
+        @retry="initializeDashboard"
+      />
       <!-- Header -->
       <div class="surface-card p-4 border-round shadow-2 mb-3">
         <div class="flex align-items-center justify-content-between gap-3 flex-wrap">
@@ -295,6 +302,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Skeleton from 'primevue/skeleton'
 import Tag from 'primevue/tag'
 import Divider from 'primevue/divider'
+import ErrorState from '@/components/common/states/ErrorState.vue'
 import { useKpiManager } from '@/composables/useKpiManager'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentDirectoryService'
@@ -324,6 +332,7 @@ const selectedDate = ref(new Date())
 const statsLoading = ref(false)
 const assignedPlaces = ref(0)
 const totalPlaces = ref(0)
+const dashboardError = ref(null)
 
 const extraStats = ref([
   { key: 'active_students', label: 'Étudiants actifs', value: 0, color: '#22c55e', icon: 'pi pi-users' },
@@ -423,22 +432,30 @@ const isCurrentPeriod = computed(() => {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
 })
 
+const reloadPeriodStats = async () => {
+  statsLoading.value = true
+  dashboardError.value = null
+  try {
+    await loadExtraStats()
+  } catch (error) {
+    dashboardError.value = error?.message || 'Vérifiez votre connexion puis réessayez.'
+  } finally {
+    statsLoading.value = false
+  }
+}
+
 const shiftPeriod = async (delta) => {
   const d = new Date(selectedDate.value)
   if (periodMode.value === 'day') d.setDate(d.getDate() + delta)
   else if (periodMode.value === 'month') d.setMonth(d.getMonth() + delta)
   else d.setFullYear(d.getFullYear() + delta)
   selectedDate.value = d
-  statsLoading.value = true
-  await loadExtraStats()
-  statsLoading.value = false
+  await reloadPeriodStats()
 }
 
 const resetToToday = async () => {
   selectedDate.value = new Date()
-  statsLoading.value = true
-  await loadExtraStats()
-  statsLoading.value = false
+  await reloadPeriodStats()
 }
 
 const navigateTo = (path) => router.push(path)
@@ -448,13 +465,16 @@ const onPeriodChange = async () => {
   else if (periodMode.value === 'year') period.value = '90d'
   else period.value = '30d'
   selectedDate.value = new Date()
-  statsLoading.value = true
-  await loadExtraStats()
-  statsLoading.value = false
+  await reloadPeriodStats()
 }
 
 const refreshAll = async () => {
-  await Promise.all([refresh(), loadExtraStats(), loadOpenSessions()])
+  dashboardError.value = null
+  try {
+    await Promise.all([refresh(), loadExtraStats(), loadOpenSessions(), loadRecentActivities()])
+  } catch (error) {
+    dashboardError.value = error?.message || 'Vérifiez votre connexion puis réessayez.'
+  }
 }
 
 const isInSelectedPeriod = (isoDate) => {
@@ -469,14 +489,16 @@ const isInSelectedPeriod = (isoDate) => {
 
 const loadOpenSessions = async () => {
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('votation_sessions')
       .select('id,pfp_type,target_class,status,is_priority')
       .eq('status', 'open')
       .order('opened_at', { ascending: false })
+    if (error) throw error
     openSessions.value = data || []
   } catch (e) {
     console.warn('Erreur chargement sessions ouvertes:', e)
+    throw new Error(`Sessions de votation indisponibles: ${e.message}`, { cause: e })
   }
 }
 
@@ -491,6 +513,9 @@ const loadExtraStats = async () => {
         .from('student_result_vote')
         .select('id,status,pfp_type,pfp_validee,pfp_echec,pfp_arret,assigned_place_id,created_at,updated_at')
     ])
+
+    if (placesRes.error) throw placesRes.error
+    if (votesRes.error) throw votesRes.error
 
     const profiles = studentDirectory.filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
     const places = (placesRes.data || []).filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
@@ -541,6 +566,7 @@ const loadExtraStats = async () => {
     ]
   } catch (error) {
     console.warn('Erreur chargement stats détaillées PFP:', error)
+    throw new Error(`Statistiques PFP indisponibles: ${error.message}`, { cause: error })
   }
 }
 
@@ -602,6 +628,9 @@ const loadRecentActivities = async () => {
 
     const items = []
 
+    if (sessionsRes.error) throw sessionsRes.error
+    if (placesRes.error) throw placesRes.error
+
     for (const s of (sessionsRes.data || [])) {
       const label = s.is_priority ? 'Session prioritaire' : 'Session votation'
       const verb = s.status === 'open' ? 'ouverte' : 'fermée'
@@ -648,14 +677,22 @@ const loadRecentActivities = async () => {
     activities.value = items.slice(0, 8)
   } catch (e) {
     console.warn('Erreur chargement activités récentes:', e)
+    throw new Error(`Activités récentes indisponibles: ${e.message}`, { cause: e })
   } finally {
     activitiesLoading.value = false
   }
 }
 
-onMounted(async () => {
-  await Promise.all([loadKpis(), loadExtraStats(), loadOpenSessions(), loadRecentActivities()])
-})
+const initializeDashboard = async () => {
+  dashboardError.value = null
+  try {
+    await Promise.all([loadKpis(), loadExtraStats(), loadOpenSessions(), loadRecentActivities()])
+  } catch (error) {
+    dashboardError.value = error?.message || 'Vérifiez votre connexion puis réessayez.'
+  }
+}
+
+onMounted(initializeDashboard)
 </script>
 
 <style scoped>

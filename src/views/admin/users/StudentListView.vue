@@ -2,7 +2,15 @@
   <AdminLayout>
     <Toast />
     <div class="filter-menu">
+      <ErrorState
+        v-if="loadError"
+        class="mb-3"
+        title="Impossible d’actualiser les étudiants"
+        :description="loadError"
+        @retry="fetchEtudiantsFromSupabase"
+      />
       <DataTable
+        v-if="!loadError || etudiants.length > 0"
         :value="filteredEtudiants"
         :paginator="true"
         :rows="10"
@@ -209,6 +217,7 @@ import StudentEditDialog from '@/components/admin/forms/StudentEditDialog.vue';
 import StudentCreateDialog from '@/components/admin/forms/StudentCreateDialog.vue';
 import { useUserStore } from '@/stores/userStore';
 import DataTableToolbar from '@/components/common/tables/DataTableToolbar.vue';
+import ErrorState from '@/components/common/states/ErrorState.vue';
 
 export default {
   name: "EtudiantList",
@@ -221,7 +230,8 @@ export default {
     Toast,
     StudentEditDialog,
     StudentCreateDialog,
-    Dropdown
+    Dropdown,
+    ErrorState
   },
   data() {
     return {
@@ -230,6 +240,7 @@ export default {
         'Classe': { value: '', matchMode: 'equals' },
       },
       loading: true,
+      loadError: null,
       globalFilterInput: '',
       globalFilter: '',
       globalFilterDebounceTimer: null,
@@ -343,6 +354,7 @@ export default {
 
     async fetchEtudiantsFromSupabase() {
       this.loading = true;
+      this.loadError = null;
       const startTime = performance.now();
       
       try {
@@ -384,6 +396,7 @@ export default {
         });
       } catch (error) {
         console.error('❌ Erreur fetchEtudiantsFromSupabase:', error);
+        this.loadError = error?.message || 'Vérifiez votre connexion puis réessayez.';
         this.toast.add({
           severity: 'error',
           summary: 'Erreur',
@@ -540,21 +553,16 @@ export default {
           newCohort: cohortValue
         });
         
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('user_profiles')
           .update({ pfp_cohort: cohortValue })
-          .eq('user_id', student.id);
+          .eq('user_id', student.id)
+          .select('user_id, pfp_cohort')
+          .maybeSingle();
         
-        if (error) {
-          console.error('❌ Erreur Supabase:', error);
-          this.toast.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de mettre à jour la cohorte PFP',
-            life: 5000
-          });
-        } else {
-          this.debug('✅ PFP Cohort mis à jour');
+        if (error) throw error;
+        if (!data || data.pfp_cohort !== cohortValue) throw new Error('La cohorte n’a pas été enregistrée.');
+        this.debug('✅ PFP Cohort mis à jour');
           
           this.toast.add({
             severity: 'success',
@@ -562,7 +570,6 @@ export default {
             detail: `Cohorte PFP ${cohortValue || 'supprimée'} pour ${student.Prenom} ${student.Nom}`,
             life: 3000
           });
-        }
       } catch (error) {
         console.error('❌ Exception updatePfpCohort:', error);
         this.toast.add({
@@ -571,6 +578,7 @@ export default {
           detail: error.message,
           life: 5000
         });
+        throw error;
       } finally {
         student.updating = false;
       }
@@ -674,46 +682,46 @@ export default {
         });
 
         // Vérifier si l'étudiant existe dans StudentsPhysio
-        const { data: existing } = await supabase
+        const { data: existing, error: existingError } = await supabase
           .from('StudentsPhysio')
           .select('user_id')
           .eq('user_id', student.id)
-          .single();
+          .maybeSingle();
 
-        let error;
+        if (existingError) throw existingError;
+
+        let persisted;
         if (existing) {
           // Update
           const result = await supabase
             .from('StudentsPhysio')
             .update({ repondant_hes: repondantValue })
-            .eq('user_id', student.id);
-          error = result.error;
+            .eq('user_id', student.id)
+            .select('user_id, repondant_hes')
+            .maybeSingle();
+          if (result.error) throw result.error;
+          persisted = result.data;
         } else {
           // Insert
           const result = await supabase
             .from('StudentsPhysio')
-            .insert({ user_id: student.id, repondant_hes: repondantValue });
-          error = result.error;
+            .insert({ user_id: student.id, repondant_hes: repondantValue })
+            .select('user_id, repondant_hes')
+            .single();
+          if (result.error) throw result.error;
+          persisted = result.data;
         }
 
-        if (error) {
-          console.error('❌ Erreur Supabase:', error);
-          this.toast.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de mettre à jour le Répondant HES',
-            life: 5000
-          });
-          throw error;
-        } else {
-          this.debug('✅ Répondant HES mis à jour');
+        if (!persisted || persisted.repondant_hes !== repondantValue) {
+          throw new Error('Le répondant HES n’a pas été enregistré.');
+        }
+        this.debug('✅ Répondant HES mis à jour');
           this.toast.add({
             severity: 'success',
             summary: 'Mis à jour',
             detail: `Répondant HES ${repondantValue || 'supprimé'} pour ${student.Prenom} ${student.Nom}`,
             life: 3000
           });
-        }
       } catch (error) {
         console.error('❌ Exception updateRepondantHES:', error);
         throw error;

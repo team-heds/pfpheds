@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url'
+import { realpathSync } from 'node:fs'
 
-import { defineConfig } from 'vite'
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import VueDevTools from 'vite-plugin-vue-devtools'
 import { VitePWA } from 'vite-plugin-pwa';
@@ -30,9 +31,52 @@ function presentationDevAssets() {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Keep optimized dependencies local to each Git worktree. Sharing the
+  // default node_modules/.vite cache makes parallel dev servers invalidate
+  // one another and forces full-page reloads while navigating.
+  cacheDir: '.vite-cache',
+  optimizeDeps: {
+    // These libraries live mostly behind lazy routes. Pre-bundle them at
+    // startup so opening a page never causes Vite to restart the application.
+    include: [
+      'primevue/card',
+      'primevue/calendar',
+      'primevue/progressspinner',
+      'primevue/inputnumber',
+      'primevue/selectbutton',
+      'primevue/divider',
+      'primevue/paginator',
+      'leaflet',
+      'chart.js',
+      'vue-chartjs',
+      '@fullcalendar/core',
+      '@fullcalendar/daygrid',
+      '@fullcalendar/interaction',
+      '@fullcalendar/timegrid',
+      '@fullcalendar/vue3',
+      '@tiptap/core',
+      '@tiptap/starter-kit',
+      '@tiptap/vue-3',
+      'exceljs',
+      'jspdf',
+      'jspdf-autotable',
+      'qrcode',
+      'three',
+      'xlsx',
+    ],
+  },
   server: {
     host: '0.0.0.0',
     port: 5180,
+    // Git worktrees can share node_modules with the main checkout. Vite resolves
+    // font URLs to that real path, so explicitly allow the resolved dependency
+    // directory while preserving the default workspace allow-list.
+    fs: {
+      allow: [
+        searchForWorkspaceRoot(process.cwd()),
+        realpathSync(fileURLToPath(new URL('./node_modules', import.meta.url))),
+      ],
+    },
     hmr: false, // DÉSACTIVER COMPLÈTEMENT LE HMR (rechargement manuel uniquement)
     watch: {
       usePolling: false,
@@ -114,7 +158,10 @@ export default defineConfig({
     }
   },
   esbuild: {
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    // Keep warnings and errors in production so incidents remain observable.
+    // Debug-only statements and debugger instructions are still stripped.
+    drop: process.env.NODE_ENV === 'production' ? ['debugger'] : [],
+    pure: process.env.NODE_ENV === 'production' ? ['console.debug'] : [],
   },
   build: {
     rollupOptions: {

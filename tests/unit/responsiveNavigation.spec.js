@@ -6,14 +6,16 @@ const readSource = (relativePath) =>
   readFileSync(join(process.cwd(), relativePath), 'utf8')
 
 describe('responsive navigation contract', () => {
-  it('keeps desktop controls at a consistent size and adapts the tablet layout', () => {
+  it('keeps desktop controls centered in the shared shell and adapts the tablet layout', () => {
     const navbar = readSource('src/components/common/utils/Navbar.vue')
     const button = readSource('src/components/ui/buttons/ButtonNavbar.vue')
     const search = readSource('src/components/common/utils/GlobalSearch.vue')
 
     expect(navbar).toContain('--navbar-control-size: 44px')
-    expect(navbar).toContain('grid-template-columns: auto minmax(0, 1fr) auto')
+    expect(navbar).toContain('padding-inline: clamp(2rem, 8vw, 10rem)')
+    expect(navbar).toContain('transform: translateX(-50%)')
     expect(navbar).toContain('@media (min-width: 769px) and (max-width: 900px)')
+    expect(navbar).toContain('grid-template-columns: 1fr auto')
     expect(navbar).toContain('grid-column: 1 / -1')
     expect(button).toContain('var(--navbar-control-size, 44px)')
     expect(search).toContain('width: 44px')

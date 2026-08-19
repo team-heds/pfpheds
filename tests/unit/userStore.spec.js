@@ -10,6 +10,8 @@ const mockSignInWithPassword = vi.fn()
 const mockSignOut = vi.fn()
 const mockFrom = vi.fn()
 const mockRemoveChannel = vi.fn()
+const mockChannel = vi.fn()
+let authStateCallback = null
 
 vi.mock('@/supabase.js', () => ({
   supabase: {
@@ -21,6 +23,7 @@ vi.mock('@/supabase.js', () => ({
       signOut: (...args) => mockSignOut(...args),
     },
     from: (...args) => mockFrom(...args),
+    channel: (...args) => mockChannel(...args),
     removeChannel: (...args) => mockRemoveChannel(...args),
   }
 }))
@@ -36,6 +39,15 @@ describe('userStore', () => {
     setActivePinia(createPinia())
     store = useUserStore()
     vi.clearAllMocks()
+    authStateCallback = null
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      authStateCallback = callback
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
+    mockChannel.mockReturnValue({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnThis(),
+    })
   })
 
   // ── État initial ─────────────────────────────────────────────
@@ -105,6 +117,40 @@ describe('userStore', () => {
 
       expect(store.session).toBeNull()
       expect(store.user).toBeNull()
+    })
+
+    it('réutilise la session résolue par le bootstrap', async () => {
+      const session = { user: { id: 'u1', email: 'test@test.ch' } }
+      const chain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { user_id: 'u1' }, error: null })
+      }
+      mockFrom.mockReturnValue(chain)
+
+      await store.init({ session, sessionResolved: true })
+
+      expect(mockGetSession).not.toHaveBeenCalled()
+      expect(store.user).toEqual(session.user)
+    })
+
+    it('ne bloque pas le callback auth sur le chargement du profil', async () => {
+      mockGetSession.mockResolvedValue({ data: { session: null }, error: null })
+      const chain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { user_id: 'u2' }, error: null })
+      }
+      mockFrom.mockReturnValue(chain)
+      await store.init()
+
+      const callbackResult = authStateCallback('SIGNED_IN', { user: { id: 'u2' } })
+
+      expect(callbackResult).toBeUndefined()
+      expect(mockFrom).not.toHaveBeenCalled()
+      await new Promise((resolve) => queueMicrotask(resolve))
+      await Promise.resolve()
+      expect(mockFrom).toHaveBeenCalledWith('user_profiles')
     })
   })
 

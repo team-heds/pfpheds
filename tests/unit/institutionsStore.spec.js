@@ -36,6 +36,8 @@ vi.mock('@/stores/institutionsStore', async () => {
       currentInstitution: null,
       loading: false,
       error: null,
+      lastFetchedAt: 0,
+      fetchPromise: null,
     }),
 
     getters: {
@@ -59,23 +61,32 @@ vi.mock('@/stores/institutionsStore', async () => {
     },
 
     actions: {
-      async fetchInstitutions() {
+      async fetchInstitutions({ force = false } = {}) {
+        const cacheIsFresh = Date.now() - this.lastFetchedAt < 5 * 60 * 1000
+        if (!force && this.institutions.length > 0 && cacheIsFresh) return this.institutions
+        if (this.fetchPromise) return this.fetchPromise
+
         this.loading = true
         this.error = null
-        try {
-          const res = await fetch('https://test.api/rest/v1/institutions?select=*', {
-            headers: { apikey: 'test', Authorization: 'Bearer test', Accept: 'application/json' }
-          })
-          if (!res.ok) throw new Error(`[${res.status}] Error`)
-          const data = await res.json()
-          this.institutions = (Array.isArray(data) ? data : []).map(normalizeInstitution)
-          return this.institutions
-        } catch (e) {
-          this.error = e.message
-          throw e
-        } finally {
-          this.loading = false
-        }
+        this.fetchPromise = (async () => {
+          try {
+            const res = await fetch('https://test.api/rest/v1/institutions?select=*', {
+              headers: { apikey: 'test', Authorization: 'Bearer test', Accept: 'application/json' }
+            })
+            if (!res.ok) throw new Error(`[${res.status}] Error`)
+            const data = await res.json()
+            this.institutions = (Array.isArray(data) ? data : []).map(normalizeInstitution)
+            this.lastFetchedAt = Date.now()
+            return this.institutions
+          } catch (e) {
+            this.error = e.message
+            throw e
+          } finally {
+            this.loading = false
+            this.fetchPromise = null
+          }
+        })()
+        return this.fetchPromise
       },
 
       async createInstitution(payload) {
@@ -286,6 +297,26 @@ describe('institutionsStore – fetchInstitutions', () => {
     expect(store.institutions[0].Name).toBe('HUG')
     expect(store.institutions[1].ImageURL).toEqual(['http://img.jpg'])
     expect(store.loading).toBe(false)
+  })
+
+  it('réutilise les institutions récentes sans nouvel appel réseau', async () => {
+    mockFetchResponse([{ InstitutionId: 1, Name: 'HUG', ImageURL: null }])
+
+    const store = useInstitutionsStore()
+    await store.fetchInstitutions()
+    await store.fetchInstitutions()
+
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('coalesce deux chargements simultanés', async () => {
+    mockFetchResponse([{ InstitutionId: 1, Name: 'HUG', ImageURL: null }])
+
+    const store = useInstitutionsStore()
+    await Promise.all([store.fetchInstitutions(), store.fetchInstitutions()])
+
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+    expect(store.fetchPromise).toBeNull()
   })
 
   it('gère les erreurs fetch', async () => {

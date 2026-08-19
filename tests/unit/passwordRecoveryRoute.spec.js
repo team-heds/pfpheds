@@ -9,7 +9,7 @@ describe('navigation vers le changement de mot de passe', () => {
     const recoveryBypass = routerSource.indexOf(
       "if (to.path === '/reset-password' || to.path === '/new-password')",
     )
-    const dynamicRoutesLoad = routerSource.indexOf('if (!dynamicRoutesLoaded)')
+    const dynamicRoutesLoad = routerSource.indexOf('if (user && !dynamicRoutesLoaded)')
 
     expect(recoveryBypass).toBeGreaterThan(-1)
     expect(dynamicRoutesLoad).toBeGreaterThan(-1)
@@ -22,6 +22,14 @@ describe('navigation vers le changement de mot de passe', () => {
     expect(authRoutes).toContain("path: '/reset-password'")
     expect(authRoutes).toContain("path: '/new-password'")
     expect(authRoutes).toContain('requiresAuth: false')
+  })
+
+  it('résout la session avant de charger les routes dynamiques protégées', () => {
+    const authInitialization = routerSource.indexOf('await authStore.initializeAuth()')
+    const dynamicRoutesLoad = routerSource.indexOf('if (user && !dynamicRoutesLoaded)')
+
+    expect(authInitialization).toBeGreaterThan(-1)
+    expect(dynamicRoutesLoad).toBeGreaterThan(authInitialization)
   })
 
   it('masque la navigation mobile authentifiée sur les écrans publics', () => {

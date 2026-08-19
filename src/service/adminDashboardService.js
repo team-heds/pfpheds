@@ -30,30 +30,34 @@ export async function getGlobalStats() {
     const modList = modules || []
 
     // Cours
-    const { count: coursesCount } = await supabase
+    const { count: coursesCount, error: coursesError } = await supabase
       .from('courses')
       .select('*', { count: 'exact', head: true })
+    if (coursesError) throw coursesError
 
     // Enseignants SI depuis user_profiles (rôle EnseignantSoins)
-    const { data: siTeachers } = await supabase
+    const { data: siTeachers, error: siTeachersError } = await supabase
       .from('user_profiles')
       .select('user_id, role, permissions, is_active')
       .or('role.eq.EnseignantSoins,permissions.cs.["EnseignantSoins"]')
       .eq('is_active', true)
+    if (siTeachersError) throw siTeachersError
     const siTeacherCount = filterSITeacherProfiles(siTeachers).length
 
     // Enseignants PHY depuis user_profiles
-    const { data: phyTeachers } = await supabase
+    const { data: phyTeachers, error: phyTeachersError } = await supabase
       .from('user_profiles')
       .select('user_id')
       .or('role.eq.EnseignantPhysio,permissions.cs.["EnseignantPhysio"]')
+    if (phyTeachersError) throw phyTeachersError
     const phyTeacherCount = phyTeachers?.length || 0
 
     // Utilisateurs avec un rôle non-null
-    const { data: usersWithRoles } = await supabase
+    const { data: usersWithRoles, error: usersWithRolesError } = await supabase
       .from('user_profiles')
       .select('user_id')
       .not('role', 'is', null)
+    if (usersWithRolesError) throw usersWithRolesError
     const totalUsersWithRoles = usersWithRoles?.length || 0
 
     // RM = modules avec responsable_email renseigné
@@ -79,15 +83,7 @@ export async function getGlobalStats() {
 
     return stats
   } catch (error) {
-    console.error('❌ [adminDashboard] Erreur stats globales:', error)
-    return {
-      totalModules: 0,
-      totalCourses: 0,
-      totalUsersWithRoles: 0,
-      si: { modules: 0, teachers: 0, rm: 0 },
-      phy: { modules: 0, teachers: 0, rm: 0 },
-      modulesNoTrack: 0
-    }
+    throw new Error(`Impossible de charger les statistiques globales: ${error.message}`, { cause: error })
   }
 }
 
@@ -134,7 +130,7 @@ export async function getAllTrackRoles() {
     return roles
   } catch (error) {
     console.error('❌ [adminDashboard] Erreur rôles:', error)
-    return []
+    throw error
   }
 }
 
@@ -158,7 +154,7 @@ export async function getModulesWithRM() {
     return data || []
   } catch (error) {
     console.error('❌ [adminDashboard] Erreur modules:', error)
-    return []
+    throw error
   }
 }
 
@@ -175,12 +171,14 @@ export async function assignTrackRole(userId, trackId, role, assignedBy) {
     if (import.meta.env.DEV) console.log('➕ [adminDashboard] Assignation rôle via user_profiles:', { userId, role })
     
     // Update role directly on user_profiles
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('user_profiles')
       .update({ role })
       .eq('user_id', userId)
+      .select('user_id, role')
     
     if (error) throw error
+    if (data?.length !== 1 || data[0].role !== role) throw new Error('Aucun utilisateur modifié ou rôle non persisté')
     
     if (import.meta.env.DEV) console.log('✅ [adminDashboard] Rôle assigné')
     return { success: true, message: 'Rôle assigné avec succès' }
@@ -201,12 +199,14 @@ export async function removeTrackRole(roleId) {
     if (import.meta.env.DEV) console.log('➖ [adminDashboard] Suppression rôle (clear):', roleId)
     
     // Clear role on user_profiles
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('user_profiles')
       .update({ role: null })
       .eq('user_id', roleId)
+      .select('user_id, role')
     
     if (error) throw error
+    if (data?.length !== 1 || data[0].role !== null) throw new Error('Aucun rôle supprimé ou modification non persistée')
     
     if (import.meta.env.DEV) console.log('✅ [adminDashboard] Rôle supprimé')
     return { success: true }
@@ -230,15 +230,17 @@ export async function updateModuleRM(moduleId, responsableEmail) {
   try {
     if (import.meta.env.DEV) console.log('📝 [adminDashboard] Mise à jour RM module:', { moduleId, responsableEmail })
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('modules')
       .update({ 
         responsable_email: responsableEmail,
         updated_at: new Date().toISOString()
       })
       .eq('id', moduleId)
+      .select('id, responsable_email')
     
     if (error) throw error
+    if (data?.length !== 1 || data[0].responsable_email !== responsableEmail) throw new Error('Aucun module modifié ou responsable non persisté')
     
     if (import.meta.env.DEV) console.log('✅ [adminDashboard] RM mis à jour')
     return { success: true }
@@ -268,7 +270,7 @@ export async function getUsersForRoleAssignment() {
     }))
   } catch (error) {
     console.error('❌ [adminDashboard] Erreur users:', error)
-    return []
+    throw error
   }
 }
 
@@ -287,10 +289,7 @@ export async function getTracks() {
     return data || []
   } catch (error) {
     console.error('❌ [adminDashboard] Erreur tracks:', error)
-    return [
-      { id: 'SI', label: 'Soins Infirmiers', color: '#3b82f6' },
-      { id: 'PHY', label: 'Physiothérapie', color: '#10b981' }
-    ]
+    throw error
   }
 }
 
@@ -317,13 +316,6 @@ export async function loadAdminDashboard() {
       users
     }
   } catch (error) {
-    console.error('❌ [adminDashboard] Erreur chargement:', error)
-    return {
-      stats: null,
-      roles: [],
-      modules: [],
-      tracks: [],
-      users: []
-    }
+    throw new Error(`Impossible de charger le dashboard admin: ${error.message}`, { cause: error })
   }
 }
