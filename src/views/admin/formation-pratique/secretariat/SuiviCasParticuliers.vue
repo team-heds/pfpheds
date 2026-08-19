@@ -1255,40 +1255,79 @@ const groupedEchecs = computed(() => {
   })
 })
 
+const failedPfpGradeFields = [
+  { field: 'pfp1a', pfpType: 'PFP1A' },
+  { field: 'pfp1b', pfpType: 'PFP1B' },
+  { field: 'pfp2', pfpType: 'PFP2' },
+  { field: 'pfp3', pfpType: 'PFP3' },
+  { field: 'pfp4', pfpType: 'PFP4' }
+]
+
+const isFailedPfpGrade = (grade) => String(grade ?? '').trim().toUpperCase() === 'F'
+
 const fetchEchecsStudents = async () => {
   loadingEchecs.value = true
   try {
-    const { data: echecs, error: echecsError } = await supabase
-      .from('student_result_vote')
-      .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, pfp_arret, commentaire_arret')
-      .eq('pfp_echec', true)
+    const [{ data: manualEchecs, error: echecsError }, { data: notes, error: notesError }, profiles] = await Promise.all([
+      supabase
+        .from('student_result_vote')
+        .select('user_id, pfp_type, year, assigned_place_name, assigned_institution_name, pfp_arret, commentaire_arret')
+        .eq('pfp_echec', true),
+      supabase
+        .from('StudentsPhysio')
+        .select('user_id, year, pfp1a, pfp1b, pfp2, pfp3, pfp4'),
+      getAllStudents()
+    ])
 
     if (echecsError) throw echecsError
+    if (notesError) throw notesError
 
-    const userIds = [...new Set((echecs || []).map(e => e.user_id))]
-    if (userIds.length === 0) {
-      echecsList.value = []
-      return
-    }
+    const mergedEchecs = new Map()
+    const keyFor = (row) => `${row.user_id}_${row.pfp_type}_${String(row.year ?? 'N/A')}`
 
-    const profiles = (await getAllStudents()).filter(profile => userIds.includes(profile.user_id))
-
-    const profileMap = new Map((profiles || []).map(p => [p.user_id, p]))
-
-    echecsList.value = (echecs || []).filter(e => profileMap.has(e.user_id)).map(e => {
-      const profile = profileMap.get(e.user_id)
-      return {
-        user_id: e.user_id,
-        etudiant: profile ? `${(profile.family_name || '').toUpperCase()} ${profile.forname || ''}`.trim() : e.user_id,
-        classe: profile?.classe || '-',
-        year: e.year,
-        pfp_type: e.pfp_type,
-        assigned_place_name: e.assigned_place_name,
-        assigned_institution_name: e.assigned_institution_name,
-        pfp_arret: e.pfp_arret,
-        commentaire_arret: e.commentaire_arret
-      }
+    // Les échecs ajoutés manuellement restent prioritaires afin de préserver leurs détails.
+    ;(manualEchecs || []).forEach(echec => {
+      mergedEchecs.set(keyFor(echec), echec)
     })
+
+    ;(notes || []).forEach(note => {
+      failedPfpGradeFields.forEach(({ field, pfpType }) => {
+        if (!isFailedPfpGrade(note[field])) return
+
+        const gradeFailure = {
+          user_id: note.user_id,
+          pfp_type: pfpType,
+          year: note.year || 'N/A',
+          assigned_place_name: null,
+          assigned_institution_name: null,
+          pfp_arret: false,
+          commentaire_arret: null
+        }
+
+        if (!mergedEchecs.has(keyFor(gradeFailure))) {
+          mergedEchecs.set(keyFor(gradeFailure), gradeFailure)
+        }
+      })
+    })
+
+    const profileMap = new Map((profiles || []).map(profile => [profile.user_id, profile]))
+
+    echecsList.value = [...mergedEchecs.values()]
+      .filter(echec => profileMap.has(echec.user_id))
+      .map(echec => {
+        const profile = profileMap.get(echec.user_id)
+        return {
+          user_id: echec.user_id,
+          etudiant: `${(profile.family_name || '').toUpperCase()} ${profile.forname || ''}`.trim(),
+          classe: profile.classe || '-',
+          year: echec.year || 'N/A',
+          pfp_type: echec.pfp_type,
+          assigned_place_name: echec.assigned_place_name,
+          assigned_institution_name: echec.assigned_institution_name,
+          pfp_arret: echec.pfp_arret,
+          commentaire_arret: echec.commentaire_arret
+        }
+      })
   } catch (e) {
     console.error('Erreur fetchEchecsStudents:', e)
     toast.add({ severity: 'error', summary: 'Erreur', detail: "Impossible de charger les échecs de stage", life: 3000 })
