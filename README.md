@@ -50,17 +50,21 @@ npm install
 Lancement local :
 
 ```bash
-npm run dev
+npm run dev:full
 ```
 
-Application frontend :
+Cette commande démarre ensemble :
 
-- Vite sert l’application sur le port configuré par le projet.
+- le frontend Vite sur le port configuré par le projet ;
+- le backend Express sur le port `3000`.
+
+Elle nécessite un fichier `backend/.env` configuré à partir de `backend/.env.example`.
 
 ## Scripts utiles
 
 ```bash
 npm run dev
+npm run dev:full
 npm run build
 npm run preview
 npm run lint

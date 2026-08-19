@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "node scripts/dev-full.mjs",
     "build": "vite build",
     "presentation:dev": "npm --prefix presentation run dev",
     "presentation:build": "npm --prefix presentation run build",
