@@ -1,6 +1,12 @@
 <template>
   <div class="theme-switch">
-    <label class="label" @click="toggleTheme">
+    <button
+      type="button"
+      class="label"
+      :aria-label="isDimTheme ? 'Activer le thème clair' : 'Activer le thème sombre'"
+      :title="isDimTheme ? 'Thème clair' : 'Thème sombre'"
+      @click="toggleTheme"
+    >
       <div class="icon-wrapper">
         <i
           v-if="!isDimTheme"
@@ -13,7 +19,7 @@
           style="color: var(--primary-color); font-size: 20px;"
         ></i>
       </div>
-    </label>
+    </button>
   </div>
 </template>
 
@@ -99,11 +105,22 @@ const replaceLink = (linkElement, href, onComplete) => {
   width: 44px;
   cursor: pointer;
   background-color: var(--surface-overlay);
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  border: 0;
+  color: var(--primary-color);
+  transition: background-color 150ms ease, transform 150ms ease;
 }
 
 .theme-switch .label:hover {
   background-color: var(--surface-hover);
+}
+
+.theme-switch .label:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.theme-switch .label:active {
+  transform: scale(0.96);
 }
 
 .icon-wrapper:hover {
@@ -121,5 +138,17 @@ const replaceLink = (linkElement, href, onComplete) => {
 .theme-switch .moon,
 .theme-switch .sun {
   transition: transform 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch .label,
+  .theme-switch .moon,
+  .theme-switch .sun {
+    transition: none;
+  }
+
+  .icon-wrapper:hover {
+    transform: none;
+  }
 }
 </style>

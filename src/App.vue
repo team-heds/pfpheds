@@ -170,5 +170,9 @@ export default {
   .background-container {
     display: none;
   }
+
+  .content {
+    padding-block-end: calc(var(--content-pad) + 4.5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 </style>

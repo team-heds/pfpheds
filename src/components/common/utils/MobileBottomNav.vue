@@ -1,91 +1,53 @@
 <template>
-  <nav class="mobile-bottom-nav" v-if="isMobile" :class="{ hide: !isVisible }" aria-label="Navigation principale">
-    <router-link v-for="item in navItems" :key="item.to" :to="item.to" class="nav-item" :class="{ active: isActive(item.to) }" :aria-current="isActive(item.to) ? 'page' : undefined">
-      <i :class="item.icon"></i>
-      <span>{{ item.label }}</span>
+  <nav v-if="isMobile" class="mobile-bottom-nav" aria-label="Navigation principale">
+    <router-link
+      v-for="item in navItems"
+      :key="item.key"
+      :to="item.to"
+      class="nav-item"
+      :class="{ active: isActive(item) }"
+      :aria-current="isActive(item) ? 'page' : undefined"
+    >
+      <i :class="item.icon" aria-hidden="true"></i>
+      <span class="nav-item__label">{{ item.label }}</span>
+      <span class="nav-item__label nav-item__label--compact">{{ item.shortLabel }}</span>
     </router-link>
   </nav>
 </template>
 
 <script setup>
 import { useRoute } from 'vue-router';
-import { ref, computed, onMounted, onUnmounted, defineProps, watch, nextTick } from 'vue';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useAuthStore } from '@/stores/authStore';
 
-const props = defineProps({ scrollTarget: Object });
-
-const userId = ref('');
-
-onMounted(() => {
-  const auth = getAuth();
-  if (auth.currentUser) {
-    userId.value = auth.currentUser.uid;
-  } else {
-    onAuthStateChanged(auth, (user) => {
-      if (user) userId.value = user.uid;
-    });
-  }
-});
-
+const authStore = useAuthStore();
+const userId = computed(() => authStore.user?.id || authStore.user?.uid || '');
 const navItems = computed(() => [
-  { to: '/feed', icon: 'pi pi-home', label: 'Accueil' },
-  { to: '/mobile-search', icon: 'pi pi-search', label: 'Recherche' },
-  { to: '/mobile-outils', icon: 'pi pi-th-large', label: 'Outils' },
-  { to: '/communities', icon: 'pi pi-comments', label: 'Communautés' },
-  { to: userId.value ? `/profile/${userId.value}` : '/profile', icon: 'pi pi-user', label: 'Profil' },
+  { key: 'feed', to: '/feed', match: '/feed', icon: 'pi pi-home', label: 'Accueil', shortLabel: 'Accueil' },
+  { key: 'search', to: '/mobile-search', match: '/mobile-search', icon: 'pi pi-search', label: 'Recherche', shortLabel: 'Chercher' },
+  { key: 'tools', to: '/mobile-outils', match: '/mobile-outils', icon: 'pi pi-th-large', label: 'Outils', shortLabel: 'Outils' },
+  { key: 'communities', to: '/communities', match: '/communities', icon: 'pi pi-comments', label: 'Communautés', shortLabel: 'Groupes' },
+  { key: 'profile', to: userId.value ? `/profile/${userId.value}` : '/profile', match: '/profile', icon: 'pi pi-user', label: 'Profil', shortLabel: 'Profil' },
 ]);
 
 const route = useRoute();
-const isActive = (to) => route.path.startsWith(to);
+const isActive = (item) => route.path === item.match || route.path.startsWith(`${item.match}/`);
 
-const isMobile = ref(window.innerWidth <= 768);
-const handleResize = () => {
-  isMobile.value = window.innerWidth <= 768;
+const mediaQuery = window.matchMedia('(max-width: 768px)');
+const isMobile = ref(mediaQuery.matches);
+const handleMediaChange = (event) => {
+  isMobile.value = event.matches;
 };
-onMounted(() => window.addEventListener('resize', handleResize));
-onUnmounted(() => window.removeEventListener('resize', handleResize));
-
-// --- Scroll hide/show logic ---
-const isVisible = ref(true);
-let lastScrollY = 0;
-const handleScroll = () => {
-  if (!props.scrollTarget) return;
-  const currentY = props.scrollTarget.scrollTop;
-  if (currentY > lastScrollY + 10) {
-    isVisible.value = false; // Scroll down: hide
-  } else if (currentY < lastScrollY - 10) {
-    isVisible.value = true; // Scroll up: show
-  }
-  lastScrollY = currentY;
+const subscribeToMediaQuery = () => {
+  if (mediaQuery.addEventListener) mediaQuery.addEventListener('change', handleMediaChange);
+  else mediaQuery.addListener(handleMediaChange);
 };
-
-function attachScrollListener() {
-  if (props.scrollTarget) {
-    lastScrollY = props.scrollTarget.scrollTop;
-    props.scrollTarget.addEventListener('scroll', handleScroll);
-  }
-}
-function detachScrollListener() {
-  if (props.scrollTarget) {
-    props.scrollTarget.removeEventListener('scroll', handleScroll);
-  }
-}
-
-onMounted(async () => {
-  await nextTick();
-  attachScrollListener();
-});
-onUnmounted(() => {
-  detachScrollListener();
-});
-
-watch(() => props.scrollTarget, (newVal, oldVal) => {
-  if (oldVal) oldVal.removeEventListener('scroll', handleScroll);
-  if (newVal) {
-    lastScrollY = newVal.scrollTop;
-    newVal.addEventListener('scroll', handleScroll);
-  }
-});
+const unsubscribeFromMediaQuery = () => {
+  if (mediaQuery.removeEventListener) mediaQuery.removeEventListener('change', handleMediaChange);
+  else mediaQuery.removeListener(handleMediaChange);
+};
+onMounted(subscribeToMediaQuery);
+onUnmounted(unsubscribeFromMediaQuery);
 </script>
 
 <style scoped>
@@ -96,49 +58,78 @@ watch(() => props.scrollTarget, (newVal, oldVal) => {
   bottom: 0;
   z-index: 1000;
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
   background: var(--surface-overlay, #fff);
   box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
   border-radius: 18px 18px 0 0;
-  max-width: 600px;
+  max-width: 37.5rem;
   margin: 0 auto;
-  padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px)); /* For iOS safe area */
-  padding-top: 8px;
-  transition: bottom 0.25s;
-}
-.mobile-bottom-nav.hide {
-  transform: translateY(100%);
-  pointer-events: none;
+  padding: 0.4rem max(0.25rem, env(safe-area-inset-right, 0px)) max(0.5rem, env(safe-area-inset-bottom, 0px)) max(0.25rem, env(safe-area-inset-left, 0px));
 }
 .nav-item {
   flex: 1 1 0;
+  min-width: 0;
+  min-height: 48px;
   text-align: center;
   color: var(--text-color, #555);
-  font-size: 1.3rem;
   text-decoration: none;
-  padding-top: 5px;
-  transition: color 0.2s;
+  border-radius: 0.75rem;
+  transition: color 150ms ease, background-color 150ms ease, transform 150ms ease;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
 }
 .nav-item.active,
 .nav-item.router-link-exact-active {
   color: var(--primary-color, #1976d2);
+  background: color-mix(in srgb, var(--primary-color) 12%, transparent);
 }
-.nav-item:focus-visible{outline:3px solid var(--primary-color);outline-offset:-3px;border-radius:.75rem}
-@media (prefers-reduced-motion:reduce){.mobile-bottom-nav,.nav-item{transition:none}}
+.nav-item:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}
+.nav-item:active {
+  transform: scale(0.96);
+}
 .nav-item i {
-  font-size: 1.6rem;
-  margin-bottom: 2px;
+  font-size: 1.35rem;
+  line-height: 1;
 }
-.nav-item span {
-  font-size: 0.7rem;
+.nav-item__label {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-item__label--compact {
+  display: none;
+}
+@media (max-width: 360px) {
+  .nav-item__label:not(.nav-item__label--compact) {
+    display: none;
+  }
+  .nav-item__label--compact {
+    display: block;
+  }
 }
 @media (min-width: 769px) {
   .mobile-bottom-nav {
     display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-item {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .nav-item.active {
+    border: 1px solid CanvasText;
   }
 }
 </style>

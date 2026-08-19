@@ -1,11 +1,14 @@
 ﻿<template>
   <Button
-    :class="customClass"
+    type="button"
+    :class="['navbar-icon-button', customClass, { 'navbar-icon-button--active': active }]"
     :style="buttonStyle"
     @click="onClick"
     :title="title"
+    :aria-label="ariaLabel || title"
+    :aria-current="active ? 'page' : undefined"
   >
-    <i :class="icon" :style="iconStyle"></i>
+    <i :class="icon" :style="iconStyle" aria-hidden="true"></i>
   </Button>
 </template>
 
@@ -40,6 +43,14 @@ export default defineComponent({
     title: {
       type: String,
       default: '',
+    },
+    ariaLabel: {
+      type: String,
+      default: '',
+    },
+    active: {
+      type: Boolean,
+      default: false,
     }
   },
   computed: {
@@ -48,12 +59,14 @@ export default defineComponent({
         backgroundColor: this.bgColor,
         border: "none",
         borderRadius: "32%",
-        width: "44px",
-        height: "44px",
+        width: "var(--navbar-control-size, 44px)",
+        minWidth: "var(--navbar-control-size, 44px)",
+        height: "var(--navbar-control-size, 44px)",
+        minHeight: "var(--navbar-control-size, 44px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        transition: "background-color 0.3s ease",
+        transition: "color 150ms ease, background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease",
         cursor: 'pointer',
       };
     },
@@ -73,8 +86,33 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.p-button:hover {
+.navbar-icon-button:hover {
   background-color: var(--surface-hover) !important;
+}
+
+.navbar-icon-button--active {
+  color: var(--surface-overlay);
+  background-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 65%, transparent);
+}
+
+.navbar-icon-button--active :deep(i) {
+  color: var(--surface-overlay) !important;
+}
+
+.navbar-icon-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.navbar-icon-button:active {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar-icon-button {
+    transition: none !important;
+  }
 }
 
 
