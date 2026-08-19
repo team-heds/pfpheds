@@ -9,6 +9,7 @@ const recovery = vi.hoisted(() => ({
 }))
 
 const routerPush = vi.hoisted(() => vi.fn())
+const layoutScheme = vi.hoisted(() => ({ value: 'dim' }))
 
 vi.mock('@/supabase.js', () => ({
   supabase: { auth: {} },
@@ -16,6 +17,12 @@ vi.mock('@/supabase.js', () => ({
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: routerPush }),
+}))
+
+vi.mock('@/layout/composables/layout', () => ({
+  useLayout: () => ({
+    layoutConfig: { colorScheme: layoutScheme },
+  }),
 }))
 
 vi.mock('@/service/passwordRecoveryService', () => ({
@@ -75,9 +82,21 @@ async function mountJourney(result) {
 describe('parcours complet de réinitialisation du mot de passe', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    layoutScheme.value = 'dim'
     recovery.authorizeWithOtp.mockResolvedValue(undefined)
     recovery.updatePassword.mockResolvedValue(undefined)
     recovery.abandon.mockResolvedValue(undefined)
+  })
+
+  it('utilise un logo lisible dans les thèmes sombre et clair', async () => {
+    const darkWrapper = await mountJourney({ status: 'valid' })
+    expect(darkWrapper.get('.reset-logo').attributes('src')).toBe(
+      '/assets/images/FR-DE_HEdS_rvb_neg.png',
+    )
+
+    layoutScheme.value = 'light'
+    const lightWrapper = await mountJourney({ status: 'valid' })
+    expect(lightWrapper.get('.reset-logo').attributes('src')).toBe('/assets/images/FR-DE_HEdS.png')
   })
 
   it('présente un état contrôlé pour un jeton expiré et accepte le dernier code reçu', async () => {
