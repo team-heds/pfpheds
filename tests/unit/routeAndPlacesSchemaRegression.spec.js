@@ -21,11 +21,14 @@ describe('Documents PFP route contract', () => {
 
 describe('Admin places schema contract', () => {
   const dashboard = readSource('src/components/admin/AdminDashboardPFP.vue')
+  const contracts = readSource('src/service/supabaseContracts.js')
 
   it('interroge uniquement les colonnes réellement présentes en production', () => {
-    expect(dashboard).toContain(".select('PlaceId,InstitutionId,NomPlace,fileurl,CreatedAt,UpdatedAt')")
-    expect(dashboard).toContain(".select('PlaceId,NomPlace,CreatedAt')")
+    expect(dashboard).toContain('.select(SUPABASE_SELECTS.dashboardPlaces)')
+    expect(dashboard).toContain('.select(SUPABASE_SELECTS.dashboardRecentPlaces)')
+    expect(contracts).toContain("dashboardPlaces: 'PlaceId,InstitutionId,NomPlace,fileurl,CreatedAt,UpdatedAt'")
+    expect(contracts).toContain("dashboardRecentPlaces: 'PlaceId,NomPlace,CreatedAt'")
     expect(dashboard).toContain(".order('CreatedAt', { ascending: false })")
-    expect(dashboard).not.toContain('fileURL,fileurl,pdfUrl,created_at,updated_at')
+    expect(contracts).not.toContain('fileURL,fileurl,pdfUrl,created_at,updated_at')
   })
 })

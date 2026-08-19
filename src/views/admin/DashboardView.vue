@@ -811,16 +811,14 @@ async function loadSupabaseData() {
 }
 
 onMounted(async () => {
-  // Charger KPI
+  // Ces lectures partagent le cache étudiants et peuvent démarrer ensemble.
   await Promise.all([
     loadGeneral(),
     loadPfp(),
     loadAcademique(),
-    loadGamification()
+    loadGamification(),
+    loadSupabaseData()
   ])
-  
-  // Charger données Supabase
-  await loadSupabaseData()
   
   // Message de bienvenue
   toast.add({

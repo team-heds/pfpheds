@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:full": "node scripts/dev-full.mjs",
+    "doctor": "node scripts/doctor.mjs",
     "build": "vite build",
     "presentation:dev": "npm --prefix presentation run dev",
     "presentation:build": "npm --prefix presentation run build",

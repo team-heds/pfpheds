@@ -18,7 +18,7 @@ vi.mock('@/composables/useInputValidation', () => ({
   validateEmail: () => ({ valid: true }),
 }))
 
-import { fetchQuickStats } from '@/service/dashboardQuickStatsService'
+import { fetchQuickStats, fetchQuickStatsWithTrends } from '@/service/dashboardQuickStatsService'
 import { assignTrackRole } from '@/service/adminDashboardService'
 
 describe('data integrity services', () => {
@@ -62,5 +62,22 @@ describe('data integrity services', () => {
 
     expect(result.success).toBe(false)
     expect(result.message).toContain('Aucun utilisateur modifié')
+  })
+
+  it('ne relit pas deux fois les mêmes statistiques pour une tendance non historisée', async () => {
+    fromMock.mockImplementation((table) => {
+      if (table === 'user_profiles') {
+        return {
+          select: () => ({ or: () => Promise.resolve({ data: [], error: null }) }),
+        }
+      }
+      return {
+        select: () => ({ limit: () => Promise.resolve({ count: 4, error: null }) }),
+      }
+    })
+
+    await fetchQuickStatsWithTrends()
+
+    expect(countStudentsMock).toHaveBeenCalledTimes(1)
   })
 })
