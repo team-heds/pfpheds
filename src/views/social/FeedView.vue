@@ -17,7 +17,6 @@
       <RightSidebar />
     </template>
   </SocialThreeColumnLayout>
-  <MobileBottomNav :scrollTarget="mainFeedRef" />
 </template>
 
 <script>
@@ -27,7 +26,6 @@ import MainFeed from '@/components/social/library/MainFeed.vue'
 import MainFeedSupabase from '@/components/social/library/MainFeedSupabase.vue'
 import RightSidebar from '@/components/social/library/RightSidebar.vue'
 import Navbar from '@/components/common/utils/Navbar.vue'
-import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue'
 import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -38,7 +36,6 @@ export default {
     MainFeed,
     MainFeedSupabase,
     RightSidebar,
-    MobileBottomNav,
     SocialThreeColumnLayout
   },
   setup() {
