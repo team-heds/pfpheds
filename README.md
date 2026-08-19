@@ -56,7 +56,7 @@ npm run dev:full
 
 Cette commande démarre ensemble :
 
-- le frontend Vite sur le port configuré par le projet ;
+- le frontend Vite sur `http://localhost:5180` ;
 - le backend Express sur le port `3000`.
 
 Elle nécessite les dépendances du backend ainsi qu'un fichier `backend/.env` configuré à partir de `backend/.env.example`.

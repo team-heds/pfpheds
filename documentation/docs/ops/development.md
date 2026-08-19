@@ -32,6 +32,7 @@ npm run dev:full
 ```
 
 La commande s'arrête immédiatement avec une instruction claire si `backend/.env` ou les dépendances du backend sont absents.
+Le frontend utilise obligatoirement `http://localhost:5180` et le backend `http://localhost:3000` ; si un port est déjà occupé, arrêter l'ancien processus avant de relancer.
 
 Pour les lancer séparément :
 
