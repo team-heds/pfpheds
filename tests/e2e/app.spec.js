@@ -1,11 +1,5 @@
 import { test, expect } from '@playwright/test'
 
-// Helper: filtre les erreurs réseau/auth qu'on attend en mode test
-function isIgnorableError(msg) {
-  const ignored = ['supabase', 'fetch', 'network', 'Failed to fetch', 'NetworkError', 'firebase', 'ERR_CONNECTION']
-  return ignored.some(k => msg.toLowerCase().includes(k.toLowerCase()))
-}
-
 // ── Tests E2E de base — vérification que l'app démarre ─────────
 
 test.describe('Application – chargement initial', () => {
@@ -31,37 +25,30 @@ test.describe('Application – chargement initial', () => {
 
 test.describe('Formulaire de login', () => {
   test('les champs email et mot de passe sont présents', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForTimeout(1500)
-    // Chercher des inputs de type email/password ou des champs de formulaire
-    const inputs = page.locator('input')
-    const count = await inputs.count()
-    expect(count).toBeGreaterThanOrEqual(1)
+    await page.goto('/home')
+    await expect(page.locator('input[type="email"]')).toBeVisible()
+    await expect(page.locator('input[type="password"]')).toBeVisible()
   })
 
   test('un message d\'erreur apparaît avec des identifiants invalides', async ({ page }) => {
-    await page.goto('/')
-    await page.waitForTimeout(1500)
+    await page.goto('/home')
 
     // Remplir les champs s'ils existent
     const emailInput = page.locator('input[type="email"], input[placeholder*="mail" i], input[placeholder*="email" i]').first()
     const passwordInput = page.locator('input[type="password"]').first()
 
-    if (await emailInput.isVisible() && await passwordInput.isVisible()) {
-      await emailInput.fill('test@invalid.com')
-      await passwordInput.fill('wrongpassword')
+    await expect(emailInput).toBeVisible()
+    await expect(passwordInput).toBeVisible()
+    await emailInput.fill('test@invalid.com')
+    await passwordInput.fill('wrongpassword')
 
-      // Chercher un bouton de soumission
-      const submitBtn = page.locator('button[type="submit"], button:has-text("Connexion"), button:has-text("Se connecter")').first()
-      if (await submitBtn.isVisible()) {
-        await submitBtn.click()
-        await page.waitForTimeout(3000)
-        // On ne devrait PAS être redirigé vers /feed ou /admin
-        const url = page.url()
-        expect(url).not.toContain('/feed')
-        expect(url).not.toContain('/admin/dashboard')
-      }
-    }
+    const submitBtn = page.locator('button[type="submit"], button:has-text("Connexion"), button:has-text("Se connecter")').first()
+    await expect(submitBtn).toBeVisible()
+    await submitBtn.click()
+    await page.waitForTimeout(3000)
+
+    expect(page.url()).not.toContain('/feed')
+    expect(page.url()).not.toContain('/admin/dashboard')
   })
 })
 
@@ -137,32 +124,25 @@ test.describe('Qualité – erreurs JavaScript', () => {
   test('pas d\'erreurs JavaScript critiques au chargement', async ({ page }) => {
     const errors = []
     page.on('pageerror', (error) => {
-      if (!isIgnorableError(error.message)) {
-        errors.push(error.message)
-      }
+      errors.push(error.message)
     })
 
     await page.goto('/')
     await page.waitForTimeout(3000)
 
-    // Pas d'erreurs de syntaxe ou de référence
-    const critical = errors.filter(e => e.includes('SyntaxError') || e.includes('ReferenceError'))
-    expect(critical).toHaveLength(0)
+    expect(errors).toHaveLength(0)
   })
 
   test('pas d\'erreurs critiques sur /calendar', async ({ page }) => {
     const errors = []
     page.on('pageerror', (error) => {
-      if (!isIgnorableError(error.message)) {
-        errors.push(error.message)
-      }
+      errors.push(error.message)
     })
 
     await page.goto('/calendar')
     await page.waitForTimeout(3000)
 
-    const critical = errors.filter(e => e.includes('SyntaxError') || e.includes('ReferenceError'))
-    expect(critical).toHaveLength(0)
+    expect(errors).toHaveLength(0)
   })
 })
 

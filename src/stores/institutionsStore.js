@@ -90,6 +90,8 @@ export const useInstitutionsStore = defineStore('institutions', {
     currentInstitution: null,
     loading: false,
     error: null,
+    lastFetchedAt: 0,
+    fetchPromise: null,
   }),
 
   getters: {
@@ -113,20 +115,32 @@ export const useInstitutionsStore = defineStore('institutions', {
   },
 
   actions: {
-    async fetchInstitutions() {
+    async fetchInstitutions({ force = false } = {}) {
+      const cacheIsFresh = Date.now() - this.lastFetchedAt < 5 * 60 * 1000
+      if (!force && this.institutions.length > 0 && cacheIsFresh) {
+        return this.institutions
+      }
+      if (this.fetchPromise) return this.fetchPromise
+
       this.loading = true
       this.error = null
-      try {
-        // PostgREST: /institutions?select=*  (select=* facultatif)
-        const data = await sbFetch(`/institutions?select=*`)
-        this.institutions = (Array.isArray(data) ? data : []).map(normalizeInstitution)
-        return this.institutions
-      } catch (e) {
-        this.error = e.message
-        throw e
-      } finally {
-        this.loading = false
-      }
+      this.fetchPromise = (async () => {
+        try {
+          // PostgREST: /institutions?select=*  (select=* facultatif)
+          const data = await sbFetch(`/institutions?select=*`)
+          this.institutions = (Array.isArray(data) ? data : []).map(normalizeInstitution)
+          this.lastFetchedAt = Date.now()
+          return this.institutions
+        } catch (e) {
+          this.error = e.message
+          throw e
+        } finally {
+          this.loading = false
+          this.fetchPromise = null
+        }
+      })()
+
+      return this.fetchPromise
     },
 
     async fetchInstitutionById(id) {

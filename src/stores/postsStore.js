@@ -15,6 +15,19 @@
 import { defineStore } from 'pinia';
 import apiClient from '@/service/apiClient';
 
+function requireList(payload, operation) {
+  if (!Array.isArray(payload)) throw new Error(`${operation}: réponse serveur invalide`)
+  return payload
+}
+
+function requirePersistedPost(payload, operation) {
+  const post = Array.isArray(payload) ? payload[0] : payload
+  if (!post || typeof post !== 'object' || !post.id) {
+    throw new Error(`${operation}: aucune publication persistée`)
+  }
+  return post
+}
+
 export const usePostsStore = defineStore('posts', {
   state: () => ({
     posts: [],
@@ -31,10 +44,12 @@ export const usePostsStore = defineStore('posts', {
       this.error = null;
       try {
         const response = await apiClient.get('/posts');
-        this.posts = response.data;
+        this.posts = requireList(response.data, 'Chargement des publications');
+        return this.posts;
       } catch (error) {
         this.error = 'Failed to fetch posts.';
         console.error(error);
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -53,19 +68,20 @@ export const usePostsStore = defineStore('posts', {
       this.error = null;
       try {
         const response = await apiClient.post('/posts', postData);
+        const persistedPost = requirePersistedPost(response.data, 'Création de la publication');
         // If it's a top-level post, add it to the start of the list
         if (!postData.parent_id) {
-            this.posts.unshift(response.data[0]);
+            this.posts.unshift(persistedPost);
         } else {
             // If it's a reply, you might want to update the parent post's reply count
             // or handle it differently depending on your UI needs.
             // Reply created successfully
         }
-        return response.data[0];
+        return persistedPost;
       } catch (error) {
         this.error = 'Failed to create post.';
         console.error(error);
-        return null;
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -82,15 +98,17 @@ export const usePostsStore = defineStore('posts', {
       this.error = null;
       try {
         const response = await apiClient.put(`/posts/${postId}`, updateData);
+        const persistedPost = requirePersistedPost(response.data, 'Mise à jour de la publication');
+        if (persistedPost.id !== postId) throw new Error('La publication retournée ne correspond pas à la publication modifiée');
         const index = this.posts.findIndex(p => p.id === postId);
         if (index !== -1) {
-          this.posts[index] = { ...this.posts[index], ...response.data };
+          this.posts[index] = { ...this.posts[index], ...persistedPost };
         }
-        return response.data;
+        return persistedPost;
       } catch (error) {
         this.error = 'Failed to update post.';
         console.error(error);
-        return null;
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -104,11 +122,17 @@ export const usePostsStore = defineStore('posts', {
       this.loading = true;
       this.error = null;
       try {
-        await apiClient.delete(`/posts/${postId}`);
+        const response = await apiClient.delete(`/posts/${postId}`);
+        const deletedId = response.data?.id || response.data?.deletedId || response.data?.deletedPost?.id;
+        if (deletedId !== postId && response.data?.success !== true) {
+          throw new Error('Suppression non confirmée par le serveur');
+        }
         this.posts = this.posts.filter(p => p.id !== postId);
+        return true;
       } catch (error) {
         this.error = 'Failed to delete post.';
         console.error(error);
+        throw error;
       } finally {
         this.loading = false;
       }

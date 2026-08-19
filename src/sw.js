@@ -3,45 +3,63 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { NetworkFirst, NetworkOnly } from 'workbox-strategies'
-import { ExpirationPlugin } from 'workbox-expiration'
 
 // ── Workbox Precache ──
-// self.__WB_MANIFEST is injected by VitePWA injectManifest
+// self.__WB_MANIFEST is injected by VitePWA injectManifest. Its revisions
+// provide a build-specific name for the runtime navigation cache as well.
+const precacheEntries = self.__WB_MANIFEST
+const navigationRevision = precacheEntries.reduce((hash, entry) => {
+  const value = `${typeof entry === 'string' ? entry : entry.url}:${entry.revision || ''}`
+  for (let index = 0; index < value.length; index += 1) {
+    hash = Math.imul(hash ^ value.charCodeAt(index), 16777619)
+  }
+  return hash
+}, 2166136261).toString(36)
+const NAVIGATION_CACHE_PREFIX = 'navigation-pages-'
+const NAVIGATION_CACHE = `${NAVIGATION_CACHE_PREFIX}${navigationRevision}`
+
 cleanupOutdatedCaches()
-precacheAndRoute(self.__WB_MANIFEST)
+precacheAndRoute(precacheEntries)
 
 // ── Runtime Caching ──
-// Supabase API: never cache
+const API_PATH_PREFIXES = [
+  '/api/',
+  '/auth/v1/',
+  '/rest/v1/',
+  '/storage/v1/',
+  '/functions/v1/',
+  '/realtime/v1/',
+]
+
+const isApiRequest = ({ url }) =>
+  API_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix)) ||
+  url.hostname.endsWith('.supabase.co') ||
+  url.hostname === 'api2.hedsvs.ch'
+
+// Auth, API and Supabase data must never be served from a cache. This includes
+// the self-hosted production gateway as well as hosted Supabase projects.
 registerRoute(
-  /^https:\/\/[a-zA-Z0-9-]+\.supabase\.co\/.*$/,
-  new NetworkOnly({ cacheName: 'supabase-api' })
+  isApiRequest,
+  new NetworkOnly()
 )
 
-// Same-origin resources: network first with 3s timeout
+// Only HTML navigations use a runtime cache. Versioned build assets are
+// already handled by the precache manifest, avoiding mixed application
+// bundles after a deployment.
 registerRoute(
-  ({ url }) => url.origin === self.location.origin && !url.pathname.startsWith('/api'),
+  ({ request, url }) => request.mode === 'navigate' && url.origin === self.location.origin,
   new NetworkFirst({
-    cacheName: 'static-resources',
-    networkTimeoutSeconds: 3,
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 50,
-        maxAgeSeconds: 24 * 60 * 60, // 1 day
-      }),
-    ],
+    cacheName: NAVIGATION_CACHE,
+    networkTimeoutSeconds: 5,
   })
 )
 
-// ── Skip Waiting & Claim ──
-self.addEventListener('install', () => {
-  self.skipWaiting()
-})
-
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    if (self.registration.active === self) {
-      await self.clients.claim()
-    }
+    const cacheNames = await caches.keys()
+    await Promise.all(cacheNames
+      .filter((cacheName) => cacheName.startsWith(NAVIGATION_CACHE_PREFIX) && cacheName !== NAVIGATION_CACHE)
+      .map((cacheName) => caches.delete(cacheName)))
   })())
 })
 

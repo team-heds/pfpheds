@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import rolesService from '@/service/rolesService';
 import { useRoleStore } from '@/stores/role';
 import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
+import { withTimeout } from '@/service/appBootstrap';
 import routes from '@/router/routes/index';
 
 const DEFAULT_NEED = 'authenticated';
@@ -26,14 +27,36 @@ const router = createRouter({
 });
 
 // Ajouter un guard de navigation
-let isAuthStateChecked = false;
 let dynamicRoutesLoaded = false;
+let dynamicRoutesPromise = null;
 const AUTH_BYPASS = import.meta.env.VITE_DISABLE_AUTH === 'true';
 
 const ROUTER_DEBUG = import.meta.env.VITE_DEBUG_ROUTER === 'true';
 const debugRouter = (...args) => {
   if (ROUTER_DEBUG) console.log(...args);
 };
+
+async function ensureDynamicRoutes() {
+  if (dynamicRoutesLoaded) return;
+  if (dynamicRoutesPromise) return dynamicRoutesPromise;
+
+  dynamicRoutesPromise = withTimeout(
+    addDynamicRoutesToRouter(router),
+    8_000,
+    () => Object.assign(new Error('Dynamic routes loading timed out'), {
+      code: 'DYNAMIC_ROUTES_TIMEOUT',
+      retryable: true,
+    }),
+  )
+    .then(() => {
+      dynamicRoutesLoaded = true;
+    })
+    .finally(() => {
+      dynamicRoutesPromise = null;
+    });
+
+  return dynamicRoutesPromise;
+}
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
@@ -46,13 +69,22 @@ router.beforeEach(async (to, from, next) => {
   if (to.path === '/reset-password' || to.path === '/new-password') {
     return next();
   }
+
+  if (AUTH_BYPASS) {
+    if (to.path === '/') return next('/home');
+    return next();
+  }
+
+  // Resolve Supabase auth before querying protected dynamic-route metadata.
+  // Anonymous login pages must never generate a misleading 401 here.
+  await authStore.initializeAuth();
+  const user = authStore.user;
   
   // 🔥 Charger les routes dynamiques depuis Supabase au premier appel
-  if (!dynamicRoutesLoaded) {
+  if (user && !dynamicRoutesLoaded) {
     debugRouter('🔄 Chargement des routes dynamiques depuis Supabase...');
     try {
-      await addDynamicRoutesToRouter(router);
-      dynamicRoutesLoaded = true;
+      await ensureDynamicRoutes();
       debugRouter('✅ Routes dynamiques chargées');
       
       // Si la route demandée existe maintenant, y naviguer
@@ -66,23 +98,14 @@ router.beforeEach(async (to, from, next) => {
     }
   }
   
-  if (AUTH_BYPASS) {
-    if (to.path === '/') return next('/home');
-    return next();
-  }
-
-  // Vérifiez si l'état d'authentification est déjà récupéré
-  if (!isAuthStateChecked) {
-    await authStore.checkAuthState();
-    isAuthStateChecked = true;
-  }
   // Initialiser le roleStore si nécessaire
 if (!roleStore.initialized) {
-  await roleStore.init();
+  await roleStore.init({
+    session: authStore.session,
+    sessionResolved: authStore.initialized,
+  });
 }
   
-  const user = authStore.user;
-
   // Gestion spécifique pour la route "/"
   if (to.path === '/') {
     if (user) {

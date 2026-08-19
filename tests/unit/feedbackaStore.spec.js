@@ -1,17 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
-// ── Mock axios ───────────────────────────────────────
-const mockGet = vi.fn()
-const mockPost = vi.fn()
-const mockPut = vi.fn()
+const { mockGet, mockPost, mockPut } = vi.hoisted(() => ({
+  mockGet: vi.fn(), mockPost: vi.fn(), mockPut: vi.fn(),
+}))
 
-vi.mock('axios', () => ({
-  default: {
-    get: (...args) => mockGet(...args),
-    post: (...args) => mockPost(...args),
-    put: (...args) => mockPut(...args),
-  },
+vi.mock('@/service/apiClient', () => ({
+  default: { get: mockGet, post: mockPost, put: mockPut },
 }))
 
 import { useFeedbackaStore } from '@/stores/feedbackaStore'
@@ -73,19 +68,18 @@ describe('feedbackaStore', () => {
     it('gère les erreurs gracieusement', async () => {
       mockGet.mockRejectedValue(new Error('Network error'))
 
-      const result = await store.fetchFeedbackas()
+      await expect(store.fetchFeedbackas()).rejects.toThrow('Network error')
 
       expect(store.error).toBe('Failed to fetch feedbackas.')
-      expect(result).toEqual([])
       expect(store.loading).toBe(false)
     })
 
-    it('retourne un tableau vide si data est null', async () => {
+    it('rejette une réponse invalide sans remplacer les données valides', async () => {
+      store.feedbackas = [{ id: 'existing' }]
       mockGet.mockResolvedValue({ data: null })
 
-      const result = await store.fetchFeedbackas()
-      expect(store.feedbackas).toEqual([])
-      expect(result).toEqual([])
+      await expect(store.fetchFeedbackas()).rejects.toThrow('réponse serveur invalide')
+      expect(store.feedbackas).toEqual([{ id: 'existing' }])
     })
   })
 
@@ -105,10 +99,9 @@ describe('feedbackaStore', () => {
     it('gère les erreurs gracieusement', async () => {
       mockGet.mockRejectedValue(new Error('Not found'))
 
-      const result = await store.fetchFeedbacka('unknown')
+      await expect(store.fetchFeedbacka('unknown')).rejects.toThrow('Not found')
 
       expect(store.error).toBe('Failed to fetch feedbacka.')
-      expect(result).toBeNull()
     })
   })
 
@@ -128,10 +121,9 @@ describe('feedbackaStore', () => {
     it('gère les erreurs gracieusement', async () => {
       mockPost.mockRejectedValue(new Error('Server error'))
 
-      const result = await store.createFeedbacka({ title: 'test' })
+      await expect(store.createFeedbacka({ title: 'test' })).rejects.toThrow('Server error')
 
       expect(store.error).toBe('Failed to create feedbacka.')
-      expect(result).toBeNull()
     })
   })
 
@@ -151,10 +143,9 @@ describe('feedbackaStore', () => {
     it('gère les erreurs gracieusement', async () => {
       mockPut.mockRejectedValue(new Error('Update failed'))
 
-      const result = await store.updateFeedbacka('1', { title: 'test' })
+      await expect(store.updateFeedbacka('1', { title: 'test' })).rejects.toThrow('Update failed')
 
       expect(store.error).toBe('Failed to update feedbacka.')
-      expect(result).toBeNull()
     })
   })
 
@@ -177,10 +168,9 @@ describe('feedbackaStore', () => {
     it('gère les erreurs gracieusement', async () => {
       mockPost.mockRejectedValue(new Error('AI error'))
 
-      const result = await store.testFeedbacka('1', 'test')
+      await expect(store.testFeedbacka('1', 'test')).rejects.toThrow('AI error')
 
       expect(store.error).toBe('Failed to test evaluation.')
-      expect(result).toBeNull()
     })
   })
 
@@ -202,10 +192,9 @@ describe('feedbackaStore', () => {
     it('gère les erreurs gracieusement', async () => {
       mockPost.mockRejectedValue(new Error('Submit failed'))
 
-      const result = await store.submitAnswer('1', {})
+      await expect(store.submitAnswer('1', {})).rejects.toThrow('Submit failed')
 
       expect(store.error).toBe('Failed to submit answer.')
-      expect(result).toBeNull()
     })
   })
 
@@ -219,8 +208,7 @@ describe('feedbackaStore', () => {
       const result = await store.fetchSubmissions('1')
 
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining('/feedbacka/1/submissions'),
-        { params: { author_id: 'admin-1' } }
+        expect.stringContaining('/feedbacka/1/submissions')
       )
       expect(store.submissions).toEqual(subs)
       expect(result).toEqual(subs)
@@ -229,10 +217,9 @@ describe('feedbackaStore', () => {
     it('gère les erreurs gracieusement', async () => {
       mockGet.mockRejectedValue(new Error('Fetch failed'))
 
-      const result = await store.fetchSubmissions('1')
+      await expect(store.fetchSubmissions('1')).rejects.toThrow('Fetch failed')
 
       expect(store.error).toBe('Failed to fetch submissions.')
-      expect(result).toEqual([])
     })
   })
 })

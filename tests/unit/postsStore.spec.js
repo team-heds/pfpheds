@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
-// Mock axios
-const { mockAxios } = vi.hoisted(() => ({
-  mockAxios: {
+const { mockApiClient } = vi.hoisted(() => ({
+  mockApiClient: {
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
@@ -11,7 +10,7 @@ const { mockAxios } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('axios', () => ({ default: mockAxios }))
+vi.mock('@/service/apiClient', () => ({ default: mockApiClient }))
 
 import { usePostsStore } from '@/stores/postsStore'
 
@@ -46,7 +45,7 @@ describe('postsStore', () => {
         { id: 'p1', Content: 'Hello', IdUser: 'u1' },
         { id: 'p2', Content: 'World', IdUser: 'u2' },
       ]
-      mockAxios.get.mockResolvedValue({ data: mockPosts })
+      mockApiClient.get.mockResolvedValue({ data: mockPosts })
 
       await store.fetchPosts()
 
@@ -57,7 +56,7 @@ describe('postsStore', () => {
 
     it('sets loading during fetch', async () => {
       let resolvePromise
-      mockAxios.get.mockReturnValue(new Promise(resolve => { resolvePromise = resolve }))
+      mockApiClient.get.mockReturnValue(new Promise(resolve => { resolvePromise = resolve }))
 
       const promise = store.fetchPosts()
       expect(store.loading).toBe(true)
@@ -69,9 +68,9 @@ describe('postsStore', () => {
     })
 
     it('handles fetch error', async () => {
-      mockAxios.get.mockRejectedValue(new Error('Network error'))
+      mockApiClient.get.mockRejectedValue(new Error('Network error'))
 
-      await store.fetchPosts()
+      await expect(store.fetchPosts()).rejects.toThrow('Network error')
 
       expect(store.error).toBe('Failed to fetch posts.')
       expect(store.loading).toBe(false)
@@ -82,7 +81,7 @@ describe('postsStore', () => {
   describe('createPost', () => {
     it('creates a top-level post and prepends to list', async () => {
       const newPost = { id: 'p3', Content: 'New post', IdUser: 'u1' }
-      mockAxios.post.mockResolvedValue({ data: [newPost] })
+      mockApiClient.post.mockResolvedValue({ data: [newPost] })
 
       const result = await store.createPost({ author_id: 'u1', content: 'New post' })
 
@@ -94,7 +93,7 @@ describe('postsStore', () => {
     it('creates a reply without prepending to list', async () => {
       store.posts = [{ id: 'p1', Content: 'Parent' }]
       const reply = { id: 'p4', Content: 'Reply', parent_id: 'p1' }
-      mockAxios.post.mockResolvedValue({ data: [reply] })
+      mockApiClient.post.mockResolvedValue({ data: [reply] })
 
       const result = await store.createPost({ author_id: 'u1', content: 'Reply', parent_id: 'p1' })
 
@@ -104,11 +103,10 @@ describe('postsStore', () => {
     })
 
     it('handles create error', async () => {
-      mockAxios.post.mockRejectedValue(new Error('Server error'))
+      mockApiClient.post.mockRejectedValue(new Error('Server error'))
 
-      const result = await store.createPost({ author_id: 'u1', content: 'Test' })
+      await expect(store.createPost({ author_id: 'u1', content: 'Test' })).rejects.toThrow('Server error')
 
-      expect(result).toBeNull()
       expect(store.error).toBe('Failed to create post.')
     })
   })
@@ -120,7 +118,7 @@ describe('postsStore', () => {
         { id: 'p1', Content: 'Old content' },
         { id: 'p2', Content: 'Other' },
       ]
-      mockAxios.put.mockResolvedValue({ data: { id: 'p1', Content: 'Updated content' } })
+      mockApiClient.put.mockResolvedValue({ data: { id: 'p1', Content: 'Updated content' } })
 
       const result = await store.updatePost('p1', { content: 'Updated content' })
 
@@ -131,7 +129,7 @@ describe('postsStore', () => {
 
     it('handles update when post not in state', async () => {
       store.posts = [{ id: 'p2', Content: 'Other' }]
-      mockAxios.put.mockResolvedValue({ data: { id: 'p1', Content: 'Updated' } })
+      mockApiClient.put.mockResolvedValue({ data: { id: 'p1', Content: 'Updated' } })
 
       const result = await store.updatePost('p1', { content: 'Updated' })
 
@@ -141,11 +139,10 @@ describe('postsStore', () => {
     })
 
     it('handles update error', async () => {
-      mockAxios.put.mockRejectedValue(new Error('Not found'))
+      mockApiClient.put.mockRejectedValue(new Error('Not found'))
 
-      const result = await store.updatePost('p1', { content: 'Test' })
+      await expect(store.updatePost('p1', { content: 'Test' })).rejects.toThrow('Not found')
 
-      expect(result).toBeNull()
       expect(store.error).toBe('Failed to update post.')
     })
   })
@@ -157,7 +154,7 @@ describe('postsStore', () => {
         { id: 'p1', Content: 'Post 1' },
         { id: 'p2', Content: 'Post 2' },
       ]
-      mockAxios.delete.mockResolvedValue({})
+      mockApiClient.delete.mockResolvedValue({ data: { deletedPost: { id: 'p1' } } })
 
       await store.deletePost('p1')
 
@@ -168,13 +165,21 @@ describe('postsStore', () => {
 
     it('handles delete error', async () => {
       store.posts = [{ id: 'p1', Content: 'Post 1' }]
-      mockAxios.delete.mockRejectedValue(new Error('Forbidden'))
+      mockApiClient.delete.mockRejectedValue(new Error('Forbidden'))
 
-      await store.deletePost('p1')
+      await expect(store.deletePost('p1')).rejects.toThrow('Forbidden')
 
       expect(store.error).toBe('Failed to delete post.')
       // Posts should remain unchanged on error
       expect(store.posts).toHaveLength(1)
     })
+  })
+
+  it('rejects an empty mutation response without changing local state', async () => {
+    store.posts = [{ id: 'p1', Content: 'Existing' }]
+    mockApiClient.post.mockResolvedValue({ data: [] })
+
+    await expect(store.createPost({ content: 'Missing' })).rejects.toThrow('aucune publication persistée')
+    expect(store.posts).toEqual([{ id: 'p1', Content: 'Existing' }])
   })
 })

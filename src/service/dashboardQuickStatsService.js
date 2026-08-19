@@ -10,20 +10,16 @@ import studentsService from './studentDirectoryService'
  * Compte les éléments d'une table avec filtre optionnel
  */
 async function countTable(table, filter = null) {
-  try {
-    // Use GET instead of HEAD to avoid 400 on some PostgREST setups
-    let query = supabase.from(table).select('*', { count: 'exact', head: false })
-    if (filter && Array.isArray(filter)) {
-      for (const [col, op, val] of filter) {
-        query = query.filter(col, op, val)
-      }
+  // Use GET instead of HEAD to avoid 400 on some PostgREST setups
+  let query = supabase.from(table).select('*', { count: 'exact', head: false })
+  if (filter && Array.isArray(filter)) {
+    for (const [col, op, val] of filter) {
+      query = query.filter(col, op, val)
     }
-    const { count, error } = await query.limit(1)
-    if (!error) return count || 0
-    return 0
-  } catch (_e) {
-    return 0
   }
+  const { count, error } = await query.limit(1)
+  if (error) throw new Error(`Impossible de compter ${table}: ${error.message}`, { cause: error })
+  return count ?? 0
 }
 
 /**
@@ -31,8 +27,7 @@ async function countTable(table, filter = null) {
  * Utilise les vraies données Supabase validées
  */
 export async function fetchQuickStats() {
-  try {
-    const [places, institutions, students, formateurs] = await Promise.all([
+  const [places, institutions, students, formateurs] = await Promise.all([
       // Places de stages
       countTable('places'),
       
@@ -44,15 +39,12 @@ export async function fetchQuickStats() {
       
       // Formateurs (enseignants avec rôles réels)
       (async () => {
-        try {
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from('user_profiles')
             .select('user_id')
             .or('role.eq.EnseignantSoins,role.eq.EnseignantPhysio,role.ilike.%enseignant%,role.ilike.%teacher%,role.ilike.%formateur%')
-          return data?.length || 0
-        } catch (_e) {
-          return 0
-        }
+          if (error) throw new Error(`Impossible de compter les formateurs: ${error.message}`, { cause: error })
+          return data?.length ?? 0
       })()
     ])
 
@@ -63,22 +55,12 @@ export async function fetchQuickStats() {
       formateurs,
       timestamp: new Date().toISOString()
     }
-  } catch (error) {
-    console.error('❌ Error fetching quick stats:', error)
-    return {
-      places: 0,
-      institutions: 0,
-      students: 0,
-      formateurs: 0,
-      error: error.message
-    }
-  }
 }
 
 /**
  * Récupère les stats avec abonnement temps réel (si disponible)
  */
-export function subscribeToQuickStats(callback) {
+export function subscribeToQuickStats(callback, onError = console.error) {
   // Supabase Realtime pour les mises à jour
   const channels = []
   
@@ -88,7 +70,7 @@ export function subscribeToQuickStats(callback) {
     .on('postgres_changes', 
       { event: '*', schema: 'public', table: 'places' },
       () => {
-        fetchQuickStats().then(callback)
+        fetchQuickStats().then(callback).catch(onError)
       }
     )
     .subscribe()
@@ -100,7 +82,7 @@ export function subscribeToQuickStats(callback) {
     .on('postgres_changes',
       { event: '*', schema: 'public', table: 'institutions' },
       () => {
-        fetchQuickStats().then(callback)
+        fetchQuickStats().then(callback).catch(onError)
       }
     )
     .subscribe()
@@ -118,34 +100,24 @@ export function subscribeToQuickStats(callback) {
  * Récupère les détails d'une table spécifique
  */
 export async function fetchTableDetails(tableName) {
-  try {
-    const { data, error, count } = await supabase
+  const { data, error, count } = await supabase
       .from(tableName)
       .select('*', { count: 'exact' })
       .limit(100)
     
-    if (error) throw error
+    if (error) throw new Error(`Impossible de charger ${tableName}: ${error.message}`, { cause: error })
     
     return {
       count,
       data: data || [],
       table: tableName
     }
-  } catch (error) {
-    console.error(`Error fetching ${tableName}:`, error)
-    return {
-      count: 0,
-      data: [],
-      error: error.message
-    }
-  }
 }
 
 /**
  * Récupère les stats avec tendances (comparaison période)
  */
 export async function fetchQuickStatsWithTrends(days = 7) {
-  try {
     const now = new Date()
     const previousDate = new Date()
     previousDate.setDate(previousDate.getDate() - days)
@@ -172,10 +144,6 @@ export async function fetchQuickStatsWithTrends(days = 7) {
     }
     
     return trends
-  } catch (error) {
-    console.error('Error fetching trends:', error)
-    return {}
-  }
 }
 
 export default {

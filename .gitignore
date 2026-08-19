@@ -52,6 +52,7 @@ dev-dist/
 # Vite temp files
 vite.config.js.timestamp-*
 *.mjs.timestamp-*
+.vite-cache/
 
 # OS generated files
 .DS_Store

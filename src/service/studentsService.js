@@ -61,7 +61,7 @@ export async function getStudentsFromUserProfiles() {
     }))
   } catch (error) {
     console.error('❌ Erreur lors du chargement depuis user_profiles:', error)
-    return []
+    throw error
   }
 }
 
@@ -156,7 +156,7 @@ export async function getAllStudents() {
       }
 
       if (physioError) {
-        debug('⚠️ Table StudentsPhysio non accessible:', physioError.message)
+        throw new Error(`Impossible de charger les données StudentsPhysio: ${physioError.message}`, { cause: physioError })
       }
 
       // Fusionner les deux sources
@@ -337,7 +337,7 @@ export async function getAllStudents() {
     } catch (error) {
       // Erreurs critiques toujours visibles
       console.error('❌ Erreur getAllStudents:', error)
-      return []
+      throw new Error(`Impossible de charger les étudiants: ${error.message}`, { cause: error })
     } finally {
       getAllStudents.__cache.inFlight = null
     }
@@ -378,7 +378,8 @@ export async function getStudentById(userId) {
     }
   } catch (error) {
     console.error('❌ Erreur getStudentById:', error)
-    return null
+    if (error?.code === 'PGRST116') return null
+    throw error
   }
 }
 
@@ -402,12 +403,14 @@ export async function updateStudent(userId, updates) {
       }
     }
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('user_profiles')
       .update(supabaseUpdates)
       .eq('user_id', userId)
+      .select('user_id')
     
     if (error) throw error
+    if (data?.length !== 1) throw new Error('Aucun étudiant modifié')
     
     invalidateStudentsCache()
     if (import.meta.env && import.meta.env.DEV) console.log(`✅ Étudiant ${userId} mis à jour`)
@@ -426,7 +429,7 @@ export async function updateStudent(userId, updates) {
 export async function deleteStudent(userId) {
   try {
     // Soft delete: changer le rôle au lieu de supprimer
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('user_profiles')
       .update({
         role: 'archived_student',
@@ -436,8 +439,10 @@ export async function deleteStudent(userId) {
         }
       })
       .eq('user_id', userId)
+      .select('user_id, role')
     
     if (error) throw error
+    if (data?.length !== 1 || data[0].role !== 'archived_student') throw new Error('Aucun étudiant archivé ou archivage non persisté')
     
     invalidateStudentsCache()
     if (import.meta.env && import.meta.env.DEV) console.log(`✅ Étudiant ${userId} archivé`)
@@ -456,7 +461,7 @@ export async function deleteStudent(userId) {
  */
 export async function assignClass(userId, classe) {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('user_profiles')
       .update({
         metadata: {
@@ -466,8 +471,10 @@ export async function assignClass(userId, classe) {
         }
       })
       .eq('user_id', userId)
+      .select('user_id, metadata')
     
     if (error) throw error
+    if (data?.length !== 1 || data[0].metadata?.classe !== classe) throw new Error('Aucun étudiant modifié ou classe non persistée')
     
     invalidateStudentsCache()
     if (import.meta.env && import.meta.env.DEV) console.log(`✅ Classe ${classe} assignée à ${userId}`)
@@ -496,7 +503,7 @@ export async function getClassStats() {
     return stats
   } catch (error) {
     console.error('❌ Erreur getClassStats:', error)
-    return {}
+    throw error
   }
 }
 
@@ -511,7 +518,7 @@ export async function getStudentsByClass(classe) {
     return allStudents.filter(s => s.Classe === classe)
   } catch (error) {
     console.error('❌ Erreur getStudentsByClass:', error)
-    return []
+    throw error
   }
 }
 
@@ -554,7 +561,7 @@ export async function countStudents() {
     return students.length
   } catch (error) {
     console.error('❌ Erreur countStudents:', error)
-    return 0
+    throw error
   }
 }
 
