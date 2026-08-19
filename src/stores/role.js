@@ -10,6 +10,7 @@ export const useRoleStore = defineStore('role', () => {
   const _unsubscribeAuth = ref(null)
   let initPromise = null
   let permissionsPromise = null
+  let permissionsUserId = null
  
   // Getters
   const isAuthenticated = computed(() => !!session.value)
@@ -61,9 +62,15 @@ export const useRoleStore = defineStore('role', () => {
       perms.value = []
       return []
     }
-    if (permissionsPromise) return permissionsPromise
+    const requestedUserId = activeSession.user?.id || null
+    if (!requestedUserId) {
+      perms.value = []
+      return []
+    }
+    if (permissionsPromise && permissionsUserId === requestedUserId) return permissionsPromise
 
-    permissionsPromise = (async () => {
+    let currentPromise
+    currentPromise = (async () => {
       try {
 
       const permsSet = new Set()
@@ -108,19 +115,27 @@ export const useRoleStore = defineStore('role', () => {
         }
       }
  
-      perms.value = Array.from(permsSet)
-      return perms.value
+      const resolvedPermissions = Array.from(permsSet)
+      if (session.value?.user?.id === requestedUserId) {
+        perms.value = resolvedPermissions
+      }
+      return resolvedPermissions
       
     } catch (e) {
       console.error('loadPermissions fatal:', e)
-      perms.value = []
+      if (session.value?.user?.id === requestedUserId) perms.value = []
       throw e
     }
     })().finally(() => {
-      permissionsPromise = null
+      if (permissionsPromise === currentPromise) {
+        permissionsPromise = null
+        permissionsUserId = null
+      }
     })
 
-    return permissionsPromise
+    permissionsPromise = currentPromise
+    permissionsUserId = requestedUserId
+    return currentPromise
   }
  
   function can(perm) {
@@ -144,6 +159,7 @@ export const useRoleStore = defineStore('role', () => {
     initialized.value = false
     initPromise = null
     permissionsPromise = null
+    permissionsUserId = null
     session.value = null
     perms.value = []
   }

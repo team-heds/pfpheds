@@ -72,4 +72,32 @@ describe('roleStore reliability', () => {
 
     expect(mockRpc).toHaveBeenCalledOnce()
   })
+
+  it('never applies permissions resolved for a previous authenticated user', async () => {
+    await store.init({
+      session: { user: { id: 'old-user' } },
+      sessionResolved: true,
+    })
+
+    let resolveOldPermissions
+    mockRpc.mockReset()
+    mockRpc
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolveOldPermissions = resolve
+      }))
+      .mockResolvedValueOnce({ data: [{ perm: 'new-user' }], error: null })
+
+    const oldRequest = store.loadPermissions({ user: { id: 'old-user' } })
+    await Promise.resolve()
+
+    authStateCallback('SIGNED_IN', { user: { id: 'new-user' } })
+    await new Promise((resolve) => queueMicrotask(resolve))
+    await vi.waitFor(() => expect(mockRpc).toHaveBeenCalledTimes(2))
+
+    resolveOldPermissions({ data: [{ perm: 'old-user' }], error: null })
+    await oldRequest
+    await vi.waitFor(() => expect(store.perms).toEqual(['new-user']))
+
+    expect(store.perms).not.toContain('old-user')
+  })
 })
