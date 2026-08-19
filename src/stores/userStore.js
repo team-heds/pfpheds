@@ -22,29 +22,44 @@ export const useUserStore = defineStore('user', {
   },
 
   actions: {
-    async init() {
+    async init({ session: resolvedSession = null, sessionResolved = false } = {}) {
       if (this.initialized) return
       if (this.initPromise) return this.initPromise
 
       this.initPromise = (async () => {
-        const { data } = await supabase.auth.getSession()
-        this.session = data?.session || null
+        if (sessionResolved) {
+          this.session = resolvedSession || null
+        } else {
+          const { data, error } = await supabase.auth.getSession()
+          if (error) throw error
+          this.session = data?.session || null
+        }
         this.user = this.session?.user || null
 
         if (!this.authSub) {
-          const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+          const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
             this.session = session
             this.user = session?.user || null
+            const expectedUserId = this.user?.id || null
 
-            if (this.user) {
-              await this.fetchProfile()
-              this.subscribeProfile()
-            } else {
+            if (!expectedUserId) {
               this.unsubscribeProfile()
               this.profile = null
+              return
             }
+
+            queueMicrotask(() => {
+              if (this.user?.id !== expectedUserId) return
+              this.fetchProfile()
+                .then(() => {
+                  if (this.user?.id === expectedUserId) this.subscribeProfile()
+                })
+                .catch((profileError) => {
+                  console.error('[UserStore] Failed to refresh profile after auth change:', profileError)
+                })
+            })
           })
-          this.authSub = sub
+          this.authSub = sub?.subscription || sub
         }
 
         if (this.user) {
@@ -108,7 +123,7 @@ export const useUserStore = defineStore('user', {
     },
 
     async upsertProfile(fields) {
-      if (!this.user) throw new Error('Non connecte')
+      if (!this.user) throw new Error('Non connecté')
 
       const row = {
         user_id: this.user.id,

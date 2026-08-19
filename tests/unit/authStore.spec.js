@@ -65,6 +65,9 @@ describe('authStore', () => {
     setActivePinia(createPinia())
     store = useAuthStore()
     vi.clearAllMocks()
+    mockSupabaseGetSession.mockResolvedValue({ data: { session: null }, error: null })
+    mockSupabaseGetUser.mockResolvedValue({ data: { user: null }, error: null })
+    mockSupabaseRefreshSession.mockResolvedValue({ data: { session: null }, error: null })
   })
 
   // ─── État initial ───
@@ -125,6 +128,64 @@ describe('authStore', () => {
       expect(store.user).toEqual(user)
       expect(store.session).toEqual(session)
       expect(store.authProvider).toBe('supabase')
+    })
+
+    it('déduplique les vérifications concurrentes', async () => {
+      const user = { id: 'supabase-user' }
+      const session = { user, access_token: 'token', expires_at: 4_102_444_800 }
+      mockSupabaseGetSession.mockResolvedValue({ data: { session }, error: null })
+      mockSupabaseGetUser.mockResolvedValue({ data: { user }, error: null })
+
+      await Promise.all([store.checkAuthState(), store.checkAuthState()])
+
+      expect(mockSupabaseGetSession).toHaveBeenCalledOnce()
+      expect(mockSupabaseGetUser).toHaveBeenCalledOnce()
+    })
+
+    it('préserve la session connue lors d’une panne réseau transitoire', async () => {
+      const previousSession = { user: { id: 'u1' }, access_token: 'known-token' }
+      store.session = previousSession
+      store.user = previousSession.user
+      store.authProvider = 'supabase'
+      mockSupabaseGetSession.mockResolvedValue({
+        data: { session: null },
+        error: new Error('Failed to fetch'),
+      })
+
+      await expect(store.checkAuthState()).rejects.toThrow('Failed to fetch')
+
+      expect(store.session).toEqual(previousSession)
+      expect(store.user).toEqual(previousSession.user)
+    })
+
+    it('sérialise les rafraîchissements de session', async () => {
+      const refreshedSession = {
+        user: { id: 'u1' },
+        access_token: 'new-token',
+        expires_at: 4_102_444_800,
+      }
+      mockSupabaseRefreshSession.mockResolvedValue({
+        data: { session: refreshedSession },
+        error: null,
+      })
+
+      const [first, second] = await Promise.all([
+        store.refreshSessionSingleFlight(),
+        store.refreshSessionSingleFlight(),
+      ])
+
+      expect(mockSupabaseRefreshSession).toHaveBeenCalledOnce()
+      expect(first).toEqual(refreshedSession)
+      expect(second).toEqual(refreshedSession)
+    })
+
+    it('garde le callback auth synchrone', () => {
+      const nextSession = { user: { id: 'u1' }, access_token: 'token' }
+
+      const callbackResult = supabaseAuthCallback('TOKEN_REFRESHED', nextSession)
+
+      expect(callbackResult).toBeUndefined()
+      expect(store.session).toEqual(nextSession)
     })
   })
 

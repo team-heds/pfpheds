@@ -8,44 +8,63 @@ export const useRoleStore = defineStore('role', () => {
   const perms = ref([])
   const initialized = ref(false)
   const _unsubscribeAuth = ref(null)
+  let initPromise = null
+  let permissionsPromise = null
  
   // Getters
   const isAuthenticated = computed(() => !!session.value)
   const isSuper = computed(() => perms.value.includes('super.all'))
  
   // Actions
-  async function init() {
+  async function init({ session: resolvedSession = null, sessionResolved = false } = {}) {
     if (initialized.value) return
- 
-    // 1) session initiale
-    const { data, error } = await supabase.auth.getSession()
-    if (error) console.warn('getSession error:', error)
-    session.value = data?.session ?? null
- 
-    // 2) perms initiales
-    await loadPermissions()
- 
-    // 3) listener unique (évite les doublons)
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
-      session.value = newSession ?? null
-      if (session.value) {
-        await loadPermissions()
+    if (initPromise) return initPromise
+
+    initPromise = (async () => {
+      if (sessionResolved) {
+        session.value = resolvedSession
       } else {
-        perms.value = []
+        const { data, error } = await supabase.auth.getSession()
+        if (error) throw error
+        session.value = data?.session ?? null
       }
+
+      await loadPermissions(session.value)
+
+      const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+        session.value = newSession ?? null
+        if (!session.value) {
+          perms.value = []
+          return
+        }
+
+        const expectedUserId = session.value.user?.id
+        queueMicrotask(() => {
+          if (session.value?.user?.id !== expectedUserId) return
+          loadPermissions(session.value).catch((permissionError) => {
+            console.error('loadPermissions after auth change:', permissionError)
+          })
+        })
+      })
+
+      _unsubscribeAuth.value = () => (sub?.subscription || sub)?.unsubscribe?.()
+      initialized.value = true
+    })().finally(() => {
+      initPromise = null
     })
- 
-    _unsubscribeAuth.value = () => sub?.subscription?.unsubscribe?.()
-    initialized.value = true
+
+    return initPromise
   }
  
-  async function loadPermissions() {
-    try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      if (!sessionData?.session) {
-        perms.value = []
-        return
-      }
+  async function loadPermissions(activeSession = session.value) {
+    if (!activeSession) {
+      perms.value = []
+      return []
+    }
+    if (permissionsPromise) return permissionsPromise
+
+    permissionsPromise = (async () => {
+      try {
 
       const permsSet = new Set()
  
@@ -64,10 +83,7 @@ export const useRoleStore = defineStore('role', () => {
       }
  
       // B) fallback user_profiles (si Admin Panel écrit ici)
-      const { data: userData, error: userErr } = await supabase.auth.getUser()
-      if (userErr) console.warn('getUser error:', userErr)
- 
-      const user = userData?.user
+      const user = activeSession.user
       if (user) {
         const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
@@ -93,11 +109,18 @@ export const useRoleStore = defineStore('role', () => {
       }
  
       perms.value = Array.from(permsSet)
+      return perms.value
       
     } catch (e) {
       console.error('loadPermissions fatal:', e)
       perms.value = []
+      throw e
     }
+    })().finally(() => {
+      permissionsPromise = null
+    })
+
+    return permissionsPromise
   }
  
   function can(perm) {
@@ -119,6 +142,8 @@ export const useRoleStore = defineStore('role', () => {
     if (_unsubscribeAuth.value) _unsubscribeAuth.value()
     _unsubscribeAuth.value = null
     initialized.value = false
+    initPromise = null
+    permissionsPromise = null
     session.value = null
     perms.value = []
   }
@@ -135,5 +160,3 @@ export const useRoleStore = defineStore('role', () => {
     destroy,
   }
 })
- 
- 

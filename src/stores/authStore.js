@@ -44,6 +44,40 @@ export const useAuthStore = defineStore('auth', () => {
   const authProvider = ref(null); // 'firebase' ou 'supabase'
   const sessionCheckInterval = ref(null);
   const lastSessionCheck = ref(null);
+  const initialized = ref(false);
+  let authCheckPromise = null;
+  let initializePromise = null;
+  let refreshPromise = null;
+  let monitoringPromise = null;
+
+  function applySupabaseSession(nextSession) {
+    session.value = nextSession || null;
+    user.value = nextSession?.user || null;
+    authProvider.value = nextSession ? 'supabase' : null;
+    lastSessionCheck.value = Date.now();
+  }
+
+  function isExpiredSessionError(authError) {
+    const message = String(authError?.message || '').toLowerCase();
+    return message.includes('invalid') || message.includes('expired') || message.includes('jwt');
+  }
+
+  function refreshSessionSingleFlight() {
+    if (refreshPromise) return refreshPromise;
+
+    refreshPromise = (async () => {
+      const { data, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !data?.session) {
+        throw refreshError || new Error('Session refresh failed');
+      }
+      applySupabaseSession(data.session);
+      return data.session;
+    })().finally(() => {
+      refreshPromise = null;
+    });
+
+    return refreshPromise;
+  }
 
   // Getters
   const isLoggedIn = computed(() => AUTH_BYPASS || !!user.value);
@@ -223,68 +257,45 @@ export const useAuthStore = defineStore('auth', () => {
       authProvider.value = 'supabase';
       session.value = { user: GUEST_USER };
       lastSessionCheck.value = Date.now();
-      return;
+      initialized.value = true;
+      return session.value;
     }
 
-    const timestamp = new Date().toLocaleTimeString();
+    if (authCheckPromise) return authCheckPromise;
 
-    // Vérifier Supabase avec gestion d'erreur
-    try {
-      const { data, error: getUserError } = await supabase.auth.getUser();
-      
+    authCheckPromise = (async () => {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+
+      let currentSession = sessionData?.session || null;
+      if (!currentSession) {
+        applySupabaseSession(null);
+        initialized.value = true;
+        return null;
+      }
+
+      const expiresAt = Number(currentSession.expires_at || 0);
+      const secondsUntilExpiry = expiresAt - Math.floor(Date.now() / 1000);
+      if (expiresAt && secondsUntilExpiry < 300) {
+        currentSession = await refreshSessionSingleFlight();
+      }
+
+      const { data: userData, error: getUserError } = await supabase.auth.getUser();
       if (getUserError) {
-        console.error(`❌ [${timestamp}] Erreur getUser:`, getUserError.message);
-        // Si le token est invalide, essayer de rafraîchir la session
-        if (getUserError.message?.includes('invalid') || getUserError.message?.includes('expired')) {
-          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-          if (!refreshError && refreshData?.session) {
-            user.value = refreshData.session.user;
-            session.value = refreshData.session;
-            authProvider.value = 'supabase';
-            lastSessionCheck.value = Date.now();
-            return;
-          } else {
-            console.error(`❌ [${timestamp}] Échec du refresh:`, refreshError?.message);
-            throw refreshError || new Error('Session refresh failed');
-          }
-        }
-        throw getUserError;
+        if (!isExpiredSessionError(getUserError)) throw getUserError;
+        currentSession = await refreshSessionSingleFlight();
+      } else if (userData?.user) {
+        currentSession = { ...currentSession, user: userData.user };
       }
-      
-      if (data.user) {
-        user.value = data.user;
-        authProvider.value = 'supabase';
-        const { data: sessionData } = await supabase.auth.getSession();
-        session.value = sessionData.session;
-        lastSessionCheck.value = Date.now();
-        
-        // Vérifier si le token va bientôt expirer (< 5 minutes)
-        if (sessionData.session) {
-          const expiresAt = sessionData.session.expires_at;
-          const now = Math.floor(Date.now() / 1000);
-          const timeUntilExpiry = expiresAt - now;
-          
-          if (timeUntilExpiry < 300) { // Moins de 5 minutes
-            console.warn(`⚠️ [${timestamp}] Token expire bientôt (${Math.floor(timeUntilExpiry / 60)} min), refresh préventif...`);
-            await supabase.auth.refreshSession();
-          }
-        }
-        return;
-      }
-    } catch (err) {
-      console.error(`❌ [${timestamp}] Erreur lors de la vérification Supabase:`, err);
-      // En cas d'erreur, nettoyer l'état
-      user.value = null;
-      authProvider.value = null;
-      session.value = null;
-      lastSessionCheck.value = Date.now();
-      return;
-    }
 
-    user.value = null;
-    authProvider.value = null;
-    session.value = null;
-    lastSessionCheck.value = Date.now();
+      applySupabaseSession(currentSession);
+      initialized.value = true;
+      return currentSession;
+    })().finally(() => {
+      authCheckPromise = null;
+    });
+
+    return authCheckPromise;
   }
 
   // Vérification périodique de la session (toutes les 2 minutes)
@@ -297,10 +308,11 @@ export const useAuthStore = defineStore('auth', () => {
     sessionCheckInterval.value = setInterval(async () => {
       // Ne vérifier que si un utilisateur est connecté
       if (user.value && authProvider.value === 'supabase') {
+        if (monitoringPromise) return;
+        monitoringPromise = (async () => {
         try {
           const { data, error } = await supabase.auth.getSession();
           if (error || !data.session) {
-            console.warn('⚠️ Session invalide détectée, tentative de reconnexion...');
             await checkAuthState();
           } else {
             // Vérifier l'expiration
@@ -309,12 +321,15 @@ export const useAuthStore = defineStore('auth', () => {
             const timeUntilExpiry = expiresAt - now;
             
             if (timeUntilExpiry < 600) { // Moins de 10 minutes
-              await supabase.auth.refreshSession();
+              await refreshSessionSingleFlight();
             }
           }
         } catch (err) {
           console.error('❌ Erreur lors de la vérification périodique:', err);
+        } finally {
+          monitoringPromise = null;
         }
+        })();
       }
     }, 120000); // Toutes les 2 minutes
     
@@ -334,23 +349,32 @@ export const useAuthStore = defineStore('auth', () => {
       authProvider.value = 'supabase';
       session.value = { user: GUEST_USER };
       lastSessionCheck.value = Date.now();
-      return;
+      initialized.value = true;
+      return session.value;
     }
-    await checkAuthState();
-    startSessionMonitoring();
+    if (initialized.value) return session.value;
+    if (initializePromise) return initializePromise;
+
+    initializePromise = (async () => {
+      await checkAuthState();
+      startSessionMonitoring();
+      return session.value;
+    })().finally(() => {
+      initializePromise = null;
+    });
+
+    return initializePromise;
   }
 
   // Gérer les changements d'état d'authentification pour les deux systèmes
 
   // Supabase auth state change
-  supabase.auth.onAuthStateChange(async (event, newSession) => {
+  supabase.auth.onAuthStateChange((event, newSession) => {
     if (AUTH_BYPASS) return;
     // Gérer tous les événements qui indiquent une session active
     if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED') && newSession) {
       // Supabase est l'unique source d'authentification de la plateforme.
-      session.value = newSession;
-      user.value = newSession.user;
-      authProvider.value = 'supabase';
+      applySupabaseSession(newSession);
         
       if (event === 'SIGNED_IN') {
         // 🆕 CRÉATION AUTOMATIQUE DU PROFIL (DÉSACTIVÉ TEMPORAIREMENT)
@@ -364,9 +388,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
     } else if (event === 'SIGNED_OUT') {
       if (authProvider.value === 'supabase') {
-        session.value = null;
-        user.value = null;
-        authProvider.value = null;
+        applySupabaseSession(null);
       }
     }
   });
@@ -381,6 +403,7 @@ export const useAuthStore = defineStore('auth', () => {
     isFirebaseUser,
     isSupabaseUser,
     lastSessionCheck,
+    initialized,
     // Firebase methods
     signUpFirebase,
     signInFirebase,
@@ -392,6 +415,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Common methods
     signOut,
     checkAuthState,
+    refreshSessionSingleFlight,
     initializeAuth,
     startSessionMonitoring,
     stopSessionMonitoring,
