@@ -27,7 +27,7 @@
             />
             <InputText v-model="globalSearch" placeholder="Rechercher (nom, email)" class="w-16rem" />
             <Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" />
-            <Button icon="pi pi-filter-slash" label="Reset filtres" outlined severity="secondary" @click="resetFilters" />
+            <Button icon="pi pi-filter-slash" label="Réinitialiser" outlined severity="secondary" @click="resetFilters" />
             <Button icon="pi pi-refresh" outlined :disabled="loading" @click="loadStudents" />
           </div>
         </div>

@@ -4,7 +4,7 @@
       <div class="breadcrumb-section mb-3">
         <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
         <i class="pi pi-angle-right text-400 mx-2"></i>
-        <span class="text-900 font-medium">Management Signature</span>
+        <span class="text-900 font-medium">Gestion des signatures</span>
       </div>
 
       <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
@@ -12,15 +12,15 @@
           <div class="flex align-items-center gap-3">
             <i class="pi pi-user-edit text-primary text-3xl"></i>
             <div>
-              <h1 class="text-2xl font-bold text-900 m-0">Management Signature</h1>
+              <h1 class="text-2xl font-bold text-900 m-0">Gestion des signatures</h1>
               <p class="text-600 m-0 mt-1">Vue d'ensemble des assignations avec répondants et signataires</p>
             </div>
           </div>
           <div class="flex gap-2">
-            <SplitButton 
-              label="Assignation de masse" 
-              icon="pi pi-check-square" 
-              :model="bulkActions" 
+            <SplitButton
+              label="Assignation de masse"
+              icon="pi pi-check-square"
+              :model="bulkActions"
               severity="warning"
               :disabled="!filteredList.length"
             />
@@ -209,39 +209,39 @@
           <div class="grid">
             <div class="col-6">
               <label class="block mb-2 font-semibold">Répondant HES</label>
-              <Dropdown 
-                v-model="editingRow.repondant_hes" 
-                :options="repondantsHESList" 
-                optionLabel="label" 
-                optionValue="value" 
-                placeholder="Sélectionner un répondant" 
-                class="w-full" 
-                showClear 
+              <Dropdown
+                v-model="editingRow.repondant_hes"
+                :options="repondantsHESList"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Sélectionner un répondant"
+                class="w-full"
+                showClear
               />
             </div>
             <div class="col-6">
               <label class="block mb-2 font-semibold">Signataire HES</label>
-              <Dropdown 
-                v-model="editingRow.signataire_hes" 
-                :options="repondantsHESList" 
-                optionLabel="label" 
-                optionValue="value" 
-                placeholder="Sélectionner un signataire" 
-                class="w-full" 
-                showClear 
+              <Dropdown
+                v-model="editingRow.signataire_hes"
+                :options="repondantsHESList"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Sélectionner un signataire"
+                class="w-full"
+                showClear
               />
             </div>
           </div>
           <div>
             <label class="block mb-2 font-semibold">Lieu de signature</label>
-            <Dropdown 
-              v-model="editingRow.lieu_signature" 
-              :options="lieuSignatureOptions" 
-              optionLabel="label" 
-              optionValue="value" 
-              placeholder="Sélectionner le lieu" 
-              class="w-full" 
-              showClear 
+            <Dropdown
+              v-model="editingRow.lieu_signature"
+              :options="lieuSignatureOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionner le lieu"
+              class="w-full"
+              showClear
             />
           </div>
           <div class="flex align-items-center gap-2">
@@ -509,7 +509,7 @@ const loadPublishedAssignments = async () => {
       studentDirectory.filter((student) => userIds.includes(student.user_id)).map(s => [s.user_id, s])
     )
     const physioByUserId = new Map((studentsPhysio || []).map(sp => [sp.user_id, sp]))
-    
+
     const praticiensById = new Map()
     ;(praticiens || []).forEach(p => {
       if (p?.id) {
@@ -526,8 +526,8 @@ const loadPublishedAssignments = async () => {
       const studentPhysioClass = physioByUserId.get(a.user_id)?.class || null
       const studentClass = studentPhysioClass || s?.Classe || s?.classe || null
 
-      const praticienFormateur = a.assigned_praticien_id 
-        ? praticiensById.get(a.assigned_praticien_id) || praticiensById.get(String(a.assigned_praticien_id)) 
+      const praticienFormateur = a.assigned_praticien_id
+        ? praticiensById.get(a.assigned_praticien_id) || praticiensById.get(String(a.assigned_praticien_id))
         : null
 
       const studentPhysio = physioByUserId.get(a.user_id)
@@ -620,11 +620,11 @@ const assignMassiveLieu = async (lieu) => {
       return p
     })
 
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Succès', 
-      detail: `${ids.length} assignations mises à jour en "${lieu}".`, 
-      life: 3000 
+    toast.add({
+      severity: 'success',
+      summary: 'Succès',
+      detail: `${ids.length} assignations mises à jour en "${lieu}".`,
+      life: 3000
     })
 
     scheduleRefresh()

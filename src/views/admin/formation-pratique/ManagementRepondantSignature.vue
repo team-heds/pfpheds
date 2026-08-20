@@ -4,7 +4,7 @@
       <div class="breadcrumb-section mb-3">
         <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
         <i class="pi pi-angle-right text-400 mx-2"></i>
-        <span class="text-900 font-medium">Management Signature</span>
+        <span class="text-900 font-medium">Gestion des signatures</span>
       </div>
 
       <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
@@ -12,49 +12,49 @@
           <div class="flex align-items-center gap-3">
             <i class="pi pi-user text-primary text-4xl"></i>
             <div>
-              <h1 class="text-3xl font-bold text-900 m-0">Management Répondant Signature</h1>
+              <h1 class="text-3xl font-bold text-900 m-0">Gestion Signatures des Répondants</h1>
               <p class="text-600 m-0 mt-2">Gestion des signatures des répondants et de la validation des assignations</p>
             </div>
           </div>
           <div class="flex align-items-center gap-3">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année :</label>
-              <Dropdown 
-                v-model="filterYear" 
-                :options="years" 
-                placeholder="Année" 
+              <Dropdown
+                v-model="filterYear"
+                :options="years"
+                placeholder="Année"
                 class="w-full md:w-8rem"
                 showClear
               />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP :</label>
-              <Dropdown 
-                v-model="filterType" 
-                :options="typesPFP" 
-                optionLabel="label" 
-                optionValue="value" 
-                placeholder="Type PFP" 
+              <Dropdown
+                v-model="filterType"
+                :options="typesPFP"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Type PFP"
                 class="w-full md:w-10rem"
                 showClear
               />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Rôle :</label>
-              <SelectButton 
-                v-model="filterRole" 
-                :options="roleOptions" 
-                optionLabel="label" 
-                optionValue="value" 
+              <SelectButton
+                v-model="filterRole"
+                :options="roleOptions"
+                optionLabel="label"
+                optionValue="value"
               />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Choisir un répondant :</label>
-              <Dropdown 
-                v-model="selectedRepondant" 
-                :options="repondantsHESList" 
-                optionLabel="label" 
-                placeholder="Sélectionner un répondant" 
+              <Dropdown
+                v-model="selectedRepondant"
+                :options="repondantsHESList"
+                optionLabel="label"
+                placeholder="Sélectionner un répondant"
                 class="w-full md:w-15rem"
                 filter
                 showClear
@@ -130,7 +130,7 @@
           <Column field="praticien_details" header="Praticien Formateur" sortable></Column>
           <Column field="praticien_mail" header="Mail Praticien" sortable>
             <template #body="slotProps">
-              <span 
+              <span
                 v-if="slotProps.data.praticien_mail !== '-'"
                 @click="copyToClipboard(slotProps.data.praticien_mail)"
                 class="cursor-pointer text-primary hover:underline"
@@ -210,19 +210,19 @@ const roleOptions = ref([
 
 const filteredAssignedStudents = computed(() => {
   let list = assignedStudents.value
-  
+
   if (filterRole.value !== 'all') {
     list = list.filter(s => s.role === filterRole.value)
   }
-  
+
   if (filterYear.value) {
     list = list.filter(s => s.year === filterYear.value)
   }
-  
+
   if (filterType.value) {
     list = list.filter(s => s.pfp_type === filterType.value)
   }
-  
+
   return list
 })
 
@@ -260,14 +260,14 @@ const fetchAssignedStudents = async (repondantName) => {
     const { data: assignments, error } = await supabase
       .from('student_result_vote')
       .select(`
-        id, 
-        user_id, 
-        pfp_type, 
-        year, 
-        assigned_place_name, 
-        repondant_hes, 
-        signataire_hes, 
-        lieu_signature, 
+        id,
+        user_id,
+        pfp_type,
+        year,
+        assigned_place_name,
+        repondant_hes,
+        signataire_hes,
+        lieu_signature,
         is_validated,
         assigned_praticien_id
       `)
