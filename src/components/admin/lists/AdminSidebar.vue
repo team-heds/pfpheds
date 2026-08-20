@@ -166,8 +166,13 @@ function isSectionOpen(label) {
 // Vérifier si l'utilisateur est connecté avec Supabase
 const isSupabaseUser = computed(() => authStore.isSupabaseUser && authStore.session);
 
-// Les utilisateurs avec ce rôle conceptuel ne voient que les sections académiques.
-const isRestrictedUser = computed(() => roleStore.can('academic.restricted'));
+// academic.restricted est une exception de navigation explicite. Ne pas passer
+// par roleStore.can() ici : super.all accorde volontairement toutes les
+// permissions et ne doit jamais transformer un administrateur en utilisateur
+// restreint.
+const isRestrictedUser = computed(() =>
+  !roleStore.isSuper && roleStore.perms.includes('academic.restricted')
+);
 
 // Plus de fallback ici: on n'affiche que roleStore.perms pour une source unique et cohérente
 
@@ -177,7 +182,7 @@ const showAcademicSection = computed(() => isSupabaseUser.value && roleStore.can
 const showGamificationSection = computed(() => isSupabaseUser.value);
 
 // Watch pour voir en temps réel les changements
-watch([showPFPSection, showAcademicSection, showGamificationSection], (newValues) => {
+watch([showPFPSection, showAcademicSection, showGamificationSection], () => {
   console.log('📊 AdminSidebar - État des sections:', {
     isSupabaseUser: isSupabaseUser.value,
     showPFP: showPFPSection.value,
@@ -413,10 +418,16 @@ function shouldShowSection(section) {
   }
 }
 
-// Initialiser le roleStore au montage du composant
+// Réutiliser la session déjà résolue par le bootstrap. Si le store existe déjà,
+// recharger ses droits pour éviter d'afficher un menu basé sur un état périmé.
 onMounted(async () => {
   if (!roleStore.initialized) {
-    await roleStore.init();
+    await roleStore.init({
+      session: authStore.session,
+      sessionResolved: authStore.initialized,
+    });
+  } else {
+    await roleStore.loadPermissions(authStore.session);
   }
   
   // Debug pour voir si l'utilisateur est bien détecté comme SupabaseUser
