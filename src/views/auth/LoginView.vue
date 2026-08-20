@@ -57,12 +57,14 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import { useLayout } from '@/layout/composables/layout';
 import { useAuthStore } from '@/stores/authStore';
+import { useRoleStore } from '@/stores/role';
 import { useRateLimit } from '@/composables/useRateLimit';
 import { validateEmail, validatePassword } from '@/composables/useInputValidation';
 import { getPostLoginRedirect } from '@/config/adminRedirects';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const roleStore = useRoleStore();
 const toast = useToast();
 const email = ref('');
 const password = ref('');
@@ -105,7 +107,8 @@ const submitForm = async () => {
     loginLimiter.reset();
     toast.add({ severity: 'success', summary: 'Connexion réussie', detail: 'Vous allez être redirigé vers le feed...', life: 3000 });
     
-    const redirectPath = getPostLoginRedirect(email.value);
+    await roleStore.loadPermissions(authStore.session);
+    const redirectPath = getPostLoginRedirect(roleStore.perms);
     setTimeout(() => {
       router.push(redirectPath);
     }, 1500);

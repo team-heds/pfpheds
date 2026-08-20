@@ -612,36 +612,16 @@ import planningService from '@/service/planningService'
 import academicYearService from '@/service/academicYearService'
 import { getSITeachers } from '@/service/academicKpiService'
 import { supabase } from '@/supabase'
-import { useAuthStore } from '@/stores/authStore'
+import { useRoleStore } from '@/stores/role'
 
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
-const authStore = useAuthStore()
+const roleStore = useRoleStore()
 
-// Liste des emails en lecture seule (sans accès aux modifications)
-const readOnlyEmails = [
-  'lucienne.darbellay-fumeaux@hevs.ch',
-  'filipa.pereira@hevs.ch',
-  'aline.chappuis@hevs.ch',
-  'maude.epiney-perruchoud@hevs.ch',
-  'isabelle.salamin-plaschy@hevs.ch',
-  'rafael.weissbrodt@hevs.ch',
-  'valerie.caloz-albrecht@hevs.ch',
-  'tiffany.rapillard@hevs.ch',
-  'omar.porteladossantos@hevs.ch',
-  'jesse.curchod@hevs.ch',
-  'line.martin@hevs.ch',
-  'isabelle.rey@hevs.ch',
-  'carla.gomesdarocha@hevs.ch',
-  'elodie.perruchoud@hevs.ch'
-]
-
-// Vérifier si l'utilisateur est en mode lecture seule
-const isReadOnly = computed(() => {
-  const userEmail = authStore.user?.email?.toLowerCase()
-  return userEmail && readOnlyEmails.includes(userEmail)
-})
+// L'édition exige une permission explicite. planning.weekly.view donne accès à
+// la consultation de la page sans autoriser les actions de modification.
+const isReadOnly = computed(() => !roleStore.can('planning.weekly.edit'))
 
 // État
 const selectedYear = ref(null)

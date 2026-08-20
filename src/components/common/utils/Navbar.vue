@@ -117,23 +117,11 @@ const user = ref(null);
 const isSettingsDialogVisible = ref(false);
 const userRoles = ref(null);
 const hasAdminAccess = ref(false);
+const permissions = ref([]);
 
-const restrictedAcademicEmails = [
-  'lucienne.darbellay-fumeaux@hevs.ch',
-  'filipa.pereira@hevs.ch',
-  'aline.chappuis@hevs.ch',
-  'maude.epiney-perruchoud@hevs.ch',
-  'isabelle.salamin-plaschy@hevs.ch',
-  'rafael.weissbrodt@hevs.ch',
-  'valerie.caloz-albrecht@hevs.ch',
-  'tiffany.rapillard@hevs.ch',
-  'omar.porteladossantos@hevs.ch',
-  'jesse.curchod@hevs.ch',
-  'line.martin@hevs.ch',
-  'isabelle.rey@hevs.ch',
-  'carla.gomesdarocha@hevs.ch',
-  'elodie.perruchoud@hevs.ch'
-];
+const isAcademicRestricted = computed(() =>
+  permissions.value.includes('academic.restricted')
+);
 
 const allMenuItems = [
   { icon: "pi pi-home", link: "/feed", title: "Accueil" },
@@ -146,11 +134,8 @@ const allMenuItems = [
 
 // Computed property pour filtrer les items selon le profil de l'utilisateur
 const filteredMenuItems = computed(() => {
-  const currentUser = authStore.user;
-  const isRestrictedAcademic = currentUser && restrictedAcademicEmails.includes(currentUser.email);
-
-  // Si l'utilisateur a un email académique restreint, ne montrer que le bouton Dashboard
-  if (isRestrictedAcademic) {
+  // Les utilisateurs avec le rôle academic_restricted ne voient que le dashboard.
+  if (isAcademicRestricted.value) {
     return allMenuItems.filter(item => item.title === 'Dashboard');
   }
 
@@ -240,8 +225,7 @@ const updateUserState = async () => {
         if (snapshot.exists()) {
           const userData = snapshot.val();
           userRoles.value = userData.Roles || {};
-          const isRestrictedAcademic = restrictedAcademicEmails.includes(currentUser.email);
-          hasAdminAccess.value = userData.Roles?.admin || userData.Roles?.editor || isRestrictedAcademic;
+          hasAdminAccess.value = userData.Roles?.admin || userData.Roles?.editor;
         }
       } catch (error) {
         console.error('Erreur lors de la récupération des données utilisateur:', error);
@@ -258,13 +242,22 @@ const updateUserState = async () => {
       }
       
       const userProfile = userStore.profile;
-      
+      let profilePermissions = userProfile?.permissions;
+      if (typeof profilePermissions === 'string') {
+        try {
+          profilePermissions = JSON.parse(profilePermissions);
+        } catch {
+          profilePermissions = [];
+        }
+      }
+
+      permissions.value = Array.isArray(profilePermissions) ? profilePermissions : [];
       userRoles.value = { user: true }; // Rôle par défaut
-      const isRestrictedAcademic = restrictedAcademicEmails.includes(currentUser.email);
-      hasAdminAccess.value = userProfile?.role === 'admin' || isRestrictedAcademic;
+      hasAdminAccess.value = userProfile?.role === 'admin';
     }
   } else {
     userRoles.value = null;
+    permissions.value = [];
     hasAdminAccess.value = false;
   }
 };
@@ -272,7 +265,7 @@ const updateUserState = async () => {
 // Mettre à jour les droits seulement quand l'identité ou le rôle change.
 // Un changement de route ne doit déclencher aucun appel Supabase.
 watch(
-  () => [authStore.user?.id || authStore.user?.uid, userStore.profile?.role],
+  () => [authStore.user?.id || authStore.user?.uid, userStore.profile?.role, userStore.profile?.permissions],
   () => { void updateUserState(); },
 );
 

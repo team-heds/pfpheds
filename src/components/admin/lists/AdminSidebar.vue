@@ -163,36 +163,11 @@ function isSectionOpen(label) {
   return openSections.value.has(label);
 }
 
-// Liste des emails qui n'ont pas accès à la section Académique
-const restrictedAcademicEmails = [
-  'lucienne.darbellay-fumeaux@hevs.ch',
-  'filipa.pereira@hevs.ch',
-  'aline.chappuis@hevs.ch',
-  'maude.epiney-perruchoud@hevs.ch',
-  'isabelle.salamin-plaschy@hevs.ch',
-  'rafael.weissbrodt@hevs.ch',
-  'valerie.caloz-albrecht@hevs.ch',
-  'tiffany.rapillard@hevs.ch',
-  'omar.porteladossantos@hevs.ch',
-  'jesse.curchod@hevs.ch',
-  'line.martin@hevs.ch',
-  'isabelle.rey@hevs.ch',
-  'carla.gomesdarocha@hevs.ch',
-  'elodie.perruchoud@hevs.ch'
-];
-
-const restrictedAcademicEmailSet = new Set(
-  restrictedAcademicEmails.map(e => String(e).toLowerCase())
-)
-
 // Vérifier si l'utilisateur est connecté avec Supabase
 const isSupabaseUser = computed(() => authStore.isSupabaseUser && authStore.session);
 
-// Vérifier si l'utilisateur est restreint pour la section Académique
-const isRestrictedUser = computed(() => {
-  const userEmail = authStore.user?.email?.toLowerCase();
-  return !!(userEmail && restrictedAcademicEmailSet.has(userEmail));
-});
+// Les utilisateurs avec ce rôle conceptuel ne voient que les sections académiques.
+const isRestrictedUser = computed(() => roleStore.can('academic.restricted'));
 
 // Plus de fallback ici: on n'affiche que roleStore.perms pour une source unique et cohérente
 
@@ -424,6 +399,7 @@ function shouldShowSection(section) {
     case 'soins infirmiers': // Soins Infirmiers / Académique
     case 'académique':
       return (
+        roleStore.can('academic.restricted') ||
         roleStore.can('page2.access') ||
         roleStore.can('AdminSoins') ||
         roleStore.can('EnseignantSoins') ||
