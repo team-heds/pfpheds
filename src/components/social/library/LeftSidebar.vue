@@ -6,7 +6,14 @@
       <!-- Profil utilisateur -->
       <div class="profile-overline">Mon espace</div>
       <div class="user-profile" :class="{ 'is-placeholder': !user.id }">
-        <button type="button" class="avatar-button" aria-label="Modifier la photo de profil" @click="triggerFileInput">
+        <button
+          type="button"
+          class="avatar-button"
+          aria-label="Modifier la photo de profil"
+          :aria-busy="avatarUploading"
+          :disabled="avatarUploading"
+          @click="triggerFileInput"
+        >
           <img
             :src="userPhotoURL"
             alt="Avatar"
@@ -23,6 +30,7 @@
           type="file"
           accept="image/*"
           class="avatar-input"
+          :disabled="avatarUploading"
           @change="onAvatarSelected"
         />
       </div>
@@ -144,12 +152,13 @@
 
 <script>
 import Toast from "primevue/toast";
-import { getDatabase, ref as dbRef, get, update, onValue } from "firebase/database";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getDatabase, ref as dbRef, get, onValue } from "firebase/database";
 import { supabase } from '@/supabase.js';
 import UserCard from '@/views/apps/chat/UserCard.vue';
 import { useEventStore } from '@/stores/eventStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useUserStore } from '@/stores/userStore';
+import supabaseStorageService from '@/service/supabaseStorageService';
 import EventDetail from '@/components/events/EventDetail.vue';
 import QuestsSidebarCard from '@/components/gamification/QuestsSidebarCard.vue';
 import Dialog from 'primevue/dialog';
@@ -167,9 +176,11 @@ export default {
   setup() {
     const eventStore = useEventStore();
     const authStore = useAuthStore();
+    const userStore = useUserStore();
     return {
       eventStore,
       authStore,
+      userStore,
       // upcomingEvents: computed(() => eventStore.upcomingEvents) // Supprimé car dupliqué
     };
   },
@@ -184,6 +195,7 @@ export default {
       recentConversations: [], // 6 dernières conversations
       showEventDetail: false, // Variable pour afficher/masquer le dialog
       selectedEvent: null, // Variable pour stocker l'événement sélectionné
+      avatarUploading: false,
     };
   },
   computed: {
@@ -469,90 +481,45 @@ export default {
       this.$router.push({ name: 'IndexChat', query: { id: conversationId, user: user.id } });
     },
     triggerFileInput() {
-      this.$refs.fileInput.click();
+      if (!this.avatarUploading) this.$refs.fileInput?.click();
     },
     async onAvatarSelected(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      
+      const file = event.target.files?.[0];
+      if (!file || this.avatarUploading) return;
+
       const currentUser = this.authStore.user;
-      if (!currentUser) {
-        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Utilisateur non connecté.', life: 4000 });
+      const userId = currentUser?.id;
+      if (!userId) {
+        this.$refs.toast?.add({ severity: 'error', summary: 'Avatar', detail: 'Utilisateur Supabase non connecté.', life: 4000 });
+        event.target.value = '';
         return;
       }
-      
-      // Vérifier que c'est une image
-      if (!file.type.startsWith('image/')) {
-        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez sélectionner une image.', life: 4000 });
-        return;
-      }
-      
-      // Vérifier la taille (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        this.$refs.toast.add({ severity: 'error', summary: 'Erreur', detail: 'L\'image ne doit pas dépasser 5MB.', life: 4000 });
-        return;
-      }
-      
-      this.$refs.toast.add({ severity: 'info', summary: 'Upload en cours', detail: 'Upload de votre photo...', life: 2000 });
-      
+
+      this.avatarUploading = true;
       try {
-        if (this.authStore.isFirebaseUser) {
-          // Upload vers Firebase Storage
-          const userId = currentUser.uid;
-          const storage = getStorage();
-          const avatarRef = storageRef(storage, `users/${userId}/profile-picture.jpg`);
-          
-          await uploadBytes(avatarRef, file);
-          const photoURL = await getDownloadURL(avatarRef);
-          
-          const db = getDatabase();
-          const userRef = dbRef(db, `Users/${userId}`);
-          await update(userRef, { PhotoURL: photoURL });
-          
-          this.user.PhotoURL = photoURL;
-          this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
-          
-        } else if (this.authStore.isSupabaseUser) {
-          // Upload vers Supabase Storage (bucket "avatars")
-          const userId = currentUser.id;
-          const path = `users/${userId}/profile-picture.jpg`;
+        const result = await supabaseStorageService.replaceUserAvatar(userId, file);
+        this.user.PhotoURL = result.url;
 
-          const { error: upErr } = await supabase.storage
-            .from('avatars')
-            .upload(path, file, { upsert: true, cacheControl: '3600' });
-          if (upErr) {
-            console.error('❌ Erreur upload Storage:', upErr);
-            throw upErr;
+        if (this.userStore.user?.id === userId) {
+          try {
+            await this.userStore.fetchProfile();
+          } catch (refreshError) {
+            console.warn('[Avatar] Profil enregistré, rafraîchissement différé:', refreshError);
           }
-
-          const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
-          const photoURL = pub?.publicUrl || '';
-
-          // Mettre à jour le profil utilisateur avec l'URL publique
-          const { error: updateError } = await supabase
-            .from('user_profiles')
-            .update({ 
-              avatar_url: photoURL,
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', userId);
-          if (updateError) {
-            console.error('❌ Erreur mise à jour profile:', updateError);
-            throw updateError;
-          }
-
-          this.user.PhotoURL = photoURL || this.user.PhotoURL;
-          this.$refs.toast.add({ severity: 'success', summary: 'Succès', detail: 'Photo de profil mise à jour !', life: 4000 });
         }
-        
+
+        this.$refs.toast?.add({ severity: 'success', summary: 'Avatar', detail: 'Photo de profil mise à jour.', life: 4000 });
       } catch (error) {
         console.error("❌ Erreur lors de l'upload de l'avatar :", error);
-        this.$refs.toast.add({ 
+        this.$refs.toast?.add({
           severity: 'error', 
-          summary: 'Erreur', 
-          detail: 'Erreur lors de l\'upload : ' + (error?.message || error), 
+          summary: 'Avatar',
+          detail: error?.message || "Impossible de mettre à jour la photo de profil.",
           life: 6000 
         });
+      } finally {
+        this.avatarUploading = false;
+        event.target.value = '';
       }
     },
     goToProfile() {

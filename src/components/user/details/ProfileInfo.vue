@@ -86,8 +86,6 @@ const user = ref({
   ville: ''
 });
 
-const selectedAvatarFile = ref(null);
-
 // Couleur de la maison de l'utilisateur (pour le composant Quêtes)
 const userHouseColor = ref('#2E8B57'); // Harmonis par défaut
 
@@ -207,65 +205,6 @@ const fetchUserProfile = async (userId) => {
   }
 };
 
-// Fonction pour sauvegarder la nouvelle photo de profil avec Supabase Storage
-// eslint-disable-next-line no-unused-vars
-const saveProfile = async () => {
-  if (selectedAvatarFile.value) {
-    const userId = user.value.uid;
-    if (!userId) {
-      console.error('Aucun utilisateur chargé, impossible de sauvegarder.');
-      return;
-    }
-    
-    try {
-      const fileName = `${userId}/profile-picture-${Date.now()}.jpg`;
-      
-      // Upload vers Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, selectedAvatarFile.value, {
-          cacheControl: '3600',
-          upsert: true
-        });
-      
-      if (uploadError) throw uploadError;
-      
-      // Obtenir l'URL publique
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-      
-      const photoURL = urlData.publicUrl;
-      
-      // Mettre à jour le profil dans user_profiles
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({
-          avatar_url: photoURL,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
-      
-      if (updateError) throw updateError;
-      
-      user.value.photoURL = photoURL;
-      console.log('✅ Photo de profil mise à jour avec succès');
-    } catch (error) {
-      console.error("❌ Erreur lors de l'upload de l'avatar :", error);
-    }
-  } else {
-    console.warn('Veuillez sélectionner une photo avant de sauvegarder.');
-  }
-};
-
-// Gestion du changement d'avatar
-// eslint-disable-next-line no-unused-vars
-const onAvatarChange = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    selectedAvatarFile.value = file;
-  }
-};
 </script>
 
 <style scoped>
