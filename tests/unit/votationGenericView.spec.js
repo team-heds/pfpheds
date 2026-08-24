@@ -8,6 +8,8 @@ vi.mock('@/supabase', () => ({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      not: vi.fn().mockResolvedValue({ data: [], error: null }),
       order: vi.fn().mockResolvedValue({ data: [], error: null }),
       maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     }),
@@ -32,8 +34,16 @@ vi.mock('@/service/votationSessionService', () => ({
   },
 }))
 
+vi.mock('@/service/resultatVotationService', () => ({
+  resultatVotationService: {
+    getAssignmentCounts: vi.fn().mockResolvedValue({}),
+    getPfp3Proposals: vi.fn().mockResolvedValue({ proposedPlaceIds: [] }),
+    getPfp4Proposals: vi.fn().mockResolvedValue({ proposedPlaceIds: [] }),
+  },
+}))
+
 // Mock votesBackendService
-vi.mock('@/stores/votesBackendService', () => ({
+vi.mock('@/service/votesBackendService', () => ({
   default: {
     getVotePlaceAggregation: vi.fn().mockResolvedValue([]),
     upsertStudentVote: vi.fn().mockResolvedValue({}),

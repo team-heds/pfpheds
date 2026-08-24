@@ -16,7 +16,7 @@ export function useVotationSession(toast, userStore) {
   const showHistoryPanel = ref(false)
 
   const sessionIsOpen = computed(() => {
-    return currentSession.value && currentSession.value.status === 'open'
+    return currentSession.value?.status === 'open'
   })
 
   const loadCurrentSession = async (pfpType, year) => {
