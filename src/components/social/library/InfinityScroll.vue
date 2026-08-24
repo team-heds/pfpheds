@@ -1,7 +1,7 @@
 <!-- src/components/Social/InfiniteScroll.vue -->
 <template>
   <div>
-    <slot></slot> <!-- Affiche les posts passés à ce composant -->
+    <slot></slot>
     <div v-if="loading" class="loading-spinner">Chargement...</div>
   </div>
 </template>
@@ -13,28 +13,46 @@ export default {
     loading: {
       type: Boolean,
       default: false
+    },
+    scrollTarget: {
+      type: String,
+      default: 'parent',
+      validator: (value) => ['parent', 'window'].includes(value)
     }
   },
   mounted() {
-    // Scroll sur le parent direct (ex: .posts-container)
-    if (this.$el.parentNode) {
-      this.$el.parentNode.addEventListener('scroll', this.onScroll);
-    }
+    this.getScrollTarget()?.addEventListener('scroll', this.onScroll)
   },
   beforeUnmount() {
-    if (this.$el.parentNode) {
-      this.$el.parentNode.removeEventListener('scroll', this.onScroll);
-    }
+    this.getScrollTarget()?.removeEventListener('scroll', this.onScroll)
   },
   methods: {
+    getScrollTarget() {
+      return this.scrollTarget === 'window' ? window : this.$el.parentNode
+    },
     onScroll(e) {
-      const el = e.target;
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50 && !this.loading) {
-        this.$emit('load-more');
+      let scrollTop
+      let clientHeight
+      let scrollHeight
+
+      if (this.scrollTarget === 'window') {
+        const documentElement = document.documentElement
+        scrollTop = window.scrollY || documentElement.scrollTop || 0
+        clientHeight = window.innerHeight || documentElement.clientHeight
+        scrollHeight = documentElement.scrollHeight
+      } else {
+        const el = e.target
+        scrollTop = el.scrollTop
+        clientHeight = el.clientHeight
+        scrollHeight = el.scrollHeight
+      }
+
+      if (scrollTop + clientHeight >= scrollHeight - 50 && !this.loading) {
+        this.$emit('load-more')
       }
     }
   }
-};
+}
 </script>
 
 <style scoped>
