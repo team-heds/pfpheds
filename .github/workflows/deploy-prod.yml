@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -78,6 +80,11 @@ jobs:
 
       - name: Run P0 security tests
         run: npm run test:security
+
+      - name: Verify Supabase schema baseline and migration guards
+        env:
+          SCHEMA_GUARD_BASE_REF: ${{ github.event_name == 'push' && github.event.before || format('origin/{0}', github.base_ref) }}
+        run: npm run db:schema:check
 
       - name: Audit production dependencies
         run: |

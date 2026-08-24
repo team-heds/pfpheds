@@ -1,0 +1,32 @@
+{
+  "description": "Lignées SQL historiques gelées. Toute nouvelle migration doit être créée dans supabase/migrations.",
+  "files": [
+    { "path": "backend/supabase/migrations/0001_create_institutions_table.sql", "sha256": "01f961f75514ed6b566fb5853c168f1c9e23a41d5ea7f15d9f6d09863823e469" },
+    { "path": "backend/supabase/migrations/0002_create_student_votes_table.sql", "sha256": "cce354940cd62cc9355842798a31dd61554e329588eae8a4d91fc9348e1f8f6d" },
+    { "path": "backend/supabase/migrations/0003_student_votes_functions.sql", "sha256": "c7e84e4cfdcecaa93960b619fde7fb29fb44fbb00c0222338b3f8fe4b9ad32cf" },
+    { "path": "backend/supabase/migrations/0004_add_pfp_cohort_to_user_profiles.sql", "sha256": "c0b55554db3f3e31d1081c27bde0db6724ec973a3051f58e083cd9c96b609c48" },
+    { "path": "backend/supabase/migrations/0005_create_student_physio_table.sql", "sha256": "ce63c69622d4d3aa32c21ee7d2d540742a067bb08356752bb7c2b4bf9109bcc4" },
+    { "path": "backend/supabase/migrations/0006_extend_students_physio_for_pfp_notes.sql", "sha256": "3c99b08cead8f181822773e8f50f12c082265f3f87b43276368284f1c986639d" },
+    { "path": "backend/supabase/migrations/0007_fix_students_physio_column_types.sql", "sha256": "bf1951de45e3cbc66af568a857674f622b16eba5a5eba6802f658f892611abcd" },
+    { "path": "backend/supabase/migrations/0008_add_pfp4_proposals_to_votation_sessions.sql", "sha256": "cf1b51d177b1198303a6ee9d28e28af9ce54209046c5ee139567e69be7a509d3" },
+    { "path": "backend/supabase/migrations/add_firebase_author_id.sql", "sha256": "53d15e9db1068da90c53a26dc3c923db8ab6405816f791a71d8beed6643da680" },
+    { "path": "backend/supabase/migrations/create_post_function.sql", "sha256": "08628e994b1e809064bc14f092fda7f2fd0302dade3c5364d53de0ed430f429a" },
+    { "path": "backend/supabase/migrations/create_praticiens_formateurs_table.sql", "sha256": "5311c40855af9057741334f77fef0cba1b9ca4d66643dff0a2c1e42619e6c775" },
+    { "path": "backend/supabase/migrations/rls_toggle.sql", "sha256": "4d5f71ecc2031491b7022b54ceef7ea3837f4b4d381c86353ef2b471f59433b8" },
+    { "path": "migrations/add_pfp_propositions_columns.sql", "sha256": "cadbca8006c11ac05ba979e7a316391a34d459b3d8ed31ac320c2212737c8442" },
+    { "path": "migrations/copy_offre_to_propositions.sql", "sha256": "25ea719915a0104f750e056dfc546365f584eec8ad17034acb036fccb2b766ea" },
+    { "path": "migrations/create_praticiens_formateurs_table.sql", "sha256": "3b9d93c256a7a08b7d0be5b658c7abd3c892599f793938093e2afc4c2c590b19" },
+    { "path": "src/database/migrations/000_reset_modules_table.sql", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" },
+    { "path": "src/database/migrations/001_create_modules_table.sql", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" },
+    { "path": "src/database/migrations/002_update_modules_remove_semester.sql", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" },
+    { "path": "src/database/migrations/003_create_tracks_table.sql", "sha256": "31bbbd9522602feb76271df7bebb384a763c880dfff3088f575759aaafbd126c" },
+    { "path": "src/database/migrations/004_create_user_track_roles.sql", "sha256": "354841adc1dc4dd081637eac86a6fdffc8f9da5bdfe8ed42191665dce5fbf8f3" },
+    { "path": "src/database/migrations/004_MASTER_multi_filiere.sql", "sha256": "5ba474ce6c5233bfcc3e573c7ab6b56ba5136369a83e94e6b9cc9bae8e4a9c73" },
+    { "path": "src/database/migrations/004b_functions.sql", "sha256": "1477fdc54d3cc38658441f1c90335d3a01d053f996a2a1722f324aa3b3ba717e" },
+    { "path": "src/database/migrations/004c_add_track_id_to_modules.sql", "sha256": "62bc0b352896a8dced66d9bf0e60fcbb482830ab87a6b47dfefedd6324a7314b" },
+    { "path": "src/database/migrations/004d_migrate_roles.sql", "sha256": "6f93787af63abd5244c95070f7c82e89f95e2d6462909ea78c6367050ff0bdb8" },
+    { "path": "src/database/migrations/005_rls_policies_modules.sql", "sha256": "00b144824d4fd8118d9dd46617a6b1938fc34286e93602c236950631b5202a13" },
+    { "path": "src/database/migrations/006_sync_responsable_email_trigger.sql", "sha256": "fcc359574a3f70fa6184754769f19eeb004d53de8067c6c508095308f458ab39" },
+    { "path": "src/database/migrations/007_planning_history_validation.sql", "sha256": "cbedb435e0b0203582c36f546ee44f02293f9e79e8fabb06c3bddce4a6070784" }
+  ]
+}
