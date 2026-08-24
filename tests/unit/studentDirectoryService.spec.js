@@ -24,7 +24,7 @@ describe('studentDirectoryService', () => {
     apiGet.mockResolvedValue({
       data: {
         data: [
-          { user_id: 's1', Classe: 'BA24' },
+          { user_id: 's1', Classe: 'BA24', repondant_hes: 'Marie Curie' },
           { user_id: 's2', Classe: 'BA25' }
         ]
       }
@@ -33,7 +33,7 @@ describe('studentDirectoryService', () => {
     expect(await getAllStudents()).toHaveLength(2)
     expect(await countStudents()).toBe(2)
     expect(await getStudentById('s2')).toMatchObject({ Classe: 'BA25' })
-    expect(await getStudentsByClass('BA24')).toEqual([{ user_id: 's1', Classe: 'BA24' }])
+    expect(await getStudentsByClass('BA24')).toEqual([{ user_id: 's1', Classe: 'BA24', repondant_hes: 'Marie Curie' }])
     expect(apiGet).toHaveBeenCalledTimes(1)
     expect(apiGet).toHaveBeenCalledWith('/audiences/students')
   })
