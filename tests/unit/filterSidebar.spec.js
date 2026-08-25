@@ -1,4 +1,6 @@
 import { shallowMount } from '@vue/test-utils'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import FilterSidebar from '@/components/common/filters/FilterSidebar.vue'
 
@@ -20,7 +22,10 @@ describe('FilterSidebar', () => {
     const wrapper = mountSidebar()
 
     expect(wrapper.get('[role="status"]').text()).toBe('12 institutions')
-    expect(wrapper.findAll('fieldset')).toHaveLength(4)
+    const groups = wrapper.findAll('[role="group"]')
+    expect(groups).toHaveLength(4)
+    expect(groups.every(group => Boolean(group.attributes('aria-labelledby')))).toBe(true)
+    expect(wrapper.findAll('.filter-section h3')).toHaveLength(4)
     expect(wrapper.text()).toContain('Canton')
     expect(wrapper.text()).toContain('Critères')
     expect(wrapper.text()).toContain('PFP')
@@ -53,5 +58,14 @@ describe('FilterSidebar', () => {
     })
 
     expect(wrapper.get('.clear-button').attributes('disabled')).toBeDefined()
+  })
+
+  it('keeps every filter reachable in the desktop sidebar', () => {
+    const source = readFileSync(join(process.cwd(), 'src/components/common/filters/FilterSidebar.vue'), 'utf8')
+
+    expect(source).toContain('max-height:100%')
+    expect(source).toContain('overflow-y:auto')
+    expect(source).toContain('position:sticky')
+    expect(source).toContain('overflow:visible')
   })
 })

@@ -41,8 +41,8 @@
     </div>
 
     <div class="filter-groups">
-      <fieldset class="filter-section">
-        <legend>Canton</legend>
+      <section class="filter-section" role="group" :aria-labelledby="`${idPrefix}-cantons-title`">
+        <h3 :id="`${idPrefix}-cantons-title`">Canton</h3>
         <ul class="filter-list">
           <li v-for="canton in cantons" :key="canton" class="filter-item">
             <Checkbox :input-id="`${idPrefix}-canton-${canton}`" :value="canton" :model-value="normalizedFilters.cantons" @update:model-value="updateGroup('cantons', $event)" />
@@ -50,37 +50,37 @@
           </li>
           <li v-if="cantons.length === 0" class="empty-option">Aucun canton disponible</li>
         </ul>
-      </fieldset>
+      </section>
 
-      <fieldset class="filter-section">
-        <legend>Critères</legend>
+      <section class="filter-section" role="group" :aria-labelledby="`${idPrefix}-criteria-title`">
+        <h3 :id="`${idPrefix}-criteria-title`">Critères</h3>
         <ul class="filter-list">
           <li v-for="criterion in criteriaOptions" :key="criterion" class="filter-item">
             <Checkbox :input-id="`${idPrefix}-criterion-${criterion}`" :value="criterion" :model-value="normalizedFilters.criter" @update:model-value="updateGroup('criter', $event)" />
             <label :for="`${idPrefix}-criterion-${criterion}`">{{ criterion }}</label>
           </li>
         </ul>
-      </fieldset>
+      </section>
 
-      <fieldset class="filter-section">
-        <legend>PFP</legend>
+      <section class="filter-section" role="group" :aria-labelledby="`${idPrefix}-pfp-title`">
+        <h3 :id="`${idPrefix}-pfp-title`">PFP</h3>
         <ul class="filter-list">
           <li v-for="pfp in pfpOptions" :key="pfp" class="filter-item">
             <Checkbox :input-id="`${idPrefix}-pfp-${pfp}`" :value="pfp" :model-value="normalizedFilters.pfp" @update:model-value="updateGroup('pfp', $event)" />
             <label :for="`${idPrefix}-pfp-${pfp}`">{{ pfp }}</label>
           </li>
         </ul>
-      </fieldset>
+      </section>
 
-      <fieldset class="filter-section">
-        <legend>Langue</legend>
+      <section class="filter-section" role="group" :aria-labelledby="`${idPrefix}-languages-title`">
+        <h3 :id="`${idPrefix}-languages-title`">Langue</h3>
         <ul class="filter-list">
           <li v-for="language in languageOptions" :key="language" class="filter-item">
             <Checkbox :input-id="`${idPrefix}-language-${language}`" :value="language" :model-value="normalizedFilters.languages" @update:model-value="updateGroup('languages', $event)" />
             <label :for="`${idPrefix}-language-${language}`">{{ language }}</label>
           </li>
         </ul>
-      </fieldset>
+      </section>
     </div>
   </section>
 </template>
@@ -117,9 +117,26 @@ function removeFilter(group, value) {
 </script>
 
 <style scoped>
-.filter-sidebar { display:flex; flex-direction:column; gap:1rem; min-width:0; margin-inline-end:var(--social-side-inset, 0); }
+.filter-sidebar {
+  display:flex;
+  flex-direction:column;
+  gap:.75rem;
+  min-width:0;
+  height:100%;
+  max-height:100%;
+  margin-inline-end:var(--social-side-inset, 0);
+  padding-inline-end:.35rem;
+  padding-block-end:1rem;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-color:var(--surface-border) transparent;
+  scrollbar-width:thin;
+}
+.filter-sidebar::-webkit-scrollbar { width:.5rem; }
+.filter-sidebar::-webkit-scrollbar-track { background:transparent; }
+.filter-sidebar::-webkit-scrollbar-thumb { border-radius:999px; background:var(--surface-border); }
 .filter-heading, .search-field, .active-filters, .filter-section { border-radius:1.2rem; background:var(--surface-card); }
-.filter-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding:1.25rem; }
+.filter-heading { position:sticky; top:0; z-index:2; display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; padding:1.25rem; box-shadow:0 .5rem 1.25rem rgba(0, 0, 0, .12); }
 .filter-heading h2, .filter-heading p { margin:0; }
 .filter-heading h2 { color:var(--text-color); font-size:1.25rem; }
 .result-count { margin-top:.25rem !important; color:var(--text-color-secondary); font-size:.875rem; }
@@ -132,13 +149,17 @@ function removeFilter(group, value) {
 .search-field .p-input-icon-left, .search-field :deep(.p-inputtext) { width:100%; }
 .active-filters { display:flex; flex-wrap:wrap; gap:.5rem; padding:1rem; }
 .filter-chip { min-height:2rem; padding-inline:.75rem; background:var(--surface-hover); color:var(--text-color); }
-.filter-groups { display:grid; gap:1rem; }
-.filter-section { min-width:0; margin:0; padding:1.25rem; border:0; }
-.filter-section legend { width:100%; padding:0 0 .75rem; color:var(--text-color); font-size:1rem; font-weight:600; }
+.filter-groups { display:grid; gap:.75rem; }
+.filter-section { min-width:0; margin:0; padding:1rem 1.25rem 1.1rem; border:0; }
+.filter-section h3 { margin:0 0 .75rem; color:var(--text-color); font-size:1rem; font-weight:600; line-height:1.35; }
 .filter-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.25rem .75rem; margin:0; padding:0; list-style:none; }
-.filter-item { display:flex; align-items:center; gap:.5rem; min-height:2.5rem; }
+.filter-item { display:flex; align-items:center; gap:.5rem; min-height:2.25rem; }
 .filter-item label { color:var(--text-color); cursor:pointer; }
 .empty-option { grid-column:1/-1; color:var(--text-color-secondary); font-style:italic; }
-@media (max-width:63.99rem) { .filter-sidebar { margin-inline:0; } .filter-groups { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:63.99rem) {
+  .filter-sidebar { height:auto; max-height:none; margin-inline:0; padding:0; overflow:visible; overscroll-behavior:auto; }
+  .filter-heading { position:static; box-shadow:none; }
+  .filter-groups { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 @media (max-width:38rem) { .filter-heading { align-items:stretch; flex-direction:column; } .clear-button { width:100%; } .filter-groups { grid-template-columns:1fr; } }
 </style>
