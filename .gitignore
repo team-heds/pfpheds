@@ -134,6 +134,9 @@ build/*.tar.gz
 # Firebase hosting cache (obsolete)
 .firebase/
 
+# Supabase CLI local metadata
+supabase/.temp/
+
 # Legacy algo scripts and data exports
 algo/
 

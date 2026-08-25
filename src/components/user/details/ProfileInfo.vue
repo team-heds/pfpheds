@@ -176,26 +176,25 @@ onMounted(async () => {
 // Fonction pour charger un profil utilisateur via son ID depuis Supabase
 const fetchUserProfile = async (userId) => {
   try {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+    const { data: rows, error } = await supabase.rpc('get_accessible_user_profile', {
+      p_target_user_id: userId,
+    });
     
     if (error) {
       console.error('Erreur Supabase:', error);
       return;
     }
     
+    const data = Array.isArray(rows) ? rows[0] : rows;
     if (data) {
       user.value = {
         uid: userId,
         prenom: data.forname || '',
         nom: data.family_name || '',
-        email: data.email || '',
+        email: userId === (authStore.user?.id || authStore.user?.uid) ? (authStore.user?.email || '') : '',
         ville: data.city || '',
         bio: data.bio || '',
-        photoURL: data.avatar_url || data.profile_picture_url || defaultAvatar
+        photoURL: data.avatar_url || defaultAvatar
       };
     } else {
       console.warn("Aucun profil trouvé pour l'ID :", userId);
