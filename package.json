@@ -7,6 +7,8 @@
     "dev": "vite",
     "dev:full": "node scripts/dev-full.mjs",
     "doctor": "node scripts/doctor.mjs",
+    "db:schema:check": "node scripts/supabase/check-schema-baseline.mjs",
+    "db:schema:export": "powershell -ExecutionPolicy Bypass -File scripts/supabase/export-schema-baseline.ps1",
     "build": "vite build",
     "presentation:dev": "npm --prefix presentation run dev",
     "presentation:build": "npm --prefix presentation run build",
