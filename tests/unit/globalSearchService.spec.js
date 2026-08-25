@@ -8,8 +8,9 @@ vi.mock('@/supabase', () => ({ supabase: { rpc, from } }))
 
 const {
   canViewUserProfile,
+  resolveAccessibleUserProfileId,
   searchAccessibleProfiles,
-  searchModules,
+  searchModules
 } = await import('@/service/globalSearchService')
 
 describe('globalSearchService', () => {
@@ -21,20 +22,27 @@ describe('globalSearchService', () => {
 
   it('recherche les profils via le RPC Supabase avec un payload minimal', async () => {
     rpc.mockResolvedValue({
-      data: [{ user_id: 'user-1', display_name: 'Antoine Test', avatar_url: null, role_label: 'Étudiant' }],
-      error: null,
+      data: [
+        {
+          user_id: 'user-1',
+          display_name: 'Antoine Test',
+          avatar_url: null,
+          role_label: 'Étudiant'
+        }
+      ],
+      error: null
     })
 
     const results = await searchAccessibleProfiles('Antoine')
 
     expect(rpc).toHaveBeenCalledWith('search_accessible_user_profiles', {
       p_query: 'Antoine',
-      p_limit: 10,
+      p_limit: 10
     })
     expect(results[0]).toMatchObject({
       id: 'user-1',
       name: 'Antoine Test',
-      route: { name: 'Profile', params: { id: 'user-1' } },
+      route: { name: 'Profile', params: { id: 'user-1' } }
     })
     expect(results[0]).not.toHaveProperty('email')
   })
@@ -43,9 +51,9 @@ describe('globalSearchService', () => {
     selectModules.mockResolvedValue({
       data: [
         { id: 1, title: 'Anatomie', code: 'ANA', description: 'Bases' },
-        { id: 2, title: 'Physiologie', code: 'PHY', description: 'Systèmes' },
+        { id: 2, title: 'Physiologie', code: 'PHY', description: 'Systèmes' }
       ],
-      error: null,
+      error: null
     })
 
     const results = await searchModules('anato')
@@ -59,5 +67,19 @@ describe('globalSearchService', () => {
   it('refuse par défaut quand le RPC de profil répond faux', async () => {
     rpc.mockResolvedValue({ data: false, error: null })
     await expect(canViewUserProfile('student-2')).resolves.toBe(false)
+  })
+
+  it('résout un ancien identifiant uniquement via le RPC Supabase autorisé', async () => {
+    rpc.mockResolvedValue({
+      data: '00000000-0000-4000-8000-000000000003',
+      error: null
+    })
+
+    await expect(resolveAccessibleUserProfileId(' legacy-id ')).resolves.toBe(
+      '00000000-0000-4000-8000-000000000003'
+    )
+    expect(rpc).toHaveBeenCalledWith('resolve_accessible_user_profile_id', {
+      p_target_identifier: 'legacy-id'
+    })
   })
 })
