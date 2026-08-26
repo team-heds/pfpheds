@@ -1,8 +1,13 @@
 # Contrat des statistiques admin — v1
 
 Endpoint : `GET /api/admin-dashboard/v1/stats`  
-Authentification : `Authorization: Bearer <JWT Supabase>`  
-Paramètre optionnel : `domains=general,pfp,academic,gamification`
+Authentification : `Authorization: Bearer <JWT Supabase>`
+
+Paramètres optionnels :
+
+- `domains=general,pfp,academic,gamification`
+- `period=day|week|month|quarter|year` (défaut : `month`)
+- `reference=<date ISO>` (défaut : instant courant ; `YYYY-MM-DD` désigne minuit à Zurich, un horodatage doit contenir `Z` ou un décalage explicite)
 
 ## Garanties
 
@@ -10,8 +15,11 @@ Paramètre optionnel : `domains=general,pfp,academic,gamification`
 - La réponse ne contient aucune ligne nominative, adresse email ou identifiant utilisateur.
 - Une erreur de lecture n'est jamais convertie en zéro.
 - Les valeurs `ok` proviennent des tables indiquées dans `source`.
-- La période v1 est `lifetime`. Les périodes historiques seront ajoutées par HEDS25-592 sans casser cette enveloppe.
-- Une réponse partielle utilise HTTP `206` et marque chaque métrique en erreur individuellement.
+- Les périodes sont calendaires en `Europe/Zurich`, avec des bornes semi-ouvertes `[start, end)` exposées en UTC.
+- La semaine commence le lundi. Les périodes précédentes sont calendaires et tiennent compte des changements d'heure.
+- Une comparaison n'est fournie que si la source permet de recalculer honnêtement la même métrique sur la période précédente.
+- Un KPI sans journal historique conserve sa valeur actuelle, mais sa comparaison est explicitement `unavailable`.
+- Une réponse partielle utilise HTTP `206` et marque chaque métrique ou comparaison en erreur individuellement.
 
 ## Autorisations
 
@@ -24,16 +32,22 @@ Paramètre optionnel : `domains=general,pfp,academic,gamification`
 
 Une demande explicite d'un domaine interdit retourne `403`. Sans paramètre, seuls les domaines autorisés sont retournés.
 
-## Enveloppe
+## Exemple d'enveloppe
 
 ```json
 {
   "version": "1",
   "asOf": "2026-08-26T08:00:00.000Z",
   "period": {
-    "key": "lifetime",
-    "start": null,
-    "end": null,
+    "key": "month",
+    "start": "2026-07-31T22:00:00.000Z",
+    "end": "2026-08-31T22:00:00.000Z",
+    "timezone": "Europe/Zurich"
+  },
+  "previousPeriod": {
+    "key": "month",
+    "start": "2026-06-30T22:00:00.000Z",
+    "end": "2026-07-31T22:00:00.000Z",
     "timezone": "Europe/Zurich"
   },
   "domains": {
@@ -41,15 +55,29 @@ Une demande explicite d'un domaine interdit retourne `403`. Sans paramètre, seu
       "status": "ok",
       "metrics": {
         "users": {
-          "value": 251,
+          "value": 20,
           "status": "ok",
           "source": "public.user_profiles",
           "asOf": "2026-08-26T08:00:00.000Z",
           "period": {
-            "key": "lifetime",
-            "start": null,
-            "end": null,
+            "key": "month",
+            "start": "2026-07-31T22:00:00.000Z",
+            "end": "2026-08-31T22:00:00.000Z",
             "timezone": "Europe/Zurich"
+          },
+          "semantics": "flow",
+          "comparison": {
+            "value": 17,
+            "status": "ok",
+            "absoluteChange": 3,
+            "percentChange": 17.6,
+            "period": {
+              "key": "month",
+              "start": "2026-06-30T22:00:00.000Z",
+              "end": "2026-07-31T22:00:00.000Z",
+              "timezone": "Europe/Zurich"
+            },
+            "error": null
           },
           "error": null
         }
@@ -59,36 +87,44 @@ Une demande explicite d'un domaine interdit retourne `403`. Sans paramètre, seu
 }
 ```
 
+## Sémantiques
+
+- `flow` : événements créés ou assignés dans la période ; une comparaison réelle est calculée.
+- `snapshot` : état actuel sans historique fiable ; la valeur est réelle, la comparaison est indisponible.
+- `cumulative` : compteur courant sans journal d'événements permettant de reconstruire la période précédente.
+
+Une comparaison disponible contient la valeur précédente, l'écart absolu et l'écart en pourcentage. Lorsque la valeur précédente vaut zéro, `percentChange` vaut `null`. Une comparaison indisponible ou en erreur ne contient aucune valeur numérique.
+
 ## Définitions v1
 
-| Domaine | Clé | Définition | Source |
-|---|---|---|---|
-| Général | `users` | profils actifs | `user_profiles.is_active = true` |
-| Général | `roles` | rôles configurés | `roles` |
-| Général | `permissions` | permissions configurées | `permissions` |
-| Général | `routes` | routes dynamiques actives | `dynamic_routes.is_active = true` |
-| PFP | `students` | profils actifs classifiés étudiants par l'audience serveur canonique | `user_profiles` |
-| PFP | `institutions` | institutions configurées | `institutions` |
-| PFP | `places` | fiches de places configurées ; ce n'est pas encore une capacité de stage | `places` |
-| PFP | `pfpInProgress` | résultats assignés ou publiés sans validation, échec ni arrêt | `student_result_vote` |
-| Académique | `teachers` | profils actifs classifiés enseignants/RM/répondants par l'audience serveur | `user_profiles` |
-| Académique | `courses` | cours configurés | `courses` |
-| Académique | `media` | vidéos enregistrées dans la bibliothèque partagée | `video_library` |
-| Académique | `modules` | modules configurés | `modules` |
-| Gamification | `activeChallenges` | défis actifs | `challenges.is_active = true` |
-| Gamification | `completedQuests` | somme non négative de `completion_count` | `quests` |
-| Gamification | `badges` | badges actifs | `badges.is_active = true` |
-| Gamification | `activeUsers` | profils ayant un total d'XP strictement positif | `gamification_data.total_xp > 0` |
+| Domaine | Clé | Définition sur la période | Source temporelle | Sémantique |
+|---|---|---|---|---|
+| Général | `users` | profils actifs créés | `user_profiles.created_at` | `flow` |
+| Général | `roles` | rôles actuellement configurés | aucune date de création | `snapshot` |
+| Général | `permissions` | permissions actuellement configurées | aucune date de création | `snapshot` |
+| Général | `routes` | routes actives créées | `dynamic_routes.created_at` | `flow` |
+| PFP | `students` | profils actifs créés et classifiés étudiants par l'audience serveur canonique | `user_profiles.created_at` | `flow` |
+| PFP | `institutions` | institutions actuellement configurées | `institutions` ne possède que `UpdatedAt` | `snapshot` |
+| PFP | `places` | fiches de places créées ; ce n'est pas une capacité de stage | `places.CreatedAt` | `flow` |
+| PFP | `pfpInProgress` | résultats assignés/publiés dans la période, sans validation, échec ni arrêt | `student_result_vote.assigned_at` | `flow` |
+| Académique | `teachers` | profils actifs créés et classifiés enseignants/RM/répondants | `user_profiles.created_at` | `flow` |
+| Académique | `courses` | cours créés | `courses.created_at` | `flow` |
+| Académique | `media` | vidéos publiées | `video_library.published_date` | `flow` |
+| Académique | `modules` | modules créés | `modules.created_at` | `flow` |
+| Gamification | `activeChallenges` | défis encore actifs créés | `challenges.created_at` | `flow` |
+| Gamification | `completedQuests` | somme actuelle non négative de `completion_count` | aucun événement de complétion | `cumulative` |
+| Gamification | `badges` | badges actifs créés | `badges.created_at` | `flow` |
+| Gamification | `activeUsers` | profils de gamification créés avec XP positif | `gamification_data.created_at` | `flow` |
 
 ## États et erreurs
 
 - `ok` : valeur réelle disponible.
-- `unavailable` : la définition ne peut pas encore être calculée sans ambiguïté.
+- `unavailable` : la définition ne peut pas être calculée sans ambiguïté.
 - `error` : la source attendue n'a pas pu être interrogée.
-- `partial` : au moins une métrique du domaine est disponible et une autre ne l'est pas.
+- `partial` : au moins une métrique ou comparaison est disponible et une autre est en erreur.
 
 Les messages SQL ne sont jamais renvoyés au navigateur. Le champ `error` contient uniquement un code borné permettant le diagnostic serveur.
 
 ## Budget initial
 
-Le contrat effectue au maximum une lecture ciblée par métrique demandée. Les quatre domaines complets représentent 16 lectures indépendantes, exécutées en parallèle. HEDS25-593 ajoutera le partage de cache et évitera les anciens chargements concurrents du frontend.
+Les métriques `flow` effectuent un comptage pour la période courante et un pour la précédente. Les quatre métriques sans historique effectuent une seule lecture, soit au maximum 28 lectures pour les quatre domaines, exécutées en parallèle. HEDS25-593 ajoutera le partage de cache et évitera les anciens chargements concurrents du frontend.

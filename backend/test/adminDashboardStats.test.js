@@ -17,6 +17,7 @@ const {
 const {
   allowedDashboardDomains,
   createAdminDashboardStatsRouter,
+  parsePeriodOptions,
   parseRequestedDomains
 } = require('../dashboard/adminDashboardStatsBackend')
 
@@ -72,12 +73,22 @@ function createFakeClient(options = {}) {
         state.filters.push(['gt', column, value])
         return query
       },
+      gte(column, value) {
+        state.filters.push(['gte', column, value])
+        return query
+      },
+      lt(column, value) {
+        state.filters.push(['lt', column, value])
+        return query
+      },
       then(resolve, reject) {
         queries.push({ ...state, filters: [...state.filters] })
-        const result = errors[table]
-          ? { data: null, count: null, error: errors[table] }
+        const resolvedCount = options.resolveCount?.(state, counts[table]) ?? counts[table]
+        const resolvedError = options.resolveError?.(state) || errors[table]
+        const result = resolvedError
+          ? { data: null, count: null, error: resolvedError }
           : state.count === 'exact' && state.head
-            ? { data: null, count: counts[table], error: null }
+            ? { data: null, count: resolvedCount, error: null }
             : { data: rows[table] || [], count: null, error: null }
         return Promise.resolve(result).then(resolve, reject)
       }
@@ -111,6 +122,9 @@ test('the v1 contract contains deterministic aggregates from real table sources'
 
   assert.equal(validateDashboardStatsResponse(response), true)
   assert.equal(response.version, '1')
+  assert.equal(response.period.key, 'month')
+  assert.equal(response.period.start, '2026-07-31T22:00:00.000Z')
+  assert.equal(response.previousPeriod.start, '2026-06-30T22:00:00.000Z')
   assert.equal(response.period.timezone, 'Europe/Zurich')
   assert.equal(response.domains.general.metrics.users.value, 17)
   assert.equal(response.domains.general.metrics.permissions.value, 23)
@@ -120,7 +134,12 @@ test('the v1 contract contains deterministic aggregates from real table sources'
   assert.equal(response.domains.gamification.metrics.completedQuests.value, 7)
   assert.equal(response.domains.gamification.metrics.activeUsers.value, 14)
   assert.equal(response.domains.general.metrics.routes.source, 'public.dynamic_routes')
-  assert.equal(queries.length, 16)
+  assert.equal(queries.length, 28)
+  assert.equal(response.domains.general.metrics.users.semantics, 'flow')
+  assert.equal(response.domains.general.metrics.users.comparison.value, 17)
+  assert.equal(response.domains.general.metrics.users.comparison.percentChange, 0)
+  assert.equal(response.domains.general.metrics.roles.semantics, 'snapshot')
+  assert.equal(response.domains.general.metrics.roles.comparison.status, 'unavailable')
 
   assert.ok(
     queries.some(
@@ -135,6 +154,42 @@ test('the v1 contract contains deterministic aggregates from real table sources'
         query.table === 'gamification_data' &&
         query.filters.some(
           ([operator, column, value]) => operator === 'gt' && column === 'total_xp' && value === 0
+        )
+    )
+  )
+})
+
+test('period selection changes real query bounds and comparison values', async () => {
+  const { client, queries } = createFakeClient({
+    resolveCount(state, fallback) {
+      const lowerBound = state.filters.find(([operator]) => operator === 'gte')?.[2]
+      if (state.table === 'courses' && lowerBound === '2026-08-25T22:00:00.000Z') return 3
+      if (state.table === 'courses' && lowerBound === '2026-08-24T22:00:00.000Z') return 2
+      return fallback
+    }
+  })
+  const service = createAdminDashboardStatsService({
+    client,
+    now: () => new Date('2026-08-26T08:00:00.000Z')
+  })
+
+  const response = await service.loadStats(['academic'], {
+    key: 'day',
+    reference: '2026-08-26T08:00:00.000Z'
+  })
+  const courses = response.domains.academic.metrics.courses
+
+  assert.equal(courses.value, 3)
+  assert.equal(courses.comparison.value, 2)
+  assert.equal(courses.comparison.absoluteChange, 1)
+  assert.equal(courses.comparison.percentChange, 50)
+  assert.ok(
+    queries.some(
+      (query) =>
+        query.table === 'courses' &&
+        query.filters.some(
+          ([operator, column, value]) =>
+            operator === 'gte' && column === 'created_at' && value === response.period.start
         )
     )
   )
@@ -170,6 +225,36 @@ test('an upstream failure is explicit and never becomes a zero', async () => {
   assert.equal(events[0].source, 'public.places')
 })
 
+test('a previous-period failure preserves the current value and marks comparison error', async () => {
+  const events = []
+  const { client } = createFakeClient({
+    resolveError(state) {
+      const lowerBound = state.filters.find(([operator]) => operator === 'gte')?.[2]
+      if (state.table === 'courses' && lowerBound === '2026-07-31T22:00:00.000Z') {
+        return { code: 'PGRST500', message: 'sensitive previous period detail' }
+      }
+      return null
+    }
+  })
+  const service = createAdminDashboardStatsService({
+    client,
+    now: () => new Date('2026-09-15T08:00:00.000Z'),
+    onMetricError: (event) => events.push(event)
+  })
+
+  const response = await service.loadStats(['academic'], { key: 'month' })
+  const metric = response.domains.academic.metrics.courses
+
+  assert.equal(metric.value, 8)
+  assert.equal(metric.status, 'ok')
+  assert.equal(metric.comparison.status, 'error')
+  assert.equal(metric.comparison.error, 'PGRST500')
+  assert.equal(metric.comparison.value, null)
+  assert.equal(response.domains.academic.status, 'partial')
+  assert.equal(events[0].key, 'courses.previous')
+  assert.equal(JSON.stringify(response).includes('sensitive previous period detail'), false)
+})
+
 test('the contract rejects personal fields and malformed values', () => {
   assert.throws(
     () => assertNoPersonalData({ domains: { general: { email: 'private@example.test' } } }),
@@ -200,6 +285,13 @@ test('domain authorization is derived from server-side permissions', () => {
   assert.deepEqual(allowedDashboardDomains({ permissions: ['EtudiantPhysio'] }), [])
   assert.deepEqual(parseRequestedDomains('pfp,academic,pfp'), ['pfp', 'academic'])
   assert.throws(() => parseRequestedDomains('general,unknown'), /domains invalide/)
+  assert.deepEqual(parsePeriodOptions({}), { key: 'month', reference: undefined })
+  assert.deepEqual(parsePeriodOptions({ period: 'quarter', reference: '2026-08-26' }), {
+    key: 'quarter',
+    reference: '2026-08-26'
+  })
+  assert.throws(() => parsePeriodOptions({ period: '90d' }), /period invalide/)
+  assert.throws(() => parsePeriodOptions({ reference: 'invalid' }), /reference invalide/)
 })
 
 test('the endpoint filters domains and refuses a forbidden domain', async () => {
@@ -219,13 +311,20 @@ test('the endpoint filters domains and refuses a forbidden domain', async () => 
   )
 
   await listen(app, async (baseUrl) => {
-    const allowed = await fetch(`${baseUrl}/api/admin-dashboard/v1/stats?domains=pfp`)
+    const allowed = await fetch(
+      `${baseUrl}/api/admin-dashboard/v1/stats?domains=pfp&period=week&reference=2026-08-26`
+    )
     assert.equal(allowed.status, 200)
-    assert.deepEqual(Object.keys((await allowed.json()).domains), ['pfp'])
+    const allowedBody = await allowed.json()
+    assert.deepEqual(Object.keys(allowedBody.domains), ['pfp'])
+    assert.equal(allowedBody.period.key, 'week')
 
     const forbidden = await fetch(`${baseUrl}/api/admin-dashboard/v1/stats?domains=general`)
     assert.equal(forbidden.status, 403)
     assert.deepEqual((await forbidden.json()).forbiddenDomains, ['general'])
+
+    const invalid = await fetch(`${baseUrl}/api/admin-dashboard/v1/stats?period=90d`)
+    assert.equal(invalid.status, 400)
   })
 })
 

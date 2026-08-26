@@ -1,8 +1,11 @@
 const {
+  createComparison,
   createDashboardStatsResponse,
   createDomain,
-  createMetric
+  createMetric,
+  unavailableComparison
 } = require('./adminDashboardContract')
+const { resolveDashboardPeriods } = require('./adminDashboardPeriod')
 const { filterStudentProfiles, filterTeacherProfiles } = require('../security/userAudience')
 
 const SOURCES = Object.freeze({
@@ -52,25 +55,86 @@ async function sumColumn(client, table, column, configure = (query) => query) {
   return rows.reduce((total, row) => total + Math.max(0, Number(row?.[column]) || 0), 0)
 }
 
-async function safeMetric({ key, domain, source, asOf, load, onMetricError }) {
+function applyPeriod(query, column, period) {
+  return query.gte(column, period.start).lt(column, period.end)
+}
+
+function flow(load) {
+  return Object.freeze({ semantics: 'flow', load })
+}
+
+function snapshot(load, semantics = 'snapshot', reason = 'HISTORY_UNAVAILABLE') {
+  return Object.freeze({ semantics, load, reason })
+}
+
+async function safeMetric({ key, domain, source, asOf, definition, periods, onMetricError }) {
+  let value
   try {
-    return createMetric({ value: await load(), source, asOf })
+    value = await definition.load(periods.current)
   } catch (error) {
     onMetricError?.({ key, domain, source, error })
     return createMetric({
       status: 'error',
       source,
       asOf,
+      period: periods.current,
+      semantics: definition.semantics,
+      comparison: unavailableComparison(periods.previous),
       error: error.code || 'UPSTREAM_QUERY_FAILED'
+    })
+  }
+
+  if (definition.semantics !== 'flow') {
+    return createMetric({
+      value,
+      source,
+      asOf,
+      period: periods.current,
+      semantics: definition.semantics,
+      comparison: unavailableComparison(periods.previous, definition.reason)
+    })
+  }
+
+  try {
+    const previousValue = await definition.load(periods.previous)
+    return createMetric({
+      value,
+      source,
+      asOf,
+      period: periods.current,
+      semantics: definition.semantics,
+      comparison: createComparison({ currentValue: value, previousValue, period: periods.previous })
+    })
+  } catch (error) {
+    onMetricError?.({ key: `${key}.previous`, domain, source, error })
+    return createMetric({
+      value,
+      source,
+      asOf,
+      period: periods.current,
+      semantics: definition.semantics,
+      comparison: unavailableComparison(
+        periods.previous,
+        error.code || 'UPSTREAM_QUERY_FAILED',
+        'error'
+      )
     })
   }
 }
 
-async function loadMetrics(domain, definitions, asOf, onMetricError) {
+async function loadMetrics(domain, definitions, asOf, periods, onMetricError) {
   const entries = await Promise.all(
     Object.entries(definitions).map(async ([key, definition]) => [
       key,
-      await safeMetric({ key, domain, source: SOURCES[key], asOf, load: definition, onMetricError })
+      await safeMetric({
+        key,
+        domain,
+        source: SOURCES[key],
+        asOf,
+        definition,
+        periods,
+        onMetricError
+      })
     ])
   )
   return createDomain(Object.fromEntries(entries))
@@ -78,52 +142,103 @@ async function loadMetrics(domain, definitions, asOf, onMetricError) {
 
 function generalDefinitions(client) {
   return {
-    users: () => countRows(client, 'user_profiles', 'user_id', (query) => query.eq('is_active', true)),
-    roles: () => countRows(client, 'roles', 'id'),
-    permissions: () => countRows(client, 'permissions', 'slug'),
-    routes: () => countRows(client, 'dynamic_routes', 'id', (query) => query.eq('is_active', true))
+    users: flow((period) =>
+      countRows(client, 'user_profiles', 'user_id', (query) =>
+        applyPeriod(query.eq('is_active', true), 'created_at', period)
+      )
+    ),
+    roles: snapshot(() => countRows(client, 'roles', 'id')),
+    permissions: snapshot(() => countRows(client, 'permissions', 'slug')),
+    routes: flow((period) =>
+      countRows(client, 'dynamic_routes', 'id', (query) =>
+        applyPeriod(query.eq('is_active', true), 'created_at', period)
+      )
+    )
   }
 }
 
 function pfpDefinitions(client) {
   return {
-    students: async () => {
-      const profiles = await selectRows(client, 'user_profiles', 'user_id,role,permissions,is_active')
-      return filterStudentProfiles(profiles).length
-    },
-    institutions: () => countRows(client, 'institutions', 'InstitutionId'),
-    places: () => countRows(client, 'places', 'PlaceId'),
-    pfpInProgress: () =>
-      countRows(client, 'student_result_vote', 'id', (query) =>
-        query
-          .in('status', ['assigned', 'published'])
-          .eq('pfp_validee', false)
-          .eq('pfp_echec', false)
-          .eq('pfp_arret', false)
+    students: flow(async (period) => {
+      const profiles = await selectRows(
+        client,
+        'user_profiles',
+        'user_id,role,permissions,is_active',
+        (query) => applyPeriod(query, 'created_at', period)
       )
+      return filterStudentProfiles(profiles).length
+    }),
+    institutions: snapshot(
+      () => countRows(client, 'institutions', 'InstitutionId'),
+      'snapshot',
+      'SOURCE_HAS_NO_CREATED_AT'
+    ),
+    places: flow((period) =>
+      countRows(client, 'places', 'PlaceId', (query) => applyPeriod(query, 'CreatedAt', period))
+    ),
+    pfpInProgress: flow((period) =>
+      countRows(client, 'student_result_vote', 'id', (query) =>
+        applyPeriod(
+          query
+            .in('status', ['assigned', 'published'])
+            .eq('pfp_validee', false)
+            .eq('pfp_echec', false)
+            .eq('pfp_arret', false),
+          'assigned_at',
+          period
+        )
+      )
+    )
   }
 }
 
 function academicDefinitions(client) {
   return {
-    teachers: async () => {
-      const profiles = await selectRows(client, 'user_profiles', 'role,permissions,is_active')
+    teachers: flow(async (period) => {
+      const profiles = await selectRows(
+        client,
+        'user_profiles',
+        'role,permissions,is_active',
+        (query) => applyPeriod(query, 'created_at', period)
+      )
       return filterTeacherProfiles(profiles).length
-    },
-    courses: () => countRows(client, 'courses', 'id'),
-    media: () => countRows(client, 'video_library', 'id'),
-    modules: () => countRows(client, 'modules', 'id')
+    }),
+    courses: flow((period) =>
+      countRows(client, 'courses', 'id', (query) => applyPeriod(query, 'created_at', period))
+    ),
+    media: flow((period) =>
+      countRows(client, 'video_library', 'id', (query) =>
+        applyPeriod(query, 'published_date', period)
+      )
+    ),
+    modules: flow((period) =>
+      countRows(client, 'modules', 'id', (query) => applyPeriod(query, 'created_at', period))
+    )
   }
 }
 
 function gamificationDefinitions(client) {
   return {
-    activeChallenges: () =>
-      countRows(client, 'challenges', 'id', (query) => query.eq('is_active', true)),
-    completedQuests: () => sumColumn(client, 'quests', 'completion_count'),
-    badges: () => countRows(client, 'badges', 'id', (query) => query.eq('is_active', true)),
-    activeUsers: () =>
-      countRows(client, 'gamification_data', 'id', (query) => query.gt('total_xp', 0))
+    activeChallenges: flow((period) =>
+      countRows(client, 'challenges', 'id', (query) =>
+        applyPeriod(query.eq('is_active', true), 'created_at', period)
+      )
+    ),
+    completedQuests: snapshot(
+      () => sumColumn(client, 'quests', 'completion_count'),
+      'cumulative',
+      'COMPLETION_EVENTS_UNAVAILABLE'
+    ),
+    badges: flow((period) =>
+      countRows(client, 'badges', 'id', (query) =>
+        applyPeriod(query.eq('is_active', true), 'created_at', period)
+      )
+    ),
+    activeUsers: flow((period) =>
+      countRows(client, 'gamification_data', 'id', (query) =>
+        applyPeriod(query.gt('total_xp', 0), 'created_at', period)
+      )
+    )
   }
 }
 
@@ -141,8 +256,13 @@ function createAdminDashboardStatsService(options) {
   const onMetricError = options.onMetricError
 
   return {
-    async loadStats(requestedDomains = Object.keys(DOMAIN_DEFINITIONS)) {
+    async loadStats(requestedDomains = Object.keys(DOMAIN_DEFINITIONS), periodOptions = {}) {
       const asOf = now().toISOString()
+      const periods = resolveDashboardPeriods({
+        key: periodOptions.key,
+        reference: periodOptions.reference,
+        now
+      })
       const uniqueDomains = [...new Set(requestedDomains)]
       for (const domain of uniqueDomains) {
         if (!DOMAIN_DEFINITIONS[domain]) throw new Error(`Domaine dashboard inconnu: ${domain}`)
@@ -156,12 +276,18 @@ function createAdminDashboardStatsService(options) {
               domain,
               DOMAIN_DEFINITIONS[domain](client),
               asOf,
+              periods,
               onMetricError
             )
           ])
         )
       )
-      return createDashboardStatsResponse({ domains, asOf })
+      return createDashboardStatsResponse({
+        domains,
+        asOf,
+        period: periods.current,
+        previousPeriod: periods.previous
+      })
     }
   }
 }
@@ -169,6 +295,7 @@ function createAdminDashboardStatsService(options) {
 module.exports = {
   DOMAIN_DEFINITIONS,
   SOURCES,
+  applyPeriod,
   countRows,
   createAdminDashboardStatsService,
   selectRows,
