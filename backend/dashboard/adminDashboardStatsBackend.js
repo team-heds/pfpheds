@@ -1,6 +1,7 @@
 const { Router } = require('express')
 const { DASHBOARD_DOMAINS } = require('./adminDashboardContract')
 const { createAdminDashboardStatsService } = require('./adminDashboardStatsService')
+const { PERIOD_KEYS, parseReference } = require('./adminDashboardPeriod')
 const { isAdmin } = require('../middleware/auth')
 const { logStructured, upstreamErrorContext } = require('../observability/logger')
 
@@ -36,6 +37,17 @@ function parseRequestedDomains(value) {
   return domains
 }
 
+function parsePeriodOptions(query = {}) {
+  const key = query.period === undefined || query.period === '' ? 'month' : String(query.period)
+  if (!PERIOD_KEYS.includes(key)) {
+    const error = new Error('Paramètre period invalide.')
+    error.status = 400
+    throw error
+  }
+  if (query.reference !== undefined && query.reference !== '') parseReference(query.reference)
+  return { key, reference: query.reference || undefined }
+}
+
 function createAdminDashboardStatsRouter(options = {}) {
   const client = options.client
   if (!client) throw new Error('Un client Supabase serveur est obligatoire.')
@@ -51,6 +63,7 @@ function createAdminDashboardStatsRouter(options = {}) {
       }
 
       const requestedDomains = parseRequestedDomains(req.query?.domains) || allowedDomains
+      const periodOptions = parsePeriodOptions(req.query)
       const forbiddenDomains = requestedDomains.filter((domain) => !allowedDomains.includes(domain))
       if (forbiddenDomains.length) {
         return res.status(403).json({
@@ -79,7 +92,7 @@ function createAdminDashboardStatsRouter(options = {}) {
         }
       })
 
-      const response = await service.loadStats(requestedDomains)
+      const response = await service.loadStats(requestedDomains, periodOptions)
       const hasErrors = Object.values(response.domains).some((domain) =>
         ['partial', 'error'].includes(domain.status)
       )
@@ -107,5 +120,6 @@ module.exports = {
   DOMAIN_PERMISSIONS,
   allowedDashboardDomains,
   createAdminDashboardStatsRouter,
+  parsePeriodOptions,
   parseRequestedDomains
 }

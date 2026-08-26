@@ -3,6 +3,7 @@ const DASHBOARD_TIMEZONE = 'Europe/Zurich'
 const DASHBOARD_DOMAINS = Object.freeze(['general', 'pfp', 'academic', 'gamification'])
 const METRIC_STATUSES = new Set(['ok', 'unavailable', 'error'])
 const DOMAIN_STATUSES = new Set(['ok', 'partial', 'unavailable', 'error'])
+const METRIC_SEMANTICS = new Set(['flow', 'snapshot', 'cumulative'])
 const FORBIDDEN_PERSONAL_FIELDS = new Set([
   'email',
   'display_name',
@@ -21,8 +22,50 @@ function lifetimePeriod() {
   })
 }
 
-function createMetric({ value = null, status = 'ok', source, asOf, error = null }) {
+function unavailableComparison(period, error = 'HISTORY_UNAVAILABLE', status = 'unavailable') {
+  if (!['unavailable', 'error'].includes(status)) {
+    throw new Error(`Statut de comparaison indisponible invalide: ${status}`)
+  }
+  return Object.freeze({
+    value: null,
+    status,
+    absoluteChange: null,
+    percentChange: null,
+    period,
+    error
+  })
+}
+
+function createComparison({ currentValue, previousValue, period }) {
+  if (!Number.isFinite(currentValue) || currentValue < 0) {
+    throw new Error('La valeur courante de comparaison est invalide.')
+  }
+  if (!Number.isFinite(previousValue) || previousValue < 0) {
+    throw new Error('La valeur précédente de comparaison est invalide.')
+  }
+  const absoluteChange = currentValue - previousValue
+  return Object.freeze({
+    value: previousValue,
+    status: 'ok',
+    absoluteChange,
+    percentChange: previousValue === 0 ? null : Math.round((absoluteChange / previousValue) * 1000) / 10,
+    period,
+    error: null
+  })
+}
+
+function createMetric({
+  value = null,
+  status = 'ok',
+  source,
+  asOf,
+  period = lifetimePeriod(),
+  semantics = 'snapshot',
+  comparison = unavailableComparison(lifetimePeriod()),
+  error = null
+}) {
   if (!METRIC_STATUSES.has(status)) throw new Error(`Statut de métrique invalide: ${status}`)
+  if (!METRIC_SEMANTICS.has(semantics)) throw new Error(`Sémantique de métrique invalide: ${semantics}`)
   if (!source) throw new Error('La source de la métrique est obligatoire.')
   if (!asOf) throw new Error('La date de fraîcheur de la métrique est obligatoire.')
   if (status === 'ok' && (!Number.isFinite(value) || value < 0)) {
@@ -37,7 +80,9 @@ function createMetric({ value = null, status = 'ok', source, asOf, error = null 
     status,
     source,
     asOf,
-    period: lifetimePeriod(),
+    period,
+    semantics,
+    comparison,
     error: status === 'ok' ? null : error || 'METRIC_UNAVAILABLE'
   })
 }
@@ -46,6 +91,7 @@ function deriveDomainStatus(metrics) {
   const statuses = Object.values(metrics).map((metric) => metric.status)
   if (!statuses.length || statuses.every((status) => status === 'unavailable')) return 'unavailable'
   if (statuses.every((status) => status === 'error')) return 'error'
+  if (Object.values(metrics).some((metric) => metric.comparison?.status === 'error')) return 'partial'
   if (statuses.every((status) => status === 'ok')) return 'ok'
   return 'partial'
 }
@@ -66,7 +112,7 @@ function assertNoPersonalData(value, path = 'response') {
   }
 }
 
-function createDashboardStatsResponse({ domains, asOf }) {
+function createDashboardStatsResponse({ domains, asOf, period = lifetimePeriod(), previousPeriod = lifetimePeriod() }) {
   if (!asOf) throw new Error('La date de fraîcheur de la réponse est obligatoire.')
   for (const domain of Object.keys(domains)) {
     if (!DASHBOARD_DOMAINS.includes(domain)) throw new Error(`Domaine dashboard inconnu: ${domain}`)
@@ -75,7 +121,8 @@ function createDashboardStatsResponse({ domains, asOf }) {
   const response = {
     version: CONTRACT_VERSION,
     asOf,
-    period: lifetimePeriod(),
+    period,
+    previousPeriod,
     domains: Object.freeze({ ...domains })
   }
   assertNoPersonalData(response)
@@ -84,8 +131,9 @@ function createDashboardStatsResponse({ domains, asOf }) {
 
 function validateDashboardStatsResponse(response) {
   if (!response || response.version !== CONTRACT_VERSION) return false
-  if (!response.asOf || !response.period || !response.domains) return false
+  if (!response.asOf || !response.period || !response.previousPeriod || !response.domains) return false
   if (response.period.timezone !== DASHBOARD_TIMEZONE) return false
+  if (response.previousPeriod.timezone !== DASHBOARD_TIMEZONE) return false
 
   try {
     assertNoPersonalData(response)
@@ -96,6 +144,21 @@ function validateDashboardStatsResponse(response) {
         if (!METRIC_STATUSES.has(metric?.status)) return false
         if (!metric.source || !metric.asOf || metric.period?.timezone !== DASHBOARD_TIMEZONE)
           return false
+        if (!METRIC_SEMANTICS.has(metric.semantics)) return false
+        if (!METRIC_STATUSES.has(metric.comparison?.status)) return false
+        if (metric.comparison?.period?.timezone !== DASHBOARD_TIMEZONE) return false
+        if (metric.comparison.status === 'ok') {
+          if (!Number.isFinite(metric.comparison.value) || metric.comparison.value < 0) return false
+          if (!Number.isFinite(metric.comparison.absoluteChange)) return false
+          if (
+            metric.comparison.percentChange !== null &&
+            !Number.isFinite(metric.comparison.percentChange)
+          ) return false
+        } else if (
+          metric.comparison.value !== null ||
+          metric.comparison.absoluteChange !== null ||
+          metric.comparison.percentChange !== null
+        ) return false
         if (metric.status === 'ok' && (!Number.isFinite(metric.value) || metric.value < 0))
           return false
         if (metric.status !== 'ok' && metric.value !== null) return false
@@ -113,8 +176,10 @@ module.exports = {
   DASHBOARD_TIMEZONE,
   assertNoPersonalData,
   createDashboardStatsResponse,
+  createComparison,
   createDomain,
   createMetric,
   lifetimePeriod,
+  unavailableComparison,
   validateDashboardStatsResponse
 }
