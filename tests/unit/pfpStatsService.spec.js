@@ -4,11 +4,14 @@ const { fromMock } = vi.hoisted(() => ({ fromMock: vi.fn() }))
 
 vi.mock('@/supabase', () => ({ supabase: { from: fromMock } }))
 
-import { createEmptyPfpStats, getPfpCohortStats } from '@/service/pfpStatsService'
+import { clearPfpCohortStatsCache, createEmptyPfpStats, getPfpCohortStats } from '@/service/pfpStatsService'
 import { SUPABASE_SELECTS } from '@/service/supabaseContracts'
 
 describe('pfpStatsService PFP1B', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    clearPfpCohortStatsCache()
+  })
 
   it('retourne toujours les deux cohortes avec des objets indépendants', () => {
     const stats = createEmptyPfpStats()
@@ -49,11 +52,29 @@ describe('pfpStatsService PFP1B', () => {
     expect(stats.PFP1B.topCantons).toMatchObject([{ label: 'FR', value: 7 }])
   })
 
-  it('conserve un contrat complet lorsque la lecture places échoue', async () => {
+  it('signale explicitement une erreur de lecture au lieu de fabriquer des zéros', async () => {
     fromMock.mockReturnValue({
       select: vi.fn().mockResolvedValue({ data: null, error: { message: 'column missing' } })
     })
 
-    await expect(getPfpCohortStats()).resolves.toEqual(createEmptyPfpStats())
+    await expect(getPfpCohortStats()).rejects.toThrow('Impossible de charger les places PFP')
+  })
+
+  it('partage une lecture simultanée entre les deux widgets de cohorte', async () => {
+    let resolvePlaces
+    const places = new Promise((resolve) => { resolvePlaces = resolve })
+    fromMock.mockImplementation((table) => ({
+      select: vi.fn(() => table === 'places'
+        ? places
+        : Promise.resolve({ data: [], error: null })),
+    }))
+
+    const first = getPfpCohortStats()
+    const second = getPfpCohortStats()
+    expect(fromMock).toHaveBeenCalledTimes(1)
+    resolvePlaces({ data: [], error: null })
+
+    await expect(Promise.all([first, second])).resolves.toHaveLength(2)
+    expect(fromMock).toHaveBeenCalledTimes(1)
   })
 })

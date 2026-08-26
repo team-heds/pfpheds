@@ -20,24 +20,24 @@
             <div class="flex gap-3">
               <ButtonGroup>
                 <Button
-                  label="7j"
-                  :outlined="period !== '7d'"
-                  :severity="period === '7d' ? 'primary' : 'secondary'"
-                  @click="period = '7d'"
+                  label="Semaine"
+                  :outlined="period !== 'week'"
+                  :severity="period === 'week' ? 'primary' : 'secondary'"
+                  @click="changePeriod('week')"
                   size="small"
                 />
                 <Button
-                  label="30j"
-                  :outlined="period !== '30d'"
-                  :severity="period === '30d' ? 'primary' : 'secondary'"
-                  @click="period = '30d'"
+                  label="Mois"
+                  :outlined="period !== 'month'"
+                  :severity="period === 'month' ? 'primary' : 'secondary'"
+                  @click="changePeriod('month')"
                   size="small"
                 />
                 <Button
-                  label="90j"
-                  :outlined="period !== '90d'"
-                  :severity="period === '90d' ? 'primary' : 'secondary'"
-                  @click="period = '90d'"
+                  label="Trimestre"
+                  :outlined="period !== 'quarter'"
+                  :severity="period === 'quarter' ? 'primary' : 'secondary'"
+                  @click="changePeriod('quarter')"
                   size="small"
                 />
               </ButtonGroup>
@@ -136,27 +136,32 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import KpiCard from './widgets/KpiCard.vue'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
-import { useKpiManager } from '@/composables/useKpiManager'
+import { useAdminDashboardStats } from '@/composables/useAdminDashboardStats'
+import { getKpisForRole } from '@/config/kpiConfigs'
+import { useRoleStore } from '@/stores/role'
 import gamificationService from '@/service/gamificationService'
 
 const router = useRouter()
 
-// Utiliser le système KPI modulable
-const {
-  kpisWithData,
-  loading,
-  refreshing,
-  period,
-  loadKpis,
-  refresh
-} = useKpiManager('gamification')
+const roleStore = useRoleStore()
+const period = ref('month')
+const stats = useAdminDashboardStats({ domains: ['gamification'], period })
+const configurations = computed(() => getKpisForRole('gamification', roleStore.perms || [], roleStore.isSuper))
+const kpisWithData = stats.mapKpis('gamification', configurations)
+const { loading, refreshing } = stats
+const loadKpis = () => stats.load().catch(() => undefined)
+const refresh = () => stats.refresh().catch(() => undefined)
+const changePeriod = async (nextPeriod) => {
+  period.value = nextPeriod
+  await refresh()
+}
 
 const activities = ref([])
 

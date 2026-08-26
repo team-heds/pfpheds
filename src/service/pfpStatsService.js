@@ -6,6 +6,10 @@
 import { supabase } from '@/supabase'
 import { SUPABASE_SELECTS } from '@/service/supabaseContracts'
 
+const PFP_STATS_CACHE_TTL_MS = 30_000
+let pfpStatsCache = null
+let pfpStatsRequest = null
+
 function createEmptyCohortStats() {
   return { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] }
 }
@@ -36,28 +40,20 @@ function parseCapacity(rawCapacity, year) {
  * Récupère les statistiques des places par cohorte PFP
  * @returns {Promise<Object>} Statistiques par cohorte
  */
-export async function getPfpCohortStats() {
+async function loadPfpCohortStats() {
   try {
     // Année courante pour le filtre - Teste avec 2025 si 2026 n'a pas de données
     const currentYear = '2026' // Change ici selon tes données (2024, 2025, 2026...)
     
     // Récupérer toutes les places avec les colonnes PFP1A et PFP1B
-    let places = []
-    try {
-      const { data, error: placesError } = await supabase
-        .from('places')
-        .select(SUPABASE_SELECTS.pfpStatsPlaces)
-      
-      if (placesError) {
-        console.warn('[pfpStatsService] Erreur places:', placesError.message)
-        // Return empty stats gracefully
-        return createEmptyPfpStats()
-      }
-      places = data || []
-    } catch (queryErr) {
-      console.warn('[pfpStatsService] Exception places:', queryErr)
-      return createEmptyPfpStats()
+    const { data: placesData, error: placesError } = await supabase
+      .from('places')
+      .select(SUPABASE_SELECTS.pfpStatsPlaces)
+
+    if (placesError) {
+      throw new Error(`Impossible de charger les places PFP: ${placesError.message}`)
     }
+    const places = placesData || []
     
     // Si pas de places, retourner des stats vides
     if (!places || places.length === 0) {
@@ -66,16 +62,11 @@ export async function getPfpCohortStats() {
     }
     
     // Récupérer toutes les institutions séparément
-    let institutions = []
-    try {
-      const { data, error: instError } = await supabase
-        .from('institutions')
-        .select(SUPABASE_SELECTS.pfpStatsInstitutions)
-      if (instError) console.warn('[pfpStatsService] Erreur institutions:', instError.message)
-      institutions = data || []
-    } catch (instErr) {
-      console.warn('[pfpStatsService] Exception institutions:', instErr)
-    }
+    const { data: institutionsData, error: instError } = await supabase
+      .from('institutions')
+      .select(SUPABASE_SELECTS.pfpStatsInstitutions)
+    if (instError) throw new Error(`Impossible de charger les institutions PFP: ${instError.message}`)
+    const institutions = institutionsData || []
     
     // Créer un map des institutions pour accès rapide
     const institutionsMap = {}
@@ -106,7 +97,7 @@ export async function getPfpCohortStats() {
     }
     
     // Traiter chaque place
-    places?.forEach((place, index) => {
+    places?.forEach((place) => {
       const institution = institutionsMap[place.InstitutionId]
       const canton = institution?.Canton || 'Non défini'
       
@@ -178,8 +169,30 @@ export async function getPfpCohortStats() {
     
   } catch (error) {
     console.error('❌ Erreur getPfpCohortStats:', error)
-    return createEmptyPfpStats()
+    throw error
   }
+}
+
+export function clearPfpCohortStatsCache() {
+  pfpStatsCache = null
+  pfpStatsRequest = null
+}
+
+export async function getPfpCohortStats({ force = false } = {}) {
+  if (!force && pfpStatsCache && Date.now() - pfpStatsCache.cachedAt < PFP_STATS_CACHE_TTL_MS) {
+    return pfpStatsCache.data
+  }
+  if (pfpStatsRequest) return pfpStatsRequest
+
+  pfpStatsRequest = loadPfpCohortStats()
+    .then((data) => {
+      pfpStatsCache = { cachedAt: Date.now(), data }
+      return data
+    })
+    .finally(() => {
+      pfpStatsRequest = null
+    })
+  return pfpStatsRequest
 }
 
 /**
@@ -189,15 +202,9 @@ export async function getPfpCohortStats() {
  * @returns {Promise<Array>} Liste des places
  */
 export async function getPfpPlacesByCohortAndCanton(cohort, canton = null) {
-  try {
-    // TODO: Implémenter le filtrage par cohorte et canton avec la nouvelle structure
-    // Pour l'instant, retourner un tableau vide
-    return []
-    
-  } catch (error) {
-    console.error('❌ Erreur getPfpPlacesByCohortAndCanton:', error)
-    return []
-  }
+  void cohort
+  void canton
+  return []
 }
 
 /**
