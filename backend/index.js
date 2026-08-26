@@ -42,6 +42,9 @@ const vimeoRoutes = require('./supabase/vimeoBackend.js')
 const githubRoutes = require('./supabase/githubBackend.js')
 const audienceDirectoryRoutes = require('./supabase/audienceDirectoryBackend.js')
 const {
+  createAdminDashboardStatsRouter
+} = require('./dashboard/adminDashboardStatsBackend.js')
+const {
   createPasswordRecoveryRequestRouter
 } = require('./supabase/passwordRecoveryRequestBackend.js')
 
@@ -132,6 +135,18 @@ app.use(
     'RepondantHES'
   ),
   audienceDirectoryRoutes
+)
+app.use(
+  '/api/admin-dashboard',
+  requireAnyPermission(
+    'students.read',
+    'EnseignantSoins',
+    'RMSoins',
+    'EnseignantPhysio',
+    'RMPhysio',
+    'RepondantHES'
+  ),
+  createAdminDashboardStatsRouter({ client: supabaseAdmin })
 )
 app.use('/api/integrations/vimeo', requireAnyPermission('editor'), vimeoRoutes)
 app.use('/api/integrations/github', requireAnyPermission('editor'), githubRoutes)

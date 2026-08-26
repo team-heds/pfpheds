@@ -16,7 +16,7 @@
         icon="pi pi-refresh" 
         text 
         rounded 
-        @click="loadStats"
+        @click="loadStats({ force: true })"
         :loading="refreshing"
       />
     </div>
@@ -27,6 +27,13 @@
         <Skeleton height="140px" borderRadius="12px" />
       </div>
     </div>
+
+    <Message v-else-if="error" severity="error" :closable="false">
+      <div class="flex align-items-center justify-content-between gap-3 flex-wrap">
+        <span>Les statistiques de cette cohorte sont indisponibles.</span>
+        <Button label="Réessayer" icon="pi pi-refresh" size="small" @click="loadStats({ force: true })" />
+      </div>
+    </Message>
 
     <!-- Stats Grid -->
     <div v-else class="grid">
@@ -209,6 +216,7 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import ProgressBar from 'primevue/progressbar'
+import Message from 'primevue/message'
 import pfpStatsService from '@/service/pfpStatsService'
 
 const props = defineProps({
@@ -224,6 +232,7 @@ const router = useRouter()
 // État
 const loading = ref(true)
 const refreshing = ref(false)
+const error = ref(null)
 const stats = ref({
   total: 0,
   assigned: 0,
@@ -280,14 +289,14 @@ const tableData = computed(() => {
 })
 
 // Méthodes
-async function loadStats() {
+async function loadStats({ force = false } = {}) {
   refreshing.value = true
+  error.value = null
   try {
-    const allStats = await pfpStatsService.getPfpCohortStats()
+    const allStats = await pfpStatsService.getPfpCohortStats({ force })
     stats.value = allStats[props.cohort]
-    console.log(`✅ Stats ${props.cohort} chargées:`, stats.value)
-  } catch (error) {
-    console.error(`❌ Erreur chargement stats ${props.cohort}:`, error)
+  } catch (loadError) {
+    error.value = loadError
   } finally {
     loading.value = false
     refreshing.value = false

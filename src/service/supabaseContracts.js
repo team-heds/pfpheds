@@ -63,7 +63,17 @@ export const CRITICAL_SUPABASE_CONTRACTS = Object.freeze({
     'closed_at'
   ]),
   RepondantPhysioHES: freezeColumns(['id', 'first_name', 'last_name', 'email']),
-  praticiens_formateurs: freezeColumns(['id'])
+  praticiens_formateurs: freezeColumns(['id']),
+  roles: freezeColumns(['id', 'slug', 'label']),
+  permissions: freezeColumns(['slug', 'description']),
+  dynamic_routes: freezeColumns(['id', 'is_active']),
+  courses: freezeColumns(['id']),
+  modules: freezeColumns(['id']),
+  video_library: freezeColumns(['id']),
+  challenges: freezeColumns(['id', 'is_active']),
+  quests: freezeColumns(['completion_count']),
+  badges: freezeColumns(['id', 'is_active']),
+  gamification_data: freezeColumns(['id', 'total_xp'])
 })
 
 export const SUPABASE_SELECTS = Object.freeze({

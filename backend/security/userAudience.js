@@ -1,5 +1,12 @@
 const STUDENT_TOKENS = new Set(['student', 'etudiant', 'etudiantphysio', 'studentphysio'])
 const SI_TEACHER_TOKENS = new Set(['enseignantsoins'])
+const TEACHER_TOKENS = new Set([
+  'enseignantsoins',
+  'enseignantphysio',
+  'rmsoins',
+  'rmphysio',
+  'repondanthes'
+])
 const GENERIC_ROLE_TOKENS = new Set(['', 'user', 'authenticated', 'member'])
 const ARCHIVED_TOKENS = new Set(['archivedstudent', 'studentarchived', 'archiveetudiant'])
 
@@ -69,6 +76,10 @@ function isSITeacherProfile(profile) {
   return belongsToAudience(profile, SI_TEACHER_TOKENS)
 }
 
+function isTeacherProfile(profile) {
+  return belongsToAudience(profile, TEACHER_TOKENS)
+}
+
 function filterStudentProfiles(profiles) {
   return (profiles || []).filter(isStudentProfile)
 }
@@ -77,12 +88,18 @@ function filterSITeacherProfiles(profiles) {
   return (profiles || []).filter(isSITeacherProfile)
 }
 
+function filterTeacherProfiles(profiles) {
+  return (profiles || []).filter(isTeacherProfile)
+}
+
 module.exports = {
   filterSITeacherProfiles,
   filterStudentProfiles,
+  filterTeacherProfiles,
   isActiveProfile,
   isSITeacherProfile,
   isStudentProfile,
+  isTeacherProfile,
   normalizeAudienceToken,
   normalizePermissions
 }
