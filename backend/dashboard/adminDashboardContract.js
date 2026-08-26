@@ -112,7 +112,13 @@ function assertNoPersonalData(value, path = 'response') {
   }
 }
 
-function createDashboardStatsResponse({ domains, asOf, period = lifetimePeriod(), previousPeriod = lifetimePeriod() }) {
+function createDashboardStatsResponse({
+  domains,
+  asOf,
+  period = lifetimePeriod(),
+  previousPeriod = lifetimePeriod(),
+  appliedFilters = {}
+}) {
   if (!asOf) throw new Error('La date de fraîcheur de la réponse est obligatoire.')
   for (const domain of Object.keys(domains)) {
     if (!DASHBOARD_DOMAINS.includes(domain)) throw new Error(`Domaine dashboard inconnu: ${domain}`)
@@ -123,6 +129,7 @@ function createDashboardStatsResponse({ domains, asOf, period = lifetimePeriod()
     asOf,
     period,
     previousPeriod,
+    appliedFilters: Object.freeze({ ...appliedFilters }),
     domains: Object.freeze({ ...domains })
   }
   assertNoPersonalData(response)

@@ -58,6 +58,18 @@
             <span>Mes KPI</span>
           </template>
 
+          <AdminDashboardFilters
+            :model-value="dashboardFilterValues"
+            :active-filters="dashboardActiveFilters"
+            :catalog="dashboardFilterCatalog"
+            :loading="dashboardFiltersLoading"
+            :error="dashboardFiltersError"
+            @apply="applyDashboardFilters"
+            @remove="removeDashboardFilter"
+            @reset="resetDashboardFilters"
+            @retry="loadDashboardFilterOptions"
+          />
+
           <Message v-if="dashboardError" severity="error" :closable="false" class="mb-4">
             <div class="flex align-items-center justify-content-between gap-3 flex-wrap">
               <span>Les statistiques ne sont pas disponibles pour le moment.</span>
@@ -480,7 +492,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
@@ -490,6 +502,7 @@ import ResizableWidgetGrid from '@/components/admin/widgets/ResizableWidgetGrid.
 import PeriodComparisonPanel from '@/components/admin/widgets/PeriodComparisonPanel.vue'
 import KpiAlertManager from '@/components/admin/widgets/KpiAlertManager.vue'
 import PeriodSelector from '@/components/admin/widgets/PeriodSelector.vue'
+import AdminDashboardFilters from '@/components/admin/widgets/AdminDashboardFilters.vue'
 import AlertsWidget from '@/components/admin/widgets/AlertsWidget.vue'
 import PfpCohortKpiWidget from '@/components/admin/widgets/PfpCohortKpiWidget.vue'
 import TrackStatsWidget from '@/components/admin/widgets/TrackStatsWidget.vue'
@@ -506,6 +519,7 @@ import Textarea from 'primevue/textarea'
 import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { useAdminDashboardStats } from '@/composables/useAdminDashboardStats'
+import { useAdminDashboardFilters } from '@/composables/useAdminDashboardFilters'
 import { getAdminDashboardMetric } from '@/service/adminDashboardStatsService'
 import { getKpisForRole } from '@/config/kpiConfigs'
 import { useAuthStore } from '@/stores/authStore'
@@ -513,6 +527,7 @@ import { useRoleStore } from '@/stores/role'
 import { useRouteErrors } from '@/composables/useRouteErrors'
 
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 const confirm = useConfirm()
 const authStore = useAuthStore()
@@ -556,7 +571,8 @@ const selectedKpi = ref(null)
 const kpiGridRef = ref(null)
 const importConfigText = ref('')
 const exportedConfig = ref('')
-const selectedPeriod = ref('month')
+const allowedPeriods = new Set(['day', 'week', 'month', 'quarter', 'year'])
+const selectedPeriod = ref(allowedPeriods.has(String(route.query.period)) ? String(route.query.period) : 'month')
 
 // Date actuelle
 const currentDate = computed(() => {
@@ -577,7 +593,22 @@ const dashboardDomains = computed(() => [
   academicConfigurations.value.length ? 'academic' : null,
   gamificationConfigurations.value.length ? 'gamification' : null,
 ].filter(Boolean))
-const dashboardStats = useAdminDashboardStats({ domains: dashboardDomains, period: selectedPeriod })
+const dashboardFilters = useAdminDashboardFilters({
+  domains: dashboardDomains,
+  period: selectedPeriod,
+  route,
+  router,
+})
+const dashboardFilterValues = dashboardFilters.filters
+const dashboardActiveFilters = dashboardFilters.activeFilters
+const dashboardFilterCatalog = dashboardFilters.catalog
+const dashboardFiltersLoading = dashboardFilters.loading
+const dashboardFiltersError = dashboardFilters.error
+const dashboardStats = useAdminDashboardStats({
+  domains: dashboardDomains,
+  period: selectedPeriod,
+  filters: dashboardFilters.filters,
+})
 const dashboardError = dashboardStats.error
 const dashboardStatus = dashboardStats.status
 const quickStatsLoading = computed(() => dashboardStats.loading.value || (!dashboardStats.data.value && !dashboardStats.error.value))
@@ -825,13 +856,32 @@ async function handlePeriodChange() {
   await refreshDashboardStats()
 }
 
+async function applyDashboardFilters(filters) {
+  await dashboardFilters.setFilters(filters)
+  await refreshDashboardStats()
+}
+
+async function removeDashboardFilter(key, value) {
+  await dashboardFilters.removeFilter(key, value)
+  await refreshDashboardStats()
+}
+
+async function resetDashboardFilters() {
+  await dashboardFilters.resetFilters()
+  await refreshDashboardStats()
+}
+
+async function loadDashboardFilterOptions() {
+  try {
+    await dashboardFilters.loadOptions()
+  } catch (_) {
+    // L'erreur réessayable est affichée dans le panneau de filtres.
+  }
+}
+
 onMounted(async () => {
   migrateLegacyDashboardStorage()
-  try {
-    await dashboardStats.load()
-  } catch (_) {
-    // L'état d'erreur réessayable est présenté dans le dashboard.
-  }
+  await Promise.allSettled([dashboardFilters.loadOptions(), dashboardStats.load()])
   
   // Message de bienvenue
   toast.add({

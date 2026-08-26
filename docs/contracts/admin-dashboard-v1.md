@@ -8,6 +8,22 @@ Paramètres optionnels :
 - `domains=general,pfp,academic,gamification`
 - `period=day|week|month|quarter|year` (défaut : `month`)
 - `reference=<date ISO>` (défaut : instant courant ; `YYYY-MM-DD` désigne minuit à Zurich, un horodatage doit contenir `Z` ou un décalage explicite)
+- `track=<id>` (répétable)
+- `role=<slug>` (répétable)
+- `class=<code>` (répétable)
+- `cohort=<code>` (répétable)
+- `pfp=PFP1A|PFP1B|PFP2|PFP3|PFP4` (répétable)
+- `institution=<nom canonique>` (répétable)
+- `status=draft|published|assigned` (répétable)
+
+Les valeurs sont triées et dédupliquées côté serveur. Une clé inconnue, une valeur invalide ou une combinaison qui ne s’applique à aucun domaine demandé retourne `400`. Les droits sont toujours recalculés depuis le JWT, même si l’interface masque déjà une option.
+
+Endpoint des options : `GET /api/admin-dashboard/v1/filter-options?domains=...`
+
+- utilise la même authentification et les mêmes autorisations de domaines ;
+- retourne uniquement les référentiels utiles et non personnels ;
+- expose une matrice `applicability` indiquant les domaines et métriques concernés ;
+- ne remplace jamais la validation de l’endpoint de statistiques.
 
 ## Garanties
 
@@ -50,6 +66,10 @@ Une demande explicite d'un domaine interdit retourne `403`. Sans paramètre, seu
     "end": "2026-07-31T22:00:00.000Z",
     "timezone": "Europe/Zurich"
   },
+  "appliedFilters": {
+    "class": ["BA25"],
+    "pfp": ["PFP2"]
+  },
   "domains": {
     "general": {
       "status": "ok",
@@ -86,6 +106,20 @@ Une demande explicite d'un domaine interdit retourne `403`. Sans paramètre, seu
   }
 }
 ```
+
+## Applicabilité des filtres
+
+| Filtre | Domaines | Métriques concernées |
+|---|---|---|
+| `track` | général, PFP, académique | utilisateurs, étudiants, enseignants |
+| `role` | général, PFP, académique | utilisateurs, étudiants, enseignants |
+| `class` | général, PFP | utilisateurs, étudiants |
+| `cohort` | général, PFP | utilisateurs, étudiants |
+| `pfp` | PFP | places, PFP en cours |
+| `institution` | PFP | institutions, places, PFP en cours |
+| `status` | PFP | PFP en cours |
+
+Une métrique non listée conserve sa définition globale. L’interface doit présenter cette portée et ne pas laisser entendre que toutes les cartes sont affectées par chaque filtre.
 
 ## Sémantiques
 

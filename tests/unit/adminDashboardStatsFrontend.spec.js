@@ -7,10 +7,13 @@ vi.mock('@/service/apiClient', () => ({
 
 import { authFetch } from '@/service/apiClient'
 import {
+  buildAdminDashboardFilterOptionsUrl,
   buildAdminDashboardStatsUrl,
   clearAdminDashboardStatsCache,
+  fetchAdminDashboardFilterOptions,
   fetchAdminDashboardStats,
   mapAdminDashboardKpis,
+  normalizeAdminDashboardFilters,
   validateAdminDashboardStatsResponse,
 } from '@/service/adminDashboardStatsService'
 
@@ -59,6 +62,17 @@ describe('adminDashboardStatsService', () => {
     })).toBe('https://api.example.test/api/admin-dashboard/v1/stats?domains=general%2Cpfp&period=week&reference=2026-08-26')
   })
 
+  it('sérialise les filtres dans un ordre canonique et construit la route des options', () => {
+    expect(normalizeAdminDashboardFilters({ class: ['BA25', 'BA24', 'BA25'], pfp: 'PFP2' }))
+      .toEqual({ class: ['BA24', 'BA25'], pfp: ['PFP2'] })
+    expect(buildAdminDashboardStatsUrl({
+      domains: ['pfp'],
+      filters: { class: ['BA25', 'BA24'], institution: ['Clinique Test'] },
+    })).toBe('https://api.example.test/api/admin-dashboard/v1/stats?domains=pfp&period=month&class=BA24&class=BA25&institution=Clinique+Test')
+    expect(buildAdminDashboardFilterOptionsUrl({ domains: ['academic', 'pfp'] }))
+      .toBe('https://api.example.test/api/admin-dashboard/v1/filter-options?domains=pfp%2Cacademic')
+  })
+
   it('déduplique deux demandes identiques simultanées', async () => {
     let resolveResponse
     authFetch.mockReturnValue(new Promise((resolve) => { resolveResponse = resolve }))
@@ -80,6 +94,28 @@ describe('adminDashboardStatsService', () => {
 
     await fetchAdminDashboardStats({ domains: ['general'], force: true })
     expect(authFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('sépare le cache de deux sélections de filtres différentes', async () => {
+    authFetch.mockResolvedValue({ json: async () => payload() })
+    await fetchAdminDashboardStats({ domains: ['general'], filters: { class: ['BA24'] } })
+    await fetchAdminDashboardStats({ domains: ['general'], filters: { class: ['BA25'] } })
+    expect(authFetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('charge les options uniquement avec authFetch et valide leur contrat', async () => {
+    const optionsPayload = {
+      version: '1',
+      domains: ['pfp'],
+      options: { pfpTypes: [{ value: 'PFP2', label: 'PFP2' }] },
+      applicability: { pfp: { domains: ['pfp'], metrics: ['places'] } },
+    }
+    authFetch.mockResolvedValue({ json: async () => optionsPayload })
+    await expect(fetchAdminDashboardFilterOptions({ domains: ['pfp'] })).resolves.toEqual(optionsPayload)
+    expect(authFetch).toHaveBeenCalledWith(
+      'https://api.example.test/api/admin-dashboard/v1/filter-options?domains=pfp',
+      expect.objectContaining({ method: 'GET' }),
+    )
   })
 
   it('préserve un vrai zéro et transforme une erreur en valeur indisponible', () => {
