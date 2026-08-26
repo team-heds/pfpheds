@@ -30,7 +30,7 @@ vi.mock('axios', () => ({
   },
 }))
 
-import { resultatVotationService } from '@/stores/resultatVotationService'
+import { resultatVotationService } from '@/service/resultatVotationService'
 
 // ── Helpers ──────────────────────────────────────────
 const fakeSession = { access_token: 'tok-123' }
@@ -60,7 +60,12 @@ describe('resultatVotationService', () => {
 
       expect(mockAxiosPost).toHaveBeenCalledWith(
         expect.stringContaining('/api/resultat-votation/run-algorithm'),
-        { pfpType: 'PFP2', year: '2026', students: [{ id: 's1' }], places: [{ id: 'p1' }] },
+        expect.objectContaining({
+          pfpType: 'PFP2',
+          year: '2026',
+          students: [{ id: 's1' }],
+          places: [{ id: 'p1' }],
+        }),
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer tok-123' })
         })
@@ -316,6 +321,7 @@ describe('resultatVotationService', () => {
       const chain = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: results, error: null }),
       }
       mockSupabaseFrom.mockReturnValue(chain)
@@ -324,7 +330,7 @@ describe('resultatVotationService', () => {
 
       expect(mockSupabaseFrom).toHaveBeenCalledWith('student_result_vote')
       expect(chain.eq).toHaveBeenCalledWith('pfp_type', 'PFP2')
-      expect(chain.eq).toHaveBeenCalledWith('year', '2026')
+      expect(chain.in).toHaveBeenCalledWith('year', ['2026', '2025-2026'])
       expect(result).toEqual(results)
     })
 
@@ -332,6 +338,7 @@ describe('resultatVotationService', () => {
       const chain = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: null, error: null }),
       }
       mockSupabaseFrom.mockReturnValue(chain)
@@ -344,6 +351,7 @@ describe('resultatVotationService', () => {
       const chain = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' } }),
       }
       mockSupabaseFrom.mockReturnValue(chain)

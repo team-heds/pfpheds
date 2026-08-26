@@ -8,8 +8,7 @@
 
     <!-- Fil d'actualité avec Infinity Scroll -->
     <div class="main-feed" ref="mainFeedRef">
-      <MainFeedSupabase v-if="isSupabaseUser" />
-      <MainFeed v-else />
+      <MainFeedSupabase />
     </div>
 
     <!-- Sidebar Droite -->
@@ -20,34 +19,24 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref } from 'vue';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
-import MainFeed from '@/components/social/library/MainFeed.vue'
 import MainFeedSupabase from '@/components/social/library/MainFeedSupabase.vue'
 import RightSidebar from '@/components/social/library/RightSidebar.vue'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
-import { useAuthStore } from '@/stores/authStore'
 
 export default {
   components: {
     Navbar,
     LeftSidebar,
-    MainFeed,
     MainFeedSupabase,
     RightSidebar,
     SocialThreeColumnLayout
   },
   setup() {
     const mainFeedRef = ref(null);
-    const authStore = useAuthStore();
-    onMounted(async () => {
-      if (!authStore.user) {
-        await authStore.checkAuthState();
-      }
-    });
-    const isSupabaseUser = computed(() => authStore.isSupabaseUser);
-    return { mainFeedRef, isSupabaseUser };
+    return { mainFeedRef };
   }
 };
 </script>

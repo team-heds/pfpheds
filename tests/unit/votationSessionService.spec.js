@@ -20,7 +20,9 @@ function createChain(finalResult) {
     insert: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue(finalResult),
     maybeSingle: vi.fn().mockResolvedValue(finalResult),
     single: vi.fn().mockResolvedValue(finalResult),
   }
@@ -29,6 +31,7 @@ function createChain(finalResult) {
   chain.insert.mockReturnValue(chain)
   chain.update.mockReturnValue(chain)
   chain.eq.mockReturnValue(chain)
+  chain.in.mockReturnValue(chain)
   chain.order.mockReturnValue(chain)
   return chain
 }
@@ -80,21 +83,19 @@ describe('votationSessionService', () => {
   describe('getActiveSession', () => {
     it('retourne la session active pour un PFP/année', async () => {
       const session = { id: '1', pfp_type: 'PFP1A', year: '2026', status: 'open' }
-      const chain = createChain({ data: session, error: null })
-      chain.maybeSingle.mockResolvedValue({ data: session, error: null })
+      const chain = createChain({ data: [session], error: null })
       mockFrom.mockReturnValue(chain)
 
       const result = await votationSessionService.getActiveSession('PFP1A', '2026')
       expect(mockFrom).toHaveBeenCalledWith('votation_sessions')
       expect(chain.eq).toHaveBeenCalledWith('pfp_type', 'PFP1A')
-      expect(chain.eq).toHaveBeenCalledWith('year', '2026')
+      expect(chain.in).toHaveBeenCalledWith('year', ['2026', '2025-2026'])
       expect(chain.eq).toHaveBeenCalledWith('status', 'open')
       expect(result).toEqual(session)
     })
 
     it('retourne null si aucune session active', async () => {
-      const chain = createChain({ data: null, error: null })
-      chain.maybeSingle.mockResolvedValue({ data: null, error: null })
+      const chain = createChain({ data: [], error: null })
       mockFrom.mockReturnValue(chain)
 
       const result = await votationSessionService.getActiveSession('PFP3', '2026')
@@ -139,16 +140,18 @@ describe('votationSessionService', () => {
       mockFrom.mockImplementation(() => {
         callCount++
         if (callCount <= 1) {
-          // closeSession: from().update().eq().eq().eq()
+          // closeSession: from().update().eq().in().eq()
           const chain = {
             update: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
+            in: vi.fn().mockReturnThis(),
           }
-          // Le dernier eq doit résoudre
+          chain.in.mockReturnValue(chain)
+          // Le second eq est le terminal de cette chaîne.
           let eqCount = 0
           chain.eq.mockImplementation(() => {
             eqCount++
-            if (eqCount >= 3) {
+            if (eqCount >= 2) {
               return Promise.resolve({ error: null })
             }
             return chain
@@ -190,11 +193,13 @@ describe('votationSessionService', () => {
       const chain = {
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
       }
+      chain.in.mockReturnValue(chain)
       let eqCount = 0
       chain.eq.mockImplementation(() => {
         eqCount++
-        if (eqCount >= 3) {
+        if (eqCount >= 2) {
           return Promise.resolve({ error: null })
         }
         return chain
@@ -210,7 +215,7 @@ describe('votationSessionService', () => {
         })
       )
       expect(chain.eq).toHaveBeenCalledWith('pfp_type', 'PFP1A')
-      expect(chain.eq).toHaveBeenCalledWith('year', '2026')
+      expect(chain.in).toHaveBeenCalledWith('year', ['2026', '2025-2026'])
       expect(chain.eq).toHaveBeenCalledWith('status', 'open')
     })
 
@@ -218,11 +223,13 @@ describe('votationSessionService', () => {
       const chain = {
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
       }
+      chain.in.mockReturnValue(chain)
       let eqCount = 0
       chain.eq.mockImplementation(() => {
         eqCount++
-        if (eqCount >= 3) {
+        if (eqCount >= 2) {
           return Promise.resolve({ error: { message: 'Update failed' } })
         }
         return chain
@@ -237,8 +244,7 @@ describe('votationSessionService', () => {
   describe('isVotationOpen', () => {
     it('retourne true si une session est ouverte', async () => {
       const session = { id: '1', pfp_type: 'PFP1A', year: '2026', status: 'open' }
-      const chain = createChain({ data: session, error: null })
-      chain.maybeSingle.mockResolvedValue({ data: session, error: null })
+      const chain = createChain({ data: [session], error: null })
       mockFrom.mockReturnValue(chain)
 
       const result = await votationSessionService.isVotationOpen('PFP1A', '2026')
@@ -246,8 +252,7 @@ describe('votationSessionService', () => {
     })
 
     it('retourne false si aucune session ouverte', async () => {
-      const chain = createChain({ data: null, error: null })
-      chain.maybeSingle.mockResolvedValue({ data: null, error: null })
+      const chain = createChain({ data: [], error: null })
       mockFrom.mockReturnValue(chain)
 
       const result = await votationSessionService.isVotationOpen('PFP3', '2026')

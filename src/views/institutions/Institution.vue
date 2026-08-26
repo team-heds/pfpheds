@@ -22,20 +22,15 @@
               </p>
             </header>
 
-            <!-- Barre de recherche au centre -->
-            <div class="search-bar">
-              <span class="p-input-icon-left">
-                <i class="pi pi-search" />
-                <InputText v-model="searchTerm" placeholder="Rechercher par nom, ville, canton ou id" class="search-input style-bar" />
-              </span>
-            </div>
-
-            <div class="results-summary" role="status">
-              <span>{{ filteredInstitutions.length }} institution{{ filteredInstitutions.length === 1 ? '' : 's' }}</span>
-              <div v-if="selectedFilterLabels.length" class="filter-chips" aria-label="Filtres actifs">
-                <span v-for="filter in selectedFilterLabels" :key="filter" class="filter-chip">{{ filter }}</span>
-                <button type="button" @click="clearFilters">Effacer les filtres</button>
-              </div>
+            <div class="mobile-filters">
+              <FilterSidebar
+                id-prefix="institution-list-mobile-filters"
+                v-model:filters="activeFilters"
+                v-model:search-term="searchTerm"
+                :cantons="cantonsList"
+                :result-count="filteredInstitutions.length"
+                @clear="clearFilters"
+              />
             </div>
 
             <!-- Zone défilante pour la grille -->
@@ -45,16 +40,15 @@
               <div v-else class="grid-container">
                 <div
                   v-for="(institution, index) in filteredInstitutions"
-                  :key="index"
+                  :key="institution.InstitutionId || institution.id || index"
                   class="card-wrapper"
                 >
                   <Card
                     class="institution-card surface-card"
-                    style="width: 20rem; height: 100%;"
                   >
                     <template #header>
                       <div class="card-header">
-                        <img :src="getInstitutionImage(institution)" alt="institution" class="card-image" />
+                        <img :src="getInstitutionImage(institution)" :alt="`Illustration de ${institution.Name}`" class="card-image" />
                         <Tag class="card-tag">{{ institution.Canton }}</Tag>
                       </div>
                       <p ref="institutionName" class="card-title">{{ institution.Name }}</p>
@@ -102,7 +96,14 @@
 
       <!-- Sidebar Droite -->
       <template #right>
-        <FilterSidebar :key="filterResetKey" :cantons="cantonsList" @filters-changed="handleSidebarFilters" />
+        <FilterSidebar
+          id-prefix="institution-list-desktop-filters"
+          v-model:filters="activeFilters"
+          v-model:search-term="searchTerm"
+          :cantons="cantonsList"
+          :result-count="filteredInstitutions.length"
+          @clear="clearFilters"
+        />
       </template>
     </SocialThreeColumnLayout>
   </div>
@@ -112,23 +113,21 @@
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
-import InputText from 'primevue/inputtext';
 import PrimeButton from 'primevue/button';
 import Card from 'primevue/card';
 import Tag from 'primevue/tag';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import FilterSidebar from '@/components/common/filters/FilterSidebar.vue'
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
-import filterData from '@/components/common/filters/filter.json'
 import EmptyState from '@/components/common/states/EmptyState.vue'
 import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
+import { filterInstitutions, getAvailableCantons } from '@/service/institutionFiltersService'
 
 export default {
   name: 'InstitutionPage',
   components: {
     FilterSidebar,
     Navbar,
-    InputText,
     PrimeButton,
     Card,
     Tag,
@@ -149,8 +148,6 @@ export default {
       },
       cantonsList: [], // Liste dynamique des cantons
       isMobile: window.innerWidth < 768,
-      filterResetKey: 0,
-      filterData: filterData
     };
   },
   setup() {
@@ -162,63 +159,13 @@ export default {
     allInstitutions() {
       return this.institutionsStore.institutions;
     },
-    criteriaByInstitution() {
-      const map = new Map();
-      const places = this.placesStore?.places || [];
-      places.forEach(p => {
-        const instId = p?.InstitutionId;
-        const placeId = p?.PlaceId;
-        if (!instId || !placeId) return;
-        const entry = this.filterData.find(it => it.IDPlace === placeId);
-        if (!entry || !Array.isArray(entry.criteria)) return;
-        const key = String(instId);
-        if (!map.has(key)) map.set(key, new Set());
-        entry.criteria.forEach(c => map.get(key).add(c));
-      });
-      const obj = {};
-      for (const [k, set] of map.entries()) obj[k] = Array.from(set);
-      return obj;
-    },
     filteredInstitutions() {
-      return this.allInstitutions.filter(inst => {
-        if (inst?.is_hidden === true) {
-          return false;
-        }
-        // Recherche textuelle
-        if (this.searchTerm) {
-          const search = this.searchTerm.toLowerCase();
-          if (!(
-            (inst.Name && inst.Name.toLowerCase().includes(search)) ||
-            (inst.Locality && inst.Locality.toLowerCase().includes(search)) ||
-            (inst.InstitutionId && String(inst.InstitutionId).toLowerCase().includes(search)) ||
-            (inst.Canton && inst.Canton.toLowerCase().includes(search))
-          )) {
-            return false;
-          }
-        }
-        // Filtre par canton
-        if (this.activeFilters.cantons.length > 0 && (!inst.Canton || !this.activeFilters.cantons.includes(inst.Canton))) {
-          return false;
-        }
-        const key = String(inst?.InstitutionId ?? inst?.id ?? '');
-        const crit = this.criteriaByInstitution[key] || [];
-        // Filtre par critères généraux
-        if (this.activeFilters.criter.length > 0 && !this.activeFilters.criter.every(c => crit.includes(c))) {
-          return false;
-        }
-        // Filtre par langue (l'institution doit avoir toutes les langues sélectionnées)
-        if (this.activeFilters.languages.length > 0 && !this.activeFilters.languages.every(lang => crit.includes(lang))) {
-          return false;
-        }
-        // Filtre par PFP
-        if (this.activeFilters.pfp.length > 0 && !this.activeFilters.pfp.some(p => crit.includes(p))) {
-          return false;
-        }
-        return true;
+      return filterInstitutions({
+        institutions: this.allInstitutions,
+        places: this.placesStore?.places || [],
+        filters: this.activeFilters,
+        searchTerm: this.searchTerm,
       });
-    },
-    selectedFilterLabels() {
-      return Object.values(this.activeFilters).flat();
     }
   },
   methods: {
@@ -243,8 +190,7 @@ export default {
         console.log('✅ Institutions loaded:', this.allInstitutions.length);
         
         // Génère la liste unique des cantons présents
-        const allCantons = this.allInstitutions.map(inst => inst.Canton).filter(Boolean);
-        this.cantonsList = [...new Set(allCantons)].sort();
+        this.cantonsList = getAvailableCantons(this.allInstitutions);
         console.log('📍 Available cantons:', this.cantonsList);
         
         this.$nextTick(() => {
@@ -278,27 +224,22 @@ export default {
         this.$router.push({ name: 'InstitutionView', params: { id: id } });
       }
     },
-    handleSidebarFilters(filters) {
-      this.activeFilters = filters;
-    },
     clearFilters() {
       this.searchTerm = '';
       this.activeFilters = { cantons: [], criter: [], pfp: [], languages: [] };
-      this.filterResetKey += 1;
+    },
+    updateIsMobile() {
+      this.isMobile = window.innerWidth < 768;
     }
   },
   mounted() {
     this.fetchInstitutions();
     this.placesStore.fetchPlaces();
     // Gestion responsive
-    window.addEventListener('resize', () => {
-      this.isMobile = window.innerWidth < 768;
-    });
+    window.addEventListener('resize', this.updateIsMobile);
   },
   beforeUnmount() {
-    window.removeEventListener('resize', () => {
-      this.isMobile = window.innerWidth < 768;
-    });
+    window.removeEventListener('resize', this.updateIsMobile);
   },
 };
 </script>
@@ -311,14 +252,11 @@ export default {
 }
 
 /* Section de contenu */
-.results-summary { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin:0 auto 1rem; color:var(--text-color-secondary); font-size:.875rem; }
-.filter-chips { display:flex; align-items:center; justify-content:flex-end; gap:.5rem; flex-wrap:wrap; }
-.filter-chip { padding:.25rem .625rem; border-radius:999px; background:var(--surface-card); color:var(--text-color); }
-.filter-chips button { min-height:2rem; padding:.25rem .625rem; border:0; background:transparent; color:var(--primary-color); font:inherit; cursor:pointer; }
-.filter-chips button:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
 .content-section {
   padding: 2rem;
 }
+
+.mobile-filters { display: none; margin-bottom: 1.5rem; }
 
 /* Header de la page */
 .page-header {
@@ -333,16 +271,6 @@ export default {
 .subtitle {
   color: var(--text-color-secondary);
   font-size: 1.25rem;
-}
-
-/* Barre de recherche */
-.search-bar {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
-}
-.search-input {
-  width: 300px;
 }
 
 /* Zone scrollable pour la grille (scrollbar masquée) */
@@ -376,6 +304,8 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  width: 100%;
+  max-width: 20rem;
   height: 100%;
 }
 .card-image {
@@ -459,11 +389,6 @@ export default {
   margin-top: 2rem;
 }
 
-.style-bar {
-  background-color: var(--surface-card);
-  border-radius: 1.2rem;
-}
-
 .institution-center-scrollable {
   height: 100%;
   overflow-y: auto;
@@ -475,5 +400,17 @@ export default {
 .institution-center-scrollable::-webkit-scrollbar {
   width: 0;
   height: 0;
+}
+
+@media (max-width: 63.99rem) {
+  .mobile-filters { display: block; }
+}
+
+@media (max-width: 38rem) {
+  .institution-center-scrollable,
+  .content-section { padding-inline: 1rem; }
+  .title { font-size: 2.25rem; }
+  .subtitle { font-size: 1rem; }
+  .grid-container { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 }
 </style>

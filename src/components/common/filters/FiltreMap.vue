@@ -20,6 +20,22 @@
           Liste des différentes places de formation pratique de la filière physiothérapie de la HES-SO Valais-Wallis
         </p>
 
+        <div class="mobile-filters">
+          <FilterSidebar
+            id-prefix="institution-map-mobile-filters"
+            v-model:filters="selectedFilters"
+            v-model:search-term="searchTerm"
+            :cantons="availableCantons"
+            :result-count="filteredInstitutions.length"
+            @clear="clearFilters"
+          />
+        </div>
+
+        <p v-if="filteredInstitutions.length !== mappableInstitutions.length" class="map-summary" role="status">
+          {{ mappableInstitutions.length }} institution{{ mappableInstitutions.length === 1 ? '' : 's' }} affichée{{ mappableInstitutions.length === 1 ? '' : 's' }} sur la carte ;
+          {{ filteredInstitutions.length - mappableInstitutions.length }} sans coordonnées valides.
+        </p>
+
         <!-- Container de la Carte -->
         <div class="map-container">
           <div v-if="institutionsLoading" class="flex justify-center items-center h-full">Chargement de la carte...</div>
@@ -53,8 +69,8 @@
             <div class="grid">
               <div class="col-12 md:col-4">
                 <img
-                  :src="selectedInstitution && selectedInstitution.ImageURL ? selectedInstitution.ImageURL : 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'"
-                  alt="Institution Image"
+                  :src="selectedInstitutionImage"
+                  :alt="selectedInstitution ? `Illustration de ${selectedInstitution.Name}` : ''"
                   class="w-full institution-image shadow"
                 />
               </div>
@@ -101,9 +117,13 @@
 
     <!-- Sidebar Droite : intégration du composant de filtre composite -->
     <template #right>
-      <FilterSidebare
+      <FilterSidebar
+        id-prefix="institution-map-desktop-filters"
+        v-model:filters="selectedFilters"
+        v-model:search-term="searchTerm"
         :cantons="availableCantons"
-        @filters-changed="handleFiltersChange"
+        :result-count="filteredInstitutions.length"
+        @clear="clearFilters"
       />
     </template>
   </SocialThreeColumnLayout>
@@ -119,17 +139,15 @@ import 'leaflet/dist/leaflet.css';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
-import FilterSidebare from './FilterSidebar.vue';
+import FilterSidebar from './FilterSidebar.vue';
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import { usePlacesStore } from '@/stores/placesStore';
 import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 
-// Import du fichier filter.json (contenant les IDPlace et leurs §s)
-import filterData from './filter.json';
-
 // Import et configuration du logo pour les marqueurs
 
 import { useInstitutionsStore } from '@/stores/institutionsStore';
+import { filterInstitutions, getAvailableCantons, hasValidInstitutionCoordinates } from '@/service/institutionFiltersService'
 import schoolLogo from '../../../../public/assets/images/markerheds.png';
 const originalWidth = 25;
 const originalHeight = 30;
@@ -150,7 +168,9 @@ const { institutions, loading: institutionsLoading, error: institutionsError } =
 const selectedInstitution = ref(null);
 const dialogVisible = ref(false);
 const router = useRouter();
-const isMobile = computed(() => window.innerWidth <= 768);
+const viewportWidth = ref(window.innerWidth)
+const isMobile = computed(() => viewportWidth.value <= 768);
+const searchTerm = ref('')
 
 // Objet réactif regroupant l'ensemble des filtres sélectionnés
 const selectedFilters = ref({
@@ -162,68 +182,29 @@ const selectedFilters = ref({
 
 // Liste des cantons disponibles (extrait dynamiquement depuis les institutions)
 const availableCantons = computed(() => {
-  const cantonsSet = new Set();
-  institutions.value.forEach(institution => {
-    if (institution.Canton) {
-      cantonsSet.add(institution.Canton);
-    }
-  });
-  return Array.from(cantonsSet);
-});
-
-// Calcul des institutions filtrées en fonction des filtres sélectionnés
-// Agrégation des critères par Institution via les places
-const criteriaByInstitution = computed(() => {
-  const mapObj = new Map();
-  const allPlaces = placesStore.places || [];
-  allPlaces.forEach(place => {
-    const instId = place?.InstitutionId;
-    const placeId = place?.PlaceId;
-    if (!instId || !placeId) return;
-    const entry = filterData.find(item => item.IDPlace === placeId);
-    if (!entry || !Array.isArray(entry.criteria)) return;
-    const key = String(instId);
-    if (!mapObj.has(key)) mapObj.set(key, new Set());
-    entry.criteria.forEach(c => mapObj.get(key).add(c));
-  });
-  const obj = {};
-  for (const [k, set] of mapObj.entries()) obj[k] = Array.from(set);
-  return obj;
+  return getAvailableCantons(institutions.value)
 });
 
 const filteredInstitutions = computed(() => {
-  return institutions.value.filter(inst => {
-    if (inst?.is_hidden === true) {
-      return false;
-    }
-    // Filtre par canton
-    if (
-      selectedFilters.value.cantons.length > 0 &&
-      !selectedFilters.value.cantons.includes(inst.Canton)
-    ) {
-      return false;
-    }
-    // Récupère les critères agrégés pour l'institution
-    const key = String(inst?.InstitutionId ?? inst?.id ?? '');
-    const crit = criteriaByInstitution.value[key] || [];
-    // Filtre par critères généraux (tous requis)
-    if (selectedFilters.value.criter.length > 0 && !selectedFilters.value.criter.every(c => crit.includes(c))) {
-      return false;
-    }
-    // Filtre par langues (toutes requises)
-    if (selectedFilters.value.languages.length > 0 && !selectedFilters.value.languages.every(lang => crit.includes(lang))) {
-      return false;
-    }
-    // Filtre par PFP (au moins un requis)
-    if (selectedFilters.value.pfp.length > 0 && !selectedFilters.value.pfp.some(p => crit.includes(p))) {
-      return false;
-    }
-    return true;
-  });
+  return filterInstitutions({
+    institutions: institutions.value,
+    places: placesStore.places || [],
+    filters: selectedFilters.value,
+    searchTerm: searchTerm.value,
+  })
 });
+
+const mappableInstitutions = computed(() => filteredInstitutions.value.filter(hasValidInstitutionCoordinates))
+const selectedInstitutionImage = computed(() => {
+  const image = selectedInstitution.value?.ImageURL
+  if (Array.isArray(image) && image.length) return image[0]
+  if (typeof image === 'string' && image) return image
+  return 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'
+})
 
 // Initialisation de la carte Leaflet
 const initMap = () => {
+  if (map.value || !document.getElementById('newMap')) return;
   map.value = L.map('newMap').setView([46.22292, 7.3668], 10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution:
@@ -232,19 +213,21 @@ const initMap = () => {
 };
 
 // Récupération des institutions depuis le store
-onMounted(() => {
-  institutionsStore.fetchInstitutions();
-  placesStore.fetchPlaces();
-});
-
-watch(institutionsLoading, (newLoading, oldLoading) => {
-  if (oldLoading && !newLoading && !institutionsError.value) {
-    nextTick(() => {
-      initMap();
-      addLocationsToMap(filteredInstitutions.value);
-    });
+onMounted(async () => {
+  window.addEventListener('resize', updateViewportWidth)
+  try {
+    await Promise.all([institutionsStore.fetchInstitutions(), placesStore.fetchPlaces()])
+    await nextTick()
+    initMap()
+    addLocationsToMap(mappableInstitutions.value)
+  } catch (error) {
+    console.error('Erreur lors du chargement de la carte des institutions:', error)
   }
 });
+
+const updateViewportWidth = () => {
+  viewportWidth.value = window.innerWidth
+}
 
 // Nettoyage des marqueurs existants sur la carte
 const clearMarkers = () => {
@@ -277,16 +260,15 @@ const addLocationsToMap = (institutions) => {
   }
 };
 
-// Gestionnaire de l'événement émis par FilterSidebare
-const handleFiltersChange = (filters) => {
-  // On met à jour l'objet selectedFilters avec les filtres reçus
-  selectedFilters.value = filters;
-};
-
 // Mise à jour automatique des marqueurs lorsque les institutions filtrées changent
-watch(filteredInstitutions, (newInstitutions) => {
+watch(mappableInstitutions, (newInstitutions) => {
   addLocationsToMap(newInstitutions);
 });
+
+const clearFilters = () => {
+  searchTerm.value = ''
+  selectedFilters.value = { cantons: [], criter: [], languages: [], pfp: [] }
+}
 
 // Navigation vers la vue détaillée de l'institution
 const navigateToDetails = (id) => {
@@ -299,13 +281,14 @@ const openWebsite = (url) => {
     const completeUrl =
       url.startsWith('http://') || url.startsWith('https://')
         ? url
-        : `http://${url}`;
+        : `https://${url}`;
     window.open(completeUrl, '_blank');
   }
 };
 
 // Nettoyage lors de la destruction du composant
 onUnmounted(() => {
+  window.removeEventListener('resize', updateViewportWidth)
   clearMarkers();
   if (map.value) {
     map.value.remove();
@@ -318,6 +301,9 @@ onUnmounted(() => {
 .main-content {
   overflow-y: auto;
 }
+
+.mobile-filters { display: none; margin-bottom: 1.5rem; }
+.map-summary { margin: 0 0 1rem; color: var(--text-color-secondary); text-align: center; }
 
 /* Styles pour la carte */
 .map-container {
@@ -349,5 +335,9 @@ onUnmounted(() => {
   .map-container {
     height: 300px;
   }
+}
+
+@media (max-width: 63.99rem) {
+  .mobile-filters { display: block; }
 }
 </style>

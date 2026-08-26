@@ -621,7 +621,11 @@ const roleStore = useRoleStore()
 
 // L'édition exige une permission explicite. planning.weekly.view donne accès à
 // la consultation de la page sans autoriser les actions de modification.
-const isReadOnly = computed(() => !roleStore.can('planning.weekly.edit'))
+const isReadOnly = computed(() => !roleStore.can([
+  'admin',
+  'editor',
+  'planning.weekly.edit'
+]))
 
 // État
 const selectedYear = ref(null)

@@ -47,15 +47,24 @@
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
                 <Button icon="pi pi-download" label="Export Excel" outlined class="p-button-sm" @click="exportXLSX" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchAllData" v-tooltip="'Rafraîchir'" :loading="loading" />
+                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="refreshAllData" v-tooltip="'Rafraîchir'" :loading="loading" />
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      <div v-if="loadError" class="surface-card fp-dark p-4 border-round shadow-2 mb-4 flex align-items-center gap-3" role="alert">
+        <i class="pi pi-exclamation-circle text-red-400 text-2xl" aria-hidden="true"></i>
+        <div class="flex-1">
+          <strong class="block mb-1">La vue d’ensemble n’a pas pu être chargée</strong>
+          <span class="text-600">{{ loadError }}</span>
+        </div>
+        <Button icon="pi pi-refresh" label="Réessayer" outlined @click="fetchAllData" />
+      </div>
+
       <!-- Statistiques -->
-      <div class="flex flex-wrap gap-2 mb-3">
+      <div v-if="!loadError" class="flex flex-wrap gap-2 mb-3">
         <div class="flex-1" style="min-width: 140px">
           <div class="surface-card p-3 border-round shadow-2">
             <div class="flex align-items-center gap-2">
@@ -136,7 +145,7 @@
       </div>
 
       <!-- Table principale -->
-      <div class="surface-card p-4 border-round shadow-2">
+      <div v-if="!loadError" class="surface-card p-4 border-round shadow-2">
         <DataTable
           :value="filteredFlatRows"
           :loading="loading"
@@ -151,7 +160,7 @@
           class="ensemble-table p-datatable-sm"
           :sortField="'nom'"
           :sortOrder="1"
-          :globalFilterFields="['nom', 'prenom', 'classe', 'pfpType', 'year', 'placeName', 'institutionName', 'praticienName', 'praticienMail']"
+          :globalFilterFields="['nom', 'prenom', 'classe', 'pfpType', 'year', 'placeName', 'institutionName', 'praticienName', 'praticienMail', 'repondantHes']"
         >
           <template #header>
             <div class="flex justify-content-between align-items-center">
@@ -250,6 +259,12 @@
                 {{ data.praticienMail }}
               </a>
               <span v-else class="text-sm">—</span>
+            </template>
+          </Column>
+
+          <Column field="repondantHes" header="Répondant HES" sortable style="min-width: 170px">
+            <template #body="{ data }">
+              <span class="text-sm">{{ data.repondantHes || '—' }}</span>
             </template>
           </Column>
 
@@ -366,6 +381,15 @@ import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
 
 import studentsService from '@/service/studentDirectoryService'
+import {
+  assertFpOverviewDataResults,
+  buildFpOverviewExportIdentity,
+  buildFpOverviewStudentFields,
+  FP_OVERVIEW_IDENTITY_COLUMNS,
+  getFpOverviewGroupBounds,
+  PFP_STAGE_EXPORT_COLUMNS,
+  matchesFpOverviewSearch
+} from '@/service/fpOverviewRespondentService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
@@ -375,6 +399,7 @@ import Tag from 'primevue/tag'
 import InputText from 'primevue/inputtext'
 
 const loading = ref(false)
+const loadError = ref('')
 const allRows = ref([])
 const searchQuery = ref('')
 const filterClasse = ref(null)
@@ -412,20 +437,7 @@ const typeOptions = [
   { label: 'Cas particuliers', value: 'cas' }
 ]
 
-const truncate = (text, max) => {
-  if (!text) return ''
-  return text.length > max ? text.substring(0, max) + '…' : text
-}
-
 const getInitials = (row) => ((row.nom?.[0] || '') + (row.prenom?.[0] || '')).toUpperCase()
-
-const getAvatarClass = (row) => {
-  const statuts = pfpTypes.map(p => row[p]?.statut)
-  if (statuts.some(s => s === 'Échec' || s === 'Arrêt')) return 'avatar-fail'
-  if (statuts.every(s => s === 'Réussi')) return 'avatar-complete'
-  if (statuts.some(s => s === 'Réussi' || s === 'En cours' || s === 'Attribué')) return 'avatar-partial'
-  return 'avatar-none'
-}
 
 const getFlatAvatarClass = (row) => {
   if (row.statut === 'Réussi') return 'avatar-complete'
@@ -456,16 +468,6 @@ const getNoteBadgeClass = (note) => {
   if (n === 'F') return 'note-fail'
   if (['A', 'B', 'C', 'D', 'E'].includes(n)) return 'note-pass'
   return 'note-none'
-}
-
-const getPfpCellClass = (pfpData) => {
-  if (!pfpData) return ''
-  const s = pfpData.statut
-  if (s === 'Réussi') return 'pfp-cell-success'
-  if (s === 'Échec' || s === 'Arrêt') return 'pfp-cell-fail'
-  if (s === 'En cours' || s === 'Publié') return 'pfp-cell-progress'
-  if (s === 'Brouillon') return 'pfp-cell-draft'
-  return ''
 }
 
 const stats = computed(() => {
@@ -506,6 +508,7 @@ const flatRows = computed(() => {
         institutionName: d.institutionName || '',
         praticienName: d.praticienName || '',
         praticienMail: d.praticienMail || '',
+        repondantHes: r.repondantHes || '',
         note: d.note || null,
         noteRetake: d.noteRetake || null,
         absences: d.absences || 0,
@@ -532,14 +535,7 @@ const filteredFlatRows = computed(() => {
 
   if (searchQuery.value?.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
-    rows = rows.filter(r =>
-      (r.nom || '').toLowerCase().includes(q) ||
-      (r.prenom || '').toLowerCase().includes(q) ||
-      (r.placeName || '').toLowerCase().includes(q) ||
-      (r.institutionName || '').toLowerCase().includes(q) ||
-      (r.praticienName || '').toLowerCase().includes(q) ||
-      (r.praticienMail || '').toLowerCase().includes(q)
-    )
+    rows = rows.filter(r => matchesFpOverviewSearch(r, q))
   }
 
   if (filterClasse.value) rows = rows.filter(r => r.classe === filterClasse.value)
@@ -558,7 +554,7 @@ const filteredRows = computed(() => {
   let rows = [...allRows.value]
   if (searchQuery.value?.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
-    rows = rows.filter(r => (r.nom || '').toLowerCase().includes(q) || (r.prenom || '').toLowerCase().includes(q))
+    rows = rows.filter(r => matchesFpOverviewSearch(r, q))
   }
   if (filterClasse.value) rows = rows.filter(r => r.classe === filterClasse.value)
   return rows
@@ -604,6 +600,7 @@ const getPfpFinalStatus = (noteValue, retakeValue) => {
 
 const fetchAllData = async () => {
   loading.value = true
+  loadError.value = ''
   try {
     const [
       studentsData,
@@ -628,6 +625,18 @@ const fetchAllData = async () => {
       supabase.from('recap_cpt_evaluation').select('*'),
       supabase.from('votation_sessions').select('pfp_type, priority_user_ids').eq('is_priority', true)
     ])
+
+    assertFpOverviewDataResults({
+      'les stages validés': physioResult,
+      'les affectations': assignmentsResult,
+      'les places': placesResult,
+      'les institutions': institutionsResult,
+      'les praticiens formateurs': praticiensResult,
+      'les cas particuliers': suiviResult,
+      'les notes PFP': notesResult,
+      'les critères CPT et évaluations': cptEvalResult,
+      'les priorités de votation': prioSessionsResult
+    })
 
     // Build priority user IDs map (pfp_type -> Set of user_ids), normalise PFP1A/PFP1B → PFP1
     const normPfpType = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
@@ -779,17 +788,12 @@ const fetchAllData = async () => {
 
     const rows = []
     studentsData.forEach(s => {
-      const userId = s.id
+      const userId = s.id || s.user_id
       const notesData = notesMap.get(userId)
       const suiviData = suiviMap.get(userId)
       const cptData = cptMap.get(userId)
 
-      const row = {
-        userId,
-        nom: s.Nom || '',
-        prenom: s.Prenom || '',
-        classe: s.Classe || '-'
-      }
+      const row = buildFpOverviewStudentFields(s)
 
       pfpTypes.forEach(pfpType => {
         const key = `${userId}__${pfpType}`
@@ -909,9 +913,15 @@ const fetchAllData = async () => {
 
   } catch (e) {
     console.error('Erreur fetchAllData:', e)
+    loadError.value = 'Impossible de charger l’annuaire étudiant et les données de stages. Réessayez dans quelques instants.'
   } finally {
     loading.value = false
   }
+}
+
+const refreshAllData = () => {
+  studentsService.invalidateStudentDirectoryCache()
+  return fetchAllData()
 }
 
 // ─── Helper: style a header row ───
@@ -1108,8 +1118,6 @@ const exportXLSX = async () => {
   // SHEETS: Vérif. BAxx (one per cohort/classe)
   // ════════════════════════════════════════════
   const cohorts = [...new Set(allRows.value.map(r => r.classe).filter(c => c && c !== '-'))].sort()
-  const pfpNoteKeysExport = { 'PFP2': 'pfp2', 'PFP3': 'pfp3', 'PFP4': 'pfp4' }
-
   // Build a map of place criteria by PlaceId
   const placeCriteriaMap = new Map()
   rawPlaces.value.forEach(p => {
@@ -1241,26 +1249,8 @@ const exportXLSX = async () => {
 
     const wsPFP = wb.addWorksheet(finalName)
 
-    const pfpSheetColCount = 17
-    wsPFP.columns = [
-      { header: 'Institution', key: 'institution', width: 30 },
-      { header: 'Place de stage', key: 'placeName', width: 24 },
-      { header: 'Critères', key: 'criteres', width: 20 },
-      { header: 'Domaine d\'expertise', key: 'domaine', width: 22 },
-      { header: 'Classe', key: 'classe', width: 10 },
-      { header: 'Nom étudiant·es', key: 'nom', width: 16 },
-      { header: 'Prénom étudiant·es', key: 'prenom', width: 14 },
-      { header: 'PF', key: 'pf', width: 22 },
-      { header: 'Email PF', key: 'pfEmail', width: 28 },
-      { header: 'Formateur·trice HES', key: 'formateurHES', width: 22 },
-      { header: 'Année', key: 'annee', width: 8 },
-      { header: 'CPT', key: 'cptStatus', width: 14 },
-      { header: 'Évaluation', key: 'evalStatus', width: 14 },
-      { header: 'Particularités', key: 'particularites', width: 18 },
-      { header: 'Absences en jours', key: 'absences', width: 14 },
-      { header: 'Notes', key: 'notes', width: 8 },
-      { header: 'Remarques', key: 'remarques', width: 35 }
-    ]
+    const pfpSheetColCount = PFP_STAGE_EXPORT_COLUMNS.length
+    wsPFP.columns = PFP_STAGE_EXPORT_COLUMNS
 
     // Row 1: merged title
     wsPFP.mergeCells(1, 1, 1, pfpSheetColCount)
@@ -1274,7 +1264,7 @@ const exportXLSX = async () => {
 
     // Row 2: headers
     const hdrRow = wsPFP.getRow(2)
-    hdrRow.values = ['Institution', 'Place de stage', 'Critères', 'Domaine d\'expertise', 'Classe', 'Nom étudiant·es', 'Prénom étudiant·es', 'PF', 'Email PF', 'Formateur·trice HES', 'Année', 'CPT', 'Évaluation', 'Particularités', 'Absences en jours', 'Notes', 'Remarques']
+    hdrRow.values = PFP_STAGE_EXPORT_COLUMNS.map(column => column.header)
     styleHeaderRow(wsPFP, 2, pfpSheetColCount)
 
     // Sort by institution then student name
@@ -1291,6 +1281,7 @@ const exportXLSX = async () => {
       const assignCriteria = criteriaLabels.filter(c => crit[c]).join(', ')
       const casText = (d.casColor && d.casColor !== 'blanc') ? `${d.casColor}${d.casComment ? ': ' + d.casComment : ''}` : ''
       const allRemarks = [d.assignmentNotes, d.remarques].filter(r => r && r.trim()).join(' | ')
+      const exportIdentity = buildFpOverviewExportIdentity(s)
 
       const row = wsPFP.addRow({
         institution: d.institutionName || '',
@@ -1302,7 +1293,8 @@ const exportXLSX = async () => {
         prenom: s.prenom || '',
         pf: d.praticienName || '',
         pfEmail: d.praticienMail || '',
-        formateurHES: '',
+        repondantHes: exportIdentity.repondantHes,
+        formateurHES: exportIdentity.formateurHES,
         annee: d.year || '',
         cptStatus: cptLabel(d.cpt) + (d.cptComment ? ' (' + d.cptComment + ')' : ''),
         evalStatus: cptLabel(d.eval) + (d.evalComment ? ' (' + d.evalComment + ')' : ''),
@@ -1313,25 +1305,21 @@ const exportXLSX = async () => {
       })
       row.eachCell({ includeEmpty: true }, (cell) => styleDataCell(cell, idx % 2 === 0))
 
-      // Col indices: 1=Institution, 2=Place, 3=Critères, 4=Domaine, 5=Classe, 6=Nom, 7=Prénom, 8=PF, 9=EmailPF, 10=FormateurHES, 11=Année, 12=CPT, 13=Eval, 14=Particularités, 15=Absences, 16=Notes, 17=Remarques
-      // Color CPT (col 12)
-      const cptCell = row.getCell(12)
+      // Col indices: 10=RépondantHES, 11=FormateurHES, 12=Année, 13=CPT, 14=Eval, 16=Absences, 17=Notes
+      const cptCell = row.getCell(13)
       if (d.cpt === true) cptCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       else if (d.cpt === false) cptCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
 
-      // Color Eval (col 13)
-      const evalCell = row.getCell(13)
+      const evalCell = row.getCell(14)
       if (d.eval === true) evalCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
       else if (d.eval === false) evalCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
 
-      // Color the note (col 16)
-      const noteCell = row.getCell(16)
+      const noteCell = row.getCell(17)
       const n = String(d.note || '').trim().toUpperCase()
       if (n === 'F') noteCell.font = { bold: true, size: 9, color: { argb: COL_RED_TEXT } }
       else if (['A', 'B', 'C', 'D', 'E'].includes(n)) noteCell.font = { bold: true, size: 9, color: { argb: COL_GREEN_TEXT } }
 
-      // Color absences (col 15)
-      const absCell = row.getCell(15)
+      const absCell = row.getCell(16)
       if (Number(d.absences) > 0) absCell.font = { bold: true, size: 9, color: { argb: COL_ORANGE_TEXT } }
     })
 
@@ -1345,11 +1333,7 @@ const exportXLSX = async () => {
   const pfpSubCols = ['Place', 'Institution', 'Critères', 'Praticien', 'Note', 'Rattrap.', 'Statut', 'Attribution', 'Abs.', 'Remarques', 'Cas part.', 'CPT', 'Eval']
   const pfpSubCount = pfpSubCols.length
 
-  const baseCols = [
-    { header: 'Nom', key: 'nom', width: 16 },
-    { header: 'Prénom', key: 'prenom', width: 14 },
-    { header: 'Classe', key: 'classe', width: 10 }
-  ]
+  const baseCols = FP_OVERVIEW_IDENTITY_COLUMNS
   const allCols = [...baseCols]
   pfpTypes.forEach(pfp => {
     pfpSubCols.forEach(sub => {
@@ -1361,7 +1345,7 @@ const exportXLSX = async () => {
   // Row 1: PFP group headers
   const groupRow = wsVE.getRow(1)
   groupRow.height = 28
-  wsVE.mergeCells(1, 1, 1, 3)
+  wsVE.mergeCells(1, 1, 1, baseCols.length)
   const infoCell = wsVE.getCell(1, 1)
   infoCell.value = 'INFORMATIONS ÉTUDIANT'
   infoCell.font = { bold: true, color: { argb: COL_WHITE }, size: 11 }
@@ -1369,8 +1353,7 @@ const exportXLSX = async () => {
   infoCell.alignment = { horizontal: 'center', vertical: 'middle' }
 
   pfpTypes.forEach((pfp, idx) => {
-    const startCol = 4 + idx * pfpSubCount
-    const endCol = startCol + pfpSubCount - 1
+    const { start: startCol, end: endCol } = getFpOverviewGroupBounds(idx, pfpSubCount)
     wsVE.mergeCells(1, startCol, 1, endCol)
     const cell = wsVE.getCell(1, startCol)
     cell.value = pfp
@@ -1396,7 +1379,7 @@ const exportXLSX = async () => {
 
   // Data rows
   rows.forEach((r, rowIndex) => {
-    const rowData = { nom: r.nom, prenom: r.prenom, classe: r.classe }
+    const rowData = buildFpOverviewExportIdentity(r)
     pfpTypes.forEach(pfp => {
       const d = r[pfp] || {}
       rowData[`${pfp}_Place`] = d.placeName || ''
@@ -1432,7 +1415,7 @@ const exportXLSX = async () => {
     excelRow.getCell(2).font = { bold: true, size: 9 }
 
     pfpTypes.forEach((pfp, pfpIdx) => {
-      const baseCol = 4 + pfpIdx * pfpSubCount
+      const { start: baseCol } = getFpOverviewGroupBounds(pfpIdx, pfpSubCount)
       const d = r[pfp] || {}
       let pfpBg = bgColor
       if (d.statut === 'Réussi') pfpBg = COL_LIGHT_GREEN
@@ -1482,11 +1465,11 @@ const exportXLSX = async () => {
   })
 
   pfpTypes.forEach((pfp, pfpIdx) => {
-    const lastCol = 3 + (pfpIdx + 1) * pfpSubCount
+    const { end: lastCol } = getFpOverviewGroupBounds(pfpIdx, pfpSubCount)
     headerRow.getCell(lastCol).border = { bottom: { style: 'thin', color: { argb: 'FF999999' } }, right: { style: 'thin', color: { argb: 'FF999999' } } }
   })
 
-  wsVE.views = [{ state: 'frozen', xSplit: 3, ySplit: 2 }]
+  wsVE.views = [{ state: 'frozen', xSplit: baseCols.length, ySplit: 2 }]
   wsVE.autoFilter = { from: { row: 2, column: 1 }, to: { row: 2 + rows.length, column: allCols.length } }
 
   // ── Download ──

@@ -3,7 +3,7 @@ import { modulePermissionGuard } from '@/router/guards/modulePermissionGuard'
 // Routes dashboard & administration
 export default [
   { path: '/admin', component: () => import('@/views/admin/DashboardView.vue'), name: 'DashboardView', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
-  { path: '/admin/dashboard-general', component: () => import('@/components/admin/AdminDashboardGeneral.vue'), name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
+  { path: '/admin/dashboard-general', redirect: '/admin', name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/dashboard-rm', component: () => import('@/views/admin/DashboardRMView.vue'), name: 'DashboardRM', meta: { requiresAuth: true, need: ['admin', 'RMSoins', 'auth.redirect.dashboard_rm'] } },
   { path: '/admin/soins-infirmiers/dashboard', component: () => import('@/views/admin/soins-infirmiers/DashboardSecretariatSI.vue'), name: 'DashboardSecretariatSI', meta: { requiresAuth: true, need: ['admin', 'RMSoins'] } },
   { path: '/admin/role-management', component: () => import('@/views/admin/RoleManagementView.vue'), name: 'RoleManagement', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },

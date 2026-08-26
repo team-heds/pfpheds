@@ -1,0 +1,18 @@
+{
+  "description": "Exceptions historiques gelées. Une nouvelle opération destructive nécessite une approbation explicite, une justification et une empreinte dédiée.",
+  "files": [
+    { "path": "supabase/migrations/20251215_create_feedbacka_module.sql", "sha256": "22a83fc138f5f45895f68e98de7787e8c4d2aaaa6bc8f9d5a8b4a7ce3b769d17", "reason": "Remplacement historique de policies ciblées." },
+    { "path": "supabase/migrations/20260130_add_async_periods_to_planning.sql", "sha256": "8fcafc65c380cd768bb620265c1ccaa9fb117abb8f8bca9859974fef65fa110a", "reason": "Remplacement historique de policies ciblées." },
+    { "path": "supabase/migrations/20260130_add_multiple_classes_support.sql", "sha256": "2f1950f331d13ab3088b4d25b66719d6eec8f8dfae483fc104b043d40019033e", "reason": "Nettoyage de données historique déjà déployé." },
+    { "path": "supabase/migrations/20260130_clean_and_standardize_class_codes.sql", "sha256": "a84c3ad94fba20f2b9291c3dc1f076578794dfeb24875a25ca2e94002e0c8018", "reason": "Normalisation de données historique déjà déployée." },
+    { "path": "supabase/migrations/20260130_fix_unique_constraint.sql", "sha256": "17b251c2bf119c77879c4a01ed71993669f316b3db962546ec4b6616b26382a1", "reason": "Nettoyage de doublons historique déjà déployé." },
+    { "path": "supabase/migrations/20260609_enable_institutions_storage.sql", "sha256": "733cc0652afa8766b3adb71c8192e615649c136d1cd88cfae8f63f5b63e01f0a", "reason": "Remplacement historique de policies Storage ciblées." },
+    { "path": "supabase/migrations/20260610_enable_avatars_storage.sql", "sha256": "1521750aea8087f7501a62cafe3fa788d03e5b3c67147cd9374b15a0b9330804", "reason": "Remplacement historique de policies Storage ciblées." },
+    { "path": "supabase/migrations/20260610_enable_student_documents_storage.sql", "sha256": "ad0288a322f247a6c6672bc81aa5671f9ca41e37e728fad4fc91dce098f84024", "reason": "Remplacement historique de policies Storage ciblées." },
+    { "path": "supabase/migrations/20260722b_add_sae_field_suivi_cas_particuliers.sql", "sha256": "2470f2e1d0257698e872ede08a935fd5c906911d78a044b35da151eba0197373", "reason": "Remplacement historique d'une contrainte et d'une colonne de suivi déjà déployé." },
+    { "path": "supabase/migrations/20260722c_rls_cas_particuliers.sql", "sha256": "e2c238cde4234ee79ac1274f3c9667e288ce29692fc251a81bb3c020bd8f7cc4", "reason": "Durcissement historique des policies de cas particuliers." },
+    { "path": "supabase/migrations/20260804_p0_security_hardening.sql", "sha256": "eaa281697d41ab2c620b029ea2417a824d5b4f8305d6cc237fe23826a66ae32c", "reason": "Durcissement P0 historique des policies et permissions." },
+    { "path": "supabase/migrations/20260804211945_complete_p0_security_matrix.sql", "sha256": "cd0c60da7598be063e36f33e0ec85cafb7188d9cd57611a76d35e8a9b8a38d23", "reason": "Durcissement P0 historique de la matrice RLS." },
+    { "path": "supabase/migrations/20260824134735_allow_users_to_update_own_avatar.sql", "sha256": "09311e022711ccd311b8c8809c464776568be58446460bac2d08c3fff7c3c698", "reason": "Remplacement ciblé des policies de profil déjà déployé." }
+  ]
+}

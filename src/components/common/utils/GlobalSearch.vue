@@ -96,7 +96,7 @@
                 <i :class="result.icon"></i>
               </div>
               <div class="result-content">
-                <div class="result-name" v-html="highlightText(result.name)"></div>
+                <div class="result-name">{{ result.name }}</div>
                 <div class="result-meta">
                   <span class="result-badge">{{ result.category }}</span>
                   <span class="result-info">{{ result.path }}</span>
@@ -125,7 +125,7 @@
                 <i class="pi pi-user"></i>
               </div>
               <div class="result-content">
-                <div class="result-name" v-html="highlightText(result.name)"></div>
+                <div class="result-name">{{ result.name }}</div>
                 <div class="result-meta">
                   <span v-if="result.role" class="result-badge">{{ result.role }}</span>
                   <span v-if="result.institution" class="result-info">{{ result.institution }}</span>
@@ -154,7 +154,7 @@
                 <i class="pi pi-building"></i>
               </div>
               <div class="result-content">
-                <div class="result-name" v-html="highlightText(result.name)"></div>
+                <div class="result-name">{{ result.name }}</div>
                 <div class="result-meta">
                   <span v-if="result.location" class="result-info">
                     <i class="pi pi-map-marker"></i> {{ result.location }}
@@ -184,7 +184,7 @@
                 <i class="pi pi-video"></i>
               </div>
               <div class="result-content">
-                <div class="result-name" v-html="highlightText(result.name)"></div>
+                <div class="result-name">{{ result.name }}</div>
                 <div class="result-meta">
                   <span v-if="result.videoCount" class="result-badge">{{ result.videoCount }} videos</span>
                   <span v-if="result.status" :class="['result-status', `status-${result.status}`]">{{ result.status }}</span>
@@ -224,15 +224,19 @@
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { db, auth } from '../../../../firebase';
-import { ref as firebaseRef, get } from 'firebase/database';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { useInstitutionsStore } from '@/stores/institutionsStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useRoleStore } from '@/stores/role';
+import { searchAccessibleProfiles, searchModules } from '@/service/globalSearchService';
+import { searchAvailableRoutes } from '@/service/searchRouteCatalog';
 
 const router = useRouter();
 const institutionsStore = useInstitutionsStore();
+const authStore = useAuthStore();
+const roleStore = useRoleStore();
 const showSearchBar = ref(false);
 const searchQuery = ref('');
 const searchInput = ref(null);
@@ -248,9 +252,6 @@ const categorizedResults = ref({
 
 // Debounce timer
 let debounceTimer = null;
-
-// User role (pour filtrer les pages)
-const currentUserRole = ref('user');
 
 const dialogHeader = computed(() => {
   return isLoading.value ? 'Recherche en cours...' : 'Recherche globale';
@@ -391,52 +392,6 @@ const calculateRelevanceScore = (text, query) => {
   return score;
 };
 
-// Highlight du texte recherche
-const highlightText = (text) => {
-  if (!searchQuery.value || !text) return text;
-  
-  const regex = new RegExp(`(${searchQuery.value})`, 'gi');
-  return text.replace(regex, '<mark>$1</mark>');
-};
-
-// Definition des pages/routes de l'application
-const getAvailablePages = () => {
-  const role = currentUserRole.value;
-  
-  const allPages = [
-    // Pages publiques
-    { name: 'Accueil', path: '/', icon: 'pi-home', roles: ['all'], category: 'Navigation', keywords: ['home', 'accueil', 'dashboard'] },
-    { name: 'Mon Profil', path: '/profile', icon: 'pi-user', roles: ['all'], category: 'Profil', keywords: ['profil', 'compte', 'settings'] },
-    
-    // Modules & Media
-    { name: 'Modules Video', path: '/modules', icon: 'pi-video', roles: ['all'], category: 'Medias', keywords: ['video', 'cours', 'formation', 'modules'] },
-    { name: 'Hub Multimedia', path: '/media', icon: 'pi-play-circle', roles: ['all'], category: 'Medias', keywords: ['media', 'multimedia', 'video'] },
-    
-    // Outils
-    { name: 'Notes', path: '/notes', icon: 'pi-book', roles: ['all'], category: 'Outils', keywords: ['notes', 'bloc-notes', 'notepad'] },
-    { name: 'Taches', path: '/tasklist', icon: 'pi-check-square', roles: ['all'], category: 'Outils', keywords: ['taches', 'todo', 'tasks'] },
-    { name: 'Calendrier', path: '/calendar', icon: 'pi-calendar', roles: ['all'], category: 'Outils', keywords: ['calendrier', 'agenda', 'calendar'] },
-    
-    // PFP
-    { name: 'PFP Gestion', path: '/pfp', icon: 'pi-briefcase', roles: ['all'], category: 'PFP', keywords: ['pfp', 'portfolio', 'formation'] },
-    { name: 'PFP Liste', path: '/pfp/list', icon: 'pi-list', roles: ['all'], category: 'PFP', keywords: ['pfp', 'liste', 'formations'] },
-    
-    // Admin uniquement
-    { name: 'Administration', path: '/admin', icon: 'pi-cog', roles: ['admin', 'editor'], category: 'Administration', keywords: ['admin', 'administration', 'settings'] },
-    { name: 'Gestion Utilisateurs', path: '/admin/users', icon: 'pi-users', roles: ['admin'], category: 'Administration', keywords: ['utilisateurs', 'users', 'membres'] },
-    { name: 'Gestion Institutions', path: '/admin/institutions', icon: 'pi-building', roles: ['admin'], category: 'Administration', keywords: ['institutions', 'etablissements', 'organisations'] },
-    { name: 'Administration Modules', path: '/admin/modules', icon: 'pi-folder', roles: ['admin', 'editor'], category: 'Administration', keywords: ['modules', 'videos', 'vimeo', 'medias'] },
-    { name: 'Votations', path: '/admin/votation', icon: 'pi-check-circle', roles: ['admin', 'editor'], category: 'Administration', keywords: ['votation', 'vote', 'sondage'] },
-    { name: 'Test Vimeo', path: '/vimeo-test', icon: 'pi-video', roles: ['admin', 'editor'], category: 'Test', keywords: ['vimeo', 'test', 'video'] },
-  ];
-  
-  // Filtrer par role
-  return allPages.filter(page => {
-    if (page.roles.includes('all')) return true;
-    return page.roles.includes(role);
-  });
-};
-
 // Fonction principale de recherche avec debounce
 const fetchSearchResults = async () => {
   if (searchQuery.value.length < 2) {
@@ -447,81 +402,33 @@ const fetchSearchResults = async () => {
   isLoading.value = true;
 
   try {
-    const query = searchQuery.value.toLowerCase();
-    
+    const query = searchQuery.value.trim();
+
     // === PAGES/ROUTES ===
-    const availablePages = getAvailablePages();
-    const pages = availablePages
-      .map(page => {
-        // Calculer le score de pertinence
-        const nameScore = calculateRelevanceScore(page.name, query);
-        const categoryScore = calculateRelevanceScore(page.category, query) * 0.5;
-        
-        // Chercher dans les keywords
-        let keywordScore = 0;
-        page.keywords.forEach(keyword => {
-          const score = calculateRelevanceScore(keyword, query);
-          if (score > keywordScore) keywordScore = score;
-        });
-        keywordScore *= 0.8;
-        
-        const totalScore = Math.max(nameScore, categoryScore, keywordScore);
-        
-        return {
-          ...page,
-          score: totalScore,
-          type: 'page'
-        };
-      })
-      .filter(page => page.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8);
+    const pages = searchAvailableRoutes({
+      router,
+      roleStore,
+      userId: authStore.user?.id,
+      query,
+    }).slice(0, 8);
     
     categorizedResults.value.pages = pages;
     
-    // References Firebase pour Users et Modules (institutions depuis Supabase)
-    const usersRef = firebaseRef(db, 'Users');
-    const modulesRef = firebaseRef(db, 'Media/Modules');
-
-    // Recuperer institutions depuis Supabase + autres depuis Firebase en parallele
-    const [usersSnap, supabaseInstitutions, modulesSnap] = await Promise.all([
-      get(usersRef).catch(() => null),
+    // Toutes les sources distantes de la recherche utilisent Supabase.
+    const [users, supabaseInstitutions, modules] = await Promise.all([
+      searchAccessibleProfiles(query).catch((error) => {
+        console.warn('[GlobalSearch] Recherche de profils indisponible:', error);
+        return [];
+      }),
       institutionsStore.fetchInstitutions().then(() => institutionsStore.institutions).catch(() => []),
-      get(modulesRef).catch(() => null),
+      searchModules(query).catch((error) => {
+        console.warn('[GlobalSearch] Recherche de modules indisponible:', error);
+        return [];
+      }),
     ]);
 
     // === UTILISATEURS ===
-    const users = [];
-    if (usersSnap && usersSnap.exists()) {
-      Object.entries(usersSnap.val()).forEach(([id, user]) => {
-        const nom = user.Nom || user.nom || '';
-        const prenom = user.Prenom || user.prenom || '';
-        const fullName = `${prenom} ${nom}`.trim();
-        const email = user.Email || user.email || '';
-        const role = user.Role || user.role || '';
-        
-        const nameScore = calculateRelevanceScore(fullName, query);
-        const emailScore = calculateRelevanceScore(email, query) * 0.7;
-        const totalScore = Math.max(nameScore, emailScore);
-        
-        if (totalScore > 0) {
-          users.push({
-            id,
-            name: fullName,
-            email,
-            role: role === 'admin' ? 'Administrateur' : role === 'editor' ? 'Editeur' : 'Utilisateur',
-            institution: user.Institution || '',
-            link: `/profile/${id}`,
-            score: totalScore,
-            type: 'user'
-          });
-        }
-      });
-    }
-    
-    // Trier par pertinence
-    users.sort((a, b) => b.score - a.score);
-    categorizedResults.value.users = users.slice(0, 10);
+    categorizedResults.value.users = users;
 
     // === INSTITUTIONS (depuis Supabase) ===
     const institutions = [];
@@ -543,7 +450,7 @@ const fetchSearchResults = async () => {
             id: inst.InstitutionId || inst.id,
             name,
             location: [ville, canton].filter(Boolean).join(', '),
-            link: `/institution/${inst.InstitutionId || inst.id}`,
+            route: { name: 'InstitutionView', params: { id: inst.InstitutionId || inst.id } },
             score: totalScore,
             type: 'institution'
           });
@@ -555,33 +462,7 @@ const fetchSearchResults = async () => {
     categorizedResults.value.institutions = institutions.slice(0, 10);
 
     // === MODULES VIDEO ===
-    const modules = [];
-    if (modulesSnap && modulesSnap.exists()) {
-      Object.entries(modulesSnap.val()).forEach(([id, module]) => {
-        const title = module.title || '';
-        const description = module.description || '';
-        const status = module.status || 'draft';
-        
-        const titleScore = calculateRelevanceScore(title, query);
-        const descScore = calculateRelevanceScore(description, query) * 0.6;
-        const totalScore = Math.max(titleScore, descScore);
-        
-        if (totalScore > 0) {
-          modules.push({
-            id,
-            name: title,
-            videoCount: module.videoCount || 0,
-            status: status === 'active' ? 'Actif' : status === 'archived' ? 'Archive' : 'Brouillon',
-            link: `/modules`,
-            score: totalScore,
-            type: 'module'
-          });
-        }
-      });
-    }
-    
-    modules.sort((a, b) => b.score - a.score);
-    categorizedResults.value.modules = modules.slice(0, 10);
+    categorizedResults.value.modules = modules;
 
   } catch (error) {
     console.error('[GlobalSearch] Erreur recherche:', error);
@@ -609,8 +490,7 @@ watch(searchQuery, (newValue) => {
 const navigateTo = (result) => {
   if (!result) return;
   
-  // Pages utilisent "path", autres utilisent "link"
-  const destination = result.path || result.link;
+  const destination = result.route || result.path || result.link;
   if (!destination) return;
   
   console.log('[GlobalSearch] Navigation vers:', destination);
@@ -642,16 +522,12 @@ const handleGlobalShortcut = (event) => {
 onMounted(async () => {
   loadSearchHistory();
   window.addEventListener('keydown', handleGlobalShortcut);
-  
-  // Charger le role de l'utilisateur
-  if (auth.currentUser) {
-    const userRef = firebaseRef(db, `Users/${auth.currentUser.uid}`);
-    const userSnap = await get(userRef).catch(() => null);
-    if (userSnap && userSnap.exists()) {
-      const userData = userSnap.val();
-      currentUserRole.value = userData.Role || userData.role || 'user';
-      console.log('[GlobalSearch] Role utilisateur:', currentUserRole.value);
-    }
+  if (!authStore.initialized) await authStore.initializeAuth();
+  if (!roleStore.initialized) {
+    await roleStore.init({
+      session: authStore.session,
+      sessionResolved: authStore.initialized,
+    });
   }
 });
 

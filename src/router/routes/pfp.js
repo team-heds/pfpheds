@@ -53,6 +53,7 @@ export default [
   // Secrétariat FP
   { path: '/admin/formation-pratique/secretariat/verification-criteres', component: () => import('@/views/admin/formation-pratique/secretariat/VerificationCriteresEtudiants.vue'), name: 'VerificationCriteresEtudiants', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/secretariat/suivi-institutions', component: () => import('@/views/admin/formation-pratique/secretariat/SuiviInstitutions.vue'), name: 'SuiviInstitutions', meta: { requiresAuth: true, need: 'page1.access' } },
+  { path: '/admin/formation-pratique/secretariat/couverture-stages', component: () => import('@/views/admin/formation-pratique/secretariat/CouvertureStages.vue'), name: 'CouvertureStages', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/secretariat/suivi-offres-institutions', component: () => import('@/views/admin/formation-pratique/secretariat/SuiviOffresInstitutions.vue'), name: 'SuiviOffresInstitutions', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/secretariat/tableau-offres', component: () => import('@/views/admin/formation-pratique/secretariat/TableauRecapitulatifOffres.vue'), name: 'TableauRecapitulatifOffres', meta: { requiresAuth: true, need: 'page1.access' } },
   { path: '/admin/formation-pratique/secretariat/recap-pfp-notes', component: () => import('@/views/admin/formation-pratique/secretariat/RecapPFPNotes.vue'), name: 'RecapPFPNotes', meta: { requiresAuth: true, need: 'page1.access' } },

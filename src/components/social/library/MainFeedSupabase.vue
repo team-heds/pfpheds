@@ -8,7 +8,17 @@
         </div>
       </transition>
       <StoriesBar />
-      <InfinityScroll :loading="loading" @load-more="loadMorePosts">
+      <div v-if="refreshWarning" class="feed-warning" role="status">{{ refreshWarning }}</div>
+      <LoadingState
+        v-if="initialLoading && filteredPosts.length === 0"
+        label="Chargement des publications…"
+      />
+      <InfinityScroll
+        v-else
+        :loading="paginationLoading"
+        scroll-target="window"
+        @load-more="loadMorePosts"
+      >
         <PostItem
           v-for="post in filteredPosts"
           :key="post.id"
@@ -29,7 +39,7 @@
         @apply-filter="applyFilter"
         @reset-filter="resetFilter"
       />
-      <div class="posts-container">
+      <div class="posts-container" ref="postsContainerRef">
         <div class="quick-post-bar" @click="handleCreateClick">
           <span class="quick-post-icon-circle">
             <i class="pi pi-file-edit quick-post-icon"></i>
@@ -41,13 +51,18 @@
           :loading="loading"
           :value="newPost"
           :selectedMedia="selectedMedia"
-          @update:value="val => newPost = val"
+          @update:value="(val) => (newPost = val)"
           @publish="postMessage"
           @media-selected="handleFileSelection"
           @remove-media="removeMedia"
         />
         <StoriesBar />
-        <InfinityScroll :loading="loading" @load-more="loadMorePosts">
+        <div v-if="refreshWarning" class="feed-warning" role="status">{{ refreshWarning }}</div>
+        <LoadingState
+          v-if="initialLoading && filteredPosts.length === 0"
+          label="Chargement des publications…"
+        />
+        <InfinityScroll v-else :loading="paginationLoading" @load-more="loadMorePosts">
           <PostItem
             v-for="post in filteredPosts"
             :key="post.id"
@@ -61,81 +76,81 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
 import { useAuthStore } from '@/stores/authStore'
 import { useToast } from 'primevue/usetoast'
 import InfinityScroll from '@/components/social/library/InfinityScroll.vue'
 import PostItem from '@/components/social/library/PostItem.vue'
-import Tag from 'primevue/tag'
 import Toast from 'primevue/toast'
-import Button from 'primevue/button'
-import FileUpload from 'primevue/fileupload'
 import FilterComponent from '@/components/social/library/FilterComponent.vue'
-import TextAreaComponent from './TextAreaComponent.vue'
 import CreatePostDialog from '@/components/social/library/CreatePostDialog.vue'
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import gamificationIntegration from '@/service/gamificationIntegration'
 import StoriesBar from './StoriesBar.vue'
+import LoadingState from '@/components/common/states/LoadingState.vue'
+import {
+  buildFeedScopeKey,
+  postMatchesFeedScope,
+  useSocialFeedStore
+} from '@/stores/socialFeedStore'
+import { createFeedRealtimeController } from '@/service/feedRealtimeController'
+import { readFeedScroll, restoreFeedScroll } from '@/service/feedScrollService'
 
 export default {
   name: 'MainFeedSupabase',
   props: {
     communityId: {
       type: String,
-      default: null,
-    },
+      default: null
+    }
   },
   components: {
     HeaderIcons,
     StoriesBar,
     InfinityScroll,
     PostItem,
-    Tag,
     Toast,
-    Button,
-    FileUpload,
     FilterComponent,
-    TextAreaComponent,
     CreatePostDialog,
+    LoadingState
   },
   setup(props) {
     const router = useRouter()
     const authStore = useAuthStore()
+    const feedStore = useSocialFeedStore()
     const toast = useToast()
 
-    const posts = ref([])
-    const filteredPosts = ref([])
     const newPost = ref('')
     const detectedTags = ref([])
-    const loading = ref(false)
     const postsPerPage = ref(10)
     const localCurrentUser = ref(null)
-    const avatarCache = ref({})
     const lastScrollTop = ref(0)
     const selectedMedia = ref([])
-    const oldestCreatedAt = ref(null)
     const showCreatePost = ref(false)
     const showHeaderStories = ref(true)
     const showHeaderIcons = ref(true)
     const showEditAndStories = ref(true)
     const mainFeedRef = ref(null)
+    const postsContainerRef = ref(null)
     const viewportWidth = ref(window.innerWidth)
     let postsChannel = null
-    let pollInterval = null
     let removeRouterAfterEach = null
+    const realtimeController = createFeedRealtimeController({
+      refresh: () => reloadPosts()
+    })
 
     const filterTypes = ref(
       props.communityId
         ? [
             { label: 'Tous', value: null },
-            { label: 'Hashtag', value: 'hashtag' },
+            { label: 'Hashtag', value: 'hashtag' }
           ]
         : [
             { label: 'Tous', value: null },
             { label: 'Hashtag', value: 'hashtag' },
-            { label: 'Communauté', value: 'community' },
+            { label: 'Communauté', value: 'community' }
           ]
     )
     const selectedFilterType = ref(null)
@@ -144,6 +159,27 @@ export default {
     const availableHashtags = ref([])
     const availableCommunities = ref([])
     const appliedFilter = ref({ type: null, value: null })
+    const createScope = () => ({
+      communityId: props.communityId || null,
+      filter: { ...appliedFilter.value }
+    })
+    const activeScope = ref(createScope())
+    feedStore.ensureScope(activeScope.value)
+    const activeEntry = computed(
+      () =>
+        feedStore.entries[buildFeedScopeKey(activeScope.value)] ||
+        feedStore.ensureScope(activeScope.value)
+    )
+    const posts = computed(() => activeEntry.value.posts)
+    const filteredPosts = posts
+    const initialLoading = computed(() => activeEntry.value.initialLoading)
+    const paginationLoading = computed(
+      () => activeEntry.value.initialLoading || activeEntry.value.paginating
+    )
+    const loading = computed(
+      () => initialLoading.value || activeEntry.value.paginating || activeEntry.value.publishing
+    )
+    const refreshWarning = computed(() => activeEntry.value.warning)
 
     const isMobile = computed(() => viewportWidth.value <= 600)
 
@@ -167,15 +203,16 @@ export default {
     watch(
       () => props.communityId,
       async () => {
+        saveCurrentScroll()
         selectedFilterType.value = null
         selectedFilterValue.value = null
         filterOptions.value = []
         appliedFilter.value = { type: null, value: null }
-        posts.value = []
-        filteredPosts.value = []
-        oldestCreatedAt.value = null
+        activeScope.value = createScope()
+        feedStore.ensureScope(activeScope.value)
         await fetchAvailableFilters()
-        await fetchPosts()
+        await reloadPosts()
+        await restoreCurrentScroll()
       }
     )
 
@@ -185,17 +222,11 @@ export default {
     }
 
     const fetchAvatars = async (userIds) => {
-      const missing = userIds.filter((id) => id && !avatarCache.value[id])
-      if (!missing.length) return
       try {
-        const { data: profiles } = await supabase
-          .from('user_profiles')
-          .select('user_id, avatar_url')
-          .in('user_id', missing)
-        ;(profiles || []).forEach((p) => {
-          avatarCache.value[p.user_id] = p.avatar_url || null
-        })
-      } catch {}
+        await feedStore.fetchAvatars(userIds)
+      } catch (error) {
+        console.warn('[SocialFeed] Avatars indisponibles:', error)
+      }
     }
 
     const postMessage = async () => {
@@ -205,7 +236,7 @@ export default {
           severity: 'warn',
           summary: 'Contenu vide',
           detail: 'Ajoutez un texte ou un média avant de publier.',
-          life: 2500,
+          life: 2500
         })
         return
       }
@@ -215,11 +246,12 @@ export default {
           severity: 'error',
           summary: 'Utilisateur non connecté',
           detail: 'Reconnectez-vous pour publier un post.',
-          life: 3000,
+          life: 3000
         })
         return
       }
 
+      feedStore.setPublishing(activeScope.value, true)
       try {
         const authorName =
           localCurrentUser.value.user_metadata?.full_name ||
@@ -251,8 +283,8 @@ export default {
               content: newPost.value,
               hashtags: hashtagsObject,
               mentions: mentionsObject,
-              community_id: props.communityId || null,
-            },
+              community_id: props.communityId || null
+            }
           ])
           .select('id, created_at')
           .single()
@@ -270,15 +302,27 @@ export default {
           id: ins.id,
           Author: authorName,
           IdUser: localCurrentUser.value.id,
-          avatar_url: avatarCache.value[localCurrentUser.value.id] || null,
+          avatar_url: feedStore.avatarCache[localCurrentUser.value.id] || null,
           Content: newPost.value,
           Timestamp: Date.now(),
           Hashtags: hashtagsObject,
           MentionGroups: mentionsObject,
-          media: media.map((m) => m.url),
+          community_id: props.communityId || null,
+          media: media.map((m) => m.url)
         }
-        posts.value = [mapped, ...posts.value]
-        applyFilters()
+        const insertedRow = {
+          id: ins.id,
+          user_id: localCurrentUser.value.id,
+          author_name: authorName,
+          content: newPost.value,
+          created_at: ins.created_at,
+          hashtags: hashtagsObject,
+          mentions: mentionsObject,
+          community_id: props.communityId || null
+        }
+        if (postMatchesFeedScope(insertedRow, activeScope.value)) {
+          feedStore.upsertPost(activeScope.value, mapped)
+        }
 
         await gamificationIntegration.onSocialInteraction(localCurrentUser.value.id, {
           action: 'post',
@@ -288,7 +332,7 @@ export default {
           hasMedia: selectedMedia.value.length > 0,
           hashtagsCount: Object.keys(hashtagsObject).length,
           mentionsCount: Object.keys(mentionsObject).length,
-          timestamp: Date.now(),
+          timestamp: Date.now()
         })
 
         newPost.value = ''
@@ -296,16 +340,16 @@ export default {
         selectedMedia.value = []
         detectedTags.value = []
         showCreatePost.value = false
-
-        reloadPosts()
       } catch (e) {
         console.error('Erreur publication Supabase:', e)
         toast.add({
           severity: 'error',
           summary: 'Publication échouée',
           detail: e?.message || 'Une erreur est survenue lors de la publication.',
-          life: 4000,
+          life: 4000
         })
+      } finally {
+        feedStore.setPublishing(activeScope.value, false)
       }
     }
 
@@ -354,10 +398,12 @@ export default {
     }
 
     const reloadPosts = async () => {
-      posts.value = []
-      filteredPosts.value = []
-      oldestCreatedAt.value = null
-      await fetchPosts()
+      const result = await feedStore.loadScope(activeScope.value, {
+        mode: 'refresh',
+        pageSize: postsPerPage.value
+      })
+      setAvailableHashtagsFromPosts()
+      return result
     }
 
     const fetchAvailableFilters = async () => {
@@ -368,7 +414,7 @@ export default {
             .select('community_id')
             .eq('user_id', localCurrentUser.value.id)
           if (ucErr) throw ucErr
-          const ids = (ucRows || []).map(r => r.community_id).filter(Boolean)
+          const ids = (ucRows || []).map((r) => r.community_id).filter(Boolean)
           if (!ids.length) {
             availableCommunities.value = []
             return
@@ -378,7 +424,7 @@ export default {
             .select('id, name')
             .in('id', ids)
           if (cErr) throw cErr
-          availableCommunities.value = (comms || []).map(c => ({ label: c.name, value: c.id }))
+          availableCommunities.value = (comms || []).map((c) => ({ label: c.name, value: c.id }))
         }
       } catch (e) {
         console.error('Erreur filtres Supabase:', e)
@@ -387,7 +433,7 @@ export default {
             severity: 'warn',
             summary: 'Filtres indisponibles',
             detail: 'Impossible de charger les filtres pour le moment.',
-            life: 3000,
+            life: 3000
           })
         }
       }
@@ -412,96 +458,69 @@ export default {
     }
 
     const fetchPosts = async () => {
-      if (loading.value) return
-      loading.value = true
-      try {
-        let q = supabase
-          .from('posts')
-          .select('id, user_id, author_name, content, created_at, hashtags, mentions')
-          .order('created_at', { ascending: false })
-          .limit(postsPerPage.value)
-
-        if (props.communityId) {
-          q = q.eq('community_id', props.communityId)
-        } else {
-          q = q.is('community_id', null)
-        }
-
-        if (appliedFilter.value.type === 'hashtag' && appliedFilter.value.value) {
-          q = q.contains('hashtags', { [appliedFilter.value.value]: true })
-        } else if (!props.communityId && appliedFilter.value.type === 'community' && appliedFilter.value.value) {
-          q = q.eq('community_id', appliedFilter.value.value)
-        }
-        if (oldestCreatedAt.value) {
-          q = q.lt('created_at', oldestCreatedAt.value)
-        }
-
-        const { data: rows, error } = await q
-        if (error) throw error
-
-        if (rows && rows.length > 0) {
-          const ids = rows.map((r) => r.id)
-          const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))]
-          let mediaMap = {}
-          if (ids.length > 0) {
-            const { data: mediaRows, error: mErr } = await supabase
-              .from('post_media')
-              .select('post_id, url, type')
-              .in('post_id', ids)
-            if (!mErr && mediaRows) {
-              mediaRows.forEach((m) => {
-                if (!mediaMap[m.post_id]) mediaMap[m.post_id] = []
-                mediaMap[m.post_id].push({ url: m.url, type: m.type })
-              })
-            }
-          }
-
-          await fetchAvatars(userIds)
-
-          const mapped = rows.map((r) => ({
-            id: r.id,
-            Author: r.author_name,
-            IdUser: r.user_id,
-            avatar_url: avatarCache.value[r.user_id] || null,
-            Content: r.content,
-            Timestamp: Date.parse(r.created_at),
-            Hashtags: r.hashtags || {},
-            MentionGroups: r.mentions || {},
-            media: (mediaMap[r.id] || []).map((m) => m.url),
-          }))
-
-          posts.value = [...posts.value, ...mapped]
-          const last = rows[rows.length - 1]
-          oldestCreatedAt.value = last.created_at
-          applyFilters()
-          setAvailableHashtagsFromPosts()
-        }
-      } catch (e) {
-        console.error('Erreur récupération posts Supabase:', e)
-        toast.add({
-          severity: 'error',
-          summary: 'Chargement impossible',
-          detail: 'Impossible de charger les posts.',
-          life: 4000,
-        })
-      }
-      loading.value = false
+      return reloadPosts()
     }
 
     const applyFilters = () => {
-      if (appliedFilter.value.type === 'hashtag' && appliedFilter.value.value) {
-        filteredPosts.value = posts.value.filter(
-          (post) => post.Hashtags && post.Hashtags[appliedFilter.value.value]
-        )
-      } else if (appliedFilter.value.type === 'community' && appliedFilter.value.value) {
-        filteredPosts.value = posts.value
-      } else {
-        filteredPosts.value = posts.value
-      }
+      setAvailableHashtagsFromPosts()
     }
 
     const loadMorePosts = async () => {
-      if (!loading.value) await fetchPosts()
+      const result = await feedStore.loadScope(activeScope.value, {
+        mode: 'paginate',
+        pageSize: postsPerPage.value
+      })
+      setAvailableHashtagsFromPosts()
+      return result
+    }
+
+    const saveCurrentScroll = () => {
+      const scrollTop = readFeedScroll({
+        isMobile: isMobile.value,
+        container: postsContainerRef.value
+      })
+      feedStore.saveScroll(activeScope.value, scrollTop)
+    }
+
+    const restoreCurrentScroll = async () => {
+      await nextTick()
+      const scrollTop = activeEntry.value.scrollTop || 0
+      restoreFeedScroll({
+        isMobile: isMobile.value,
+        container: postsContainerRef.value,
+        scrollTop
+      })
+      lastScrollTop.value = scrollTop
+    }
+
+    const switchScope = async (scope) => {
+      saveCurrentScroll()
+      const nextEntry = feedStore.ensureScope(scope)
+      if (!nextEntry.loaded) {
+        const result = await feedStore.loadScope(scope, {
+          mode: 'refresh',
+          pageSize: postsPerPage.value
+        })
+        if (!result.ok && !nextEntry.loaded) {
+          appliedFilter.value = { ...activeScope.value.filter }
+          selectedFilterType.value = activeScope.value.filter.type
+          selectedFilterValue.value = activeScope.value.filter.value
+          onFilterTypeChange(selectedFilterType.value)
+          toast.add({
+            severity: 'warn',
+            summary: 'Filtre indisponible',
+            detail: 'Le fil déjà affiché a été conservé.',
+            life: 3500
+          })
+          return result
+        }
+      } else {
+        void feedStore.loadScope(scope, { mode: 'refresh', pageSize: postsPerPage.value })
+      }
+      activeScope.value = scope
+      setAvailableHashtagsFromPosts()
+      await restoreCurrentScroll()
+      return { ok: true }
     }
 
     const handleCreateClick = () => {
@@ -515,6 +534,7 @@ export default {
     const handleScroll = (event) => {
       const scrollTop = event.target.scrollTop
       lastScrollTop.value = scrollTop
+      feedStore.saveScroll(activeScope.value, scrollTop)
       showEditAndStories.value = scrollTop === 0
     }
 
@@ -526,7 +546,31 @@ export default {
         showHeaderIcons.value = true
       }
       lastScrollTop.value = currentScroll
+      feedStore.saveScroll(activeScope.value, currentScroll)
     }
+
+    watch(isMobile, async (nextMobile, previousMobile) => {
+      const scrollTop = readFeedScroll({
+        isMobile: previousMobile,
+        container: postsContainerRef.value
+      })
+      feedStore.saveScroll(activeScope.value, scrollTop)
+      window.removeEventListener('scroll', handleWindowScroll)
+      postsContainerRef.value?.removeEventListener('scroll', handleScroll)
+
+      await nextTick()
+      if (nextMobile) {
+        window.addEventListener('scroll', handleWindowScroll)
+      } else {
+        postsContainerRef.value?.addEventListener('scroll', handleScroll)
+      }
+      restoreFeedScroll({
+        isMobile: nextMobile,
+        container: postsContainerRef.value,
+        scrollTop
+      })
+      lastScrollTop.value = scrollTop
+    })
 
     onMounted(async () => {
       if (!authStore.user) {
@@ -537,96 +581,56 @@ export default {
         localCurrentUser.value = currentUser
         await fetchAvatars([currentUser.id])
         await fetchAvailableFilters()
-        await fetchPosts()
+        await reloadPosts()
+        await restoreCurrentScroll()
       }
-      if (isMobile.value) {
-        window.addEventListener('scroll', handleWindowScroll)
-      }
+      if (isMobile.value) window.addEventListener('scroll', handleWindowScroll)
       window.addEventListener('resize', handleResize)
-      if (mainFeedRef.value) {
-        mainFeedRef.value.addEventListener('scroll', handleScroll)
-      }
+      if (!isMobile.value) postsContainerRef.value?.addEventListener('scroll', handleScroll)
 
       // Supabase Realtime: nouveaux posts
       if (!postsChannel) {
         postsChannel = supabase
           .channel('realtime-posts-feed')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'posts' }, async (payload) => {
-          const row = payload.new
-          // Appliquer le même scope que le feed courant
-          const matchCommunity = props.communityId
-            ? row.community_id === props.communityId
-            : (
-                (appliedFilter.value.type === 'community' && row.community_id === appliedFilter.value.value) ||
-                (appliedFilter.value.type !== 'community' && row.community_id === null)
-              )
-          const matchHashtag = (
-            appliedFilter.value.type !== 'hashtag' || (row.hashtags && row.hashtags[appliedFilter.value.value])
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'posts' },
+            async (payload) => {
+              await feedStore.handleRealtimePostChange(payload)
+            }
           )
-          if (!matchCommunity || !matchHashtag) return
-
-          // Récupérer ses médias
-          let mediaUrls = []
-          try {
-            const { data: mediaRows } = await supabase
-              .from('post_media')
-              .select('url, type')
-              .eq('post_id', row.id)
-            mediaUrls = (mediaRows || []).map((m) => m.url)
-          } catch {}
-
-          await fetchAvatars([row.user_id])
-          const mapped = {
-            id: row.id,
-            Author: row.author_name,
-            IdUser: row.user_id,
-            avatar_url: avatarCache.value[row.user_id] || null,
-            Content: row.content,
-            Timestamp: Date.parse(row.created_at),
-            Hashtags: row.hashtags || {},
-            MentionGroups: row.mentions || {},
-            media: mediaUrls,
-          }
-          // Éviter doublons
-          if (!posts.value.find((p) => p.id === mapped.id)) {
-            posts.value = [mapped, ...posts.value]
-            applyFilters()
-          }
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'post_media' },
+            (payload) => {
+              feedStore.attachRealtimeMedia(payload.new)
+            }
+          )
+          .subscribe((status) => {
+            realtimeController.handleStatus(status)
           })
-          .subscribe()
-      }
-
-      // Fallback polling: recharger le feed périodiquement si le realtime est indisponible
-      if (!pollInterval) {
-        pollInterval = setInterval(() => {
-          reloadPosts()
-        }, 30000)
       }
 
       if (!removeRouterAfterEach) {
         removeRouterAfterEach = router.afterEach((to, from) => {
           if (from?.name === 'CreateContentMobile') {
-            reloadPosts()
+            void reloadPosts()
           }
         })
       }
     })
 
     onUnmounted(() => {
+      saveCurrentScroll()
       window.removeEventListener('scroll', handleWindowScroll)
       window.removeEventListener('resize', handleResize)
-      if (mainFeedRef.value) {
-        mainFeedRef.value.removeEventListener('scroll', handleScroll)
-      }
+      postsContainerRef.value?.removeEventListener('scroll', handleScroll)
       cleanupMediaPreviews(selectedMedia.value)
       if (postsChannel) {
         supabase.removeChannel(postsChannel)
         postsChannel = null
       }
-      if (pollInterval) {
-        clearInterval(pollInterval)
-        pollInterval = null
-      }
+      realtimeController.stop()
       if (removeRouterAfterEach) {
         removeRouterAfterEach()
         removeRouterAfterEach = null
@@ -643,7 +647,6 @@ export default {
       localCurrentUser,
       lastScrollTop,
       selectedMedia,
-      oldestCreatedAt,
       filterTypes,
       selectedFilterType,
       filterOptions,
@@ -657,7 +660,11 @@ export default {
       showHeaderStories,
       showHeaderIcons,
       showEditAndStories,
+      initialLoading,
+      paginationLoading,
+      refreshWarning,
       mainFeedRef,
+      postsContainerRef,
       extractTags,
       postMessage,
       uploadMedia,
@@ -666,20 +673,40 @@ export default {
       reloadPosts,
       fetchAvailableFilters,
       onFilterTypeChange,
-      applyFilter: () => { appliedFilter.value = { type: selectedFilterType.value, value: selectedFilterValue.value }; reloadPosts() },
-      resetFilter: () => { selectedFilterType.value = null; selectedFilterValue.value = null; appliedFilter.value = { type: null, value: null }; filterOptions.value = []; reloadPosts() },
+      applyFilter: async () => {
+        appliedFilter.value = { type: selectedFilterType.value, value: selectedFilterValue.value }
+        await switchScope(createScope())
+      },
+      resetFilter: async () => {
+        selectedFilterType.value = null
+        selectedFilterValue.value = null
+        appliedFilter.value = { type: null, value: null }
+        filterOptions.value = []
+        await switchScope(createScope())
+      },
       fetchPosts,
       applyFilters,
       loadMorePosts,
       handleScroll,
       updateSelectedFilterType,
-      updateSelectedFilterValue,
+      updateSelectedFilterValue
     }
-  },
+  }
 }
 </script>
 
 <style scoped>
+.feed-warning {
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 35%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--text-color);
+  font-size: 0.875rem;
+}
+
 .quick-post-bar {
   display: flex;
   align-items: center;
@@ -687,7 +714,7 @@ export default {
   border-radius: 1.2rem;
   padding: 0.5rem 1rem;
   margin-bottom: 1.1rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   cursor: pointer;
   transition: background 0.18s;
   max-width: 880px;
@@ -696,24 +723,66 @@ export default {
   margin-right: auto;
 }
 @media (max-width: 900px) {
-  .quick-post-bar { max-width: 98vw; }
+  .quick-post-bar {
+    max-width: 98vw;
+  }
 }
 .quick-post-icon-circle {
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; background: var(--surface-hover);
-  border-radius: 50%; margin-right: 0.7rem; flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--surface-hover);
+  border-radius: 50%;
+  margin-right: 0.7rem;
+  flex-shrink: 0;
 }
-.quick-post-icon { font-size: 1rem; color: var(--primary-color); }
-.quick-post-placeholder { color: #888; font-size: 1.01rem; flex: 1; text-align: left; }
+.quick-post-icon {
+  font-size: 1rem;
+  color: var(--primary-color);
+}
+.quick-post-placeholder {
+  color: #888;
+  font-size: 1.01rem;
+  flex: 1;
+  text-align: left;
+}
 @media (max-width: 768px) {
-  .quick-post-bar { padding: 0.35rem 0.5rem; border-radius: 0.8rem; margin-bottom: 0.6rem; }
-  .quick-post-icon-circle { width: 26px; height: 26px; margin-right: 0.5rem; }
-  .quick-post-icon { font-size: 0.85rem; }
-  .quick-post-placeholder { font-size: 0.96rem; }
+  .quick-post-bar {
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 0.6rem;
+  }
+  .quick-post-icon-circle {
+    width: 26px;
+    height: 26px;
+    margin-right: 0.5rem;
+  }
+  .quick-post-icon {
+    font-size: 0.85rem;
+  }
+  .quick-post-placeholder {
+    font-size: 0.96rem;
+  }
 }
-.main-feed { height: 85vh; max-height: 90vh; overflow-y: auto; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 880px; margin-left: auto; margin-right: auto; }
+.main-feed {
+  height: 85vh;
+  max-height: 90vh;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+}
 @media (max-width: 900px) {
-  .main-feed { max-width: 98vw; }
+  .main-feed {
+    max-width: 98vw;
+  }
 }
 .main-feed.community-mode {
   max-width: 880px;
@@ -735,12 +804,56 @@ export default {
   width: 100%;
   max-width: 100%;
 }
-.posts-container { height: 100vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; }
-.posts-container::-webkit-scrollbar { display: none; }
-.mainfeed-mobile { display: flex; flex-direction: column; }
-.header-stories-sticky { position: sticky; top: 0; z-index: 10; background: #0d1a2f; transition: transform 0.25s; }
-.header-stories-sticky.hidden { transform: translateY(-100%); }
-.post-feed-scrollable { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.25s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+@media (max-width: 600px) {
+  .main-feed,
+  .main-feed.community-mode {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .mainfeed-mobile {
+    width: 100%;
+  }
+}
+.posts-container {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.posts-container::-webkit-scrollbar {
+  display: none;
+}
+.mainfeed-mobile {
+  display: flex;
+  flex-direction: column;
+}
+.header-stories-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0d1a2f;
+  transition: transform 0.25s;
+}
+.header-stories-sticky.hidden {
+  transform: translateY(-100%);
+}
+.post-feed-scrollable {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

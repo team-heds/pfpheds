@@ -116,8 +116,8 @@ const submitFormSupabase = async () => {
       life: 3000 
     })
     
-    await roleStore.loadPermissions(authStore.session)
-    const redirectPath = getPostLoginRedirect(roleStore.perms)
+    const permissions = await roleStore.loadPermissions(authStore.session)
+    const redirectPath = getPostLoginRedirect(permissions)
     setTimeout(() => router.push(redirectPath), 1500)
   } catch (error) {
     console.error('Supabase login error:', error)

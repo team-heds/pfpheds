@@ -21,7 +21,7 @@ const { mockUpsertStudentVote } = vi.hoisted(() => ({
   mockUpsertStudentVote: vi.fn(),
 }))
 
-vi.mock('@/stores/votesBackendService', () => ({
+vi.mock('@/service/votesBackendService', () => ({
   default: {
     upsertStudentVote: (...args) => mockUpsertStudentVote(...args),
   },
@@ -138,7 +138,9 @@ describe('votesStore', () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: mockVote, error: null }),
+        in: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue({ data: [mockVote], error: null }),
       })
 
       const result = await store.fetchVote('PFP1A', '2025')
@@ -152,7 +154,9 @@ describe('votesStore', () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        in: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue({ data: [], error: null }),
       })
 
       const result = await store.fetchVote('PFP1A', '2025')
@@ -207,18 +211,11 @@ describe('votesStore', () => {
       store.currentVote = { pfp_type: 'PFP1A', year: '2025' }
 
       mockAuthGetUser.mockResolvedValue({ data: { user: { id: 'u1' } } })
-      mockFrom.mockReturnValue({
-        delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-      })
-      // The last .eq() in the chain resolves
+      // La requête se termine par .in('year', ...).
       const chain = {
         delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ error: null }),
-          }),
-        }),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({ error: null }),
       }
       mockFrom.mockReturnValue(chain)
 

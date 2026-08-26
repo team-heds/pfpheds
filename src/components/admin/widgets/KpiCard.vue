@@ -30,7 +30,7 @@
 
       <!-- Valeur principale avec animation -->
       <div class="kpi-value-section">
-        <div class="kpi-value" :class="{ 'animate-value': animated }">
+        <div class="kpi-value" :class="{ 'animate-value': animated, 'kpi-value--unavailable': !isAvailable }">
           {{ formattedValue }}
         </div>
         
@@ -40,6 +40,10 @@
           <span>{{ Math.abs(trend) }}%</span>
         </div>
       </div>
+
+      <p v-if="!isAvailable" class="kpi-unavailable" role="status">
+        Cette donnée est temporairement indisponible.
+      </p>
 
       <!-- Charts optionnels -->
       <template v-if="showChart && chartData && chartData.length">
@@ -123,17 +127,21 @@ const props = defineProps({
   actionLabel: String,
   variant: { type: String, default: 'default' }, // default, compact, large
   size: { type: String, default: 'medium' }, // compact, small, medium, large, xlarge
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  status: { type: String, default: 'ok' }
 })
 
 defineEmits(['action'])
 
 const formattedValue = computed(() => {
+  if (!isAvailable.value) return 'Indisponible'
   if (typeof props.value === 'number') {
     return props.value.toLocaleString()
   }
-  return props.value || '0'
+  return props.value
 })
+
+const isAvailable = computed(() => props.status === 'ok' && props.value !== null && props.value !== undefined)
 
 const trendClass = computed(() => ({
   'trend-up': props.trend > 0,
@@ -344,6 +352,17 @@ const effectiveChartHeight = computed(() => {
   color: var(--text-color);
   line-height: 1;
   letter-spacing: -0.02em;
+}
+
+.kpi-value--unavailable {
+  font-size: 1rem;
+  color: var(--text-color-secondary);
+}
+
+.kpi-unavailable {
+  margin: -.5rem 0 0;
+  color: var(--text-color-secondary);
+  font-size: .75rem;
 }
 
 .animate-value {

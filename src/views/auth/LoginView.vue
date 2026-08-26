@@ -107,8 +107,8 @@ const submitForm = async () => {
     loginLimiter.reset();
     toast.add({ severity: 'success', summary: 'Connexion réussie', detail: 'Vous allez être redirigé vers le feed...', life: 3000 });
     
-    await roleStore.loadPermissions(authStore.session);
-    const redirectPath = getPostLoginRedirect(roleStore.perms);
+    const permissions = await roleStore.loadPermissions(authStore.session);
+    const redirectPath = getPostLoginRedirect(permissions);
     setTimeout(() => {
       router.push(redirectPath);
     }, 1500);

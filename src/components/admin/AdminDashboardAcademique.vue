@@ -20,24 +20,24 @@
           <div class="flex gap-3">
             <ButtonGroup>
               <Button
-                label="7j"
-                :outlined="period !== '7d'"
-                :severity="period === '7d' ? 'primary' : 'secondary'"
-                @click="period = '7d'"
+                label="Semaine"
+                :outlined="period !== 'week'"
+                :severity="period === 'week' ? 'primary' : 'secondary'"
+                @click="changePeriod('week')"
                 size="small"
               />
               <Button
-                label="30j"
-                :outlined="period !== '30d'"
-                :severity="period === '30d' ? 'primary' : 'secondary'"
-                @click="period = '30d'"
+                label="Mois"
+                :outlined="period !== 'month'"
+                :severity="period === 'month' ? 'primary' : 'secondary'"
+                @click="changePeriod('month')"
                 size="small"
               />
               <Button
-                label="90j"
-                :outlined="period !== '90d'"
-                :severity="period === '90d' ? 'primary' : 'secondary'"
-                @click="period = '90d'"
+                label="Trimestre"
+                :outlined="period !== 'quarter'"
+                :severity="period === 'quarter' ? 'primary' : 'secondary'"
+                @click="changePeriod('quarter')"
                 size="small"
               />
             </ButtonGroup>
@@ -111,21 +111,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import KpiCard from './widgets/KpiCard.vue'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
-import { useKpiManager } from '@/composables/useKpiManager'
+import { useAdminDashboardStats } from '@/composables/useAdminDashboardStats'
+import { getKpisForRole } from '@/config/kpiConfigs'
+import { useRoleStore } from '@/stores/role'
 
 const router = useRouter()
 
-// Utiliser le système KPI modulable
-const { kpisWithData, loading, refreshing, period, loadKpis, refresh } = useKpiManager('academique')
-
-const activities = ref([])
+const roleStore = useRoleStore()
+const period = ref('month')
+const stats = useAdminDashboardStats({ domains: ['academic'], period })
+const configurations = computed(() => getKpisForRole('academique', roleStore.perms || [], roleStore.isSuper))
+const kpisWithData = stats.mapKpis('academic', configurations)
+const { loading, refreshing } = stats
+const loadKpis = () => stats.load().catch(() => undefined)
+const refresh = () => stats.refresh().catch(() => undefined)
+const changePeriod = async (nextPeriod) => {
+  period.value = nextPeriod
+  await refresh()
+}
 
 const navigateTo = (path) => {
   router.push(path)
@@ -143,33 +153,8 @@ const handleKpiAction = (kpi) => {
   }
 }
 
-const activityIcon = (type) => {
-  switch (type) {
-    case 'enseignant':
-      return 'pi pi-user'
-    case 'cours':
-      return 'pi pi-calendar'
-    case 'media':
-      return 'pi pi-video'
-    case 'module':
-      return 'pi pi-th-large'
-    default:
-      return 'pi pi-info-circle'
-  }
-}
-
 onMounted(async () => {
   await loadKpis()
-  activities.value = [
-    {
-      type: 'enseignant',
-      title: 'Nouvel enseignant ajouté',
-      time: 'il y a 25 min',
-      to: '/admin/teachers-si'
-    },
-    { type: 'cours', title: 'Cours planifié', time: 'il y a 2 h', to: '/admin/planning/manage' },
-    { type: 'media', title: 'Vidéo importée', time: 'hier', to: '/admin/academic/video-library' }
-  ]
 })
 </script>
 

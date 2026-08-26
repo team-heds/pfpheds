@@ -871,6 +871,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
+import { FAILED_PFP_GRADE_FIELDS, isFailedPfpGrade } from '@/service/pfpFailureService'
 import { useAuthStore } from '@/stores/authStore'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import DataTable from 'primevue/datatable'
@@ -1255,16 +1256,6 @@ const groupedEchecs = computed(() => {
   })
 })
 
-const failedPfpGradeFields = [
-  { field: 'pfp1a', pfpType: 'PFP1A' },
-  { field: 'pfp1b', pfpType: 'PFP1B' },
-  { field: 'pfp2', pfpType: 'PFP2' },
-  { field: 'pfp3', pfpType: 'PFP3' },
-  { field: 'pfp4', pfpType: 'PFP4' }
-]
-
-const isFailedPfpGrade = (grade) => String(grade ?? '').trim().toUpperCase() === 'F'
-
 const fetchEchecsStudents = async () => {
   loadingEchecs.value = true
   try {
@@ -1291,7 +1282,7 @@ const fetchEchecsStudents = async () => {
     })
 
     ;(notes || []).forEach(note => {
-      failedPfpGradeFields.forEach(({ field, pfpType }) => {
+      FAILED_PFP_GRADE_FIELDS.forEach(({ field, pfpType }) => {
         if (!isFailedPfpGrade(note[field])) return
 
         const gradeFailure = {

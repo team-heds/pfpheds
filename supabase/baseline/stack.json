@@ -1,0 +1,44 @@
+{
+  "exportedAt": "2026-08-24T15:07:18.4789549Z",
+  "source": "self-hosted-production-read-only",
+  "postgresVersion": "15.6",
+  "gateway": "caddy",
+  "exposedSchemas": [
+    "public"
+  ],
+  "internalSchemas": [
+    "auth",
+    "realtime",
+    "storage"
+  ],
+  "publicExtensions": [
+    "citext|public|true",
+    "pg_net|public|false",
+    "pg_trgm|public|true",
+    "pgcrypto|public|true",
+    "uuid-ossp|public|true"
+  ],
+  "images": [
+    "supabase-auth-1|supabase/gotrue:v2.144.0",
+    "supabase-studio-1|supabase/studio:latest",
+    "supabase-realtime-1|supabase/realtime:v2.47.2",
+    "supabase-rest-1|postgrest/postgrest:v12.2.3",
+    "supabase-storage-1|supabase/storage-api:v1.11.1",
+    "supabase-db-1|supabase/postgres:15.6.1.101",
+    "supabase-caddy-1|caddy:2.8",
+    "supabase-meta-1|supabase/postgres-meta:v0.80.0"
+  ],
+  "dumpSha256": "2f39952dab0011d5e8beb76e5886d188f404e4938800c5ccaf8884b081338c97",
+  "catalogSha256": "7a6631c2df1ef66d385349984438e9340322b29530266190f5f535877fb2fddf",
+  "internalDependenciesSha256": "aa36ec231d326f14365c694f94b7547c1dfee234ec921a995604e81d10847d36",
+  "objectCounts": {
+    "relations": 117,
+    "functions": 237,
+    "policies": 258,
+    "triggers": 42,
+    "tableGrants": 2151,
+    "routineGrants": 501,
+    "foreignKeys": 81,
+    "viewDependencies": 39
+  }
+}
