@@ -14,6 +14,15 @@ export const ADMIN_DASHBOARD_PERIODS = Object.freeze([
   'quarter',
   'year',
 ])
+export const ADMIN_DASHBOARD_FILTER_KEYS = Object.freeze([
+  'track',
+  'role',
+  'class',
+  'cohort',
+  'pfp',
+  'institution',
+  'status',
+])
 
 const METRIC_STATUSES = new Set(['ok', 'unavailable', 'error'])
 const DOMAIN_STATUSES = new Set(['ok', 'partial', 'unavailable', 'error'])
@@ -75,16 +84,40 @@ function validateReference(reference) {
   return String(reference)
 }
 
+export function normalizeAdminDashboardFilters(filters = {}) {
+  const unknownKeys = Object.keys(filters || {}).filter(
+    (key) => !ADMIN_DASHBOARD_FILTER_KEYS.includes(key),
+  )
+  if (unknownKeys.length) throw new TypeError('Un filtre dashboard est invalide.')
+  return Object.fromEntries(
+    ADMIN_DASHBOARD_FILTER_KEYS.map((key) => {
+      const raw = filters?.[key]
+      const values = (Array.isArray(raw) ? raw : raw ? [raw] : [])
+        .map((value) => String(value).trim())
+        .filter(Boolean)
+      return [key, [...new Set(values)].sort((a, b) => a.localeCompare(b, 'fr-CH'))]
+    }).filter(([, values]) => values.length),
+  )
+}
+
 function requestOptions(options = {}) {
   return {
     domains: uniqueDomains(options.domains),
     period: validatePeriod(options.period),
     reference: validateReference(options.reference),
+    filters: normalizeAdminDashboardFilters(options.filters),
   }
 }
 
 function requestKey(options) {
-  return `${options.domains.join(',')}|${options.period}|${options.reference || ''}`
+  return `${options.domains.join(',')}|${options.period}|${options.reference || ''}|${JSON.stringify(options.filters)}`
+}
+
+function appendFilters(params, filters) {
+  for (const key of ADMIN_DASHBOARD_FILTER_KEYS) {
+    for (const value of filters[key] || []) params.append(key, value)
+  }
+  return params
 }
 
 export function buildAdminDashboardStatsUrl(options = {}) {
@@ -94,7 +127,40 @@ export function buildAdminDashboardStatsUrl(options = {}) {
     period: resolved.period,
   })
   if (resolved.reference) params.set('reference', resolved.reference)
+  appendFilters(params, resolved.filters)
   return `${String(API_URL).replace(/\/+$/, '')}/admin-dashboard/v1/stats?${params}`
+}
+
+export function buildAdminDashboardFilterOptionsUrl(options = {}) {
+  const domains = uniqueDomains(options.domains)
+  const params = new URLSearchParams({ domains: domains.join(',') })
+  return `${String(API_URL).replace(/\/+$/, '')}/admin-dashboard/v1/filter-options?${params}`
+}
+
+export function validateAdminDashboardFilterOptions(payload, requestedDomains) {
+  if (!payload || payload.version !== '1' || !payload.options || !payload.applicability) {
+    throw new TypeError('Le contrat des filtres admin est invalide.')
+  }
+  const domains = uniqueDomains(requestedDomains)
+  if (!Array.isArray(payload.domains) || payload.domains.some((domain) => !domains.includes(domain))) {
+    throw new TypeError('Les domaines des filtres admin sont invalides.')
+  }
+  for (const entries of Object.values(payload.options)) {
+    if (!Array.isArray(entries)) throw new TypeError('Une liste de filtres admin est invalide.')
+    for (const entry of entries) {
+      if (!entry?.value || !entry?.label) throw new TypeError('Une option de filtre admin est invalide.')
+    }
+  }
+  return payload
+}
+
+export async function fetchAdminDashboardFilterOptions(options = {}) {
+  const domains = uniqueDomains(options.domains)
+  const response = await authFetch(buildAdminDashboardFilterOptionsUrl({ domains }), {
+    method: 'GET',
+    signal: options.signal,
+  })
+  return validateAdminDashboardFilterOptions(await response.json(), domains)
 }
 
 export function validateAdminDashboardStatsResponse(payload, requestedDomains = ADMIN_DASHBOARD_DOMAINS) {
@@ -110,6 +176,7 @@ export function validateAdminDashboardStatsResponse(payload, requestedDomains = 
   }
 
   const domains = uniqueDomains(requestedDomains)
+  if (payload.appliedFilters !== undefined) normalizeAdminDashboardFilters(payload.appliedFilters)
   for (const domainName of domains) {
     const domain = payload.domains[domainName]
     if (!domain || !DOMAIN_STATUSES.has(domain.status) || !domain.metrics) {

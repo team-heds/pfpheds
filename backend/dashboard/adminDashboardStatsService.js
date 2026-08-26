@@ -6,7 +6,17 @@ const {
   unavailableComparison
 } = require('./adminDashboardContract')
 const { resolveDashboardPeriods } = require('./adminDashboardPeriod')
-const { filterStudentProfiles, filterTeacherProfiles } = require('../security/userAudience')
+const {
+  filterStudentProfiles,
+  filterTeacherProfiles,
+  isActiveProfile
+} = require('../security/userAudience')
+const {
+  applyColumnFilter,
+  applyPlaceFilters,
+  applyResultFilters,
+  filterProfiles
+} = require('./adminDashboardFilters')
 
 const SOURCES = Object.freeze({
   users: 'public.user_profiles',
@@ -140,13 +150,26 @@ async function loadMetrics(domain, definitions, asOf, periods, onMetricError) {
   return createDomain(Object.fromEntries(entries))
 }
 
-function generalDefinitions(client) {
+function hasPeopleFilters(filters) {
+  return ['track', 'role', 'class', 'cohort'].some((key) => filters[key]?.length)
+}
+
+function generalDefinitions(client, filters = {}) {
   return {
-    users: flow((period) =>
-      countRows(client, 'user_profiles', 'user_id', (query) =>
-        applyPeriod(query.eq('is_active', true), 'created_at', period)
+    users: flow(async (period) => {
+      if (!hasPeopleFilters(filters)) {
+        return countRows(client, 'user_profiles', 'user_id', (query) =>
+          applyPeriod(query.eq('is_active', true), 'created_at', period)
+        )
+      }
+      const profiles = await selectRows(
+        client,
+        'user_profiles',
+        'role,permissions,is_active,classe,pfp_cohort,primary_track_id',
+        (query) => applyPeriod(query, 'created_at', period)
       )
-    ),
+      return filterProfiles(profiles.filter(isActiveProfile), filters).length
+    }),
     roles: snapshot(() => countRows(client, 'roles', 'id')),
     permissions: snapshot(() => countRows(client, 'permissions', 'slug')),
     routes: flow((period) =>
@@ -157,51 +180,57 @@ function generalDefinitions(client) {
   }
 }
 
-function pfpDefinitions(client) {
+function pfpDefinitions(client, filters = {}) {
   return {
     students: flow(async (period) => {
       const profiles = await selectRows(
         client,
         'user_profiles',
-        'user_id,role,permissions,is_active',
+        'user_id,role,permissions,is_active,classe,pfp_cohort,primary_track_id',
         (query) => applyPeriod(query, 'created_at', period)
       )
-      return filterStudentProfiles(profiles).length
+      return filterProfiles(filterStudentProfiles(profiles), filters).length
     }),
     institutions: snapshot(
-      () => countRows(client, 'institutions', 'InstitutionId'),
+      () =>
+        countRows(client, 'institutions', 'InstitutionId', (query) =>
+          applyColumnFilter(query, 'Name', filters.institution)
+        ),
       'snapshot',
       'SOURCE_HAS_NO_CREATED_AT'
     ),
     places: flow((period) =>
-      countRows(client, 'places', 'PlaceId', (query) => applyPeriod(query, 'CreatedAt', period))
+      countRows(client, 'places', 'PlaceId', (query) =>
+        applyPeriod(applyPlaceFilters(query, filters), 'CreatedAt', period)
+      )
     ),
     pfpInProgress: flow((period) =>
-      countRows(client, 'student_result_vote', 'id', (query) =>
-        applyPeriod(
-          query
-            .in('status', ['assigned', 'published'])
+      countRows(client, 'student_result_vote', 'id', (query) => {
+        let filtered = applyResultFilters(query, filters)
+        if (!filters.status?.length) filtered = filtered.in('status', ['assigned', 'published'])
+        return applyPeriod(
+          filtered
             .eq('pfp_validee', false)
             .eq('pfp_echec', false)
             .eq('pfp_arret', false),
           'assigned_at',
           period
         )
-      )
+      })
     )
   }
 }
 
-function academicDefinitions(client) {
+function academicDefinitions(client, filters = {}) {
   return {
     teachers: flow(async (period) => {
       const profiles = await selectRows(
         client,
         'user_profiles',
-        'role,permissions,is_active',
+        'role,permissions,is_active,classe,pfp_cohort,primary_track_id',
         (query) => applyPeriod(query, 'created_at', period)
       )
-      return filterTeacherProfiles(profiles).length
+      return filterProfiles(filterTeacherProfiles(profiles), filters).length
     }),
     courses: flow((period) =>
       countRows(client, 'courses', 'id', (query) => applyPeriod(query, 'created_at', period))
@@ -256,7 +285,7 @@ function createAdminDashboardStatsService(options) {
   const onMetricError = options.onMetricError
 
   return {
-    async loadStats(requestedDomains = Object.keys(DOMAIN_DEFINITIONS), periodOptions = {}) {
+    async loadStats(requestedDomains = Object.keys(DOMAIN_DEFINITIONS), periodOptions = {}, filters = {}) {
       const asOf = now().toISOString()
       const periods = resolveDashboardPeriods({
         key: periodOptions.key,
@@ -274,7 +303,7 @@ function createAdminDashboardStatsService(options) {
             domain,
             await loadMetrics(
               domain,
-              DOMAIN_DEFINITIONS[domain](client),
+              DOMAIN_DEFINITIONS[domain](client, filters),
               asOf,
               periods,
               onMetricError
@@ -286,7 +315,8 @@ function createAdminDashboardStatsService(options) {
         domains,
         asOf,
         period: periods.current,
-        previousPeriod: periods.previous
+        previousPeriod: periods.previous,
+        appliedFilters: filters
       })
     }
   }

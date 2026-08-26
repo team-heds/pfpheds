@@ -15,6 +15,7 @@ export function useAdminDashboardStats(options = {}) {
   const domains = computed(() => unref(options.domains) || ADMIN_DASHBOARD_DOMAINS)
   const period = computed(() => unref(options.period) || 'month')
   const reference = computed(() => unref(options.reference) || null)
+  const filters = computed(() => unref(options.filters) || {})
 
   const status = computed(() => {
     if (loading.value) return 'loading'
@@ -35,6 +36,7 @@ export function useAdminDashboardStats(options = {}) {
         domains: domains.value,
         period: period.value,
         reference: reference.value,
+        filters: filters.value,
         force,
       })
       if (sequence === requestSequence) data.value = response
@@ -72,6 +74,7 @@ export function useAdminDashboardStats(options = {}) {
     status,
     period,
     domains,
+    filters,
     load,
     refresh,
     invalidatePendingResponse,

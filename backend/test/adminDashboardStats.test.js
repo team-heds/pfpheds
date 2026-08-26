@@ -20,6 +20,11 @@ const {
   parsePeriodOptions,
   parseRequestedDomains
 } = require('../dashboard/adminDashboardStatsBackend')
+const {
+  loadDashboardFilterOptions,
+  parseDashboardFilters,
+  validateFilterCombination
+} = require('../dashboard/adminDashboardFilters')
 
 function createFakeClient(options = {}) {
   const queries = []
@@ -48,6 +53,11 @@ function createFakeClient(options = {}) {
       { user_id: 'admin-1', role: 'admin', permissions: ['EtudiantPhysio'], is_active: true }
     ],
     quests: [{ completion_count: 2 }, { completion_count: 5 }, { completion_count: null }],
+    tracks: [{ id: 'physio', label: 'Physiothérapie', is_active: true }],
+    roles: [{ slug: 'EtudiantPhysio', label: 'Étudiant physio' }],
+    classes: [{ code: 'BA25', name: 'Bachelor 2025' }],
+    cohorts: [{ code: 'PFP1A', name: 'PFP 1A' }],
+    institutions: [{ Name: 'Clinique Test', is_hidden: false }],
     ...(options.rows || {})
   }
   const errors = options.errors || {}
@@ -79,6 +89,14 @@ function createFakeClient(options = {}) {
       },
       lt(column, value) {
         state.filters.push(['lt', column, value])
+        return query
+      },
+      not(column, operator, value) {
+        state.filters.push(['not', column, operator, value])
+        return query
+      },
+      or(value) {
+        state.filters.push(['or', value])
         return query
       },
       then(resolve, reject) {
@@ -294,6 +312,87 @@ test('domain authorization is derived from server-side permissions', () => {
   assert.throws(() => parsePeriodOptions({ reference: 'invalid' }), /reference invalide/)
 })
 
+test('dashboard filters are canonical, bounded and domain-aware', () => {
+  assert.deepEqual(parseDashboardFilters({ class: ['BA25', 'BA24', 'BA25'], pfp: 'PFP2' }), {
+    class: ['BA24', 'BA25'],
+    pfp: ['PFP2']
+  })
+  assert.throws(() => parseDashboardFilters({ pfp: 'PFP9' }), /PFP est invalide/)
+  assert.throws(() => parseDashboardFilters({ unexpected: 'value' }), /paramètre de filtre/)
+  assert.throws(
+    () => validateFilterCombination({ institution: ['Clinique Test'] }, ['academic']),
+    (error) => error.code === 'FILTER_COMBINATION_INVALID'
+  )
+})
+
+test('profile and PFP filters are applied to current and previous queries', async () => {
+  const { client, queries } = createFakeClient({
+    rows: {
+      user_profiles: [
+        {
+          user_id: 'student-1',
+          role: 'EtudiantPhysio',
+          is_active: true,
+          classe: 'BA25',
+          pfp_cohort: 'PFP1A',
+          primary_track_id: 'physio'
+        },
+        {
+          user_id: 'student-2',
+          role: 'EtudiantPhysio',
+          is_active: true,
+          classe: 'BA24',
+          pfp_cohort: 'PFP1B',
+          primary_track_id: 'physio'
+        }
+      ]
+    }
+  })
+  const service = createAdminDashboardStatsService({
+    client,
+    now: () => new Date('2026-08-26T08:00:00.000Z')
+  })
+  const filters = {
+    class: ['BA25'],
+    pfp: ['PFP2'],
+    institution: ['Clinique Test'],
+    status: ['assigned']
+  }
+  const response = await service.loadStats(['pfp'], { key: 'month' }, filters)
+
+  assert.equal(response.domains.pfp.metrics.students.value, 1)
+  assert.deepEqual(response.appliedFilters, filters)
+  const resultQueries = queries.filter((query) => query.table === 'student_result_vote')
+  assert.equal(resultQueries.length, 2)
+  assert.ok(
+    resultQueries.every((query) =>
+      [
+        ['eq', 'pfp_type', 'PFP2'],
+        ['eq', 'assigned_institution_name', 'Clinique Test'],
+        ['eq', 'status', 'assigned']
+      ].every((filter) => query.filters.some((entry) => JSON.stringify(entry) === JSON.stringify(filter)))
+    )
+  )
+  assert.ok(
+    queries
+      .filter((query) => query.table === 'places')
+      .every((query) => query.filters.some(([operator, column]) => operator === 'not' && column === 'PFP2'))
+  )
+})
+
+test('filter options contain authorized references and no personal data', async () => {
+  const { client } = createFakeClient()
+  const result = await loadDashboardFilterOptions(client, ['pfp'])
+
+  assert.equal(result.version, '1')
+  assert.deepEqual(result.options.institutions, [
+    { value: 'Clinique Test', label: 'Clinique Test' }
+  ])
+  assert.equal(result.options.pfpTypes.length, 5)
+  assert.equal(JSON.stringify(result).includes('email'), false)
+  assert.deepEqual(result.applicability.status.domains, ['pfp'])
+})
+
 test('the endpoint filters domains and refuses a forbidden domain', async () => {
   const { client } = createFakeClient()
   const app = express()
@@ -325,6 +424,17 @@ test('the endpoint filters domains and refuses a forbidden domain', async () => 
 
     const invalid = await fetch(`${baseUrl}/api/admin-dashboard/v1/stats?period=90d`)
     assert.equal(invalid.status, 400)
+
+    const options = await fetch(`${baseUrl}/api/admin-dashboard/v1/filter-options?domains=pfp`)
+    assert.equal(options.status, 200)
+    const optionsBody = await options.json()
+    assert.deepEqual(optionsBody.domains, ['pfp'])
+    assert.equal(optionsBody.options.institutions[0].value, 'Clinique Test')
+
+    const forbiddenOptions = await fetch(
+      `${baseUrl}/api/admin-dashboard/v1/filter-options?domains=general`
+    )
+    assert.equal(forbiddenOptions.status, 403)
   })
 })
 

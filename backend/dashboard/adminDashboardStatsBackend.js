@@ -4,6 +4,11 @@ const { createAdminDashboardStatsService } = require('./adminDashboardStatsServi
 const { PERIOD_KEYS, parseReference } = require('./adminDashboardPeriod')
 const { isAdmin } = require('../middleware/auth')
 const { logStructured, upstreamErrorContext } = require('../observability/logger')
+const {
+  loadDashboardFilterOptions,
+  parseDashboardFilters,
+  validateFilterCombination
+} = require('./adminDashboardFilters')
 
 const DOMAIN_PERMISSIONS = Object.freeze({
   pfp: new Set(['students.read', 'enseignantphysio', 'rmphysio', 'repondanthes']),
@@ -55,6 +60,37 @@ function createAdminDashboardStatsRouter(options = {}) {
   const now = options.now
   const router = Router()
 
+  router.get('/v1/filter-options', async (req, res) => {
+    try {
+      const allowedDomains = allowedDashboardDomains(req.auth)
+      if (!allowedDomains.length) {
+        return res.status(403).json({ error: 'Permission dashboard insuffisante.' })
+      }
+      const requestedDomains = parseRequestedDomains(req.query?.domains) || allowedDomains
+      const forbiddenDomains = requestedDomains.filter((domain) => !allowedDomains.includes(domain))
+      if (forbiddenDomains.length) {
+        return res.status(403).json({
+          error: 'Un ou plusieurs domaines dashboard ne sont pas autorisés.',
+          forbiddenDomains
+        })
+      }
+      return res.json(await loadDashboardFilterOptions(client, requestedDomains))
+    } catch (error) {
+      if (error.status === 400) return res.status(400).json({ error: error.message, code: error.code })
+      logStructured(
+        'error',
+        upstreamErrorContext(error, {
+          event: 'admin-dashboard.filter-options-error',
+          requestId: req.id,
+          service: 'supabase',
+          operation: 'admin-dashboard-filter-options'
+        }),
+        logger
+      )
+      return res.status(500).json({ error: 'Impossible de charger les filtres admin.' })
+    }
+  })
+
   router.get('/v1/stats', async (req, res) => {
     try {
       const allowedDomains = allowedDashboardDomains(req.auth)
@@ -71,6 +107,7 @@ function createAdminDashboardStatsRouter(options = {}) {
           forbiddenDomains
         })
       }
+      const filters = validateFilterCombination(parseDashboardFilters(req.query), requestedDomains)
 
       const service = createAdminDashboardStatsService({
         client,
@@ -92,13 +129,13 @@ function createAdminDashboardStatsRouter(options = {}) {
         }
       })
 
-      const response = await service.loadStats(requestedDomains, periodOptions)
+      const response = await service.loadStats(requestedDomains, periodOptions, filters)
       const hasErrors = Object.values(response.domains).some((domain) =>
         ['partial', 'error'].includes(domain.status)
       )
       return res.status(hasErrors ? 206 : 200).json(response)
     } catch (error) {
-      if (error.status === 400) return res.status(400).json({ error: error.message })
+      if (error.status === 400) return res.status(400).json({ error: error.message, code: error.code })
       logStructured(
         'error',
         upstreamErrorContext(error, {
