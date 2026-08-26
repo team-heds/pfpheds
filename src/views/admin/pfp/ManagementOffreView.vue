@@ -892,7 +892,7 @@ const loadStudentsToDoByPfp = async () => {
         .select('user_id, firebase_id, classe, role, email'),
       supabase
         .from('StudentsPhysio')
-        .select('user_id, firebase_id, Mail, email, mail, class, Class, classe, Classe, promotion, year, annee'),
+        .select('user_id, firebase_id, class'),
       supabase
         .from('student_result_vote')
         .select('user_id, pfp_type, pfp_validee')
@@ -903,23 +903,12 @@ const loadStudentsToDoByPfp = async () => {
     if (validatedError) throw validatedError
 
     const classByIdentity = new Map()
-    const userIdByEmail = new Map()
-
-    ;(profiles || []).forEach((profile) => {
-      const email = (profile.email || '').trim().toLowerCase()
-      if (!email || !profile.user_id) return
-      userIdByEmail.set(email, profile.user_id)
-    })
-
     ;(physioRows || []).forEach((row) => {
-      const rawClasse = row.class || row.Class || row.classe || row.Classe || row.promotion || row.year || row.annee
-      const normalizedClasse = normalizeClassCode(rawClasse)
+      const normalizedClasse = normalizeClassCode(row.class)
       if (!normalizedClasse) return
-      const email = (row.Mail || row.email || row.mail || '').trim().toLowerCase()
 
       if (row.user_id) classByIdentity.set(row.user_id, normalizedClasse)
       if (row.firebase_id) classByIdentity.set(row.firebase_id, normalizedClasse)
-      if (email) classByIdentity.set(email, normalizedClasse)
     })
 
     const profilesStudents = (profiles || []).filter((u) => {
@@ -940,7 +929,7 @@ const loadStudentsToDoByPfp = async () => {
     profilesStudents.forEach((student) => {
       const classFromProfile = normalizeClassCode(student.classe)
       const normalizedEmail = (student.email || '').trim().toLowerCase()
-      const classFromPhysio = classByIdentity.get(student.user_id) || classByIdentity.get(student.firebase_id) || classByIdentity.get(normalizedEmail)
+      const classFromPhysio = classByIdentity.get(student.user_id) || classByIdentity.get(student.firebase_id)
       const resolvedClasse = classFromPhysio || classFromProfile
       if (!resolvedClasse || !targetClasses.includes(resolvedClasse)) return
 
@@ -955,12 +944,11 @@ const loadStudentsToDoByPfp = async () => {
     })
 
     ;(physioRows || []).forEach((row) => {
-      const resolvedClasse = normalizeClassCode(row.class || row.Class || row.classe || row.Classe || row.promotion || row.year || row.annee)
+      const resolvedClasse = normalizeClassCode(row.class)
       if (!resolvedClasse || !targetClasses.includes(resolvedClasse)) return
-      const normalizedEmail = (row.Mail || row.email || row.mail || '').trim().toLowerCase()
-      const resolvedUserId = row.user_id || (normalizedEmail ? userIdByEmail.get(normalizedEmail) : null) || null
+      const resolvedUserId = row.user_id || null
 
-      const key = resolvedUserId || row.firebase_id || normalizedEmail
+      const key = resolvedUserId || row.firebase_id
       if (!key) return
 
       if (!studentMap.has(key)) {
@@ -1380,4 +1368,3 @@ onMounted(async () => {
   }
 }
 </style>
-
