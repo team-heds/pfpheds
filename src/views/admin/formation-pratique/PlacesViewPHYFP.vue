@@ -377,6 +377,8 @@
           </Column>
         </DataTable>
       </div>
+
+      <PlacementNeedsPanel :places="store.places || []" :year="selectedYear" />
     </div>
 
     <!-- Dialog de création de place -->
@@ -553,6 +555,7 @@ import { usePraticiensStore } from '@/stores/praticiensStore'
 import Dropdown from 'primevue/dropdown'
 import { checkSupabaseAuth } from '@/utils/checkAuth'
 import CreatePlaceDialog from '@/components/admin/places/CreatePlaceDialog.vue'
+import PlacementNeedsPanel from '@/components/admin/places/PlacementNeedsPanel.vue'
 import Dialog from 'primevue/dialog'
 import OverlayPanel from 'primevue/overlaypanel'
 import Checkbox from 'primevue/checkbox'
@@ -574,7 +577,7 @@ const years = ref([
   { label: '2026-2027', value: '2027' },
   { label: '2027-2028', value: '2028' }
 ])
-const selectedYear = ref('2026')
+const selectedYear = ref('2027')
 const FILTERS_KEY = 'fp_phy_places_filters'
 
 const hasPdf = (p) => Boolean(p?.fileURL || p?.FileURL || p?.pdfUrl || p?.PdfUrl || p?.fileUrl || p?.fileurl)
