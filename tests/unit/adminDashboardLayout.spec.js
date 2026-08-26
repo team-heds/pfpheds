@@ -53,4 +53,17 @@ describe('admin dashboard layout', () => {
     expect(wrapper.findAll('.skeleton-stub')).toHaveLength(4)
     expect(wrapper.text()).not.toContain('194')
   })
+
+  it('distingue une statistique indisponible d’un vrai zéro', () => {
+    const unavailable = mount(DashboardStatCard, {
+      props: { label: 'Étudiants', value: null, status: 'error', icon: 'pi pi-users' },
+    })
+    const zero = mount(DashboardStatCard, {
+      props: { label: 'Étudiants', value: 0, status: 'ok', icon: 'pi pi-users' },
+    })
+
+    expect(unavailable.text()).toContain('Indisponible')
+    expect(unavailable.text()).not.toMatch(/>0</)
+    expect(zero.get('.dashboard-stat__value').text()).toBe('0')
+  })
 })

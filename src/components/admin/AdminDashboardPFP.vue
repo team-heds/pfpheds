@@ -303,21 +303,23 @@ import Skeleton from 'primevue/skeleton'
 import Tag from 'primevue/tag'
 import Divider from 'primevue/divider'
 import ErrorState from '@/components/common/states/ErrorState.vue'
-import { useKpiManager } from '@/composables/useKpiManager'
+import { useAdminDashboardStats } from '@/composables/useAdminDashboardStats'
+import { getKpisForRole } from '@/config/kpiConfigs'
+import { useRoleStore } from '@/stores/role'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentDirectoryService'
 import { SUPABASE_SELECTS } from '@/service/supabaseContracts'
 
 const router = useRouter()
 
-const {
-  kpisWithData,
-  loading,
-  refreshing,
-  period,
-  loadKpis,
-  refresh
-} = useKpiManager('pfp')
+const roleStore = useRoleStore()
+const period = ref('month')
+const stats = useAdminDashboardStats({ domains: ['pfp'], period })
+const configurations = computed(() => getKpisForRole('pfp', roleStore.perms || [], roleStore.isSuper))
+const kpisWithData = stats.mapKpis('pfp', configurations)
+const { loading, refreshing } = stats
+const loadKpis = stats.load
+const refresh = stats.refresh
 
 const periodOptions = [
   { label: 'Jour', value: 'day' },
@@ -462,11 +464,11 @@ const resetToToday = async () => {
 const navigateTo = (path) => router.push(path)
 
 const onPeriodChange = async () => {
-  if (periodMode.value === 'day') period.value = '7d'
-  else if (periodMode.value === 'year') period.value = '90d'
-  else period.value = '30d'
+  if (periodMode.value === 'day') period.value = 'day'
+  else if (periodMode.value === 'year') period.value = 'year'
+  else period.value = 'month'
   selectedDate.value = new Date()
-  await reloadPeriodStats()
+  await Promise.all([refresh(), reloadPeriodStats()])
 }
 
 const refreshAll = async () => {

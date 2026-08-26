@@ -58,6 +58,16 @@
             <span>Mes KPI</span>
           </template>
 
+          <Message v-if="dashboardError" severity="error" :closable="false" class="mb-4">
+            <div class="flex align-items-center justify-content-between gap-3 flex-wrap">
+              <span>Les statistiques ne sont pas disponibles pour le moment.</span>
+              <Button label="Réessayer" icon="pi pi-refresh" size="small" @click="refreshDashboardStats" />
+            </div>
+          </Message>
+          <Message v-else-if="dashboardStatus === 'partial'" severity="warn" :closable="false" class="mb-4">
+            Certaines statistiques sont temporairement indisponibles. Les valeurs disponibles restent affichées.
+          </Message>
+
           <!-- Quick Stats - Widgets Redimensionnables -->
           <div class="mb-4">
             <div class="dashboard-section-heading">
@@ -80,19 +90,19 @@
             >
               <!-- Template pour chaque widget -->
               <template #widget_places="{ widget, size }">
-                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Disponibles" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
+                <DashboardStatCard :label="widget.label" :value="widget.value" :status="widget.status" caption="Disponibles" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
               </template>
 
               <template #widget_institutions="{ widget, size }">
-                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Partenaires" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
+                <DashboardStatCard :label="widget.label" :value="widget.value" :status="widget.status" caption="Partenaires" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
               </template>
 
               <template #widget_students="{ widget, size }">
-                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Inscrits" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
+                <DashboardStatCard :label="widget.label" :value="widget.value" :status="widget.status" caption="Inscrits" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
               </template>
 
               <template #widget_formateurs="{ widget, size }">
-                <DashboardStatCard :label="widget.label" :value="widget.value" caption="Praticiens" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
+                <DashboardStatCard :label="widget.label" :value="widget.value" :status="widget.status" caption="Praticiens" :icon="widget.icon" :color="widget.color" :loading="quickStatsLoading" :data-size="size" />
               </template>
             </ResizableWidgetGrid>
           </div>
@@ -166,6 +176,7 @@
 
           <PeriodComparisonPanel
             :kpis="userKpis"
+            :period="selectedPeriod"
             @compare="handleComparison"
           />
         </TabPanel>
@@ -332,7 +343,7 @@
                 
                 <div class="grid">
                   <div class="col-12 md:col-6 lg:col-3">
-                    <Card class="dashboard-link-card" @click="navigateTo('/admin/dashboard-general')">
+                    <Card class="dashboard-link-card" @click="navigateTo('/admin')">
                       <template #content>
                         <div class="text-center p-3">
                           <Avatar
@@ -468,11 +479,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
-import { auth } from '@/firebase'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import DashboardKpiGrid from '@/components/admin/widgets/DashboardKpiGrid.vue'
 import DashboardStatCard from '@/components/admin/widgets/DashboardStatCard.vue'
@@ -483,7 +493,6 @@ import PeriodSelector from '@/components/admin/widgets/PeriodSelector.vue'
 import AlertsWidget from '@/components/admin/widgets/AlertsWidget.vue'
 import PfpCohortKpiWidget from '@/components/admin/widgets/PfpCohortKpiWidget.vue'
 import TrackStatsWidget from '@/components/admin/widgets/TrackStatsWidget.vue'
-import { fetchQuickStats, subscribeToQuickStats } from '@/service/dashboardQuickStatsService'
 import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import Card from 'primevue/card'
@@ -496,20 +505,29 @@ import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
 import Toast from 'primevue/toast'
 import ConfirmDialog from 'primevue/confirmdialog'
-import { useKpiManager } from '@/composables/useKpiManager'
+import { useAdminDashboardStats } from '@/composables/useAdminDashboardStats'
+import { getAdminDashboardMetric } from '@/service/adminDashboardStatsService'
+import { getKpisForRole } from '@/config/kpiConfigs'
+import { useAuthStore } from '@/stores/authStore'
+import { useRoleStore } from '@/stores/role'
 import { useRouteErrors } from '@/composables/useRouteErrors'
 
 const router = useRouter()
 const toast = useToast()
 const confirm = useConfirm()
+const authStore = useAuthStore()
+const roleStore = useRoleStore()
 
 // Gérer l'affichage des erreurs de navigation (ex: accès refusé PFP)
 useRouteErrors()
 
 // User info
-const user = computed(() => auth.currentUser)
-const userId = computed(() => user.value?.uid || 'default')
-const userName = computed(() => user.value?.displayName || user.value?.email?.split('@')[0] || 'Admin')
+const user = computed(() => authStore.user)
+const userId = computed(() => user.value?.id || 'default')
+const userName = computed(() => {
+  const metadata = user.value?.user_metadata || {}
+  return metadata.full_name || metadata.name || metadata.display_name || user.value?.email?.split('@')[0] || 'Admin'
+})
 const userInitials = computed(() => {
   const name = userName.value
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -517,6 +535,17 @@ const userInitials = computed(() => {
 
 // Storage key personnalisé par utilisateur
 const userStorageKey = computed(() => `dashboard-kpi-config-${userId.value}`)
+
+function migrateLegacyDashboardStorage() {
+  if (userStorageKey.value === 'dashboard-kpi-config-default') return
+  for (const suffix of ['', '-widgets']) {
+    const targetKey = `${userStorageKey.value}${suffix}`
+    const legacyKey = `dashboard-kpi-config-default${suffix}`
+    if (!localStorage.getItem(targetKey) && localStorage.getItem(legacyKey)) {
+      localStorage.setItem(targetKey, localStorage.getItem(legacyKey))
+    }
+  }
+}
 
 // État
 const activeTab = ref(0)
@@ -535,11 +564,27 @@ const currentDate = computed(() => {
   return new Date().toLocaleDateString('fr-FR', options)
 })
 
-// Charger tous les KPI
-const { kpisWithData: generalKpis, loadKpis: loadGeneral } = useKpiManager('general')
-const { kpisWithData: pfpKpis, loadKpis: loadPfp } = useKpiManager('pfp')
-const { kpisWithData: academiqueKpis, loadKpis: loadAcademique } = useKpiManager('academique')
-const { kpisWithData: gamificationKpis, loadKpis: loadGamification } = useKpiManager('gamification')
+const configurationsFor = (dashboardType) => computed(() =>
+  getKpisForRole(dashboardType, roleStore.perms || [], roleStore.isSuper),
+)
+const generalConfigurations = configurationsFor('general')
+const pfpConfigurations = configurationsFor('pfp')
+const academicConfigurations = configurationsFor('academique')
+const gamificationConfigurations = configurationsFor('gamification')
+const dashboardDomains = computed(() => [
+  generalConfigurations.value.length ? 'general' : null,
+  pfpConfigurations.value.length ? 'pfp' : null,
+  academicConfigurations.value.length ? 'academic' : null,
+  gamificationConfigurations.value.length ? 'gamification' : null,
+].filter(Boolean))
+const dashboardStats = useAdminDashboardStats({ domains: dashboardDomains, period: selectedPeriod })
+const dashboardError = dashboardStats.error
+const dashboardStatus = dashboardStats.status
+const quickStatsLoading = computed(() => dashboardStats.loading.value || (!dashboardStats.data.value && !dashboardStats.error.value))
+const generalKpis = dashboardStats.mapKpis('general', generalConfigurations)
+const pfpKpis = dashboardStats.mapKpis('pfp', pfpConfigurations)
+const academiqueKpis = dashboardStats.mapKpis('academic', academicConfigurations)
+const gamificationKpis = dashboardStats.mapKpis('gamification', gamificationConfigurations)
 
 // Tous les KPI de l'utilisateur
 const userKpis = computed(() => [
@@ -553,16 +598,16 @@ const userKpis = computed(() => [
 const kpisWithAlerts = computed(() => userKpis.value.filter(kpi => kpi.alert))
 const activeAlertsCount = computed(() => kpisWithAlerts.value.length)
 
-// Supabase data (temps réel)
-const totalPlaces = ref(0)
-const totalInstitutions = ref(0)
-const totalStudents = ref(0)
-const totalFormateurs = ref(0)
-const quickStatsLoading = ref(true)
-const unsubscribeQuickStats = ref(null)
-
 // Mode édition widgets
 const widgetEditMode = ref(false)
+
+function quickMetric(domain, key) {
+  const metric = getAdminDashboardMetric(dashboardStats.data.value, domain, key)
+  return {
+    value: metric?.status === 'ok' ? metric.value : null,
+    status: metric?.status || (dashboardStats.loading.value ? 'loading' : 'unavailable'),
+  }
+}
 
 // Widgets redimensionnables
 const quickStatsWidgets = computed(() => [
@@ -570,7 +615,7 @@ const quickStatsWidgets = computed(() => [
     id: 'widget_places',
     label: 'Places de stages',
     icon: 'pi pi-map-marker',
-    value: totalPlaces.value,
+    ...quickMetric('pfp', 'places'),
     color: '#3b82f6',
     size: 'small'
   },
@@ -578,7 +623,7 @@ const quickStatsWidgets = computed(() => [
     id: 'widget_institutions',
     label: 'Institutions',
     icon: 'pi pi-building',
-    value: totalInstitutions.value,
+    ...quickMetric('pfp', 'institutions'),
     color: '#10b981',
     size: 'small'
   },
@@ -586,7 +631,7 @@ const quickStatsWidgets = computed(() => [
     id: 'widget_students',
     label: 'Étudiants',
     icon: 'pi pi-users',
-    value: totalStudents.value,
+    ...quickMetric('pfp', 'students'),
     color: '#8b5cf6',
     size: 'small'
   },
@@ -594,7 +639,7 @@ const quickStatsWidgets = computed(() => [
     id: 'widget_formateurs',
     label: 'Formateurs',
     icon: 'pi pi-id-card',
-    value: totalFormateurs.value,
+    ...quickMetric('academic', 'teachers'),
     color: '#f59e0b',
     size: 'small'
   }
@@ -763,62 +808,30 @@ function navigateTo(path) {
   router.push(path)
 }
 
-function handlePeriodChange(period) {
-  console.log('Période changée:', period)
-  // La comparaison sera gérée automatiquement par useKpiManager
-  // qui intègre periodComparison
-  toast.add({
-    severity: 'info',
-    summary: 'Période mise à jour',
-    detail: `Comparaison avec la période: ${period}`,
-    life: 3000
-  })
-}
-
-// Charger données Supabase en temps réel
-async function loadSupabaseData() {
-  quickStatsLoading.value = true
-  
+async function refreshDashboardStats() {
   try {
-    // Charger les stats initiales
-    const stats = await fetchQuickStats()
-    
-    totalPlaces.value = stats.places || 0
-    totalInstitutions.value = stats.institutions || 0
-    totalStudents.value = stats.students || 0
-    totalFormateurs.value = stats.formateurs || 0
-    
-    // S'abonner aux mises à jour temps réel
-    unsubscribeQuickStats.value = subscribeToQuickStats((newStats) => {
-      totalPlaces.value = newStats.places || 0
-      totalInstitutions.value = newStats.institutions || 0
-      totalStudents.value = newStats.students || 0
-      totalFormateurs.value = newStats.formateurs || 0
-    })
-    
-    quickStatsLoading.value = false
+    await dashboardStats.refresh()
   } catch (error) {
-    console.error('Error loading Supabase data:', error)
-    quickStatsLoading.value = false
-    
     toast.add({
-      severity: 'warn',
+      severity: 'error',
       summary: 'Erreur de chargement',
-      detail: 'Impossible de charger les statistiques',
+      detail: 'Impossible de charger les statistiques. Vous pouvez réessayer.',
       life: 3000
     })
   }
 }
 
+async function handlePeriodChange() {
+  await refreshDashboardStats()
+}
+
 onMounted(async () => {
-  // Ces lectures partagent le cache étudiants et peuvent démarrer ensemble.
-  await Promise.all([
-    loadGeneral(),
-    loadPfp(),
-    loadAcademique(),
-    loadGamification(),
-    loadSupabaseData()
-  ])
+  migrateLegacyDashboardStorage()
+  try {
+    await dashboardStats.load()
+  } catch (_) {
+    // L'état d'erreur réessayable est présenté dans le dashboard.
+  }
   
   // Message de bienvenue
   toast.add({
@@ -827,13 +840,6 @@ onMounted(async () => {
     detail: 'Personnalisez votre dashboard avec drag & drop',
     life: 4000
   })
-})
-
-onUnmounted(() => {
-  // Nettoyer l'abonnement Supabase
-  if (unsubscribeQuickStats.value) {
-    unsubscribeQuickStats.value()
-  }
 })
 </script>
 
