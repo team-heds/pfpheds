@@ -139,6 +139,7 @@ test('sensitive API routes reject anonymous requests', async () => {
       ['/api/admin/users', 'POST'],
       ['/api/audiences/students', 'GET'],
       ['/api/audiences/si-teachers', 'GET'],
+      ['/api/admin-dashboard/v1/stats', 'GET'],
       ['/api/integrations/vimeo/videos', 'GET'],
       ['/api/integrations/github/status', 'GET'],
       ['/api/resultat-votation/student/test-user/PFP1A/2026', 'GET']

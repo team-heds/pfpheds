@@ -25,6 +25,14 @@ describe('contrats Supabase critiques étudiants, dashboard et PFP', () => {
     }
   })
 
+  it('déclare les colonnes exactes utilisées par les agrégats admin v1', () => {
+    expect(CRITICAL_SUPABASE_CONTRACTS.dynamic_routes).toEqual(['id', 'is_active'])
+    expect(CRITICAL_SUPABASE_CONTRACTS.permissions).toContain('slug')
+    expect(CRITICAL_SUPABASE_CONTRACTS.challenges).toContain('is_active')
+    expect(CRITICAL_SUPABASE_CONTRACTS.quests).toEqual(['completion_count'])
+    expect(CRITICAL_SUPABASE_CONTRACTS.gamification_data).toContain('total_xp')
+  })
+
   it('centralise les sélections des pages étudiants, dashboard et PFP', () => {
     const studentPage = readSource('src/views/admin/formation-pratique/EtudiantsViewPHYFP.vue')
     const dashboard = readSource('src/components/admin/AdminDashboardPFP.vue')

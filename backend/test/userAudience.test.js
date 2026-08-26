@@ -3,8 +3,10 @@ const assert = require('node:assert/strict')
 const {
   filterSITeacherProfiles,
   filterStudentProfiles,
+  filterTeacherProfiles,
   isSITeacherProfile,
-  isStudentProfile
+  isStudentProfile,
+  isTeacherProfile
 } = require('../security/userAudience')
 
 test('student audience excludes every staff primary role even with legacy student data', () => {
@@ -39,4 +41,21 @@ test('SI teacher audience only accepts active SI teacher profiles', () => {
     ['teacher', 'legacy-teacher']
   )
   assert.equal(isSITeacherProfile(profiles[2]), false)
+})
+
+test('dashboard teacher audience accepts active teachers from both tracks', () => {
+  const profiles = [
+    { user_id: 'si', role: 'EnseignantSoins', is_active: true },
+    { user_id: 'physio', role: 'EnseignantPhysio', is_active: true },
+    { user_id: 'rm', role: 'RMPhysio', is_active: true },
+    { user_id: 'legacy', role: 'user', permissions: ['RepondantHES'], is_active: true },
+    { user_id: 'student', role: 'EtudiantPhysio', permissions: ['EnseignantPhysio'], is_active: true },
+    { user_id: 'inactive', role: 'EnseignantSoins', is_active: false }
+  ]
+
+  assert.deepEqual(
+    filterTeacherProfiles(profiles).map((profile) => profile.user_id),
+    ['si', 'physio', 'rm', 'legacy']
+  )
+  assert.equal(isTeacherProfile(profiles[4]), false)
 })
