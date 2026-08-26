@@ -577,8 +577,11 @@ const years = ref([
   { label: '2026-2027', value: '2027' },
   { label: '2027-2028', value: '2028' }
 ])
-const selectedYear = ref('2027')
-const FILTERS_KEY = 'fp_phy_places_filters'
+const CURRENT_PLANNING_YEAR = '2027'
+const selectedYear = ref(CURRENT_PLANNING_YEAR)
+// Nouvelle clé pour ne pas restaurer l'année 2025-2026 mémorisée avant l'ajout
+// des statistiques de planification 2026-2027.
+const FILTERS_KEY = 'fp_phy_places_filters_v2'
 
 const hasPdf = (p) => Boolean(p?.fileURL || p?.FileURL || p?.pdfUrl || p?.PdfUrl || p?.fileUrl || p?.fileurl)
 
@@ -929,7 +932,7 @@ watch([searchInput, selectedYear, rowsPerPage, showAll, compact, multiSortMeta],
 function resetFilters() {
   searchInput.value = ''
   search.value = ''
-  selectedYear.value = years.value[0] || '2026'
+  selectedYear.value = CURRENT_PLANNING_YEAR
   multiSortMeta.value = [{ field: 'InstitutionNameSort', order: 1 }]
   rowsPerPage.value = 20
   showAll.value = false

@@ -10,7 +10,9 @@ const students = [
 describe('placementNeedsService', () => {
   it('associe la classe attendue au PFP et à l’année académique', () => {
     expect(getTargetClass('2027', 'PFP1A')).toBe('BA26')
+    expect(getTargetClass('2027', 'PFP1B')).toBe('BA26')
     expect(getTargetClass('2027', 'PFP2')).toBe('BA25')
+    expect(getTargetClass('2027', 'PFP3')).toBe('BA24')
     expect(getTargetClass('2027', 'PFP4')).toBe('BA24')
   })
 

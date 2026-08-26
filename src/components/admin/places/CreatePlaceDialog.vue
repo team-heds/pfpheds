@@ -151,7 +151,7 @@
       <div class="surface-card fp-dark p-3 border-round mb-3">
         <h3 class="text-lg font-semibold mb-3">Nombre de places par module</h3>
         
-        <TabView>
+        <TabView v-model:activeIndex="activeYearTabIndex">
           <TabPanel header="2025">
             <div class="grid mt-3">
               <div class="col-6 md:col-4">
@@ -261,6 +261,21 @@
               </div>
             </div>
           </TabPanel>
+          <TabPanel header="2027">
+            <div class="grid mt-3">
+              <div v-for="pfpType in pfpTypes" :key="`${pfpType}-2027`" class="col-6 md:col-4">
+                <div class="field">
+                  <label :for="`${pfpType.toLowerCase()}-2027`" class="font-semibold">{{ pfpType }}</label>
+                  <InputText
+                    :id="`${pfpType.toLowerCase()}-2027`"
+                    v-model="formData.pfpValues2027[pfpType]"
+                    inputmode="numeric"
+                    placeholder="Ex: 2"
+                  />
+                </div>
+              </div>
+            </div>
+          </TabPanel>
         </TabView>
       </div>
 
@@ -312,7 +327,7 @@
       <!-- Remarques -->
       <div class="surface-card fp-dark p-3 border-round mb-3">
         <h3 class="text-lg font-semibold mb-3">Remarques</h3>
-        <TabView>
+        <TabView v-model:activeIndex="activeYearTabIndex">
           <TabPanel header="2025">
             <div class="field mt-3">
               <Textarea
@@ -329,6 +344,16 @@
                 v-model="formData.remarques2026"
                 rows="4"
                 placeholder="Remarques pour 2026..."
+                class="w-full"
+              />
+            </div>
+          </TabPanel>
+          <TabPanel header="2027">
+            <div class="field mt-3">
+              <Textarea
+                v-model="formData.remarques2027"
+                rows="4"
+                placeholder="Remarques pour 2026-2027..."
                 class="w-full"
               />
             </div>
@@ -454,6 +479,14 @@ const isVisible = computed({
 })
 
 const loading = ref(false)
+const pfpTypes = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4']
+const supportedYears = ['2025', '2026', '2027']
+const activeYearTabIndex = ref(Math.max(0, supportedYears.indexOf(props.selectedYear)))
+
+watch(() => props.selectedYear, (year) => {
+  const index = supportedYears.indexOf(year)
+  if (index >= 0) activeYearTabIndex.value = index
+}, { immediate: true })
 const submitted = ref(false)
 const uploading = ref(false)
 const selectedFile = ref(null)
@@ -537,6 +570,7 @@ const formData = ref({
   // Remarques par année
   remarques2025: '',
   remarques2026: '',
+  remarques2027: '',
   // Valeurs PFP pour 2025
   pfpValues2025: {
     PFP1A: '',
@@ -547,6 +581,14 @@ const formData = ref({
   },
   // Valeurs PFP pour 2026
   pfpValues2026: {
+    PFP1A: '',
+    PFP1B: '',
+    PFP2: '',
+    PFP3: '',
+    PFP4: ''
+  },
+  // Valeurs PFP pour l'année académique 2026-2027
+  pfpValues2027: {
     PFP1A: '',
     PFP1B: '',
     PFP2: '',
@@ -589,7 +631,7 @@ async function onCreate() {
 
     console.log('🏥 Institution sélectionnée:', institution)
 
-    // Construire les objets JSONB pour les PFP (2025 et 2026)
+    // Construire les objets JSONB pour les PFP (clé canonique = année de fin)
     const pfpData = {}
     
     // PFP 2025
@@ -607,28 +649,37 @@ async function onCreate() {
     if (formData.value.pfpValues2026.PFP2) pfp2026.PFP2 = formData.value.pfpValues2026.PFP2
     if (formData.value.pfpValues2026.PFP3) pfp2026.PFP3 = formData.value.pfpValues2026.PFP3
     if (formData.value.pfpValues2026.PFP4) pfp2026.PFP4 = formData.value.pfpValues2026.PFP4
+
+    // Année académique 2026-2027
+    const pfp2027 = {}
+    if (formData.value.pfpValues2027.PFP1A) pfp2027.PFP1A = formData.value.pfpValues2027.PFP1A
+    if (formData.value.pfpValues2027.PFP1B) pfp2027.PFP1B = formData.value.pfpValues2027.PFP1B
+    if (formData.value.pfpValues2027.PFP2) pfp2027.PFP2 = formData.value.pfpValues2027.PFP2
+    if (formData.value.pfpValues2027.PFP3) pfp2027.PFP3 = formData.value.pfpValues2027.PFP3
+    if (formData.value.pfpValues2027.PFP4) pfp2027.PFP4 = formData.value.pfpValues2027.PFP4
     
-    // Combiner les PFP des deux années
-    if (formData.value.pfpValues2025.PFP1A || formData.value.pfpValues2026.PFP1A) {
-      pfpData.PFP1A = { '2025': pfp2025.PFP1A || '', '2026': pfp2026.PFP1A || '' }
+    // Combiner les PFP des années prises en charge
+    if (formData.value.pfpValues2025.PFP1A || formData.value.pfpValues2026.PFP1A || formData.value.pfpValues2027.PFP1A) {
+      pfpData.PFP1A = { '2025': pfp2025.PFP1A || '', '2026': pfp2026.PFP1A || '', '2027': pfp2027.PFP1A || '' }
     }
-    if (formData.value.pfpValues2025.PFP1B || formData.value.pfpValues2026.PFP1B) {
-      pfpData.PFP1B = { '2025': pfp2025.PFP1B || '', '2026': pfp2026.PFP1B || '' }
+    if (formData.value.pfpValues2025.PFP1B || formData.value.pfpValues2026.PFP1B || formData.value.pfpValues2027.PFP1B) {
+      pfpData.PFP1B = { '2025': pfp2025.PFP1B || '', '2026': pfp2026.PFP1B || '', '2027': pfp2027.PFP1B || '' }
     }
-    if (formData.value.pfpValues2025.PFP2 || formData.value.pfpValues2026.PFP2) {
-      pfpData.PFP2 = { '2025': pfp2025.PFP2 || '', '2026': pfp2026.PFP2 || '' }
+    if (formData.value.pfpValues2025.PFP2 || formData.value.pfpValues2026.PFP2 || formData.value.pfpValues2027.PFP2) {
+      pfpData.PFP2 = { '2025': pfp2025.PFP2 || '', '2026': pfp2026.PFP2 || '', '2027': pfp2027.PFP2 || '' }
     }
-    if (formData.value.pfpValues2025.PFP3 || formData.value.pfpValues2026.PFP3) {
-      pfpData.PFP3 = { '2025': pfp2025.PFP3 || '', '2026': pfp2026.PFP3 || '' }
+    if (formData.value.pfpValues2025.PFP3 || formData.value.pfpValues2026.PFP3 || formData.value.pfpValues2027.PFP3) {
+      pfpData.PFP3 = { '2025': pfp2025.PFP3 || '', '2026': pfp2026.PFP3 || '', '2027': pfp2027.PFP3 || '' }
     }
-    if (formData.value.pfpValues2025.PFP4 || formData.value.pfpValues2026.PFP4) {
-      pfpData.PFP4 = { '2025': pfp2025.PFP4 || '', '2026': pfp2026.PFP4 || '' }
+    if (formData.value.pfpValues2025.PFP4 || formData.value.pfpValues2026.PFP4 || formData.value.pfpValues2027.PFP4) {
+      pfpData.PFP4 = { '2025': pfp2025.PFP4 || '', '2026': pfp2026.PFP4 || '', '2027': pfp2027.PFP4 || '' }
     }
 
-    // Construire l'objet remarques (2025 et 2026)
+    // Construire l'objet remarques par année
     const remarques = {}
     if (formData.value.remarques2025) remarques['2025'] = formData.value.remarques2025
     if (formData.value.remarques2026) remarques['2026'] = formData.value.remarques2026
+    if (formData.value.remarques2027) remarques['2027'] = formData.value.remarques2027
 
     // Données de la nouvelle place (UNIQUEMENT les colonnes de la table places)
     const newPlaceData = {
@@ -830,6 +881,7 @@ function onClose() {
       praticiensFormateurs: [],
       remarques2025: '',
       remarques2026: '',
+      remarques2027: '',
       pfpValues2025: {
         PFP1A: '',
         PFP1B: '',
@@ -838,6 +890,13 @@ function onClose() {
         PFP4: ''
       },
       pfpValues2026: {
+        PFP1A: '',
+        PFP1B: '',
+        PFP2: '',
+        PFP3: '',
+        PFP4: ''
+      },
+      pfpValues2027: {
         PFP1A: '',
         PFP1B: '',
         PFP2: '',
