@@ -115,8 +115,8 @@ vi.mock('vue-router', () => ({
   useRoute: () => ({ query: {} })
 }))
 
-vi.mock('@/stores/authStore', () => ({
-  useAuthStore: () => ({ user: { email: 'test.user@hevs.ch' } })
+vi.mock('@/stores/role', () => ({
+  useRoleStore: () => ({ can: () => true })
 }))
 
 vi.mock('@/supabase', () => ({

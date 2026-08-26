@@ -4,13 +4,13 @@
       <div class="breadcrumb-section mb-3">
         <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>
         <i class="pi pi-angle-right text-400 mx-2"></i>
-        <span class="text-900 font-medium">Management Répondant CPT</span>
+        <span class="text-900 font-medium">Gestion Répondants CPT</span>
       </div>
       <div class="surface-card fp-dark p-4 border-round shadow-2">
         <div class="flex align-items-center gap-3 mb-4">
           <i class="pi pi-users text-primary text-4xl"></i>
           <div>
-            <h1 class="text-3xl font-bold text-900 m-0">Management Répondant CPT</h1>
+            <h1 class="text-3xl font-bold text-900 m-0">Gestion Répondants CPT</h1>
             <p class="text-600 m-0 mt-2">Gestion des répondants CPT</p>
           </div>
         </div>

@@ -49,6 +49,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '@/stores/authStore'
+import { useRoleStore } from '@/stores/role'
 import { useRateLimit } from '@/composables/useRateLimit'
 import { validateEmail, validatePassword } from '@/composables/useInputValidation'
 import { getPostLoginRedirect } from '@/config/adminRedirects'
@@ -66,6 +67,7 @@ const resetLoading = ref(false)
 const router = useRouter()
 const toast = useToast()
 const authStore = useAuthStore()
+const roleStore = useRoleStore()
 const loginLimiter = useRateLimit({ maxAttempts: 5, lockoutDuration: 60_000 })
 const resetLimiter = useRateLimit({ maxAttempts: 3, lockoutDuration: 120_000 })
 
@@ -114,7 +116,8 @@ const submitFormSupabase = async () => {
       life: 3000 
     })
     
-    const redirectPath = getPostLoginRedirect(email.value)
+    const permissions = await roleStore.loadPermissions(authStore.session)
+    const redirectPath = getPostLoginRedirect(permissions)
     setTimeout(() => router.push(redirectPath), 1500)
   } catch (error) {
     console.error('Supabase login error:', error)

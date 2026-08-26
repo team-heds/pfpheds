@@ -4,7 +4,7 @@ import { modulePermissionGuard } from '@/router/guards/modulePermissionGuard'
 export default [
   { path: '/admin', component: () => import('@/views/admin/DashboardView.vue'), name: 'DashboardView', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
   { path: '/admin/dashboard-general', redirect: '/admin', name: 'AdminDashboardGeneral', meta: { requiresAuth: true, need: 'admin' } },
-  { path: '/admin/dashboard-rm', component: () => import('@/views/admin/DashboardRMView.vue'), name: 'DashboardRM', meta: { requiresAuth: true, need: ['admin', 'RMSoins'] } },
+  { path: '/admin/dashboard-rm', component: () => import('@/views/admin/DashboardRMView.vue'), name: 'DashboardRM', meta: { requiresAuth: true, need: ['admin', 'RMSoins', 'auth.redirect.dashboard_rm'] } },
   { path: '/admin/soins-infirmiers/dashboard', component: () => import('@/views/admin/soins-infirmiers/DashboardSecretariatSI.vue'), name: 'DashboardSecretariatSI', meta: { requiresAuth: true, need: ['admin', 'RMSoins'] } },
   { path: '/admin/role-management', component: () => import('@/views/admin/RoleManagementView.vue'), name: 'RoleManagement', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
   { 
@@ -45,7 +45,7 @@ export default [
   { path: '/admin/planning', component: () => import('@/views/admin/planning/PlanningView.vue'), name: 'PlanningView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/planning/manage', component: () => import('@/views/admin/planning/PlanningAdminView.vue'), name: 'PlanningAdminView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/planning/years', component: () => import('@/views/admin/AcademicYearManagement.vue'), name: 'AcademicYearManagement', meta: { requiresAuth: true, need: 'admin' } },
-  { path: '/admin/planning/weekly', component: () => import('@/views/admin/planning/WeeklyPlanningAdminView.vue'), name: 'WeeklyPlanningAdminView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/planning/weekly', component: () => import('@/views/admin/planning/WeeklyPlanningAdminView.vue'), name: 'WeeklyPlanningAdminView', meta: { requiresAuth: true, need: ['admin', 'editor', 'planning.weekly.view'] } },
   { path: '/admin/planning/semester', component: () => import('@/views/admin/planning/SemesterPlanningAdminView.vue'), name: 'SemesterPlanningAdminView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/planning/annual', component: () => import('@/views/admin/planning/AnnualPlanningView.vue'), name: 'AnnualPlanningView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/soins-infirmiers/planning-journalier', component: () => import('@/views/admin/soins-infirmiers/DailyPlanningView.vue'), name: 'DailyPlanningView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },

@@ -163,36 +163,16 @@ function isSectionOpen(label) {
   return openSections.value.has(label);
 }
 
-// Liste des emails qui n'ont pas accès à la section Académique
-const restrictedAcademicEmails = [
-  'lucienne.darbellay-fumeaux@hevs.ch',
-  'filipa.pereira@hevs.ch',
-  'aline.chappuis@hevs.ch',
-  'maude.epiney-perruchoud@hevs.ch',
-  'isabelle.salamin-plaschy@hevs.ch',
-  'rafael.weissbrodt@hevs.ch',
-  'valerie.caloz-albrecht@hevs.ch',
-  'tiffany.rapillard@hevs.ch',
-  'omar.porteladossantos@hevs.ch',
-  'jesse.curchod@hevs.ch',
-  'line.martin@hevs.ch',
-  'isabelle.rey@hevs.ch',
-  'carla.gomesdarocha@hevs.ch',
-  'elodie.perruchoud@hevs.ch'
-];
-
-const restrictedAcademicEmailSet = new Set(
-  restrictedAcademicEmails.map(e => String(e).toLowerCase())
-)
-
 // Vérifier si l'utilisateur est connecté avec Supabase
 const isSupabaseUser = computed(() => authStore.isSupabaseUser && authStore.session);
 
-// Vérifier si l'utilisateur est restreint pour la section Académique
-const isRestrictedUser = computed(() => {
-  const userEmail = authStore.user?.email?.toLowerCase();
-  return !!(userEmail && restrictedAcademicEmailSet.has(userEmail));
-});
+// academic.restricted est une exception de navigation explicite. Ne pas passer
+// par roleStore.can() ici : super.all accorde volontairement toutes les
+// permissions et ne doit jamais transformer un administrateur en utilisateur
+// restreint.
+const isRestrictedUser = computed(() =>
+  !roleStore.isSuper && roleStore.perms.includes('academic.restricted')
+);
 
 // Plus de fallback ici: on n'affiche que roleStore.perms pour une source unique et cohérente
 
@@ -202,7 +182,7 @@ const showAcademicSection = computed(() => isSupabaseUser.value && roleStore.can
 const showGamificationSection = computed(() => isSupabaseUser.value);
 
 // Watch pour voir en temps réel les changements
-watch([showPFPSection, showAcademicSection, showGamificationSection], (newValues) => {
+watch([showPFPSection, showAcademicSection, showGamificationSection], () => {
   console.log('📊 AdminSidebar - État des sections:', {
     isSupabaseUser: isSupabaseUser.value,
     showPFP: showPFPSection.value,
@@ -424,6 +404,7 @@ function shouldShowSection(section) {
     case 'soins infirmiers': // Soins Infirmiers / Académique
     case 'académique':
       return (
+        roleStore.can('academic.restricted') ||
         roleStore.can('page2.access') ||
         roleStore.can('AdminSoins') ||
         roleStore.can('EnseignantSoins') ||
@@ -437,10 +418,16 @@ function shouldShowSection(section) {
   }
 }
 
-// Initialiser le roleStore au montage du composant
+// Réutiliser la session déjà résolue par le bootstrap. Si le store existe déjà,
+// recharger ses droits pour éviter d'afficher un menu basé sur un état périmé.
 onMounted(async () => {
   if (!roleStore.initialized) {
-    await roleStore.init();
+    await roleStore.init({
+      session: authStore.session,
+      sessionResolved: authStore.initialized,
+    });
+  } else {
+    await roleStore.loadPermissions(authStore.session);
   }
   
   // Debug pour voir si l'utilisateur est bien détecté comme SupabaseUser

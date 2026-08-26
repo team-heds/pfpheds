@@ -19,7 +19,7 @@
           <div class="flex align-items-center gap-2 flex-wrap">
             <InputText v-model="search" placeholder="Rechercher (nom, email, institution)" class="w-16rem" />
             <Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" />
-            <Button icon="pi pi-filter-slash" label="Reset filtres" outlined severity="secondary" @click="resetFilters" />
+            <Button icon="pi pi-filter-slash" label="Réinitialiser" outlined severity="secondary" @click="resetFilters" />
             <Button icon="pi pi-plus" label="Ajouter" outlined @click="openCreate" />
             <Button icon="pi pi-refresh" outlined :disabled="loading" @click="refresh" />
           </div>
@@ -101,58 +101,58 @@
         </DataTable>
       </div>
 
-      <Dialog 
-        v-model:visible="editorVisible" 
-        :modal="true" 
-        :header="form.id ? 'Modifier un praticien formateur' : 'Ajouter un praticien formateur'" 
+      <Dialog
+        v-model:visible="editorVisible"
+        :modal="true"
+        :header="form.id ? 'Modifier un praticien formateur' : 'Ajouter un praticien formateur'"
         :style="{ width: '450px' }"
       >
         <div class="p-fluid">
           <div class="field mb-3">
             <label for="prenom" class="font-semibold">Prénom *</label>
-            <InputText 
-              id="prenom" 
-              v-model="form.prenom" 
+            <InputText
+              id="prenom"
+              v-model="form.prenom"
               placeholder="Ex: Jean"
               :class="{ 'p-invalid': submitted && !form.prenom }"
             />
             <small v-if="submitted && !form.prenom" class="p-error">Le prénom est requis</small>
           </div>
-          
+
           <div class="field mb-3">
             <label for="nom" class="font-semibold">Nom *</label>
-            <InputText 
-              id="nom" 
-              v-model="form.nom" 
+            <InputText
+              id="nom"
+              v-model="form.nom"
               placeholder="Ex: Dupont"
               :class="{ 'p-invalid': submitted && !form.nom }"
             />
             <small v-if="submitted && !form.nom" class="p-error">Le nom est requis</small>
           </div>
-          
+
           <div class="field mb-3">
             <label for="mail" class="font-semibold">Email *</label>
-            <InputText 
-              id="mail" 
-              v-model="form.mail" 
+            <InputText
+              id="mail"
+              v-model="form.mail"
               type="email"
               placeholder="Ex: jean.dupont@email.ch"
               :class="{ 'p-invalid': submitted && !form.mail }"
             />
             <small v-if="submitted && !form.mail" class="p-error">L'email est requis</small>
           </div>
-          
+
           <div class="field mb-3">
             <label for="institution" class="font-semibold">Institution</label>
-            <Dropdown 
+            <Dropdown
               id="institution"
-              v-model="form.selectedInstitutionId" 
-              :options="institutionOptions" 
-              optionLabel="label" 
-              optionValue="value" 
-              filter 
+              v-model="form.selectedInstitutionId"
+              :options="institutionOptions"
+              optionLabel="label"
+              optionValue="value"
+              filter
               filterPlaceholder="Rechercher une institution..."
-              placeholder="Sélectionner une institution" 
+              placeholder="Sélectionner une institution"
               :loading="instStore.loading"
               showClear
               class="w-full"
@@ -160,14 +160,14 @@
             <small class="text-500">Optionnel - Lien vers l'institution associée</small>
           </div>
         </div>
-        
+
         <template #footer>
           <Button label="Annuler" icon="pi pi-times" text @click="closeDialog" />
-          <Button 
-            :label="form.id ? 'Mettre à jour' : 'Créer'" 
-            icon="pi pi-check" 
-            :loading="saving" 
-            @click="save" 
+          <Button
+            :label="form.id ? 'Mettre à jour' : 'Créer'"
+            icon="pi pi-check"
+            :loading="saving"
+            @click="save"
           />
         </template>
       </Dialog>
@@ -299,8 +299,8 @@ const institutionOptions = computed(() => {
       const name = i.Name || i.name || `#${id}`
       const locality = i.Locality || i.localite || ''
       const label = locality ? `${name} (${locality})` : name
-      return { 
-        label, 
+      return {
+        label,
         value: id,
         institution: name,
         localite: locality,
@@ -367,7 +367,7 @@ function closeDialog() {
 
 async function save() {
   submitted.value = true
-  
+
   // Validation
   if (!form.value.prenom || !form.value.nom || !form.value.mail) {
     toast.add({ severity: 'warn', summary: 'Champs requis', detail: 'Prénom, nom et email sont obligatoires.', life: 3500 })
@@ -386,12 +386,12 @@ async function save() {
     toast.add({ severity: 'warn', summary: 'Doublon détecté', detail: 'Cet email existe déjà pour un autre praticien formateur.', life: 3500 })
     return
   }
-  
+
   try {
     saving.value = true
-    const payload = { 
-      prenom: form.value.prenom.trim(), 
-      nom: form.value.nom.trim(), 
+    const payload = {
+      prenom: form.value.prenom.trim(),
+      nom: form.value.nom.trim(),
       mail: email,
       institution: null,
       localite: null,
@@ -405,7 +405,7 @@ async function save() {
       payload.institution = form.value.institution.trim() || null
       payload.localite = (form.value.localite || '').trim() || null
     }
-    
+
     if (!form.value.id) {
       await store.createPraticienFormateur(payload)
       toast.add({ severity: 'success', summary: 'Création réussie', detail: 'Le praticien formateur a été ajouté.', life: 3000 })
@@ -413,7 +413,7 @@ async function save() {
       await store.updatePraticienFormateur(form.value.id, payload)
       toast.add({ severity: 'success', summary: 'Mise à jour réussie', detail: 'Le praticien formateur a été mis à jour.', life: 3000 })
     }
-    
+
     editorVisible.value = false
     submitted.value = false
   } catch (e) {
