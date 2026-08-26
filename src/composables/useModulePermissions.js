@@ -3,7 +3,7 @@
  * Permet de vérifier si un utilisateur peut voir/éditer un module
  */
 
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase'
 
@@ -17,20 +17,12 @@ export function useModulePermissions() {
     return authStore.user?.email || null
   })
 
+  const userRoles = ref([])
+
   /**
-   * Vérifie si l'utilisateur est admin
+   * Vérifie si l'utilisateur est admin à partir de ses rôles en base.
    */
-  const isAdmin = computed(() => {
-    // Vérifier dans les rôles Supabase ou dans un store de rôles
-    // Pour l'instant, on peut utiliser une liste simple
-    const adminEmails = [
-      'admin@hevs.ch',
-      'antoine.quarroz@hevs.ch'
-      // Ajoutez d'autres admins ici
-    ]
-    
-    return adminEmails.includes(userEmail.value)
-  })
+  const isAdmin = computed(() => userRoles.value.includes('admin'))
 
   /**
    * Vérifie si l'utilisateur est responsable d'un module spécifique
@@ -39,26 +31,26 @@ export function useModulePermissions() {
    */
   const isModuleOwner = (module) => {
     if (!module || !userEmail.value) return false
-    
+
     // Admin a accès à tout
     if (isAdmin.value) return true
-    
+
     // Vérifier si l'email correspond (responsable)
     if (module.responsable_email === userEmail.value) return true
-    
+
     // Vérifier si l'email correspond (coordinateur - supporte plusieurs emails séparés par des virgules)
     if (module.coordinateur && typeof module.coordinateur === 'string') {
       const coordinators = module.coordinateur.split(',').map(e => e.trim().toLowerCase());
       if (coordinators.includes(userEmail.value.toLowerCase())) return true;
     }
-    
+
     // Fallback: vérifier par nom si responsable_email n'est pas défini
     if (module.responsable && userEmail.value) {
       const emailName = userEmail.value.split('@')[0].toLowerCase()
       const responsableName = module.responsable.toLowerCase()
       return responsableName.includes(emailName)
     }
-    
+
     return false
   }
 
@@ -70,7 +62,7 @@ export function useModulePermissions() {
   const canViewModule = (module) => {
     // Admin peut tout voir
     if (isAdmin.value) return true
-    
+
     // Responsable peut voir ses modules
     return isModuleOwner(module)
   }
@@ -83,7 +75,7 @@ export function useModulePermissions() {
   const canEditModule = (module) => {
     // Admin peut tout éditer
     if (isAdmin.value) return true
-    
+
     // Responsable peut éditer ses modules
     return isModuleOwner(module)
   }
@@ -102,7 +94,7 @@ export function useModulePermissions() {
    * @param {Object} module
    * @returns {Boolean}
    */
-  const canDeleteModule = (module) => {
+  const canDeleteModule = () => {
     // Seuls les admins peuvent supprimer
     return isAdmin.value
   }
@@ -112,25 +104,40 @@ export function useModulePermissions() {
    * @returns {Promise<Array>}
    */
   const getUserRoles = async () => {
-    if (!userEmail.value) return []
-    
+    const userId = authStore.user?.id
+    if (!userId) {
+      userRoles.value = []
+      return []
+    }
+
     try {
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_email', userEmail.value)
-      
+        .eq('user_id', userId)
+
       if (error) {
         console.error('Erreur récupération rôles:', error)
+        userRoles.value = []
         return []
       }
-      
-      return data.map(r => r.role)
+
+      userRoles.value = (data || []).map((role) => role.role)
+      return userRoles.value
     } catch (error) {
       console.error('Erreur getUserRoles:', error)
+      userRoles.value = []
       return []
     }
   }
+
+  watch(
+    () => authStore.user?.id,
+    () => {
+      getUserRoles()
+    },
+    { immediate: true }
+  )
 
   /**
    * Vérifie si l'utilisateur a un rôle spécifique
@@ -149,10 +156,10 @@ export function useModulePermissions() {
    */
   const filterAccessibleModules = (modules) => {
     if (!modules || !Array.isArray(modules)) return []
-    
+
     // Admin voit tout
     if (isAdmin.value) return modules
-    
+
     // Filtrer par responsable ou coordinateur
     return modules.filter(module => isModuleOwner(module))
   }
@@ -169,7 +176,7 @@ export function useModulePermissions() {
       delete: "Seuls les administrateurs peuvent supprimer des modules",
       create: "Seuls les administrateurs peuvent créer des modules"
     }
-    
+
     return messages[action] || "Permission refusée"
   }
 
@@ -178,7 +185,7 @@ export function useModulePermissions() {
     userEmail,
     isAdmin,
     canCreateModule,
-    
+
     // Methods
     isModuleOwner,
     canViewModule,
