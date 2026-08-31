@@ -43,11 +43,11 @@ export const HES_HOUSES = {
 
 // Configuration des niveaux (compatible avec hesHousesService)
 export const LEVEL_CONFIG = {
-  1: { name: 'Étudiant·e', xpRequired: 0, xpToNext: 50 },
-  2: { name: 'Stagiaire', xpRequired: 50, xpToNext: 75 },
-  3: { name: 'Assistant·e', xpRequired: 125, xpToNext: 100 },
-  4: { name: 'Praticien·ne Junior', xpRequired: 225, xpToNext: 150 },
-  5: { name: 'Soignant·e', xpRequired: 375, xpToNext: 200 }
+  1: { name: 'Étudiant·e', xpRequired: 0, xpToNext: 100 },
+  2: { name: 'Stagiaire', xpRequired: 100, xpToNext: 300 },
+  3: { name: 'Assistant·e', xpRequired: 400, xpToNext: 500 },
+  4: { name: 'Praticien·ne Junior', xpRequired: 900, xpToNext: 700 },
+  5: { name: 'Soignant·e', xpRequired: 1600, xpToNext: 900 }
 }
 
 // Cache simple pour éviter les requêtes répétées
@@ -115,7 +115,7 @@ class GamificationServiceSupabase {
 
       // Calculer le niveau basé sur XP (formule: niveau = √(XP/100), min 1, max 20)
       const totalXP = gamificationData.total_xp || 0
-      const calculatedLevel = Math.min(20, Math.max(1, Math.floor(Math.sqrt(totalXP / 100))))
+      const calculatedLevel = Math.min(20, Math.max(1, Math.floor(Math.sqrt(totalXP / 100)) + 1))
       
       // Convertir les données Supabase au format attendu par CardNameProfile
       const formattedData = {
@@ -148,14 +148,13 @@ class GamificationServiceSupabase {
 
   /**
    * Calcule l'XP nécessaire pour le prochain niveau
-   * Nouveau système 20 niveaux: XP requis = (niveau)² × 100
+   * Même formule que public.calculate_level_from_xp : le niveau suivant est
+   * atteint à currentLevel² × 100 XP.
    */
   calculateXPToNext(currentLevel, currentXP) {
-    const nextLevel = currentLevel + 1
-    if (nextLevel > 20) return 0 // Niveau max atteint
+    if (currentLevel >= 20) return 0 // Niveau max atteint
     
-    // Formule: XP pour niveau N = N² × 100
-    const xpForNextLevel = Math.pow(nextLevel, 2) * 100
+    const xpForNextLevel = Math.pow(currentLevel, 2) * 100
     const xpRemaining = xpForNextLevel - currentXP
     
     return Math.max(0, xpRemaining)
@@ -170,7 +169,7 @@ class GamificationServiceSupabase {
       niveau: 1,
       xp: 0,
       totalXP: 0,
-      xpToNext: 50,
+      xpToNext: 100,
       lastXPGain: null,
       loginStreak: 0,
       badges: [],
@@ -184,8 +183,8 @@ class GamificationServiceSupabase {
    * Récupère les informations d'une maison par nom
    */
   getHouseInfo(houseName) {
-    if (!houseName) return null
-    return HES_HOUSES[houseName.toLowerCase()] || null
+    if (!houseName) return HES_HOUSES.harmonis
+    return HES_HOUSES[houseName.toLowerCase()] || HES_HOUSES.harmonis
   }
 
   /**
@@ -291,13 +290,7 @@ class GamificationServiceSupabase {
           const userEmail = user.email || user.user_email || 'email_inconnu'
           const userId = user.user_id || user.id || 'id_inconnu'
           
-          // 🔧 CORRECTION FORCÉE: Antoine doit être dans Elaris (correction du house_id incorrect)
-          let finalHouse = house
-          if (userEmail === 'antoine.quarroz@hevs.ch') {
-            finalHouse = 'elaris'
-          } else if (!house && userEmail === 'antoine.quarroz@hevs.ch') {
-            finalHouse = 'elaris'
-          }
+          const finalHouse = house
           
           if (finalHouse && housesStats[finalHouse]) {
             housesStats[finalHouse].totalXP += userXP
@@ -473,16 +466,44 @@ class GamificationServiceSupabase {
   }
 
   /**
-   * Ajoute de l'XP à un utilisateur (placeholder pour compatibilité)
+   * Enregistre une action vérifiable auprès du moteur Supabase.
+   * L'identité et le montant d'XP sont toujours déterminés côté serveur.
    */
-  async addUserXP(userId, action, customXP = null) {
+  async addUserXP(userId, action, actionData = {}) {
     try {
-      // Pour l'instant, on ne fait que invalider le cache
-      // L'ajout d'XP sera géré par le service principal
+      const sourceId = actionData.sourceId || actionData.targetId || null
+      const metadata = {
+        ...actionData,
+        sourceId: undefined,
+        targetId: undefined,
+        requestedUserId: undefined,
+        requestedXP: undefined
+      }
+
+      const { data, error } = await this.supabase.rpc('record_my_gamification_action', {
+        p_action: String(action || '').toUpperCase(),
+        p_source_id: sourceId,
+        p_metadata: metadata
+      })
+
+      if (error) throw error
+
       this.invalidateCache(userId)
-      
-      // Retourner les nouvelles données
-      return await this.getUserGamificationData(userId)
+      const freshData = await this.getUserGamificationData(userId)
+
+      return {
+        ...freshData,
+        ...data,
+        xp: data?.total_xp ?? freshData.xp,
+        totalXP: data?.total_xp ?? freshData.totalXP,
+        niveau: data?.current_level ?? freshData.niveau,
+        lastXPGain: data?.awarded
+          ? {
+              amount: data.xp_gained,
+              description: String(action || '').toUpperCase()
+            }
+          : freshData.lastXPGain
+      }
     } catch (error) {
       console.error('Erreur lors de l\'ajout d\'XP:', error)
       throw error
@@ -525,12 +546,7 @@ class GamificationServiceSupabase {
         gamificationData.forEach(user => {
           let houseName = houseIdToName[user.house_id]
           
-          // 🔧 CORRECTION ANTOINE: Forcer vers Elaris (ID: 550e8400-e29b-41d4-a716-446655440002)
-          if (user.email === 'antoine.quarroz@hevs.ch') {
-            houseName = 'elaris'
-          }
-          
-          if (houseName && houseCounts.hasOwnProperty(houseName)) {
+          if (houseName && Object.prototype.hasOwnProperty.call(houseCounts, houseName)) {
             houseCounts[houseName]++
           }
         })
@@ -791,37 +807,6 @@ class GamificationServiceSupabase {
     }
   }
 
-  /**
-   * Obtient les informations d'une maison
-   * @param {string} houseName - Nom de la maison
-   * @returns {Object} Informations de la maison
-   */
-  getHouseInfo(houseName) {
-    const houses = {
-      harmonis: {
-        name: 'Harmonis',
-        color: '#27ae60',
-        motto: "L'harmonie du corps, force de l’esprit"
-      },
-      elaris: {
-        name: 'Elaris',
-        color: '#e74c3c',
-        motto: 'La passion guide nos actions'
-      },
-      doloris: {
-        name: 'Doloris',
-        color: '#f39c12',
-        motto: 'La persévérance forge les champions'
-      },
-      solencia: {
-        name: 'Solencia',
-        color: '#3498db',
-        motto: 'La sagesse éclaire le chemin'
-      }
-    }
-    
-    return houses[houseName] || houses.harmonis
-  }
 }
 
 // Instance singleton

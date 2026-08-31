@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock Supabase — the service uses `this.supabase` which is assigned from the import
 let mockFromChain
 let mockRpcResult
 
-vi.mock('../../../src/supabase.js', () => {
+vi.mock('@/supabase', () => {
   const supabaseMock = {
     from: vi.fn(() => mockFromChain),
     rpc: vi.fn(() => Promise.resolve(mockRpcResult || { data: null, error: null })),
@@ -20,6 +20,7 @@ import { supabase as supabaseMock } from '@/supabase'
 describe('gamificationServiceSupabase', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRpcResult = null
     gamificationServiceSupabase.cache.clear()
     // Reset supabaseMock.from to use mockFromChain (may have been overridden in tests)
     supabaseMock.from = vi.fn(() => mockFromChain)
@@ -82,7 +83,7 @@ describe('gamificationServiceSupabase', () => {
         niveau: 1,
         xp: 0,
         totalXP: 0,
-        xpToNext: 50,
+        xpToNext: 100,
         lastXPGain: null,
         loginStreak: 0,
         badges: [],
@@ -96,9 +97,9 @@ describe('gamificationServiceSupabase', () => {
   // ==================== calculateXPToNext ====================
   describe('calculateXPToNext', () => {
     it('returns XP remaining for next level', () => {
-      // Level 1 with 0 XP: next level (2) requires 2² × 100 = 400 XP
+      // Canonical database formula: level 2 starts at 1² × 100 XP.
       const result = gamificationServiceSupabase.calculateXPToNext(1, 0)
-      expect(result).toBe(400)
+      expect(result).toBe(100)
     })
 
     it('returns 0 when at max level (20)', () => {
@@ -107,16 +108,15 @@ describe('gamificationServiceSupabase', () => {
     })
 
     it('returns 0 when XP exceeds next level requirement', () => {
-      // Level 1, XP = 500. Next level (2) requires 400. 400 - 500 = -100 → 0
+      // Defensive clamp when XP and displayed level are temporarily stale.
       const result = gamificationServiceSupabase.calculateXPToNext(1, 500)
       expect(result).toBe(0)
     })
 
     it('calculates correctly for mid levels', () => {
-      // Level 5 with 2000 XP: next level (6) requires 6² × 100 = 3600
-      // 3600 - 2000 = 1600
+      // Level 5 with 2000 XP: level 6 starts at 5² × 100 = 2500.
       const result = gamificationServiceSupabase.calculateXPToNext(5, 2000)
-      expect(result).toBe(1600)
+      expect(result).toBe(500)
     })
   })
 
@@ -272,9 +272,9 @@ describe('gamificationServiceSupabase', () => {
 
       const result = await gamificationServiceSupabase.getUserGamificationData('user1')
       expect(result.maison).toBeNull()
-      // total_xp = 100, level = floor(sqrt(100/100)) = 1
+      // Database formula: floor(sqrt(100/100)) + 1 = 2.
       expect(result.xp).toBe(100)
-      expect(result.niveau).toBe(1)
+      expect(result.niveau).toBe(2)
     })
 
     it('returns default data when user not found (PGRST116)', async () => {
@@ -379,8 +379,8 @@ describe('gamificationServiceSupabase', () => {
       }
 
       const result = await gamificationServiceSupabase.getUserGamificationData('user1')
-      // Level = min(20, max(1, floor(sqrt(900/100)))) = floor(3) = 3
-      expect(result.niveau).toBe(3)
+      // Database formula: floor(sqrt(900/100)) + 1 = 4.
+      expect(result.niveau).toBe(4)
       expect(result.totalXP).toBe(900)
     })
   })
@@ -421,13 +421,24 @@ describe('gamificationServiceSupabase', () => {
 
   // ==================== addUserXP ====================
   describe('addUserXP', () => {
-    it('invalidates cache and returns fresh data', async () => {
+    it('uses the identity-aware Supabase RPC and never sends user id or XP amount', async () => {
       // Pre-cache
       gamificationServiceSupabase.cache.set('gamification_user1', {
         data: { maison: 'elaris', xp: 100 },
         timestamp: Date.now(),
       })
 
+      mockRpcResult = {
+        data: {
+          awarded: true,
+          duplicate: false,
+          xp_gained: 25,
+          total_xp: 150,
+          current_level: 2,
+          badges_unlocked: [],
+        },
+        error: null,
+      }
       mockFromChain = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -437,10 +448,39 @@ describe('gamificationServiceSupabase', () => {
         }),
       }
 
-      const result = await gamificationServiceSupabase.addUserXP('user1', 'login')
-      // Cache should have been invalidated and re-fetched
+      const result = await gamificationServiceSupabase.addUserXP('user1', 'post', {
+        targetId: '11111111-1111-1111-1111-111111111111',
+        postLength: 42,
+      })
+
+      expect(supabaseMock.rpc).toHaveBeenCalledWith('record_my_gamification_action', {
+        p_action: 'POST',
+        p_source_id: '11111111-1111-1111-1111-111111111111',
+        p_metadata: expect.objectContaining({ postLength: 42 }),
+      })
+      expect(supabaseMock.rpc.mock.calls[0][1]).not.toHaveProperty('p_user_id')
+      expect(supabaseMock.rpc.mock.calls[0][1]).not.toHaveProperty('p_amount')
+      // The secure award invalidates stale data, then caches the authoritative refresh.
+      expect(gamificationServiceSupabase.cache.has('gamification_user1')).toBe(true)
       expect(result.xp).toBe(150)
       expect(result.totalXP).toBe(150)
+      expect(result.niveau).toBe(2)
+      expect(result).toHaveProperty('xpToNext')
+      expect(result).toHaveProperty('loginStreak')
+      expect(result.lastXPGain.amount).toBe(25)
+    })
+
+    it('surfaces RPC errors instead of pretending XP was awarded', async () => {
+      mockRpcResult = {
+        data: null,
+        error: { message: 'Unsupported gamification action' },
+      }
+
+      await expect(
+        gamificationServiceSupabase.addUserXP('user1', 'like', {
+          targetId: '11111111-1111-1111-1111-111111111111',
+        })
+      ).rejects.toMatchObject({ message: 'Unsupported gamification action' })
     })
   })
 

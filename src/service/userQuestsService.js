@@ -181,19 +181,9 @@ class UserQuestsService {
   async startQuest(userId, questId) {
     try {
       const { data, error } = await supabase
-        .from('user_quest_progress')
-        .upsert({
-          user_id: userId,
-          quest_id: questId,
-          status: 'in_progress',
-          progress: 0,
-          current_step: 0,
-          started_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,quest_id'
+        .rpc('start_my_quest', {
+          p_quest_id: questId
         })
-        .select()
-        .single()
       
       if (error) throw error
       
@@ -213,36 +203,8 @@ class UserQuestsService {
    * @param {number} currentStep - Étape actuelle
    * @returns {Promise<Object>} Progression mise à jour
    */
-  async updateQuestProgress(userId, questId, progress, currentStep) {
-    try {
-      const updateData = {
-        progress,
-        current_step: currentStep,
-        updated_at: new Date().toISOString()
-      }
-      
-      // Si complétée à 100%
-      if (progress >= 100) {
-        updateData.status = 'completed'
-        updateData.completed_at = new Date().toISOString()
-      }
-      
-      const { data, error } = await supabase
-        .from('user_quest_progress')
-        .update(updateData)
-        .eq('user_id', userId)
-        .eq('quest_id', questId)
-        .select()
-        .single()
-      
-      if (error) throw error
-      
-      return data
-      
-    } catch (error) {
-      console.error('❌ Erreur mise à jour progression:', error)
-      throw error
-    }
+  async updateQuestProgress() {
+    throw new Error('La progression des quêtes doit être validée par une action serveur')
   }
   
   /**
@@ -251,22 +213,8 @@ class UserQuestsService {
    * @param {string} questId - ID quête
    * @returns {Promise<Object>} Progression complétée
    */
-  async completeQuest(userId, questId) {
-    try {
-      const { data, error } = await supabase
-        .rpc('complete_quest', {
-          p_user_id: userId,
-          p_quest_id: questId
-        })
-      
-      if (error) throw error
-      
-      return data
-      
-    } catch (error) {
-      console.error('❌ Erreur complétion quête:', error)
-      throw error
-    }
+  async completeQuest() {
+    throw new Error('Une quête ne peut être complétée que par une action serveur vérifiée')
   }
   
   /**
@@ -348,7 +296,7 @@ class UserQuestsService {
       if (typeof channel.unsubscribe === 'function') {
         channel.unsubscribe()
       } else {
-        try { supabase.removeChannel(channel) } catch {}
+        try { supabase.removeChannel(channel) } catch { /* Channel was already removed. */ }
       }
     }
   }
