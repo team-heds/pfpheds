@@ -125,19 +125,19 @@
           label="Quêtes" 
           icon="pi pi-flag" 
           class="p-button-text p-button-sm"
-          @click="$router.push('/gamification/quests')"
+          @click="$router.push('/quests')"
         />
         <Button 
           label="Défis" 
           icon="pi pi-trophy" 
           class="p-button-text p-button-sm"
-          @click="$router.push('/gamification/challenges')"
+          @click="$router.push('/challenges')"
         />
         <Button 
           label="Badges" 
           icon="pi pi-star" 
           class="p-button-text p-button-sm"
-          @click="$router.push('/gamification/achievements')"
+          @click="$router.push('/achievements')"
         />
       </div>
     </div>
@@ -263,11 +263,8 @@ const formatTime = (timestamp) => {
 
 // Actions
 const viewFullProfile = () => {
-  if (props.userId && props.userId !== auth.currentUser?.uid) {
-    router.push(`/profile/${props.userId}`)
-  } else {
-    router.push('/gamification/profile')
-  }
+  if (!targetUserId.value) return
+  router.push(`/gamification-profile/${targetUserId.value}`)
 }
 
 // Charger les données utilisateur

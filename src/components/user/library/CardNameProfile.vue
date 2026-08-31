@@ -11,7 +11,7 @@
   />
 
   <!-- PROMPT QUIZ MAISON (masqué temporairement pour la présentation, ne pas supprimer) -->
-  <div v-if="SHOW_GAMIFICATION_UI && !hasValidHouse && !isGameMaster" class="house-quiz-prompt mb-4">
+  <div v-if="SHOW_HOUSE_QUIZ && !hasValidHouse && !isGameMaster" class="house-quiz-prompt mb-4">
     <div class="quiz-prompt-card">
       <div class="quiz-prompt-content">
         <i class="pi pi-graduation-cap quiz-prompt-icon"></i>
@@ -151,12 +151,13 @@ import XPBar from '@/components/gamification/XPBar.vue';
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import gamificationIntegration from '@/service/gamificationIntegration'
 import supabaseStorageService from '@/service/supabaseStorageService'
+import { gamificationFeatures } from '@/config/gamificationFeatures'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 const toast = useToast();
 
-// Masque temporairement l'UI de gamification sur le profil (présentation) - repasser à true pour réactiver
-const SHOW_GAMIFICATION_UI = false;
+const SHOW_GAMIFICATION_UI = gamificationFeatures.userJourney;
+const SHOW_HOUSE_QUIZ = gamificationFeatures.userJourney && gamificationFeatures.houseQuiz;
 
 // Profil consulté (celui affiché)
 const user = ref({

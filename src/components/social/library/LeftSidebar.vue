@@ -147,7 +147,7 @@
     />
   </Dialog>
 
-  <QuestsSidebarCard v-if="!hideGamification" />
+  <QuestsSidebarCard v-if="gamificationUserJourneyEnabled && !hideGamification" />
 </template>
 
 <script>
@@ -163,6 +163,7 @@ import EventDetail from '@/components/events/EventDetail.vue';
 import QuestsSidebarCard from '@/components/gamification/QuestsSidebarCard.vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
+import { gamificationFeatures } from '@/config/gamificationFeatures';
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
@@ -181,6 +182,7 @@ export default {
       eventStore,
       authStore,
       userStore,
+      gamificationUserJourneyEnabled: gamificationFeatures.userJourney,
       // upcomingEvents: computed(() => eventStore.upcomingEvents) // Supprimé car dupliqué
     };
   },

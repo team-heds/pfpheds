@@ -78,10 +78,7 @@ const navigateToProfile = () => {
   console.log('Navigating to gamification profile...')
   try {
     // Navigation vers le profil de l'utilisateur connecté (sans userId)
-    router.push({ 
-      name: 'GamificationProfilePage'
-      // Pas de params.userId → charge le profil de l'utilisateur connecté
-    })
+    router.push({ name: 'GamificationProfileSelf' })
   } catch (error) {
     console.error('Navigation error:', error)
   }
