@@ -49,13 +49,19 @@
           </h3>
           <p class="text-600 m-0">{{ resultDescription }}</p>
           
-          <!-- QUIZ SECTION (MVP) -->
+          <!-- QUIZ SECTION -->
           <div v-if="isQuizResult" class="mt-4 p-3 surface-100 border-round">
             <p class="font-bold mb-3">❓ Question Rapide</p>
-            <p class="mb-3">Quelle est la capitale du Valais ?</p>
-            <div class="flex gap-2 justify-content-center">
-              <Button label="Sion" size="small" @click="handleQuizAnswer(true)" />
-              <Button label="Lausanne" size="small" severity="secondary" @click="handleQuizAnswer(false)" />
+            <p class="mb-3">{{ quizQuestion?.prompt }}</p>
+            <div class="flex flex-wrap gap-2 justify-content-center">
+              <Button
+                v-for="option in quizOptions"
+                :key="option.id"
+                :label="option.label"
+                size="small"
+                :disabled="answeringQuiz"
+                @click="handleQuizAnswer(option.id)"
+              />
             </div>
           </div>
 
@@ -83,14 +89,13 @@ const isSpinning = ref(false)
 const hasSpun = ref(false)
 const result = ref(null)
 const loading = ref(false)
+const answeringQuiz = ref(false)
 
 // Segments Config
 const segments = [
-  { id: 'QUIZ_EASY', label: 'Quiz Facile', icon: 'pi pi-question', color: '#3B82F6', rotation: 36 },    // 0-72 deg
-  { id: 'XP_BONUS', label: '+5 XP', icon: 'pi pi-bolt', color: '#F59E0B', rotation: 108 },             // 72-144 deg
-  { id: 'QUIZ_HARD', label: 'Quiz Difficile', icon: 'pi pi-exclamation-circle', color: '#EF4444', rotation: 180 }, // 144-216
-  { id: 'HELP_CHALLENGE', label: 'Entraide', icon: 'pi pi-heart', color: '#10B981', rotation: 252 },   // 216-288
-  { id: 'REROLL', label: 'Rejouer', icon: 'pi pi-refresh', color: '#8B5CF6', rotation: 324 }           // 288-360
+  { id: 'QUIZ_EASY', label: 'Quiz Facile', icon: 'pi pi-question', color: '#3B82F6', rotation: 60 },
+  { id: 'XP_BONUS', label: '+5 XP', icon: 'pi pi-bolt', color: '#F59E0B', rotation: 180 },
+  { id: 'QUIZ_HARD', label: 'Quiz Difficile', icon: 'pi pi-exclamation-circle', color: '#EF4444', rotation: 300 }
 ]
 
 // Computed
@@ -114,14 +119,33 @@ const resultDescription = computed(() => {
   if (!result.value) return ''
   switch(result.value.result_type) {
     case 'XP_BONUS': return 'Vous avez gagné 5 XP directement !'
-    case 'REROLL': return 'Vous avez gagné un jeton pour rejouer plus tard.'
-    case 'HELP_CHALLENGE': return 'Nouvelle mission disponible dans votre profil.'
     default: return 'Répondez juste pour gagner !'
   }
 })
 
 const isQuizResult = computed(() => {
   return result.value && (result.value.result_type === 'QUIZ_EASY' || result.value.result_type === 'QUIZ_HARD')
+})
+
+const quizQuestion = computed(() => result.value?.prize_details?.question || null)
+const quizOptions = computed(() => Object.entries(quizQuestion.value?.options || {}).map(([id, label]) => ({ id, label })))
+
+watch(showModal, (opened) => {
+  if (
+    opened
+    && !store.canSpin
+    && store.quizStatus === 'pending'
+    && store.lastSpinId
+    && store.lastResult?.question
+  ) {
+    result.value = {
+      spin_id: store.lastSpinId,
+      result_type: store.lastResultType,
+      prize_details: store.lastResult,
+      quiz_status: store.quizStatus
+    }
+    hasSpun.value = true
+  }
 })
 
 // Methods
@@ -178,13 +202,21 @@ const handleClose = () => {
   }, 500)
 }
 
-const handleQuizAnswer = (isCorrect) => {
-  if (isCorrect) {
-    alert('Bonne réponse ! +10 XP (Simulation MVP)')
+const handleQuizAnswer = async (answerId) => {
+  answeringQuiz.value = true
+  try {
+    const answer = await store.submitQuizAnswer(result.value?.spin_id, answerId)
+    if (answer?.correct) {
+      window.alert(`Bonne réponse ! +${answer.xp_added || 0} XP`)
+    } else {
+      window.alert('Dommage... Essayez demain !')
+    }
     handleClose()
-  } else {
-    alert('Dommage... Essayez demain !')
-    handleClose()
+  } catch (error) {
+    console.error('Erreur de validation du quiz quotidien:', error)
+    window.alert('La réponse n’a pas pu être validée. Réessayez.')
+  } finally {
+    answeringQuiz.value = false
   }
 }
 </script>
@@ -202,11 +234,9 @@ const handleQuizAnswer = (isCorrect) => {
   box-shadow: 0 0 20px rgba(0,0,0,0.2);
   /* Conic Gradient for Segments */
   background: conic-gradient(
-    #3B82F6 0deg 72deg,    /* Easy */
-    #F59E0B 72deg 144deg,  /* Bonus */
-    #EF4444 144deg 216deg, /* Hard */
-    #10B981 216deg 288deg, /* Help */
-    #8B5CF6 288deg 360deg  /* Reroll */
+    #3B82F6 0deg 120deg,
+    #F59E0B 120deg 240deg,
+    #EF4444 240deg 360deg
   );
   position: relative;
   overflow: hidden;

@@ -44,6 +44,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import Button from 'primevue/button'
 import { useRoleStore } from '@/stores/role'
+import { gamificationFeatures } from '@/config/gamificationFeatures'
 
 const roleStore = useRoleStore()
 
@@ -84,12 +85,15 @@ const outils = computed(() => {
   const baseOutils = canAccessTrainingHub.value
     ? [...allOutils, ...adminOutils]
     : allOutils
+  const enabledOutils = baseOutils.filter((outil) =>
+    outil.to !== '/tournois' || gamificationFeatures.tournaments
+  )
 
   if (!isMobile.value) {
-    return baseOutils.filter(o => ['QR code', 'Apps langues', 'Notes', 'Tournois', 'Formations'].includes(o.label))
+    return enabledOutils.filter(o => ['QR code', 'Apps langues', 'Notes', 'Tournois', 'Formations'].includes(o.label))
   }
 
-  return baseOutils.filter(o => ['QR code', 'Apps langues', 'Tournois', 'Formations'].includes(o.label))
+  return enabledOutils.filter(o => ['QR code', 'Apps langues', 'Tournois', 'Formations'].includes(o.label))
 })
 
 const showVoirPlus = computed(() => outils.value.length >= 12)
