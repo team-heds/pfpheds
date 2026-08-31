@@ -137,6 +137,25 @@ export function buildAdminDashboardFilterOptionsUrl(options = {}) {
   return `${String(API_URL).replace(/\/+$/, '')}/admin-dashboard/v1/filter-options?${params}`
 }
 
+export function buildGamificationActivityUrl(limit = 20) {
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 50))
+  return `${String(API_URL).replace(/\/+$/, '')}/admin-dashboard/v1/gamification/activity?limit=${safeLimit}`
+}
+
+export async function fetchGamificationActivity(options = {}) {
+  const response = await authFetch(buildGamificationActivityUrl(options.limit), {
+    method: 'GET',
+    signal: options.signal,
+  })
+  const payload = await response.json()
+  if (payload?.version !== '1' || !Array.isArray(payload.activities)) {
+    throw new TypeError('Le contrat des activités gamification est invalide.')
+  }
+  return payload.activities.filter((activity) =>
+    activity && typeof activity.title === 'string' && typeof activity.occurredAt === 'string'
+  )
+}
+
 export function validateAdminDashboardFilterOptions(payload, requestedDomains) {
   if (!payload || payload.version !== '1' || !payload.options || !payload.applicability) {
     throw new TypeError('Le contrat des filtres admin est invalide.')

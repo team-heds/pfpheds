@@ -157,6 +157,7 @@ export async function addDynamicRoutesToRouter(router) {
     'AdminDashboardPFP',
     'AdminDashboardAcademique',
     'AdminDashboardGamification',
+    'AnalyticsDashboardView',
     'AlertsDashboard',
     'AdminSettingsView',
     'SupabaseDiagnosticView',
