@@ -11,6 +11,14 @@
         </div>
       </div>
 
+      <div v-else-if="loadError" class="loading-container" role="alert">
+        <div class="loading-spinner">
+          <i class="pi pi-exclamation-triangle"></i>
+          <p>{{ loadError }}</p>
+          <Button label="Réessayer" icon="pi pi-refresh" @click="loadData" />
+        </div>
+      </div>
+
       <!-- Main Content -->
       <div v-else class="challenges-content">
         
@@ -188,7 +196,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAuth } from 'firebase/auth'
+import { useAuthStore } from '@/stores/authStore'
 import challengesService from '@/service/challengesService'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
@@ -197,13 +205,14 @@ import Dialog from 'primevue/dialog'
 
 // Router and auth
 const router = useRouter()
-const auth = getAuth()
+const authStore = useAuthStore()
 
 // Reactive state
 const loading = ref(true)
+const loadError = ref('')
 const activeChallenges = ref([])
 const challengeHistory = ref([])
-const challengeStats = ref({})
+const challengeStats = ref({ totalCompleted: 0, totalXPFromChallenges: 0, streakWeeks: 0 })
 const showModal = ref(false)
 const selectedChallenge = ref(null)
 const showAllHistory = ref(false)
@@ -229,7 +238,7 @@ const normalizeHouse = (val) => {
 }
 
 const houseColor = computed(() => {
-  const h = normalizeHouse(auth.currentUser?.maison)
+  const h = normalizeHouse(authStore.user?.user_metadata?.maison || authStore.user?.maison)
   if (!h) return '#6B7280'
   return houseConfig[h]?.color || '#6B7280'
 })
@@ -333,12 +342,13 @@ const goBack = () => {
 const loadData = async () => {
   try {
     loading.value = true
+    loadError.value = ''
     
-    if (!auth.currentUser?.uid) {
+    if (!authStore.user?.id) {
       throw new Error('Utilisateur non connecté')
     }
     
-    const userId = auth.currentUser.uid
+    const userId = authStore.user.id
     
     // Load active challenges
     activeChallenges.value = await challengesService.getUserActiveChallenges(userId)
@@ -354,6 +364,7 @@ const loadData = async () => {
     
   } catch (error) {
     console.error('Erreur lors du chargement des données:', error)
+    loadError.value = 'Les défis ne peuvent pas être chargés pour le moment.'
   } finally {
     loading.value = false
   }
