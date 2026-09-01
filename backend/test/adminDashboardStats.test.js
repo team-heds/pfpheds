@@ -12,7 +12,8 @@ const {
   validateDashboardStatsResponse
 } = require('../dashboard/adminDashboardContract')
 const {
-  createAdminDashboardStatsService
+  createAdminDashboardStatsService,
+  loadRecentGamificationActivity
 } = require('../dashboard/adminDashboardStatsService')
 const {
   allowedDashboardDomains,
@@ -40,8 +41,8 @@ function createFakeClient(options = {}) {
     video_library: 9,
     modules: 6,
     challenges: 3,
-    badges: 11,
-    gamification_data: 14,
+    user_quest_progress: 7,
+    user_badges: 11,
     ...(options.counts || {})
   }
   const rows = {
@@ -52,7 +53,12 @@ function createFakeClient(options = {}) {
       { user_id: 'teacher-2', role: 'user', permissions: ['EnseignantSoins'], is_active: true },
       { user_id: 'admin-1', role: 'admin', permissions: ['EtudiantPhysio'], is_active: true }
     ],
-    quests: [{ completion_count: 2 }, { completion_count: 5 }, { completion_count: null }],
+    xp_history: [
+      { user_id: 'user-1', action: 'QUEST_COMPLETE', source_type: 'quest', amount: 25, created_at: '2026-08-26T07:00:00Z' },
+      { user_id: 'user-1', action: 'LOGIN', source_type: 'login', amount: 5, created_at: '2026-08-25T07:00:00Z' },
+      { user_id: 'user-2', action: 'BADGE_UNLOCK', source_type: 'badge', amount: 10, created_at: '2026-08-24T07:00:00Z' },
+      { user_id: null }
+    ],
     tracks: [{ id: 'physio', label: 'Physiothérapie', is_active: true }],
     roles: [{ slug: 'EtudiantPhysio', label: 'Étudiant physio' }],
     classes: [{ code: 'BA25', name: 'Bachelor 2025' }],
@@ -99,6 +105,18 @@ function createFakeClient(options = {}) {
         state.filters.push(['or', value])
         return query
       },
+      order(column, config) {
+        state.order = [column, config]
+        return query
+      },
+      limit(value) {
+        state.limit = value
+        return query
+      },
+      range(from, to) {
+        state.range = [from, to]
+        return query
+      },
       then(resolve, reject) {
         queries.push({ ...state, filters: [...state.filters] })
         const resolvedCount = options.resolveCount?.(state, counts[table]) ?? counts[table]
@@ -107,7 +125,14 @@ function createFakeClient(options = {}) {
           ? { data: null, count: null, error: resolvedError }
           : state.count === 'exact' && state.head
             ? { data: null, count: resolvedCount, error: null }
-            : { data: rows[table] || [], count: null, error: null }
+            : {
+                data: (rows[table] || []).slice(
+                  state.range?.[0] || 0,
+                  state.limit || (state.range ? state.range[1] + 1 : undefined)
+                ),
+                count: null,
+                error: null
+              }
         return Promise.resolve(result).then(resolve, reject)
       }
     }
@@ -150,7 +175,7 @@ test('the v1 contract contains deterministic aggregates from real table sources'
   assert.equal(response.domains.pfp.metrics.pfpInProgress.value, 4)
   assert.equal(response.domains.academic.metrics.teachers.value, 2)
   assert.equal(response.domains.gamification.metrics.completedQuests.value, 7)
-  assert.equal(response.domains.gamification.metrics.activeUsers.value, 14)
+  assert.equal(response.domains.gamification.metrics.activeUsers.value, 2)
   assert.equal(response.domains.general.metrics.routes.source, 'public.dynamic_routes')
   assert.equal(queries.length, 28)
   assert.equal(response.domains.general.metrics.users.semantics, 'flow')
@@ -169,9 +194,9 @@ test('the v1 contract contains deterministic aggregates from real table sources'
   assert.ok(
     queries.some(
       (query) =>
-        query.table === 'gamification_data' &&
+        query.table === 'xp_history' &&
         query.filters.some(
-          ([operator, column, value]) => operator === 'gt' && column === 'total_xp' && value === 0
+          ([operator, column]) => operator === 'gte' && column === 'created_at'
         )
     )
   )
@@ -219,6 +244,39 @@ test('dashboard aggregate production code contains no random value generator', (
     'utf8'
   )
   assert.doesNotMatch(source, /Math\.random|routes\s*:\s*120|roles\s*\*\s*5/)
+})
+
+test('recent gamification activity is bounded, real and contains no personal identifier', async () => {
+  const { client, queries } = createFakeClient()
+  const activities = await loadRecentGamificationActivity(client, 2)
+
+  assert.equal(activities.length, 2)
+  assert.deepEqual(activities[0], {
+    type: 'quest',
+    title: 'Quête terminée',
+    xp: 25,
+    occurredAt: '2026-08-26T07:00:00Z'
+  })
+  assert.equal(JSON.stringify(activities).includes('user-1'), false)
+  const query = queries.find((entry) => entry.table === 'xp_history')
+  assert.equal(query.limit, 2)
+  assert.deepEqual(query.order, ['created_at', { ascending: false }])
+  assert.equal(query.columns, 'action,source_type,amount,created_at')
+})
+
+test('active users pagination is not capped by the PostgREST default page size', async () => {
+  const xpRows = Array.from({ length: 1005 }, (_, index) => ({ user_id: `user-${index}` }))
+  const { client, queries } = createFakeClient({ rows: { xp_history: xpRows } })
+  const service = createAdminDashboardStatsService({
+    client,
+    now: () => new Date('2026-08-26T08:00:00.000Z')
+  })
+
+  const response = await service.loadStats(['gamification'])
+
+  assert.equal(response.domains.gamification.metrics.activeUsers.value, 1005)
+  assert.ok(queries.some((query) => query.table === 'xp_history' && query.range?.[0] === 1000))
+  assert.ok(queries.some((query) => query.table === 'user_badges' && query.columns === 'badge_id'))
 })
 
 test('an upstream failure is explicit and never becomes a zero', async () => {

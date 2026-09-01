@@ -32,9 +32,19 @@ const SOURCES = Object.freeze({
   media: 'public.video_library',
   modules: 'public.modules',
   activeChallenges: 'public.challenges',
-  completedQuests: 'public.quests.completion_count',
-  badges: 'public.badges',
-  activeUsers: 'public.gamification_data.total_xp'
+  completedQuests: 'public.user_quest_progress.completed_at',
+  badges: 'public.user_badges.earned_at',
+  activeUsers: 'public.xp_history.created_at'
+})
+
+const GAMIFICATION_ACTIVITY_TITLES = Object.freeze({
+  LOGIN: 'Connexion récompensée',
+  PROFILE_UPDATE: 'Profil complété',
+  POST: 'Publication récompensée',
+  QUEST_COMPLETE: 'Quête terminée',
+  CHALLENGE_COMPLETE: 'Défi terminé',
+  BADGE_UNLOCK: 'Badge obtenu',
+  DAILY_WHEEL: 'Roue quotidienne'
 })
 
 function queryError(table, error) {
@@ -60,9 +70,42 @@ async function selectRows(client, table, columns, configure = (query) => query) 
   return data || []
 }
 
+async function selectAllRows(client, table, columns, configure = (query) => query) {
+  const pageSize = 1000
+  const rows = []
+  for (let offset = 0; ; offset += pageSize) {
+    const page = await selectRows(client, table, columns, (query) =>
+      configure(query).range(offset, offset + pageSize - 1)
+    )
+    rows.push(...page)
+    if (page.length < pageSize) return rows
+  }
+}
+
 async function sumColumn(client, table, column, configure = (query) => query) {
   const rows = await selectRows(client, table, column, configure)
   return rows.reduce((total, row) => total + Math.max(0, Number(row?.[column]) || 0), 0)
+}
+
+async function countDistinct(client, table, column, configure = (query) => query) {
+  const rows = await selectAllRows(client, table, column, configure)
+  return new Set(rows.map((row) => row?.[column]).filter(Boolean)).size
+}
+
+async function loadRecentGamificationActivity(client, limit = 20) {
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 50))
+  const rows = await selectRows(client, 'xp_history', 'action,source_type,amount,created_at', (query) =>
+    query.order('created_at', { ascending: false }).limit(safeLimit)
+  )
+  return rows.map((row) => {
+    const action = String(row?.action || 'ACTIVITY').toUpperCase()
+    return Object.freeze({
+      type: String(row?.source_type || action).toLowerCase(),
+      title: GAMIFICATION_ACTIVITY_TITLES[action] || 'Activité gamification',
+      xp: Number(row?.amount) || 0,
+      occurredAt: row?.created_at || null
+    })
+  })
 }
 
 function applyPeriod(query, column, period) {
@@ -246,26 +289,39 @@ function academicDefinitions(client, filters = {}) {
   }
 }
 
-function gamificationDefinitions(client) {
+function gamificationDefinitions(client, _filters = {}, asOf = new Date().toISOString()) {
   return {
-    activeChallenges: flow((period) =>
-      countRows(client, 'challenges', 'id', (query) =>
-        applyPeriod(query.eq('is_active', true), 'created_at', period)
+    activeChallenges: snapshot(
+      () => {
+        const today = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Europe/Zurich',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(new Date(asOf))
+        return countRows(client, 'challenges', 'id', (query) =>
+          query
+            .eq('is_active', true)
+            .or(`start_date.is.null,start_date.lte.${today}`)
+            .or(`end_date.is.null,end_date.gte.${today}`)
+        )
+      },
+      'snapshot',
+      'ACTIVE_CHALLENGES_ARE_A_CURRENT_SNAPSHOT'
+    ),
+    completedQuests: flow((period) =>
+      countRows(client, 'user_quest_progress', 'id', (query) =>
+        applyPeriod(query.eq('status', 'completed'), 'completed_at', period)
       )
     ),
-    completedQuests: snapshot(
-      () => sumColumn(client, 'quests', 'completion_count'),
-      'cumulative',
-      'COMPLETION_EVENTS_UNAVAILABLE'
-    ),
     badges: flow((period) =>
-      countRows(client, 'badges', 'id', (query) =>
-        applyPeriod(query.eq('is_active', true), 'created_at', period)
+      countRows(client, 'user_badges', 'badge_id', (query) =>
+        applyPeriod(query, 'earned_at', period)
       )
     ),
     activeUsers: flow((period) =>
-      countRows(client, 'gamification_data', 'id', (query) =>
-        applyPeriod(query.gt('total_xp', 0), 'created_at', period)
+      countDistinct(client, 'xp_history', 'user_id', (query) =>
+        applyPeriod(query, 'created_at', period)
       )
     )
   }
@@ -303,7 +359,7 @@ function createAdminDashboardStatsService(options) {
             domain,
             await loadMetrics(
               domain,
-              DOMAIN_DEFINITIONS[domain](client, filters),
+              DOMAIN_DEFINITIONS[domain](client, filters, asOf),
               asOf,
               periods,
               onMetricError
@@ -326,8 +382,11 @@ module.exports = {
   DOMAIN_DEFINITIONS,
   SOURCES,
   applyPeriod,
+  countDistinct,
   countRows,
   createAdminDashboardStatsService,
+  loadRecentGamificationActivity,
   selectRows,
+  selectAllRows,
   sumColumn
 }

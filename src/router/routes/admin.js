@@ -25,7 +25,7 @@ export default [
   { path: '/admin/teachers-assignment', component: () => import('@/views/admin/TeacherAssignmentView.vue'), name: 'TeacherAssignment', meta: { requiresAuth: true, need: ['admin', 'RMSoins', 'PlanificateurHoraires'] } },
   { path: '/admin/dashboard-pfp', component: () => import('@/components/admin/AdminDashboardPFP.vue'), name: 'AdminDashboardPFP', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio'] } },
   { path: '/admin/dashboard-academique', component: () => import('@/components/admin/AdminDashboardAcademique.vue'), name: 'AdminDashboardAcademique', meta: { requiresAuth: true, need: ['super.all', 'admin', 'editor'] } },
-  { path: '/admin/dashboard-gamification', component: () => import('@/components/admin/AdminDashboardGamification.vue'), name: 'AdminDashboardGamification', meta: { requiresAuth: true, need: ['super.all', 'admin', 'house_coach'] } },
+  { path: '/admin/dashboard-gamification', component: () => import('@/components/admin/AdminDashboardGamification.vue'), name: 'AdminDashboardGamification', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio'] } },
   { path: '/admin/alerts', component: () => import('@/views/admin/AlertsDashboard.vue'), name: 'AlertsDashboard', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
   { path: '/admin/settings', component: () => import('@/views/admin/SettingsView.vue'), name: 'AdminSettingsView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/supabase-diagnostic', component: () => import('@/views/admin/SupabaseDiagnosticView.vue'), name: 'SupabaseDiagnosticView', meta: { requiresAuth: true, need: 'admin' } },
@@ -77,7 +77,7 @@ export default [
   { path: '/admin/gamification/badges', component: () => import('@/views/admin/gamification/BadgeManagementView.vue'), name: 'BadgeManagementView', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
   { path: '/admin/gamification/users', component: () => import('@/views/admin/gamification/UserManagementView.vue'), name: 'UserManagementView', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
   { path: '/admin/gamification/houses', component: () => import('@/views/admin/gamification/HouseManagementView.vue'), name: 'HouseManagementView', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
-  { path: '/admin/gamification/analytics', component: () => import('@/views/admin/gamification/AnalyticsDashboardView.vue'), name: 'AnalyticsDashboardView', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
+  { path: '/admin/gamification/analytics', redirect: '/admin/dashboard-gamification', name: 'AnalyticsDashboardView', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio'] } },
 
   // Gamification création (public)
   { path: '/create-challenge', component: () => import('@/views/admin/gamification/ChallengeManagementView.vue'), name: 'CreateChallenge', meta: { requiresAuth: true, need: ['super.all', 'admin', 'house_coach'] } },

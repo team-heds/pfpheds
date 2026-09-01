@@ -1,6 +1,9 @@
 const { Router } = require('express')
 const { DASHBOARD_DOMAINS } = require('./adminDashboardContract')
-const { createAdminDashboardStatsService } = require('./adminDashboardStatsService')
+const {
+  createAdminDashboardStatsService,
+  loadRecentGamificationActivity
+} = require('./adminDashboardStatsService')
 const { PERIOD_KEYS, parseReference } = require('./adminDashboardPeriod')
 const { isAdmin } = require('../middleware/auth')
 const { logStructured, upstreamErrorContext } = require('../observability/logger')
@@ -147,6 +150,28 @@ function createAdminDashboardStatsRouter(options = {}) {
         logger
       )
       return res.status(500).json({ error: 'Impossible de charger les statistiques admin.' })
+    }
+  })
+
+  router.get('/v1/gamification/activity', async (req, res) => {
+    try {
+      if (!allowedDashboardDomains(req.auth).includes('gamification')) {
+        return res.status(403).json({ error: 'Permission dashboard gamification insuffisante.' })
+      }
+      const activities = await loadRecentGamificationActivity(client, req.query?.limit)
+      return res.json({ version: '1', asOf: new Date().toISOString(), activities })
+    } catch (error) {
+      logStructured(
+        'error',
+        upstreamErrorContext(error, {
+          event: 'admin-dashboard.gamification-activity-error',
+          requestId: req.id,
+          service: 'supabase',
+          operation: 'admin-dashboard-gamification-activity'
+        }),
+        logger
+      )
+      return res.status(500).json({ error: 'Impossible de charger les activités gamification.' })
     }
   })
 
