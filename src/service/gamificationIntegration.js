@@ -10,22 +10,14 @@
  *
  * @exports {GamificationIntegration} gamificationIntegration - Instance singleton
  */
-import { checkAndUnlockActionBadges } from './badgesService'
-import gamificationService from './gamificationService'
-import * as challengesService from './challengesService'
+import gamificationServiceSupabase from './gamificationServiceSupabase'
 
 class GamificationIntegration {
   constructor() {
     this.xpActions = {
       LOGIN: 5,
       PROFILE_UPDATE: 10,
-      QUIZ_COMPLETE: 50,
-      POST: 25,
-      COMMENT: 15,
-      REPLY: 10,
-      LIKE: 2,
-      SHARE: 10,
-      ACHIEVEMENT: 100
+      POST: 25
     }
   }
 
@@ -37,36 +29,23 @@ class GamificationIntegration {
    */
   async processUserAction(userId, action, actionData = {}) {
     try {
-      let xpGained = 0
+      const rewardSupported = this.shouldGiveXP(action)
+      let xpGained = { amount: 0, duplicate: false, badgesUnlocked: [] }
       
       // Attribuer XP si applicable
-      if (this.shouldGiveXP(action)) {
+      if (rewardSupported) {
         xpGained = await this.addXPForAction(userId, action, actionData)
       }
 
-      // Vérifier et débloquer les badges
-      const unlockedBadges = await checkAndUnlockActionBadges(userId, action, {
-        ...actionData,
-        xpGained
-      })
-
-      // Mettre à jour les quêtes
-      await this.updateQuestProgress(userId, action, actionData)
-
-      // Mettre à jour les défis
-      await this.updateChallengeProgress(userId, action, actionData)
-
-      // Logger l'action
-      await gamificationService.logAction(action, userId, {
-        ...actionData,
-        xpGained,
-        badgesUnlocked: unlockedBadges.length
-      })
+      // Badges et défis sont évalués dans la même transaction Supabase.
+      const unlockedBadges = xpGained.badgesUnlocked || []
 
       return {
         success: true,
-        xpGained,
+        xpGained: xpGained.amount,
         badgesUnlocked: unlockedBadges,
+        duplicate: xpGained.duplicate,
+        rewardSupported,
         action,
         timestamp: Date.now()
       }
@@ -92,68 +71,22 @@ class GamificationIntegration {
    * Ajoute de l'XP pour une action spécifique
    */
   async addXPForAction(userId, action, actionData = {}) {
-    const xpAmount = this.xpActions[action.toUpperCase()] || 0
-    
-    if (xpAmount > 0) {
-      // Utiliser le service HES existant pour ajouter l'XP
-      const { addUserXP } = await import('./hesHousesService')
-      await addUserXP(userId, action.toUpperCase(), xpAmount)
-      return xpAmount
+    const normalizedAction = action.toUpperCase()
+    if (!this.shouldGiveXP(normalizedAction)) {
+      return { amount: 0, duplicate: false, badgesUnlocked: [] }
     }
-    
-    return 0
-  }
 
-  /**
-   * Met à jour le progrès des quêtes
-   */
-  async updateQuestProgress(userId, action, actionData) {
-    try {
-      // Les quêtes seront mises à jour automatiquement par les services existants
-      // Cette méthode peut être étendue selon les besoins spécifiques
-      // Quest update for action handled by existing services
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour des quêtes:', error)
+    const result = await gamificationServiceSupabase.addUserXP(
+      userId,
+      normalizedAction,
+      actionData
+    )
+
+    return {
+      amount: result?.xp_gained || 0,
+      duplicate: Boolean(result?.duplicate),
+      badgesUnlocked: result?.badges_unlocked || []
     }
-  }
-
-  /**
-   * Met à jour le progrès des défis
-   */
-  async updateChallengeProgress(userId, action, actionData) {
-    try {
-      // Mapper les actions vers les types de défis
-      const challengeTypeMap = {
-        'LOGIN': 'daily_login',
-        'POST': 'create_post',
-        'COMMENT': 'create_comment',
-        'LIKE': 'give_like',
-        'PROFILE_UPDATE': 'update_profile'
-      }
-      
-      const challengeType = challengeTypeMap[action.toUpperCase()]
-      if (challengeType) {
-        await challengesService.updateChallengeProgress(userId, challengeType, 1, actionData)
-      }
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour des défis:', error)
-    }
-  }
-
-  /**
-   * Vérifie si une quête correspond à l'action
-   */
-  questMatchesAction(quest, action, actionData) {
-    if (!quest.requirements || !quest.requirements.actions) return false
-    return quest.requirements.actions.includes(action.toLowerCase())
-  }
-
-  /**
-   * Vérifie si un défi correspond à l'action
-   */
-  challengeMatchesAction(challenge, action, actionData) {
-    if (!challenge.requirements || !challenge.requirements.actions) return false
-    return challenge.requirements.actions.includes(action.toLowerCase())
   }
 
   // ============ MÉTHODES RACCOURCIES POUR ACTIONS SPÉCIFIQUES ============
@@ -184,7 +117,8 @@ class GamificationIntegration {
   }
 
   /**
-   * Déclenche les événements pour un quiz terminé
+   * Observe un quiz terminé. L'attribution de maison/XP reste exclusivement
+   * gérée par la transaction Supabase assign_my_house.
    */
   async onQuizComplete(userId, quizData = {}) {
     return await this.processUserAction(userId, 'QUIZ_COMPLETE', {
@@ -196,7 +130,8 @@ class GamificationIntegration {
   }
 
   /**
-   * Déclenche les événements pour une interaction sociale
+   * Observe une interaction sociale. Seule la création vérifiée d'un POST
+   * est récompensée; likes et commentaires restent non récompensés.
    */
   async onSocialInteraction(userId, interactionData = {}) {
     const action = interactionData.action || 'SOCIAL_INTERACTION'
@@ -209,7 +144,8 @@ class GamificationIntegration {
   }
 
   /**
-   * Déclenche les événements pour un achievement débloqué
+   * Observe un achievement. Les bonus de badge sont calculés par Supabase,
+   * jamais à partir de cet événement navigateur.
    */
   async onAchievementUnlocked(userId, achievementData = {}) {
     return await this.processUserAction(userId, 'ACHIEVEMENT', {
