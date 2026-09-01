@@ -276,7 +276,7 @@
         </div>
 
         <!-- 2. DÉFIS DE LA SEMAINE EN DEUXIÈME -->
-        <div class="members-ranking">
+        <div v-if="collectionsEnabled" class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-flag"></i> Défis de la Semaine</h3>
             <div class="challenge-stats">
@@ -341,7 +341,7 @@
         </div>
 
         <!-- 3. BADGES EN DERNIER -->
-        <div class="members-ranking">
+        <div v-if="collectionsEnabled" class="members-ranking">
           <div class="card-header">
             <h3><i class="pi pi-shield"></i> Mes Badges</h3>
             <div class="badge-stats">
@@ -488,6 +488,9 @@ import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase.js'
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
+import badgesService from '@/service/badgesService'
+import challengesService from '@/service/challengesService'
+import { gamificationFeatures } from '@/config/gamificationFeatures'
 import levelsConfig from '@/config/levelsConfig'
 import userQuestsService from '@/service/userQuestsService'
 import Navbar from '@/components/common/utils/Navbar.vue'
@@ -519,6 +522,7 @@ const props = defineProps({
 const router = useRouter()
 const toast = useToast()
 const authStore = useAuthStore()
+const collectionsEnabled = gamificationFeatures.userJourney && gamificationFeatures.badgesChallenges
 
 // Computed: ID de l'utilisateur à afficher (prop.id ou utilisateur connecté)
 const displayUserId = computed(() => props.id || authStore.user?.id)
@@ -1040,48 +1044,19 @@ const checkForNewBadges = async () => {
 }
 
 const loadBadgesData = async () => {
+  if (!collectionsEnabled) return
   const userId = displayUserId.value
   if (!userId) return
   
   try {
     console.log('🏆 Chargement des badges depuis Supabase pour:', userId)
     
-    // Récupérer les badges de l'utilisateur depuis Supabase
-    const { data: userBadgesData, error: userBadgesError } = await supabase
-      .from('user_badges')
-      .select(`
-        *,
-        badge:badges(*)
-      `)
-      .eq('user_id', userId)
-    
-    if (userBadgesError && userBadgesError.code !== 'PGRST116') {
-      console.error('Erreur chargement badges utilisateur:', userBadgesError)
-    }
-    
-    // Récupérer tous les badges disponibles
-    const { data: allBadgesData, error: allBadgesError } = await supabase
-      .from('badges')
-      .select('*')
-      .order('rarity', { ascending: true })
-    
-    if (allBadgesError) {
-      console.error('Erreur chargement badges:', allBadgesError)
-    }
-    
-    // Formatter les données
-    allBadges.value = allBadgesData || []
-    
-    // Formatter les badges de l'utilisateur
-    if (userBadgesData && userBadgesData.length > 0) {
-      userBadges.value = userBadgesData.map(ub => ({
-        ...ub.badge,
-        unlocked_at: ub.unlocked_at,
-        progress: ub.progress || 100
-      }))
-    } else {
-      userBadges.value = []
-    }
+    const [availableBadges, earnedBadges] = await Promise.all([
+      badgesService.getAllBadges(),
+      badgesService.getUserBadges(userId),
+    ])
+    allBadges.value = availableBadges
+    userBadges.value = earnedBadges
     
     console.log(`✅ ${userBadges.value.length} badges débloqués sur ${allBadges.value.length}`)
     
@@ -1099,55 +1074,20 @@ const onNotificationClose = () => {
 
 // Challenge system methods
 const loadChallengesData = async () => {
+  if (!collectionsEnabled) return
   const userId = displayUserId.value
   if (!userId) return
   
   try {
     console.log('🎯 Chargement des défis depuis Supabase pour:', userId)
     
-    // Récupérer les défis actifs (non expirés)
-    const { data: challengesData, error: challengesError } = await supabase
-      .from('challenges')
-      .select('*')
-      .or('end_date.is.null,end_date.gte.' + new Date().toISOString())
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-    
-    if (challengesError && challengesError.code !== 'PGRST116') {
-      console.error('Erreur chargement défis:', challengesError)
-    }
-    
-    // Récupérer les progressions de l'utilisateur
-    const { data: userProgressData, error: progressError } = await supabase
-      .from('user_challenge_progress')
-      .select('*')
-      .eq('user_id', userId)
-    
-    if (progressError && progressError.code !== 'PGRST116') {
-      console.error('Erreur chargement progression défis:', progressError)
-    }
-    
-    // Combiner les données
-    if (challengesData && challengesData.length > 0) {
-      activeChallenges.value = challengesData.map(challenge => {
-        const userProgress = userProgressData?.find(p => p.challenge_id === challenge.id)
-        return {
-          ...challenge,
-          progress: userProgress?.progress || 0,
-          completed: userProgress?.completed || false,
-          completed_at: userProgress?.completed_at || null
-        }
-      })
-    } else {
-      activeChallenges.value = []
-    }
-    
-    // Calculer les stats
-    const completed = activeChallenges.value.filter(c => c.completed)
-    challengeStats.value = {
-      totalCompleted: completed.length,
-      totalXPFromChallenges: completed.reduce((sum, c) => sum + (c.points || c.xp_reward || 0), 0)
-    }
+    const [challenges, stats] = await Promise.all([
+      challengesService.getUserActiveChallenges(userId),
+      challengesService.getUserChallengeStats(userId),
+    ])
+    activeChallenges.value = challenges
+    challengeStats.value = stats
+    const completed = challenges.filter(c => c.completed)
     
     console.log(`✅ ${activeChallenges.value.length} défis chargés (${completed.length} complétés)`)
     

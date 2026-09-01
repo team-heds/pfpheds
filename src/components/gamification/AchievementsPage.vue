@@ -11,6 +11,14 @@
         </div>
       </div>
 
+      <div v-else-if="loadError" class="loading-container" role="alert">
+        <div class="loading-spinner">
+          <i class="pi pi-exclamation-triangle"></i>
+          <p>{{ loadError }}</p>
+          <Button label="Réessayer" icon="pi pi-refresh" @click="loadData" />
+        </div>
+      </div>
+
       <!-- Main Content -->
       <div v-else class="achievements-content">
         
@@ -160,7 +168,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAuth } from 'firebase/auth'
+import { useAuthStore } from '@/stores/authStore'
 import badgesService from '@/service/badgesService'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
@@ -171,10 +179,11 @@ import Dropdown from 'primevue/dropdown'
 
 // Router and auth
 const router = useRouter()
-const auth = getAuth()
+const authStore = useAuthStore()
 
 // Reactive state
 const loading = ref(true)
+const loadError = ref('')
 const userBadges = ref([])
 const allBadges = ref([])
 const searchQuery = ref('')
@@ -320,19 +329,21 @@ const goBack = () => {
 const loadData = async () => {
   try {
     loading.value = true
+    loadError.value = ''
     
-    if (!auth.currentUser?.uid) {
+    if (!authStore.user?.id) {
       throw new Error('Utilisateur non connecté')
     }
     
     // Load all badges
-    allBadges.value = Object.values(badgesService.BADGES_CONFIG)
+    allBadges.value = await badgesService.getAllBadges()
     
     // Load user badges
-    userBadges.value = await badgesService.getUserBadges(auth.currentUser.uid)
+    userBadges.value = await badgesService.getUserBadges(authStore.user.id)
     
   } catch (error) {
     console.error('Erreur lors du chargement des données:', error)
+    loadError.value = 'Les badges ne peuvent pas être chargés pour le moment.'
   } finally {
     loading.value = false
   }
