@@ -18,11 +18,7 @@
       <div v-else-if="wheelStore.backendFunctionMissing" class="text-center py-2 text-orange-500 surface-50 border-round p-3">
         <i class="pi pi-database text-2xl mb-2"></i>
         <p class="font-bold mb-1">Configuration Manquante</p>
-        <p class="text-sm mb-3 text-700">Le moteur du jeu n'est pas installé sur Supabase.</p>
-        <div class="text-left text-xs bg-black-alpha-10 p-2 border-round text-700 overflow-hidden text-overflow-ellipsis">
-          Exécutez le script SQL: <br>
-          <span class="font-mono text-primary">20251209_daily_wheel_logic.sql</span>
-        </div>
+        <p class="text-sm mb-3 text-700">La roue quotidienne n'est pas encore disponible.</p>
         <Button label="Réessayer" icon="pi pi-refresh" class="mt-3 p-button-sm p-button-outlined" @click="wheelStore.checkStatus()" />
       </div>
 
@@ -52,8 +48,15 @@
           </div>
           <p class="font-bold text-900 mb-2">Déjà joué aujourd'hui !</p>
           <p class="text-sm text-600 mb-3">
-            Revenez demain pour un nouveau tirage.
+            {{ wheelStore.quizStatus === 'pending' ? 'Votre question attend encore une réponse.' : 'Revenez demain pour un nouveau tirage.' }}
           </p>
+          <Button
+            v-if="wheelStore.quizStatus === 'pending'"
+            label="Reprendre le quiz"
+            icon="pi pi-question-circle"
+            class="w-full mb-3"
+            @click="wheelStore.openModal()"
+          />
           <div v-if="wheelStore.lastResult" class="surface-100 p-2 border-round text-sm">
             Dernier gain : <strong>{{ wheelStore.lastResult.label }}</strong>
           </div>

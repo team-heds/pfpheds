@@ -166,7 +166,12 @@ export async function addDynamicRoutesToRouter(router) {
     'DynamicRoutesEditor',
     'VotationView',
     'VotationViewPFP1B',
-    'Ventriglisse3D'
+    'Ventriglisse3D',
+    'GameView',
+    'GameHub',
+    'RomRunnerView',
+    'TournoisView',
+    'TournoiDetailsView'
   ];
 
   dynamicRoutes.forEach((route) => {

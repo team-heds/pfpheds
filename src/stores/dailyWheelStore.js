@@ -7,6 +7,9 @@ export const useDailyWheelStore = defineStore('dailyWheel', {
     loading: false,
     isSpinning: false,
     lastResult: null, // { result_type, prize_details }
+    lastResultType: null,
+    lastSpinId: null,
+    quizStatus: null,
     showModal: false, // Controls the visibility of the wheel modal
     error: null,
     backendFunctionMissing: false
@@ -29,6 +32,9 @@ export const useDailyWheelStore = defineStore('dailyWheel', {
         if (error) throw error
         this.canSpin = Boolean(data?.can_spin)
         this.lastResult = data?.last_result || null
+        this.lastResultType = data?.last_result_type || null
+        this.lastSpinId = data?.last_spin_id || null
+        this.quizStatus = data?.quiz_status || null
       } catch (err) {
         console.error('Error checking wheel status:', err)
         this.error = err.message
@@ -60,9 +66,22 @@ export const useDailyWheelStore = defineStore('dailyWheel', {
       }
     },
 
+    async submitQuizAnswer(spinId, answerId) {
+      if (!spinId || !answerId) throw new Error('Réponse de quiz incomplète')
+      const { data, error } = await supabase.rpc('submit_daily_wheel_quiz', {
+        p_spin_id: spinId,
+        p_answer_id: answerId
+      })
+      if (error) throw error
+      return data
+    },
+
     // Marque l'animation comme terminée et met à jour l'état
     completeSpin(result) {
       this.lastResult = result.prize_details
+      this.lastResultType = result.result_type
+      this.lastSpinId = result.spin_id
+      this.quizStatus = result.quiz_status || null
       this.canSpin = false
       this.isSpinning = false
     },

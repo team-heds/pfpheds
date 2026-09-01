@@ -9,12 +9,12 @@
 
       <div class="grid">
         <!-- Daily Wheel Widget -->
-        <div class="col-12 md:col-6 lg:col-6">
+        <div v-if="gamificationFeatures.dailyWheel" class="col-12 md:col-6 lg:col-6">
           <DailyWheelWidget />
         </div>
 
         <!-- ROM Runner Game Card -->
-        <div class="col-12 md:col-6 lg:col-6">
+        <div v-if="gamificationFeatures.romRunner" class="col-12 md:col-6 lg:col-6">
           <div class="game-card h-full flex flex-column bg-gray-900 text-white overflow-hidden relative">
             <!-- Background effect -->
             <div class="absolute inset-0 opacity-20 pointer-events-none" 
@@ -61,6 +61,7 @@ import { useRouter } from 'vue-router';
 import Navbar from '@/components/common/utils/Navbar.vue';
 import DailyWheelWidget from '@/components/gamification/daily/DailyWheelWidget.vue';
 import Button from 'primevue/button';
+import { gamificationFeatures } from '@/config/gamificationFeatures';
 
 const router = useRouter();
 </script>

@@ -14,6 +14,7 @@
     { "path": "supabase/migrations/20260804_p0_security_hardening.sql", "sha256": "eaa281697d41ab2c620b029ea2417a824d5b4f8305d6cc237fe23826a66ae32c", "reason": "Durcissement P0 historique des policies et permissions." },
     { "path": "supabase/migrations/20260804211945_complete_p0_security_matrix.sql", "sha256": "cd0c60da7598be063e36f33e0ec85cafb7188d9cd57611a76d35e8a9b8a38d23", "reason": "Durcissement P0 historique de la matrice RLS." },
     { "path": "supabase/migrations/20260824134735_allow_users_to_update_own_avatar.sql", "sha256": "09311e022711ccd311b8c8809c464776568be58446460bac2d08c3fff7c3c698", "reason": "Remplacement ciblé des policies de profil déjà déployé." },
-    { "path": "supabase/migrations/20260831144042_secure_gamification_action_engine.sql", "sha256": "3755c8d5afda68454a2a119501dc5a2950f3aefe114579fed9e8dd3ba55d3329", "reason": "Durcissement ciblé: suppression des écritures RLS permissives de gamification et remplacement par des RPC transactionnelles liées à auth.uid()." }
+    { "path": "supabase/migrations/20260831144042_secure_gamification_action_engine.sql", "sha256": "3755c8d5afda68454a2a119501dc5a2950f3aefe114579fed9e8dd3ba55d3329", "reason": "Durcissement ciblé: suppression des écritures RLS permissives de gamification et remplacement par des RPC transactionnelles liées à auth.uid()." },
+    { "path": "supabase/migrations/20260831171500_secure_daily_wheel_quiz.sql", "sha256": "0eb0a6b439698ad50a097eb76727a0336e91afad21c78389a3325c1274674132", "reason": "Durcissement ciblé de la roue quotidienne: retrait de la policy d'écriture directe et mises à jour internes transactionnelles pour une attribution XP idempotente." }
   ]
 }

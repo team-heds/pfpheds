@@ -1,3 +1,9 @@
+import { gamificationFeatures } from '@/config/gamificationFeatures'
+
+const featureGuard = (feature) => () => (
+  gamificationFeatures[feature] ? true : { path: '/outils', replace: true }
+)
+
 // Routes applications, outils, mobile & spéciales
 export default [
   // Applications & outils
@@ -12,11 +18,11 @@ export default [
   { path: '/tools/formations', component: () => import('@/views/apps/tools/AdminTrainingHubView.vue'), name: 'AdminTrainingHub', meta: { requiresAuth: true, need: ['admin'] } },
   { path: '/tools/formations/:slug', component: () => import('@/views/apps/tools/AdminTrainingDetailView.vue'), name: 'AdminTrainingDetail', meta: { requiresAuth: true, need: ['admin'] } },
   { path: '/tools/ftp-upload', component: () => import('@/views/apps/tools/FTPUploadTestView.vue'), name: 'FTPUploadTest', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
-  { path: '/game', component: () => import('@/views/apps/tools/GameView.vue'), name: 'GameView', meta: { requiresAuth: true } },
-  { path: '/rom-runner', component: () => import('@/views/apps/rom-runner/RomRunnerView.vue'), name: 'RomRunnerView', meta: { requiresAuth: true } },
+  { path: '/game', component: () => import('@/views/apps/tools/GameView.vue'), name: 'GameView', beforeEnter: featureGuard('gamesHub'), meta: { requiresAuth: true } },
+  { path: '/rom-runner', component: () => import('@/views/apps/rom-runner/RomRunnerView.vue'), name: 'RomRunnerView', beforeEnter: featureGuard('romRunner'), meta: { requiresAuth: true } },
   { path: '/chatbot', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotView', meta: { requiresAuth: true } },
-  { path: '/tournois', component: () => import('@/views/apps/tools/TournoisView.vue'), name: 'TournoisView', meta: { requiresAuth: true } },
-  { path: '/tournois/:id', component: () => import('@/views/apps/tools/TournoiDetailsView.vue'), name: 'TournoiDetailsView', meta: { requiresAuth: true } },
+  { path: '/tournois', component: () => import('@/views/apps/tools/TournoisView.vue'), name: 'TournoisView', beforeEnter: featureGuard('tournaments'), meta: { requiresAuth: true } },
+  { path: '/tournois/:id', component: () => import('@/views/apps/tools/TournoiDetailsView.vue'), name: 'TournoiDetailsView', beforeEnter: featureGuard('tournaments'), meta: { requiresAuth: true } },
   { path: '/mobile-tools', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsView', meta: { requiresAuth: true } },
   { path: '/mobile-lang-apps', component: () => import('@/views/apps/tools/MobileLangAppsView.vue'), name: 'MobileLangApps', meta: { mobileOnly: true } },
   { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
@@ -41,7 +47,7 @@ export default [
   { path: '/list', component: () => import('@/components/media/audio/ListComponent.vue'), name: 'ListComponent', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
 
   // Routes spéciales
-  { path: '/ventriglisse3d', component: () => import('@/components/games/Ventriglisse3D.vue'), name: 'Ventriglisse3D', meta: { requiresAuth: false } },
+  { path: '/ventriglisse3d', component: () => import('@/components/games/Ventriglisse3D.vue'), name: 'Ventriglisse3D', beforeEnter: featureGuard('ventriglisse'), meta: { requiresAuth: true } },
   { path: '/qr', component: () => import('@/components/ui/QrCodeGenerator.vue'), name: 'QRCodePage', meta: { requiresAuth: false } },
   { path: '/outils', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },
   { path: '/outils/formations', component: () => import('@/views/apps/tools/AdminTrainingHubView.vue'), name: 'AdminTrainingHubFr', meta: { requiresAuth: true, need: ['admin'] } },
