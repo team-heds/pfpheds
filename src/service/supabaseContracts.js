@@ -44,12 +44,18 @@ export const CRITICAL_SUPABASE_CONTRACTS = Object.freeze({
   ]),
   student_result_vote: freezeColumns([
     'id',
+    'user_id',
     'status',
     'pfp_type',
+    'year',
     'pfp_validee',
     'pfp_echec',
     'pfp_arret',
     'assigned_place_id',
+    'assigned_place_name',
+    'assigned_institution_name',
+    'assigned_praticien_id',
+    'remarques',
     'created_at',
     'updated_at'
   ]),
