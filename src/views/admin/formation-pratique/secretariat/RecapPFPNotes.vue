@@ -316,6 +316,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentDirectoryService'
+import { savePfpOutcome } from '@/service/pfpOutcomeApi'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Dropdown from 'primevue/dropdown'
 import DataTable from 'primevue/datatable'
@@ -453,13 +454,7 @@ const showRetakePfp4 = computed(() => filteredNotes.value.some(note => getNoteSt
 const showAbsencesIndicator = computed(() => filteredNotes.value.some(note => hasAnyAbsence(note)))
 const showRemarksIndicator = computed(() => filteredNotes.value.some(note => hasAnyRemark(note)))
 
-const hasGrade = (value) => {
-  if (typeof value === 'boolean') return false
-  const normalized = String(value ?? '').trim().toLowerCase()
-  return normalized !== '' && normalized !== '-' && normalized !== 'false' && normalized !== 'true'
-}
-
-const isPfpLocked = (key, note) => false
+const isPfpLocked = () => false
 
 // Quand on change PFP1, on écrit dans la colonne DB qui avait déjà une valeur (pfp1b si rempli, sinon pfp1a)
 const onPfp1Change = (data) => {
@@ -647,23 +642,19 @@ const syncValidationFromNotes = async (note) => {
       const assignment = assignmentByType.get(item.pfpType)
       if (!assignment || assignment.pfp_arret) continue
 
-      const nextValidee = item.status === 'Réussi'
-      const nextEchec = item.status === 'Échec'
+      const nextOutcome = item.status === 'Réussi'
+        ? 'passed'
+        : item.status === 'Échec'
+          ? 'failed'
+          : 'pending'
+      const nextValidee = nextOutcome === 'passed'
+      const nextEchec = nextOutcome === 'failed'
 
       if (assignment.pfp_validee === nextValidee && assignment.pfp_echec === nextEchec) {
         continue
       }
 
-      const { error: updateError } = await supabase
-        .from('student_result_vote')
-        .update({
-          pfp_validee: nextValidee,
-          pfp_echec: nextEchec,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', assignment.id)
-
-      if (updateError) throw updateError
+      await savePfpOutcome(assignment.id, nextOutcome)
     }
   } catch (e) {
     console.error('Erreur sync validation depuis notes:', e)
