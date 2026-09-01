@@ -1,5 +1,22 @@
 import { supabase } from '@/supabase'
 
+const emptyQuestStats = () => ({
+  totalQuests: 0,
+  notStartedQuests: 0,
+  activeQuests: 0,
+  completedQuests: 0,
+  failedQuests: 0,
+  totalXPFromQuests: 0,
+  averageProgress: 0,
+  total: 0,
+  notStarted: 0,
+  inProgress: 0,
+  completed: 0,
+  failed: 0,
+  totalXP: 0,
+  totalCompleted: 0,
+})
+
 /**
  * Service pour la gestion utilisateur des quêtes sur Supabase
  */
@@ -231,33 +248,39 @@ class UserQuestsService {
       
       if (error) throw error
       
-      const stats = {
-        total: data.length,
-        notStarted: data.filter(q => q.status === 'not_started').length,
-        inProgress: data.filter(q => q.status === 'in_progress').length,
-        completed: data.filter(q => q.status === 'completed').length,
-        failed: data.filter(q => q.status === 'failed').length,
-        totalXP: data
+      const rows = data || []
+      const notStartedQuests = rows.filter(q => q.status === 'not_started').length
+      const activeQuests = rows.filter(q => q.status === 'in_progress').length
+      const completedQuests = rows.filter(q => q.status === 'completed').length
+      const failedQuests = rows.filter(q => q.status === 'failed').length
+      const totalXPFromQuests = rows
           .filter(q => q.status === 'completed')
-          .reduce((sum, q) => sum + (q.quest?.xp_reward || 0), 0),
-        averageProgress: data.length > 0
-          ? Math.round(data.reduce((sum, q) => sum + q.progress, 0) / data.length)
-          : 0
+          .reduce((sum, q) => sum + (Number(q.quest?.xp_reward) || 0), 0)
+      const averageProgress = rows.length > 0
+        ? Math.round(rows.reduce((sum, q) => sum + (Number(q.progress) || 0), 0) / rows.length)
+        : 0
+
+      return {
+        totalQuests: rows.length,
+        notStartedQuests,
+        activeQuests,
+        completedQuests,
+        failedQuests,
+        totalXPFromQuests,
+        averageProgress,
+        // Aliases temporaires pour les vues historiques.
+        total: rows.length,
+        notStarted: notStartedQuests,
+        inProgress: activeQuests,
+        completed: completedQuests,
+        failed: failedQuests,
+        totalXP: totalXPFromQuests,
+        totalCompleted: completedQuests,
       }
-      
-      return stats
       
     } catch (error) {
       console.error('❌ Erreur statistiques quêtes:', error)
-      return {
-        total: 0,
-        notStarted: 0,
-        inProgress: 0,
-        completed: 0,
-        failed: 0,
-        totalXP: 0,
-        averageProgress: 0
-      }
+      return emptyQuestStats()
     }
   }
   

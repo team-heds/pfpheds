@@ -1,11 +1,16 @@
 <template>
   <div 
     class="badge-card" 
+    role="button"
+    tabindex="0"
+    :aria-label="`${isUnlocked ? 'Badge obtenu' : 'Badge verrouillé'} : ${badge.name}`"
     :class="[
       `rarity-${badge.rarity}`,
       { 'unlocked': isUnlocked, 'locked': !isUnlocked, 'glow': shouldGlow }
     ]"
     @click="$emit('click', badge)"
+    @keydown.enter="$emit('click', badge)"
+    @keydown.space.prevent="$emit('click', badge)"
     v-tooltip="tooltipContent"
   >
     <!-- Badge Icon -->
@@ -118,7 +123,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['click'])
+defineEmits(['click'])
 
 // Computed properties pour la rareté
 const rarityConfig = computed(() => BADGE_RARITY[props.badge.rarity] || BADGE_RARITY.common)
@@ -131,8 +136,6 @@ const progressPercentage = computed(() => {
   if (props.progressMax === 0) return 0
   return Math.min((props.progressValue / props.progressMax) * 100, 100)
 })
-
-const isNearCompletion = computed(() => progressPercentage.value >= 80)
 
 // Tooltip content
 const tooltipContent = computed(() => {
@@ -164,7 +167,7 @@ const formatUnlockDate = (dateString) => {
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, opacity 0.3s ease;
   border: 2px solid transparent;
   overflow: hidden;
   min-height: 220px;
@@ -180,9 +183,14 @@ const formatUnlockDate = (dateString) => {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
+.badge-card:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
 .badge-card:active {
   transform: translateY(-2px) scale(1.01);
-  transition: all 0.1s ease;
+  transition-duration: 0.1s;
 }
 
 /* Rarity Styles */

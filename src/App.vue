@@ -20,7 +20,10 @@
       <!-- Intégration du widget ConvAI -->
       <!-- <ConvaiWidget /> -->
       <!-- Centre de notifications gamification -->
-      <GamificationNotification />
+      <GamificationNotification
+        v-if="gamificationUserJourneyEnabled && gamificationUserId"
+        :user-id="gamificationUserId"
+      />
     </div>
 
     <!-- Loader
@@ -39,6 +42,9 @@ import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
 // import notificationService from '@/service/notificationService';
 import questExpirationService from '@/service/questExpirationService';
+import { mapState } from 'pinia';
+import { useAuthStore } from '@/stores/authStore';
+import { gamificationFeatures } from '@/config/gamificationFeatures';
 
 export default {
   name: "App",
@@ -58,6 +64,12 @@ export default {
     };
   },
   computed: {
+    ...mapState(useAuthStore, {
+      gamificationUserId: (store) => store.user?.id || null,
+    }),
+    gamificationUserJourneyEnabled() {
+      return gamificationFeatures.userJourney;
+    },
     showMobileBottomNav() {
       return this.$route.meta?.hideMobileNav !== true;
     },

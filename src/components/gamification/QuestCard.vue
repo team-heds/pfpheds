@@ -2,6 +2,9 @@
   <!-- CARTE COMPACTE -->
   <div 
     class="quest-card-compact"
+    role="button"
+    tabindex="0"
+    :aria-label="`Voir la quête ${quest.title}`"
     :class="[
       { 'quest-expired': isExpired },
       { 'quest-completed': isCompleted },
@@ -9,6 +12,8 @@
     ]"
     :style="{ '--house-color': houseColor }"
     @click="showModal = true"
+    @keydown.enter="showModal = true"
+    @keydown.space.prevent="showModal = true"
   >
     <!-- Icône -->
     <div class="quest-icon-small" :style="{ backgroundColor: `${houseColor}15`, borderColor: houseColor }">
@@ -698,7 +703,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--surface-border);
   border-left: 4px solid var(--house-color);
-  transition: all 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   cursor: pointer;
   position: relative;
   min-height: 80px;
@@ -709,6 +714,11 @@ onUnmounted(() => {
   transform: translateY(-3px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   border-color: var(--house-color);
+}
+
+.quest-card-compact:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 3px;
 }
 
 /* Icône carte compacte */

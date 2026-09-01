@@ -747,7 +747,8 @@ const formatNumber = (num) => {
 }
 
 const goBack = () => {
-  router.push('/gamification-profile')
+  const userId = authStore.user?.id
+  router.push(userId ? { name: 'Profile', params: { id: userId } } : '/home')
 }
 
 // Watchers

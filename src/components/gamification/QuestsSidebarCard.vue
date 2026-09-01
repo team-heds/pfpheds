@@ -11,6 +11,7 @@
       <Button 
         icon="pi pi-arrow-right" 
         class="p-button-text p-button-sm"
+        aria-label="Voir toutes les quêtes"
         @click="goToQuests"
         v-tooltip.top="'Voir toutes les quêtes'"
       />
@@ -24,11 +25,13 @@
 
     <!-- Liste des nouvelles quêtes -->
     <div v-else-if="newQuests.length > 0" class="quests-list">
-      <div 
+      <button
         v-for="quest in displayedQuests"
         :key="quest.id"
+        type="button"
         class="quest-item"
         :class="{ 'new-quest': quest.isNew }"
+        :aria-label="`Voir la quête ${quest.title}`"
         @click="viewQuestDetails(quest)"
       >
         <!-- Icône et contenu -->
@@ -62,7 +65,7 @@
         <div class="quest-arrow">
           <i class="pi pi-chevron-right"></i>
         </div>
-      </div>
+      </button>
 
       <!-- Bouton "Voir plus" si + de 3 quêtes -->
       <Button 
@@ -161,7 +164,7 @@ const loadNewQuests = async () => {
     const user = authStore.user
     if (!user) return
     
-    const userId = authStore.isFirebaseUser ? user.uid : user.id
+    const userId = user.id
 
     console.log('🔍 Chargement des nouvelles quêtes pour:', userId)
 
@@ -191,7 +194,7 @@ const subscribeToQuestUpdates = () => {
   const user = authStore.user
   if (!user) return
   
-  const userId = authStore.isFirebaseUser ? user.uid : user.id
+  const userId = user.id
 
   console.log('🔔 Abonnement aux nouvelles quêtes pour:', userId)
 
@@ -203,19 +206,11 @@ const subscribeToQuestUpdates = () => {
 }
 
 const viewQuestDetails = (quest) => {
-  const user = authStore.user
-  if (!user) return
-  
-  const userId = authStore.isFirebaseUser ? user.uid : user.id
-  router.push(`/gamification-profile/${userId}`)
+  router.push({ name: 'QuestsPage', query: { quest: quest.id } })
 }
 
 const goToQuests = () => {
-  const user = authStore.user
-  if (!user) return
-  
-  const userId = authStore.isFirebaseUser ? user.uid : user.id
-  router.push(`/gamification-profile/${userId}`)
+  router.push({ name: 'QuestsPage' })
 }
 
 // Lifecycle
@@ -294,8 +289,17 @@ onBeforeUnmount(() => {
   border: 1px solid var(--surface-border);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
   background: var(--surface-ground);
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.quest-item:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .quest-item:hover {
@@ -424,7 +428,7 @@ onBeforeUnmount(() => {
   border: none;
   color: white;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .see-all-btn:hover {

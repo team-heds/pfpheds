@@ -1,7 +1,12 @@
 <template>
-  <div class="gamification-notifications">
+  <div
+    class="gamification-notifications"
+    role="status"
+    aria-live="polite"
+    aria-atomic="false"
+  >
     <!-- Notification Toast -->
-    <div 
+    <article
       v-for="notification in visibleNotifications" 
       :key="notification.id"
       :class="[
@@ -10,7 +15,6 @@
         { 'notification-entering': notification.entering },
         { 'notification-leaving': notification.leaving }
       ]"
-      @click="handleNotificationClick(notification)"
     >
       <div class="notification-icon">
         <i :class="getNotificationIcon(notification.type)"></i>
@@ -28,19 +32,21 @@
         <Button 
           icon="pi pi-times" 
           class="p-button-text p-button-sm notification-close"
+          aria-label="Fermer la notification"
           @click.stop="dismissNotification(notification.id)"
         />
       </div>
-    </div>
+    </article>
 
     <!-- Notification Center (optionnel) -->
-    <div v-if="showCenter" class="notification-center">
+    <div v-if="centerVisible" class="notification-center">
       <div class="notification-center-header">
         <h3>Notifications Gamification</h3>
         <Button 
           icon="pi pi-times" 
           class="p-button-text"
-          @click="showCenter = false"
+          aria-label="Fermer le centre de notifications"
+          @click="centerVisible = false"
         />
       </div>
       
@@ -71,9 +77,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import Button from 'primevue/button'
-import gamificationService from '@/service/gamificationService'
+import { supabase } from '@/supabase'
 
 const props = defineProps({
   userId: {
@@ -98,29 +104,16 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['notification-click', 'center-toggle'])
-
 // État des notifications
 const notifications = ref([])
 const allNotifications = ref([])
 const listenerId = ref(null)
-const notificationQueue = ref([])
+const centerVisible = ref(props.showCenter)
 
 // Notifications visibles (limitées)
 const visibleNotifications = computed(() => {
   return notifications.value.slice(0, props.maxVisible)
 })
-
-// Types de notifications gamification
-const notificationTypes = {
-  XP_GAINED: 'xp',
-  LEVEL_UP: 'level',
-  BADGE_EARNED: 'badge',
-  QUEST_COMPLETED: 'quest',
-  CHALLENGE_COMPLETED: 'challenge',
-  HOUSE_JOINED: 'house',
-  ACHIEVEMENT_UNLOCKED: 'achievement'
-}
 
 // Icônes par type de notification
 const getNotificationIcon = (type) => {
@@ -198,18 +191,6 @@ const dismissNotification = (notificationId) => {
   }
 }
 
-// Gérer le clic sur une notification
-const handleNotificationClick = (notification) => {
-  // Marquer comme lue
-  notification.read = true
-  
-  // Émettre l'événement
-  emit('notification-click', notification)
-  
-  // Masquer la notification
-  dismissNotification(notification.id)
-}
-
 // Formater le temps
 const formatTime = (timestamp) => {
   const date = new Date(timestamp)
@@ -230,53 +211,43 @@ const formatTime = (timestamp) => {
 
 // Traiter les logs d'activité en notifications
 const processActivityLog = (log) => {
-  if (!log || !props.userId || log.userId !== props.userId) return
+  if (!log || !props.userId || log.user_id !== props.userId) return
+  if ((Number(log.amount) || 0) <= 0) return
   
   const notificationData = {
-    type: log.action,
-    timestamp: log.timestamp
+    sourceLogId: log.id,
+    type: 'xp',
+    timestamp: log.created_at ? new Date(log.created_at).getTime() : Date.now()
   }
+
+  const action = String(log.action || '').toUpperCase()
   
-  switch (log.action) {
-    case 'xp_gained':
-      notificationData.title = 'Points d\'expérience gagnés!'
-      notificationData.message = log.reason || 'Action gamification'
-      notificationData.xpGain = log.amount
-      notificationData.type = 'xp'
-      break
-      
-    case 'level_up':
-      notificationData.title = 'Niveau supérieur atteint!'
-      notificationData.message = `Vous êtes maintenant niveau ${log.newLevel}`
-      notificationData.type = 'level'
-      break
-      
-    case 'badge_earned':
+  switch (action) {
+    case 'BADGE_UNLOCK':
+    case 'BADGE_UNLOCKED':
       notificationData.title = 'Nouveau badge obtenu!'
-      notificationData.message = log.badgeName || 'Badge débloqué'
+      notificationData.message = log.description || 'Badge débloqué'
       notificationData.type = 'badge'
       break
-      
-    case 'quest_completed':
+
+    case 'QUEST_COMPLETE':
+    case 'QUEST_COMPLETED':
       notificationData.title = 'Quête terminée!'
-      notificationData.message = log.questName || 'Quête accomplie avec succès'
+      notificationData.message = log.description || 'Quête accomplie avec succès'
       notificationData.type = 'quest'
       break
-      
-    case 'challenge_completed':
+
+    case 'CHALLENGE_COMPLETE':
+    case 'CHALLENGE_COMPLETED':
       notificationData.title = 'Défi relevé!'
-      notificationData.message = log.challengeName || 'Défi accompli avec succès'
+      notificationData.message = log.description || 'Défi accompli avec succès'
       notificationData.type = 'challenge'
       break
-      
-    case 'house_joined':
-      notificationData.title = 'Maison rejointe!'
-      notificationData.message = `Bienvenue dans la maison ${log.houseName}`
-      notificationData.type = 'house'
-      break
-      
+
     default:
-      return // Ne pas créer de notification pour les autres actions
+      notificationData.title = 'Points d\'expérience gagnés!'
+      notificationData.message = log.description || 'Progression enregistrée'
+      notificationData.xpGain = Number(log.amount) > 0 ? Number(log.amount) : null
   }
   
   showNotification(notificationData)
@@ -285,17 +256,27 @@ const processActivityLog = (log) => {
 // S'abonner aux mises à jour d'activité
 const subscribeToActivity = () => {
   if (!props.userId) return
-  
-  listenerId.value = gamificationService.subscribeToActivity((recentLogs) => {
-    // Traiter seulement les nouveaux logs
-    const existingIds = new Set(allNotifications.value.map(n => n.sourceLogId))
-    
-    recentLogs.forEach(log => {
-      if (!existingIds.has(log.id)) {
-        processActivityLog({ ...log, sourceLogId: log.id })
-      }
-    })
-  })
+
+  unsubscribeFromActivity()
+  listenerId.value = supabase
+    .channel(`gamification-notifications-${props.userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'xp_history',
+        filter: `user_id=eq.${props.userId}`
+      },
+      ({ new: activity }) => processActivityLog(activity)
+    )
+    .subscribe()
+}
+
+const unsubscribeFromActivity = () => {
+  if (!listenerId.value) return
+  supabase.removeChannel(listenerId.value)
+  listenerId.value = null
 }
 
 // API publique pour créer des notifications manuellement
@@ -317,10 +298,18 @@ onMounted(() => {
   }
 })
 
+watch(() => props.userId, (userId, previousUserId) => {
+  if (userId === previousUserId) return
+  unsubscribeFromActivity()
+  if (userId) subscribeToActivity()
+})
+
+watch(() => props.showCenter, (showCenter) => {
+  centerVisible.value = showCenter
+})
+
 onUnmounted(() => {
-  if (listenerId.value) {
-    gamificationService.unsubscribe(listenerId.value)
-  }
+  unsubscribeFromActivity()
 })
 </script>
 
@@ -346,8 +335,7 @@ onUnmounted(() => {
   min-width: 320px;
   max-width: 400px;
   pointer-events: auto;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
   transform: translateX(100%);
   opacity: 0;
 }

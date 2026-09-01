@@ -1,12 +1,17 @@
 <template>
   <div 
     class="challenge-card" 
+    role="button"
+    tabindex="0"
+    :aria-label="`Voir le défi ${challenge.name}`"
     :class="[
       `difficulty-${challenge.difficulty.toLowerCase()}`,
       { 'completed': challenge.completed, 'near-completion': isNearCompletion }
     ]"
     :style="{ '--house-color': houseColor }"
     @click="$emit('click', challenge)"
+    @keydown.enter="$emit('click', challenge)"
+    @keydown.space.prevent="$emit('click', challenge)"
   >
     <!-- Difficulty Indicator -->
     <div class="difficulty-indicator" :style="{ backgroundColor: houseColor }">
@@ -50,7 +55,14 @@
           </span>
         </div>
         
-        <div class="progress-bar-container">
+        <div
+          class="progress-bar-container"
+          role="progressbar"
+          aria-label="Progression du défi"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-valuenow="progressPercentage"
+        >
           <div class="progress-bar">
             <div 
               class="progress-fill" 
@@ -133,7 +145,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['click'])
+defineEmits(['click'])
 
 // Computed properties
 const difficultyConfig = computed(() => 
@@ -221,7 +233,7 @@ const formatCompletionDate = (dateString) => {
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
   border: 2px solid var(--house-color);
   overflow: hidden;
   min-height: 280px;
@@ -235,9 +247,14 @@ const formatCompletionDate = (dateString) => {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
+.challenge-card:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
 .challenge-card:active {
   transform: translateY(-2px) scale(1.01);
-  transition: all 0.1s ease;
+  transition-duration: 0.1s;
 }
 
 /* Difficulty Styles */

@@ -69,7 +69,7 @@ const motto = 'Voir tout, gérer tout'
 const navigateToProfile = () => {
   console.log('Navigating to gamification profile...')
   try {
-    router.push({ name: 'GamificationProfilePage' })
+    router.push({ name: 'GamificationProfileSelf' })
   } catch (error) {
     console.error('Navigation error:', error)
   }
