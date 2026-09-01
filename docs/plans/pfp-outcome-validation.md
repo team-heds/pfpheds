@@ -1,21 +1,21 @@
 ---
 ticket: PFP-OUTCOME-VALIDATION
-validated: no
+validated: yes
 ---
 
 # Plan — Fiabiliser la validation des résultats PFP
 
 ## Critères d'acceptation
 
-- [ ] Chaque affectation publiée possède exactement un état visible : En attente, Réussi, Échec ou Arrêt.
-- [ ] Une modification reste locale tant que l'utilisateur n'a pas choisi « Enregistrer ».
-- [ ] Un arrêt exige un motif; les erreurs d'enregistrement sont visibles et l'ancien état est restauré.
-- [ ] Les filtres année, classe, PFP et résultat proviennent des données réelles et couvrent 2027/BA26.
-- [ ] Les mutations sont autorisées côté serveur et portent sur les identifiants exacts.
-- [ ] Chaque modification est auditée côté serveur.
-- [ ] Les profils, alertes et vues de secrétariat reflètent le résultat enregistré.
+- [x] Chaque affectation publiée possède exactement un état visible : En attente, Réussi, Échec ou Arrêt.
+- [x] Une modification reste locale tant que l'utilisateur n'a pas choisi « Enregistrer ».
+- [x] Un arrêt exige un motif; les erreurs d'enregistrement sont visibles et l'ancien état est restauré.
+- [x] Les filtres année, classe, PFP et résultat proviennent des données réelles et couvrent 2027/BA26.
+- [x] Les mutations sont autorisées côté serveur et portent sur les identifiants exacts.
+- [x] Chaque modification est auditée côté serveur.
+- [x] Les profils, alertes et vues de secrétariat reflètent le résultat enregistré.
 
-## 1. Créer le modèle canonique et ses tests
+## 1. Créer le modèle canonique et ses tests ✅
 
 - **Objectif :** centraliser la conversion entre les trois booléens existants et un état métier exclusif.
 - **Fichiers attendus :** `src/service/pfpOutcomeService.js`, `tests/unit/pfpOutcomeService.spec.js`.
@@ -25,7 +25,7 @@ validated: no
 - **Validation :** `npm run test:unit -- tests/unit/pfpOutcomeService.spec.js`.
 - **Rollback :** suppression du service et du test, sans impact sur les données.
 
-## 2. Ajouter le garde-fou SQL et l'audit
+## 2. Ajouter le garde-fou SQL et l'audit ✅
 
 - **Objectif :** garantir l'exclusivité en base et conserver une piste d'audit serveur.
 - **Fichiers attendus :** une migration créée par `supabase migration new`, contrat Supabase mis à jour si nécessaire.
@@ -36,7 +36,7 @@ validated: no
 - **Sécurité :** l'acteur vient du JWT backend; aucune donnée d'audit n'est renvoyée aux étudiants.
 - **Rollback :** retirer la contrainte puis la table d'audit; aucune colonne métier historique supprimée.
 
-## 3. Exposer une mutation backend autorisée
+## 3. Exposer une mutation backend autorisée ✅
 
 - **Objectif :** supprimer les écritures directes depuis le navigateur et enregistrer résultat + audit de manière contrôlée.
 - **Fichiers attendus :** route backend dédiée, montage dans `backend/index.js`, tests backend.
@@ -46,7 +46,7 @@ validated: no
 - **Validation :** `npm --prefix backend test`.
 - **Rollback :** retirer le montage de route; la lecture existante continue de fonctionner.
 
-## 4. Refaire l'interaction de la page Validation PFP
+## 4. Refaire l'interaction de la page Validation PFP ✅
 
 - **Objectif :** remplacer les trois cases immédiates par un choix exclusif lisible et une sauvegarde explicite.
 - **Fichiers attendus :** `src/views/admin/pfp/ValidationPFP.vue`, éventuellement un petit composant commun de sélection d'état.
@@ -57,7 +57,7 @@ validated: no
 - **Accessibilité :** groupe de boutons nommé, focus visible, message d'erreur associé, aucune information portée uniquement par la couleur.
 - **Rollback :** rétablir l'ancien composant; le backend et la contrainte restent compatibles.
 
-## 5. Vérifier les consommateurs et l'action de masse
+## 5. Vérifier les consommateurs et l'action de masse ✅
 
 - **Objectif :** confirmer que profils, alertes et secrétariat lisent le résultat canonique et sécuriser la validation en masse.
 - **Fichiers attendus :** tests ciblés autour de `profileStages`, `pfpAlertsService`, `VueDEnsembleFP`; adaptation minimale si une divergence est confirmée.

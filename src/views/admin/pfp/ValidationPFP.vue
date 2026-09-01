@@ -90,7 +90,7 @@
             <Dropdown v-model="filterClasse" :options="classes" placeholder="Classe" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterStatus" :options="statusList" optionLabel="label" optionValue="value" placeholder="Statut" class="w-full" showClear />
+            <Dropdown v-model="filterStatus" :options="statusList" optionLabel="label" optionValue="value" placeholder="Résultat" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-4">
             <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-full" />
@@ -182,32 +182,53 @@
           <Column field="praticien_formateur" header="Praticien formateur" sortable></Column>
           
           <!-- Checkboxes de validation -->
-          <Column header="Validation PFP" style="min-width: 280px;">
+          <Column header="Résultat PFP" style="min-width: 430px;">
             <template #body="slotProps">
-              <div class="flex flex-column gap-2">
-                <div class="flex align-items-center gap-2">
-                  <Checkbox 
-                    v-model="slotProps.data.pfp_validee" 
-                    :binary="true"
-                    @change="handleValidationChange(slotProps.data, 'validee')"
+              <div class="pfp-outcome-editor flex flex-column gap-2">
+                <SelectButton
+                  v-model="slotProps.data._outcomeDraft"
+                  :options="PFP_OUTCOME_OPTIONS"
+                  optionLabel="label"
+                  optionValue="value"
+                  :allowEmpty="false"
+                  :disabled="slotProps.data._outcomeSaving || !slotProps.data.id"
+                  :aria-label="`Résultat PFP de ${slotProps.data.student_name}`"
+                />
+                <Textarea
+                  v-if="slotProps.data._outcomeDraft === PFP_OUTCOMES.STOPPED"
+                  v-model="slotProps.data._outcomeComment"
+                  rows="2"
+                  maxlength="2000"
+                  placeholder="Motif obligatoire de l'arrêt"
+                  :disabled="slotProps.data._outcomeSaving"
+                  :aria-label="`Motif de l'arrêt de ${slotProps.data.student_name}`"
+                  class="w-full"
+                />
+                <small v-if="!slotProps.data.id" class="text-orange-600">
+                  Aucune affectation ne peut être modifiée sur cette ligne.
+                </small>
+                <small v-if="slotProps.data._outcomeError" class="text-red-600" role="alert">
+                  {{ slotProps.data._outcomeError }}
+                </small>
+                <small v-else-if="slotProps.data._outcomeSaved" class="text-green-600" role="status">
+                  Résultat enregistré.
+                </small>
+                <div v-if="isOutcomeDirty(slotProps.data)" class="flex gap-2">
+                  <Button
+                    label="Enregistrer"
+                    icon="pi pi-save"
+                    size="small"
+                    :loading="slotProps.data._outcomeSaving"
+                    @click="saveOutcomeRow(slotProps.data)"
                   />
-                  <label class="text-sm">PFP Validée</label>
-                </div>
-                <div class="flex align-items-center gap-2">
-                  <Checkbox 
-                    v-model="slotProps.data.pfp_echec" 
-                    :binary="true"
-                    @change="handleValidationChange(slotProps.data, 'echec')"
+                  <Button
+                    label="Annuler"
+                    icon="pi pi-undo"
+                    size="small"
+                    outlined
+                    :disabled="slotProps.data._outcomeSaving"
+                    @click="resetOutcomeDraft(slotProps.data)"
                   />
-                  <label class="text-sm">PFP Échec</label>
-                </div>
-                <div class="flex align-items-center gap-2">
-                  <Checkbox 
-                    v-model="slotProps.data.pfp_arret" 
-                    :binary="true"
-                    @change="handleArretChange(slotProps.data)"
-                  />
-                  <label class="text-sm">PFP Arrêt</label>
                 </div>
               </div>
             </template>
@@ -221,28 +242,6 @@
       </div>
     </div>
 
-    <!-- Dialog pour le commentaire d'arrêt -->
-    <Dialog 
-      v-model:visible="showArretDialog" 
-      modal 
-      header="Motif de l'arrêt" 
-      :style="{ width: '450px' }"
-      :closable="false"
-    >
-      <div class="flex flex-column gap-3">
-        <p class="text-600 m-0">Veuillez indiquer le motif de l'arrêt de la PFP :</p>
-        <Textarea 
-          v-model="arretComment" 
-          rows="4" 
-          placeholder="Saisissez le motif de l'arrêt..."
-          class="w-full"
-        />
-      </div>
-      <template #footer>
-        <Button label="Annuler" severity="secondary" outlined @click="cancelArret" />
-        <Button label="Confirmer" @click="confirmArret" />
-      </template>
-    </Dialog>
   </AdminLayout>
 </template>
 
@@ -250,7 +249,16 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentDirectoryService'
-import { useAutoRefresh } from '@/composables/useAutoRefresh'
+import { savePfpOutcome } from '@/service/pfpOutcomeApi'
+import {
+  PFP_OUTCOMES,
+  PFP_OUTCOME_OPTIONS,
+  buildPfpOutcomePayload,
+  createPfpOutcomeDraft,
+  getPfpOutcome,
+  hasPfpOutcomeChanged,
+  validatePfpOutcome
+} from '@/service/pfpOutcomeService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
@@ -260,10 +268,8 @@ import Tag from 'primevue/tag'
 import Dropdown from 'primevue/dropdown'
 import Avatar from 'primevue/avatar'
 import InputSwitch from 'primevue/inputswitch'
-import Checkbox from 'primevue/checkbox'
-import Dialog from 'primevue/dialog'
 import Textarea from 'primevue/textarea'
-import Row from 'primevue/row'
+import SelectButton from 'primevue/selectbutton'
 
 const loading = ref(false)
 const searchQuery = ref('')
@@ -340,13 +346,8 @@ const formatActionDate = (iso) => {
   return new Date(iso).toLocaleString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-// Dialog pour l'arrêt
-const showArretDialog = ref(false)
-const arretComment = ref('')
-const currentRow = ref(null)
-
-const years = ref(['2025', '2026'])
-const classes = ref(['BA23', 'BA24', 'BA25'])
+const years = computed(() => [...new Set((placesList.value || []).map(row => row.year).filter(Boolean))].sort())
+const classes = computed(() => [...new Set((allStudents.value || []).map(getStudentClass).filter(Boolean))].sort())
 const typesPFP = ref([
   { label: 'PFP1A', value: 'PFP1A' },
   { label: 'PFP1B', value: 'PFP1B' },
@@ -385,11 +386,8 @@ const exportExcel = async () => {
 }
 
 watch(showAllStudents, (val) => {
-  if (val) {
-    filterStatus.value = null
-  } else {
-    filterStatus.value = 'published'
-  }
+  void val
+  filterStatus.value = null
 })
 
 watch(adminActionStorageKey, () => {
@@ -401,8 +399,7 @@ watch(adminActionHistory, () => {
 }, { deep: true })
 
 const statusList = ref([
-  { label: 'Publié', value: 'published' },
-  { label: 'Non attribué', value: 'unassigned' },
+  ...PFP_OUTCOME_OPTIONS,
   { label: 'Tous', value: null }
 ])
 
@@ -412,8 +409,6 @@ const stats = ref({
   failed: 0,
   stopped: 0
 })
-
-const { scheduleRefresh } = useAutoRefresh(() => loadPublishedAssignments())
 
 const getVotationTypeLabel = (assignment) => {
   if (!assignment) return 'Tirage aléatoire'
@@ -440,54 +435,69 @@ const getPraticienFullName = (p) => {
   return `${prenom} ${nom}`.trim()
 }
 
-// Gestion des checkboxes
-const handleValidationChange = async (row, type) => {
-  // Si on coche une checkbox, décocher les autres
-  if (type === 'validee' && row.pfp_validee) {
-    row.pfp_echec = false
-    row.pfp_arret = false
-    row.commentaire_arret = ''
-    await saveValidation(row)
-  } else if (type === 'echec' && row.pfp_echec) {
-    row.pfp_validee = false
-    row.pfp_arret = false
-    row.commentaire_arret = ''
-    await saveValidation(row)
-  } else if (type === 'validee' && !row.pfp_validee) {
-    // Décoché - sauvegarder l'état et supprimer de pfp_valided
-    await saveValidation(row)
-    await removeFromStudentsPhysio(row)
-  } else if (type === 'echec' && !row.pfp_echec) {
-    // Décoché - sauvegarder l'état
-    await saveValidation(row)
-    await removeFromStudentsPhysio(row)
+const initializeOutcomeState = (row) => {
+  const draft = createPfpOutcomeDraft(row)
+  return {
+    ...row,
+    _outcomeDraft: draft.outcome,
+    _outcomeComment: draft.comment,
+    _outcomeSaving: false,
+    _outcomeError: getPfpOutcome(row) === PFP_OUTCOMES.INVALID
+      ? 'Cette ancienne ligne contient plusieurs résultats. Choisissez le bon résultat puis enregistrez.'
+      : '',
+    _outcomeSaved: false
   }
-  updateStats()
-  scheduleRefresh()
 }
 
-// Sauvegarder la validation dans student_result_vote
-const saveValidation = async (row) => {
+const isOutcomeDirty = (row) => hasPfpOutcomeChanged(row, {
+  outcome: row._outcomeDraft,
+  comment: row._outcomeComment
+})
+
+const resetOutcomeDraft = (row) => {
+  const draft = createPfpOutcomeDraft(row)
+  row._outcomeDraft = draft.outcome === PFP_OUTCOMES.INVALID ? PFP_OUTCOMES.PENDING : draft.outcome
+  row._outcomeComment = draft.comment
+  row._outcomeError = ''
+  row._outcomeSaved = false
+}
+
+const applySavedOutcome = (row, outcome, comment, saved = {}) => {
+  const canonical = buildPfpOutcomePayload(outcome, comment)
+  Object.assign(row, canonical, saved)
+  row._outcomeDraft = outcome
+  row._outcomeComment = canonical.commentaire_arret
+  row._outcomeError = ''
+  row._outcomeSaved = true
+}
+
+const saveOutcomeRow = async (row, options = {}) => {
+  if (!row?.id || row._outcomeSaving) return false
+
+  const validation = validatePfpOutcome(row._outcomeDraft, row._outcomeComment)
+  if (!validation.valid) {
+    row._outcomeError = validation.message
+    row._outcomeSaved = false
+    return false
+  }
+
+  row._outcomeSaving = true
+  row._outcomeError = ''
+  row._outcomeSaved = false
   try {
-    const { error } = await supabase
-      .from('student_result_vote')
-      .update({
-        pfp_validee: row.pfp_validee,
-        pfp_echec: row.pfp_echec,
-        pfp_arret: row.pfp_arret,
-        commentaire_arret: row.commentaire_arret,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', row.id)
-
-    if (error) throw error
-
-    // Synchroniser avec StudentsPhysio si validé, échec ou arrêt
-    if (row.pfp_validee || row.pfp_echec || row.pfp_arret) {
-      await syncWithStudentsPhysio(row)
+    const saved = await savePfpOutcome(row.id, row._outcomeDraft, row._outcomeComment)
+    applySavedOutcome(row, row._outcomeDraft, row._outcomeComment, saved)
+    updateStats()
+    if (!options.silentHistory) {
+      const label = PFP_OUTCOME_OPTIONS.find(option => option.value === row._outcomeDraft)?.label
+      addAdminAction('Résultat PFP', `${row.student_name} · ${row.pfp_type} · ${label}`)
     }
+    return true
   } catch (error) {
-    console.error('Erreur sauvegarde validation:', error)
+    row._outcomeError = error?.message || "Le résultat n'a pas pu être enregistré."
+    return false
+  } finally {
+    row._outcomeSaving = false
   }
 }
 
@@ -523,232 +533,20 @@ const bulkValidateSelectedPfp = async () => {
   bulkValidating.value = true
   try {
     for (const row of targetRows) {
-      row.pfp_validee = true
-      row.pfp_echec = false
-      row.pfp_arret = false
-      row.commentaire_arret = ''
-      await saveValidation(row)
+      row._outcomeDraft = PFP_OUTCOMES.PASSED
+      row._outcomeComment = ''
+      const saved = await saveOutcomeRow(row, { silentHistory: true })
+      if (!saved) throw new Error(row._outcomeError || `Échec pour ${row.student_name}`)
     }
 
     updateStats()
-    scheduleRefresh()
     addAdminAction('Validation en masse', `${targetRows.length} ligne(s) validée(s) pour ${bulkValidatePfpType.value} (${filterYear.value || 'année non précisée'})`)
   } catch (error) {
     console.error('Erreur validation en masse:', error)
+    window.alert(error?.message || "La validation en masse n'a pas pu être terminée.")
   } finally {
     bulkValidating.value = false
   }
-}
-
-// Synchroniser avec StudentsPhysio.pfp_valided
-const syncWithStudentsPhysio = async (row) => {
-  try {
-    const { data: studentData, error: studentError } = await supabase
-      .from('StudentsPhysio')
-      .select('pfp_valided, pfp_2')
-      .eq('user_id', row.user_id)
-      .maybeSingle()
-
-    if (studentError) throw studentError
-
-    let pfpValided = []
-    if (studentData?.pfp_valided) {
-      try {
-        pfpValided = typeof studentData.pfp_valided === 'string' 
-          ? JSON.parse(studentData.pfp_valided) 
-          : studentData.pfp_valided
-      } catch (e) {
-        pfpValided = []
-      }
-    }
-
-    const { data: placeData } = await supabase
-      .from('places')
-      .select('AMBU, DE, FR, MSQ, NEUROGER, REHAB, SYSINT, AIGU, IT, ENG, NomPlace, InstitutionName, InstitutionId')
-      .eq('PlaceId', row.assigned_place_id)
-      .single()
-
-    // Déterminer le status
-    const status = row.pfp_validee ? 'validee' : (row.pfp_echec ? 'echec' : (row.pfp_arret ? 'arret' : 'normal'))
-
-    // Filtrer les critères selon le status
-    let criteriaToInclude = {}
-    if (status === 'echec') {
-      // Pour échec, ne transmettre que DE ou FR
-      criteriaToInclude = {
-        DE: placeData?.DE || false,
-        FR: placeData?.FR || false
-      }
-    } else if (status === 'arret') {
-      // Pour arrêt, ne transmettre aucun critère
-      criteriaToInclude = {}
-    } else {
-      // Pour validee, transmettre tous les critères
-      criteriaToInclude = {
-        AMBU: placeData?.AMBU || false,
-        DE: placeData?.DE || false,
-        FR: placeData?.FR || false,
-        MSQ: placeData?.MSQ || false,
-        NEUROGER: placeData?.NEUROGER || false,
-        REHAB: placeData?.REHAB || false,
-        SYSINT: placeData?.SYSINT || false,
-        AIGU: placeData?.AIGU || false,
-        IT: placeData?.IT || false,
-        ENG: placeData?.ENG || false
-      }
-    }
-
-    const validationEntry = {
-      PlaceId: row.assigned_place_id,
-      ID_PFP: row.assigned_place_id,
-      id_pfp: row.assigned_place_id,
-      NomPlace: placeData?.NomPlace || row.place_name || row.assigned_place_name || '',
-      nom_pfp: placeData?.NomPlace || row.place_name || row.assigned_place_name || '',
-      Domaine: row.assigned_place_name || placeData?.NomPlace || '',
-      InstitutionName: placeData?.InstitutionName || row.institution_name || row.assigned_institution_name || '',
-      institution_name: placeData?.InstitutionName || row.institution_name || row.assigned_institution_name || '',
-      InstitutionId: placeData?.InstitutionId || null,
-      pfp_type: row.pfp_type,
-      pfpLevel: row.pfp_type,
-      year: row.year,
-      praticien_formateur: row.praticien_formateur,
-      status: status,
-      commentaire_arret: row.commentaire_arret || '',
-      ...criteriaToInclude,
-      validated_at: new Date().toISOString()
-    }
-
-    // Match by pfp_type first, then by PlaceId/ID_PFP
-    const existingIndex = pfpValided.findIndex(p => 
-      (p.pfp_type === row.pfp_type || p.pfpLevel === row.pfp_type) ||
-      (p.PlaceId === row.assigned_place_id || p.ID_PFP === row.assigned_place_id || p.id_pfp === row.assigned_place_id)
-    )
-    if (existingIndex >= 0) {
-      pfpValided[existingIndex] = validationEntry
-    } else {
-      pfpValided.push(validationEntry)
-    }
-
-    // Update existing row, or insert if it doesn't exist
-    const { error: updateError, count } = await supabase
-      .from('StudentsPhysio')
-      .update({
-        pfp_valided: JSON.stringify(pfpValided),
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', row.user_id)
-
-    if (updateError) throw updateError
-
-    // If no row was updated (row doesn't exist), insert a new one
-    if (count === 0 && !studentData) {
-      const { error: insertError } = await supabase
-        .from('StudentsPhysio')
-        .insert({
-          user_id: row.user_id,
-          pfp_valided: JSON.stringify(pfpValided),
-          updated_at: new Date().toISOString()
-        })
-      if (insertError) throw insertError
-    }
-
-    console.log(`✅ pfp_valided synced for ${row.user_id} (${row.pfp_type}): status=${status}`)
-
-  } catch (error) {
-    console.error('Erreur synchronisation StudentsPhysio:', error)
-  }
-}
-
-// Supprimer la validation de StudentsPhysio.pfp_valided
-const removeFromStudentsPhysio = async (row) => {
-  try {
-    const { data: studentData, error: studentError } = await supabase
-      .from('StudentsPhysio')
-      .select('pfp_valided')
-      .eq('user_id', row.user_id)
-      .maybeSingle()
-
-    if (studentError) throw studentError
-
-    let pfpValided = []
-    if (studentData?.pfp_valided) {
-      try {
-        pfpValided = typeof studentData.pfp_valided === 'string'
-          ? JSON.parse(studentData.pfp_valided)
-          : studentData.pfp_valided
-      } catch (e) {
-        pfpValided = []
-      }
-    }
-
-    // Filtrer pour supprimer l'entrée correspondante (match by pfp_type or PlaceId/ID_PFP)
-    const filteredPfpValided = pfpValided.filter(p => {
-      const matchesPfpType = (p.pfp_type === row.pfp_type || p.pfpLevel === row.pfp_type)
-      const matchesPlace = (p.PlaceId === row.assigned_place_id || p.ID_PFP === row.assigned_place_id || p.id_pfp === row.assigned_place_id)
-      return !(matchesPfpType || matchesPlace)
-    })
-
-    const { error: updateError } = await supabase
-      .from('StudentsPhysio')
-      .update({
-        pfp_valided: JSON.stringify(filteredPfpValided),
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', row.user_id)
-
-    if (updateError) throw updateError
-
-  } catch (error) {
-    console.error('Erreur suppression StudentsPhysio:', error)
-  }
-}
-
-const handleArretChange = async (row) => {
-  if (row.pfp_arret) {
-    // Ouvrir le dialog pour le commentaire
-    currentRow.value = row
-    showArretDialog.value = true
-  } else {
-    // Décoché, effacer le commentaire et sauvegarder
-    row.commentaire_arret = ''
-    await saveValidation(row)
-    await removeFromStudentsPhysio(row)
-    updateStats()
-    scheduleRefresh()
-  }
-}
-
-const cancelArret = async () => {
-  if (currentRow.value) {
-    currentRow.value.pfp_arret = false
-    currentRow.value.commentaire_arret = ''
-    // Sauvegarder l'état décoché
-    await saveValidation(currentRow.value)
-    await removeFromStudentsPhysio(currentRow.value)
-  }
-  showArretDialog.value = false
-  arretComment.value = ''
-  currentRow.value = null
-  updateStats()
-  scheduleRefresh()
-}
-
-const confirmArret = async () => {
-  if (currentRow.value) {
-    currentRow.value.pfp_arret = true
-    currentRow.value.commentaire_arret = arretComment.value
-    // Décocher les autres checkboxes
-    currentRow.value.pfp_validee = false
-    currentRow.value.pfp_echec = false
-    
-    // Sauvegarder dans la base de données
-    await saveValidation(currentRow.value)
-  }
-  showArretDialog.value = false
-  arretComment.value = ''
-  currentRow.value = null
-  updateStats()
-  scheduleRefresh()
 }
 
 const updateStats = () => {
@@ -786,7 +584,7 @@ const baseRows = computed(() => {
     })
 
     const assignment = candidates[0] || null
-    out.push({
+    out.push(initializeOutcomeState({
       user_id: userId,
       student_name: getStudentName(s),
       student_class: getStudentClass(s),
@@ -804,7 +602,7 @@ const baseRows = computed(() => {
       pfp_echec: assignment?.pfp_echec || false,
       pfp_arret: assignment?.pfp_arret || false,
       commentaire_arret: assignment?.commentaire_arret || ''
-    })
+    }))
   })
 
   return out
@@ -816,7 +614,7 @@ const filteredPlacesList = computed(() => {
     if (filterYear.value && row.year !== filterYear.value) return false
     if (filterType.value && row.pfp_type !== filterType.value) return false
     if (filterClasse.value && row.student_class !== filterClasse.value) return false
-    if (filterStatus.value && row.status !== filterStatus.value) return false
+    if (filterStatus.value && getPfpOutcome(row) !== filterStatus.value) return false
     if (!q) return true
     return (
       (row.student_name || '').toLowerCase().includes(q) ||
@@ -852,10 +650,10 @@ const filteredPlacesList = computed(() => {
       if (parts.length === 1) {
         return { lastName: parts[0], firstName: '' }
       }
-      return {
+      return initializeOutcomeState({
         lastName: parts[parts.length - 1] || '',
         firstName: parts.slice(0, -1).join(' ') || ''
-      }
+      })
     }
     
     const nameA = splitName(a.student_name)
@@ -983,7 +781,7 @@ const loadPublishedAssignments = async () => {
 }
 
 onMounted(async () => {
-  filterStatus.value = 'published'
+  filterStatus.value = null
   await loadPublishedAssignments()
 })
 </script>
@@ -991,5 +789,14 @@ onMounted(async () => {
 <style scoped>
 .validation-pfp-page {
   min-height: calc(100vh - 100px);
+}
+
+.pfp-outcome-editor :deep(.p-selectbutton) {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.pfp-outcome-editor :deep(.p-button) {
+  min-height: 2.5rem;
 }
 </style>
