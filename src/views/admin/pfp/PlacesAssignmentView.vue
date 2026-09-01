@@ -11,6 +11,20 @@
               <p class="text-600 m-0 mt-1">Suivi et validation des stages par classe, PFP et année</p>
             </div>
           </div>
+          <div class="flex gap-2" role="group" aria-label="Mode d'affichage">
+            <Button
+              label="À contrôler"
+              icon="pi pi-verified"
+              :outlined="reviewMode !== 'review'"
+              @click="setReviewMode('review')"
+            />
+            <Button
+              label="Recherche par place"
+              icon="pi pi-search"
+              :outlined="reviewMode !== 'lookup'"
+              @click="setReviewMode('lookup')"
+            />
+          </div>
         </div>
       </div>
 
@@ -23,6 +37,7 @@
               v-model="selectedClass" 
               :options="classOptions" 
               placeholder="Classe"
+              showClear
               class="w-8rem"
               @change="loadResults"
             />
@@ -32,6 +47,8 @@
             <Dropdown 
               v-model="selectedPFP" 
               :options="pfpOptions" 
+              optionLabel="label"
+              optionValue="value"
               placeholder="PFP"
               class="w-8rem"
               @change="loadResults"
@@ -45,6 +62,30 @@
               placeholder="Année"
               class="w-8rem"
               @change="loadResults"
+            />
+          </div>
+          <div class="flex align-items-center gap-2">
+            <span class="text-600 font-medium">Contrôle</span>
+            <Dropdown
+              v-model="reviewStatusFilter"
+              :options="reviewStatusOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Tous"
+              showClear
+              class="w-11rem"
+            />
+          </div>
+          <div class="flex align-items-center gap-2">
+            <span class="text-600 font-medium">Publication</span>
+            <Dropdown
+              v-model="publicationStatusFilter"
+              :options="publicationStatusOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Toutes"
+              showClear
+              class="w-11rem"
             />
           </div>
           <span class="flex-1"></span>
@@ -127,10 +168,11 @@
             <div class="flex gap-2">
               <Button 
                 icon="pi pi-check-circle" 
-                label="Publier aux étudiants" 
+                :label="`Publier (${publishableAssignmentIds.length})`"
                 severity="success" 
                 @click="publishAssignments"
                 :loading="publishing"
+                :disabled="publishableAssignmentIds.length === 0"
                 v-tooltip.top="'Rendre les assignations visibles dans le profil des étudiants'"
               />
               <Button 
@@ -152,7 +194,7 @@
           </div>
 
           <DataTable 
-            :value="results" 
+            :value="filteredResults"
             :paginator="true" 
             :rows="50"
             :rowsPerPageOptions="[25, 50, 100]"
@@ -163,8 +205,13 @@
           >
             <template #header>
               <div class="flex justify-content-between align-items-center">
-                <span class="text-lg font-semibold">{{ results.length }} étudiants assignés</span>
-                <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-full md:w-20rem" />
+                <span class="text-lg font-semibold">{{ filteredResults.length }} affectation(s)</span>
+                <InputText
+                  v-model="searchQuery"
+                  :placeholder="reviewMode === 'lookup' ? 'Place, institution ou étudiant…' : 'Rechercher une affectation…'"
+                  aria-label="Rechercher dans les affectations"
+                  class="w-full md:w-24rem"
+                />
               </div>
             </template>
 
@@ -177,11 +224,34 @@
               </template>
             </Column>
 
+            <Column field="student_class" header="Classe" sortable :style="{ width: '110px' }">
+              <template #body="slotProps">
+                <Tag :value="slotProps.data.student_class || '—'" severity="secondary" />
+              </template>
+            </Column>
+
+            <Column v-if="reviewMode === 'lookup'" field="pfp_type" header="PFP" sortable :style="{ width: '100px' }" />
+            <Column v-if="reviewMode === 'lookup'" field="year" header="Année" sortable :style="{ width: '100px' }" />
+
             <Column field="assigned_place_name" header="Place Attribuée" sortable :style="{ minWidth: '250px' }">
               <template #body="slotProps">
                 <div>
-                  <div class="font-semibold">{{ slotProps.data.assigned_place_name }}</div>
-                  <small class="text-500">{{ slotProps.data.assigned_institution_name }}</small>
+                  <div class="font-semibold">{{ slotProps.data.place_name }}</div>
+                  <small class="text-500">{{ slotProps.data.institution_name }}</small>
+                </div>
+              </template>
+            </Column>
+
+            <Column field="review_status" header="Contrôle" sortable :style="{ minWidth: '210px' }">
+              <template #body="slotProps">
+                <div class="flex flex-column gap-1">
+                  <Tag
+                    :value="getReviewStatusLabel(slotProps.data.review_status)"
+                    :severity="getReviewStatusSeverity(slotProps.data.review_status)"
+                  />
+                  <small v-for="issue in slotProps.data.review_issues" :key="issue.code" class="text-600">
+                    {{ issue.label }}
+                  </small>
                 </div>
               </template>
             </Column>
@@ -254,11 +324,12 @@
               </template>
             </Column>
 
-            <Column field="pfp_validee" header="PF Validé" sortable :style="{ width: '120px', textAlign: 'center' }">
+            <Column field="pfp_validee" header="Stage validé" sortable :style="{ width: '130px', textAlign: 'center' }">
               <template #body="slotProps">
                 <InputSwitch 
                   :modelValue="slotProps.data.pfp_validee" 
                   @update:modelValue="(val) => togglePfpValidee(slotProps.data, val)"
+                  v-tooltip.top="'Validation pédagogique après réalisation du stage'"
                 />
               </template>
             </Column>
@@ -307,6 +378,7 @@
                     severity="success" 
                     text 
                     rounded
+                    :disabled="slotProps.data.review_status === ASSIGNMENT_REVIEW_STATUS.BLOCKED"
                     @click="publishSingleAssignment(slotProps.data)"
                     v-tooltip.top="'Publier à l\'étudiant'"
                   />
@@ -434,6 +506,14 @@ import InputSwitch from 'primevue/inputswitch'
 import Textarea from 'primevue/textarea'
 import { useToast } from 'primevue/usetoast'
 import { usePlacesStore } from '@/stores/placesStore'
+import {
+  ASSIGNMENT_REVIEW_STATUS,
+  buildPlaceAssignmentReview,
+  filterPlaceAssignmentReview,
+  getAssignmentAcademicYearKeys,
+  getPlaceAssignmentCapacity,
+  getPublishableAssignmentIds
+} from '@/service/placeAssignmentReviewService'
 
 const toast = useToast()
 const placesStore = usePlacesStore()
@@ -443,10 +523,42 @@ const { scheduleRefresh } = useAutoRefresh(() => loadResults())
 // Filtres
 const selectedClass = ref('BA25')
 const selectedPFP = ref(null)
-const selectedYear = ref('2026')
-const classOptions = ref(['BA23', 'BA24', 'BA25'])
-const pfpOptions = ref(['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4'])
-const yearOptions = ref(['2025', '2026', '2027'])
+const selectedYear = ref('2027')
+const classOptions = ref(['BA23', 'BA24', 'BA25', 'BA26'])
+const pfpOptions = ref([
+  { label: 'Tous les PFP', value: 'ALL' },
+  { label: 'PFP1A', value: 'PFP1A' },
+  { label: 'PFP1B', value: 'PFP1B' },
+  { label: 'PFP2', value: 'PFP2' },
+  { label: 'PFP3', value: 'PFP3' },
+  { label: 'PFP4', value: 'PFP4' }
+])
+const yearOptions = ref(['2025', '2026', '2027', '2028'])
+const reviewMode = ref('review')
+const reviewStatusFilter = ref(null)
+const publicationStatusFilter = ref(null)
+const reviewStatusOptions = [
+  { label: 'Prêt', value: ASSIGNMENT_REVIEW_STATUS.READY },
+  { label: 'À vérifier', value: ASSIGNMENT_REVIEW_STATUS.WARNING },
+  { label: 'Bloqué', value: ASSIGNMENT_REVIEW_STATUS.BLOCKED }
+]
+const publicationStatusOptions = [
+  { label: 'Brouillon', value: 'draft' },
+  { label: 'Publié', value: 'published' },
+  { label: 'Assigné', value: 'assigned' }
+]
+
+const setReviewMode = (mode) => {
+  reviewMode.value = mode
+  searchQuery.value = ''
+  reviewStatusFilter.value = null
+  publicationStatusFilter.value = null
+
+  if (mode === 'lookup') {
+    selectedClass.value = null
+    selectedPFP.value = 'ALL'
+  }
+}
 
 // Données
 const loading = ref(false)
@@ -455,6 +567,35 @@ const allStudents = ref([])
 const allPraticiens = ref([])
 const allPlaces = ref([])
 const searchQuery = ref('')
+
+const reviewRows = computed(() => buildPlaceAssignmentReview({
+  assignments: results.value,
+  places: allPlaces.value,
+  students: allStudents.value
+}))
+
+const filteredResults = computed(() => filterPlaceAssignmentReview(reviewRows.value, {
+  query: searchQuery.value,
+  reviewStatus: reviewStatusFilter.value,
+  publicationStatus: publicationStatusFilter.value,
+  pfp: selectedPFP.value,
+  year: selectedYear.value,
+  studentClass: selectedClass.value
+}))
+
+const publishableAssignmentIds = computed(() => getPublishableAssignmentIds(filteredResults.value))
+
+const getReviewStatusLabel = (status) => ({
+  [ASSIGNMENT_REVIEW_STATUS.READY]: 'Prêt',
+  [ASSIGNMENT_REVIEW_STATUS.WARNING]: 'À vérifier',
+  [ASSIGNMENT_REVIEW_STATUS.BLOCKED]: 'Bloqué'
+}[status] || 'À vérifier')
+
+const getReviewStatusSeverity = (status) => ({
+  [ASSIGNMENT_REVIEW_STATUS.READY]: 'success',
+  [ASSIGNMENT_REVIEW_STATUS.WARNING]: 'warning',
+  [ASSIGNMENT_REVIEW_STATUS.BLOCKED]: 'danger'
+}[status] || 'secondary')
 
 // Dialog d'édition
 const editDialogVisible = ref(false)
@@ -518,12 +659,17 @@ const loadResults = async () => {
     allStudents.value = studentsData
 
     // 2. Charger les résultats d'attribution depuis student_result_vote
-    const { data, error } = await supabase
+    let assignmentsQuery = supabase
       .from('student_result_vote')
       .select('*')
-      .eq('pfp_type', selectedPFP.value)
-      .eq('year', selectedYear.value)
+      .in('year', getAssignmentAcademicYearKeys(selectedYear.value))
       .order('assigned_rank', { ascending: true })
+
+    if (selectedPFP.value !== 'ALL') {
+      assignmentsQuery = assignmentsQuery.eq('pfp_type', selectedPFP.value)
+    }
+
+    const { data, error } = await assignmentsQuery
 
     if (error) {
       console.error('[ERROR] Erreur Supabase:', error)
@@ -678,7 +824,7 @@ const loadResults = async () => {
     // 7. Mettre à jour les statistiques
     const classStudents = allStudents.value.filter(s => {
       const classe = s.Classe || s.classe || s.class
-      return classe === selectedClass.value
+      return !selectedClass.value || classe === selectedClass.value
     })
     
     const validatedCount = results.value.filter(r => r.pfp_validee).length
@@ -690,8 +836,8 @@ const loadResults = async () => {
       availablePlaces: validatedCount
     }
 
-    // 7. Auto-assigner les praticiens si nécessaire
-    await autoAssignPraticiens()
+    // La consultation reste sans effet de bord. Le praticien est choisi explicitement
+    // par l'administrateur avant la publication de l'affectation.
   } catch (error) {
     console.error('[ERROR] Erreur lors du chargement des résultats:', error)
     console.error('[ERROR] Stack:', error.stack)
@@ -799,15 +945,11 @@ const openEditDialog = async (assignment) => {
     await placesStore.fetchPlaces()
     
     // Filtrer selon le PFP sélectionné
-    const pfpField = selectedPFP.value // 'PFP1A' ou 'PFP1B'
+    const pfpField = assignment.pfp_type || selectedPFP.value
     
-    availablePlaces.value = placesStore.places.filter(place => {
-      const hasField = place[pfpField] === true || 
-                       place[pfpField] === 1 || 
-                       place[pfpField] === '1' ||
-                       place[pfpField] === 'true'
-      return hasField
-    })
+    availablePlaces.value = placesStore.places.filter(place => (
+      getPlaceAssignmentCapacity(place, pfpField, assignment.year || selectedYear.value) > 0
+    ))
     
     if (availablePlaces.value.length === 0) {
       console.warn('[WARN] Aucune place trouvée après filtrage!')
@@ -858,7 +1000,8 @@ const saveNewPlace = async () => {
                       selectedNewPlace.value.name || 
                       'Place sans nom'
     
-    const institutionName = selectedNewPlace.value.Institution_name || 
+    const institutionName = selectedNewPlace.value.InstitutionName ||
+                           selectedNewPlace.value.Institution_name ||
                            selectedNewPlace.value.Name || 
                            selectedNewPlace.value.Institution || 
                            selectedNewPlace.value.institution || 
@@ -913,6 +1056,16 @@ const saveNewPlace = async () => {
 
 // Publier une seule assignation
 const publishSingleAssignment = async (assignment) => {
+  if (assignment.review_status === ASSIGNMENT_REVIEW_STATUS.BLOCKED) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Affectation à corriger',
+      detail: assignment.review_issues.map(issue => issue.label).join(' · '),
+      life: 5000
+    })
+    return
+  }
+
   try {
 
     const { error } = await supabase
@@ -1011,7 +1164,7 @@ const unpublishAssignments = async () => {
     return
   }
 
-  if (results.value.length === 0) {
+  if (filteredResults.value.length === 0) {
     toast.add({
       severity: 'warn',
       summary: 'Aucune assignation',
@@ -1021,7 +1174,11 @@ const unpublishAssignments = async () => {
     return
   }
 
-  const publishedCount = results.value.filter(r => r.status === 'published').length
+  const publishedIds = filteredResults.value
+    .filter(row => row.status === 'published')
+    .map(row => row.id)
+    .filter(Boolean)
+  const publishedCount = publishedIds.length
   
   if (publishedCount === 0) {
     toast.add({
@@ -1034,7 +1191,7 @@ const unpublishAssignments = async () => {
   }
 
   // Demander confirmation
-  if (!confirm(`Voulez-vous annuler la publication de ${publishedCount} assignations pour ${selectedPFP.value} ${selectedYear.value}?\n\nCes assignations ne seront plus visibles dans le profil des étudiants et pourront être modifiées.`)) {
+  if (!confirm(`Voulez-vous annuler la publication de ${publishedCount} affectation(s) visibles pour ${selectedClass.value}, ${selectedPFP.value}, ${selectedYear.value} ?\n\nSeules les lignes actuellement filtrées seront modifiées.`)) {
     return
   }
 
@@ -1047,9 +1204,7 @@ const unpublishAssignments = async () => {
         status: 'draft',
         updated_at: new Date().toISOString()
       })
-      .eq('pfp_type', selectedPFP.value)
-      .eq('year', selectedYear.value)
-      .eq('status', 'published')
+      .in('id', publishedIds)
 
     if (error) {
       console.error('[ERROR] Erreur dépublication:', error)
@@ -1057,10 +1212,8 @@ const unpublishAssignments = async () => {
     }
 
     // Mettre à jour localement
-    results.value = results.value.map(r => ({
-      ...r,
-      status: 'draft'
-    }))
+    const publishedIdSet = new Set(publishedIds)
+    results.value = results.value.map(row => publishedIdSet.has(row.id) ? { ...row, status: 'draft' } : row)
 
     toast.add({
       severity: 'info',
@@ -1095,7 +1248,7 @@ const publishAssignments = async () => {
     return
   }
 
-  if (results.value.length === 0) {
+  if (filteredResults.value.length === 0) {
     toast.add({
       severity: 'warn',
       summary: 'Aucune assignation',
@@ -1105,8 +1258,8 @@ const publishAssignments = async () => {
     return
   }
 
-  // Compter les assignations déjà publiées
-  const unpublishedCount = results.value.filter(r => r.status !== 'published').length
+  const idsToPublish = publishableAssignmentIds.value
+  const unpublishedCount = idsToPublish.length
   
   if (unpublishedCount === 0) {
     toast.add({
@@ -1119,7 +1272,9 @@ const publishAssignments = async () => {
   }
 
   // Demander confirmation
-  if (!confirm(`Voulez-vous publier ${unpublishedCount} assignations non publiées pour ${selectedPFP.value} ${selectedYear.value}?\n\nCes assignations seront visibles dans le profil des étudiants.`)) {
+  const blockedCount = filteredResults.value.filter(row => row.review_status === ASSIGNMENT_REVIEW_STATUS.BLOCKED).length
+  const warningCount = filteredResults.value.filter(row => row.review_status === ASSIGNMENT_REVIEW_STATUS.WARNING && row.status !== 'published').length
+  if (!confirm(`Publier ${unpublishedCount} affectation(s) pour ${selectedClass.value}, ${selectedPFP.value}, ${selectedYear.value} ?\n\n${warningCount} ligne(s) demandent une vérification et ${blockedCount} ligne(s) bloquée(s) seront exclues. Seules les lignes actuellement filtrées seront modifiées.`)) {
     return
   }
 
@@ -1132,9 +1287,7 @@ const publishAssignments = async () => {
         status: 'published',
         updated_at: new Date().toISOString()
       })
-      .eq('pfp_type', selectedPFP.value)
-      .eq('year', selectedYear.value)
-      .eq('status', 'draft')
+      .in('id', idsToPublish)
 
     if (error) {
       console.error('[ERROR] Erreur publication:', error)
@@ -1142,10 +1295,8 @@ const publishAssignments = async () => {
     }
 
     // Mettre à jour localement
-    results.value = results.value.map(r => ({
-      ...r,
-      status: 'published'
-    }))
+    const publishedIdSet = new Set(idsToPublish)
+    results.value = results.value.map(row => publishedIdSet.has(row.id) ? { ...row, status: 'published' } : row)
 
     toast.add({
       severity: 'success',

@@ -158,6 +158,30 @@ test('sensitive API routes reject anonymous requests', async () => {
   }
 })
 
+test('development CORS accepts loopback origins on dynamic Vite ports', async () => {
+  const app = require('../index')
+  const server = app.listen(0, '127.0.0.1')
+  await new Promise((resolve) => server.once('listening', resolve))
+  const { port } = server.address()
+  try {
+    for (const origin of ['http://localhost:5182', 'http://127.0.0.1:6199']) {
+      const response = await fetch(`http://127.0.0.1:${port}/api/audiences/students`, {
+        method: 'OPTIONS',
+        headers: {
+          Origin: origin,
+          'Access-Control-Request-Method': 'GET'
+        }
+      })
+      assert.equal(response.status, 204)
+      assert.equal(response.headers.get('access-control-allow-origin'), origin)
+    }
+  } finally {
+    await new Promise((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve()))
+    )
+  }
+})
+
 test('only operational probes are public', async () => {
   const app = require('../index')
   const server = app.listen(0, '127.0.0.1')

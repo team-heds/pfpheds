@@ -51,21 +51,33 @@ const {
 // push
 const pushRoutes = require('./supabase/pushBackend')
 
-const allowedOrigins =
-  process.env.NODE_ENV === 'production'
-    ? ['https://hedsvs.ch', 'https://www.hedsvs.ch', 'https://api2.hedsvs.ch']
-    : [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:5180',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:5174',
-        'http://127.0.0.1:5180'
-      ]
+const allowedProductionOrigins = [
+  'https://hedsvs.ch',
+  'https://www.hedsvs.ch',
+  'https://api2.hedsvs.ch'
+]
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true
+
+  if (process.env.NODE_ENV === 'production') {
+    return allowedProductionOrigins.includes(origin)
+  }
+
+  try {
+    const url = new URL(origin)
+    return (
+      url.protocol === 'http:' &&
+      (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
+    )
+  } catch {
+    return false
+  }
+}
 
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true)
     }
     return callback(new Error(`CORS blocked for origin: ${origin}`))
