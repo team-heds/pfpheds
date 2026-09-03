@@ -56,13 +56,19 @@ const toggleTheme = () => {
 
 const changeColorScheme = (newColorScheme) => {
   const themeLink = document.getElementById("theme-link");
-  if (!themeLink) return;
-
+  console.log(newColorScheme + " theme link :");
+  console.log(themeLink);
+  if (!themeLink) {
+    console.error("Error: themeLink is not set");
+    return;
+  }
   const href = themeLink.getAttribute("href");
   const newHref = href.replace(/theme-(dim|light|dark)/g, 'theme-' + newColorScheme);
 
-  if (newHref === href) return;
-
+  if (newHref === href) {
+    console.error("Error: newHref doesn't match with themeLink href");
+    return;
+  }
   replaceLink(themeLink, newHref, () => {
     layoutConfig.colorScheme.value = newColorScheme;
   });
