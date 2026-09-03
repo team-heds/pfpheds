@@ -2,6 +2,7 @@
 import { ref, watch, computed } from 'vue';
 import { usePrimeVue } from 'primevue/config';
 import { useLayout } from '@/layout/composables/layout';
+import { useColorScheme } from '@/composables/useColorScheme';
 
 defineProps({
     simple: {
@@ -15,7 +16,7 @@ const rippleActive = computed(() => $primevue.config.ripple);
 const inputStyle = computed(() => $primevue.config.inputStyle || 'outlined') ;
 
 const { setScale, layoutConfig, layoutState, onConfigSidebarToggle } = useLayout();
-const colorScheme = ref(layoutConfig.colorScheme.value);
+const { colorScheme, setColorScheme } = useColorScheme();
 const componentThemes = ref([
     { name: 'indigo', color: '#6366F1' },
     { name: 'blue', color: '#3B82F6' },
@@ -37,16 +38,8 @@ watch(layoutConfig.menuMode, (newVal) => {
 const onConfigButtonClick = () => {
     onConfigSidebarToggle();
 };
-const changeColorScheme = (colorScheme) => {
-    const themeLink = document.getElementById('theme-link');
-    const themeLinkHref = themeLink.getAttribute('href');
-    const currentColorScheme = 'theme-' + layoutConfig.colorScheme.value.toString();
-    const newColorScheme = 'theme-' + colorScheme;
-    const newHref = themeLinkHref.replace(currentColorScheme, newColorScheme);
-
-    replaceLink(themeLink, newHref, () => {
-        layoutConfig.colorScheme.value = colorScheme;
-    });
+const changeColorScheme = (newColorScheme) => {
+    setColorScheme(newColorScheme);
 };
 const changeTheme = (theme) => {
     const themeLink = document.getElementById('theme-link');

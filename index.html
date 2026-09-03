@@ -5,9 +5,33 @@
   <link rel="icon" href="/pictoHEdS.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Plateforme - HEdS</title>
+  <script>
+    // Applique le thème enregistré avant le chargement de Vue afin d'éviter
+    // tout flash du mauvais thème au premier rendu. Doit rester un script
+    // inline synchrone (pas un module) pour s'exécuter avant main.js.
+    // Toute modification de cette logique doit rester cohérente avec
+    // src/composables/useColorScheme.js (seule source de vérité après le
+    // montage de l'application).
+    (function () {
+      var VALID_SCHEMES = ['dim', 'light'];
+      var DEFAULT_SCHEME = 'dim';
+      var scheme = DEFAULT_SCHEME;
+
+      try {
+        var stored = window.localStorage.getItem('colorScheme');
+        if (VALID_SCHEMES.indexOf(stored) !== -1) {
+          scheme = stored;
+        }
+      } catch (e) {
+        // localStorage indisponible (navigation privée stricte, quota, etc.)
+      }
+
+      document.documentElement.setAttribute('data-theme', scheme);
+    })();
+  </script>
   <link href="/layout/styles/preloading/preloading.css" rel="stylesheet"/>
-  <link id="theme-link" data-theme-link="heds" data-theme-scheme="dim" rel="stylesheet" href="./src/assets/theme/theme-dim/heds/theme.css" />
-  <link data-theme-link="heds" data-theme-scheme="light" rel="stylesheet" href="./src/assets/theme/theme-light/heds/theme.css" media="not all" />
+  <link id="theme-link" data-theme-link="heds" data-theme-scheme="dim" rel="stylesheet" href="/themes/heds-dim.css" />
+  <link data-theme-link="heds" data-theme-scheme="light" rel="stylesheet" href="/themes/heds-light.css" media="not all" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
         integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
         crossorigin=""/>

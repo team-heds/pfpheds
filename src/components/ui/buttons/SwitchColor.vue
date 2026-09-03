@@ -24,56 +24,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { useLayout } from "@/layout/composables/layout";
+import { computed } from "vue";
+import { useColorScheme } from "@/composables/useColorScheme";
 
-const { layoutConfig } = useLayout();
-const isDimTheme = ref(layoutConfig.colorScheme.value === "dim");
-
-const getThemeLinks = () => Array.from(
-  document.querySelectorAll('link[data-theme-link="heds"]')
-);
-
-const detectCurrentScheme = () => {
-  const themeLinks = getThemeLinks();
-  const activeLink = themeLinks.find((link) => link.media !== 'not all' && !link.disabled);
-  return activeLink?.dataset.themeScheme || null;
-};
-
-onMounted(() => {
-  const actual = detectCurrentScheme();
-  if (actual) {
-    layoutConfig.colorScheme.value = actual;
-    isDimTheme.value = actual === 'dim';
-  }
-});
+const { colorScheme, toggleColorScheme } = useColorScheme();
+const isDimTheme = computed(() => colorScheme.value === "dim");
 
 const toggleTheme = () => {
-  isDimTheme.value = !isDimTheme.value;
-  const newScheme = isDimTheme.value ? "dim" : "light";
-  changeColorScheme(newScheme);
+  toggleColorScheme();
 };
-
-const changeColorScheme = (newColorScheme) => {
-  const themeLinks = getThemeLinks();
-  const targetLink = themeLinks.find(
-    (link) => link.dataset.themeScheme === newColorScheme
-  );
-
-  if (!targetLink) {
-    console.error(`Thème HEdS introuvable: ${newColorScheme}`);
-    return;
-  }
-
-  themeLinks.forEach((link) => {
-    const isActive = link === targetLink;
-    link.disabled = !isActive;
-    link.media = isActive ? 'all' : 'not all';
-  });
-
-  layoutConfig.colorScheme.value = newColorScheme;
-};
-
 </script>
 
 <style scoped>
