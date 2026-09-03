@@ -37,7 +37,11 @@ const getThemeLinks = () => Array.from(
 const detectCurrentScheme = () => {
   const themeLinks = getThemeLinks();
   const activeLink = themeLinks.find((link) => link.media !== 'not all' && !link.disabled);
-  return activeLink?.dataset.themeScheme || null;
+  if (activeLink?.dataset.themeScheme) return activeLink.dataset.themeScheme;
+
+  // Vite bundles the default dim stylesheet into the main CSS in production.
+  // In that case only the optional light override remains as a <link> element.
+  return themeLinks.some((link) => link.dataset.themeScheme === 'light') ? 'dim' : null;
 };
 
 onMounted(() => {
@@ -49,9 +53,10 @@ onMounted(() => {
 });
 
 const toggleTheme = () => {
-  isDimTheme.value = !isDimTheme.value;
-  const newScheme = isDimTheme.value ? "dim" : "light";
-  changeColorScheme(newScheme);
+  const newScheme = isDimTheme.value ? "light" : "dim";
+  if (changeColorScheme(newScheme)) {
+    isDimTheme.value = newScheme === "dim";
+  }
 };
 
 const changeColorScheme = (newColorScheme) => {
@@ -60,9 +65,12 @@ const changeColorScheme = (newColorScheme) => {
     (link) => link.dataset.themeScheme === newColorScheme
   );
 
-  if (!targetLink) {
+  const usesBundledDimTheme = newColorScheme === 'dim'
+    && themeLinks.some((link) => link.dataset.themeScheme === 'light');
+
+  if (!targetLink && !usesBundledDimTheme) {
     console.error(`Thème HEdS introuvable: ${newColorScheme}`);
-    return;
+    return false;
   }
 
   themeLinks.forEach((link) => {
@@ -72,6 +80,7 @@ const changeColorScheme = (newColorScheme) => {
   });
 
   layoutConfig.colorScheme.value = newColorScheme;
+  return true;
 };
 
 </script>
