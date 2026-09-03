@@ -30,14 +30,14 @@ import { useLayout } from "@/layout/composables/layout";
 const { layoutConfig } = useLayout();
 const isDimTheme = ref(layoutConfig.colorScheme.value === "dim");
 
+const getThemeLinks = () => Array.from(
+  document.querySelectorAll('link[data-theme-link="heds"]')
+);
+
 const detectCurrentScheme = () => {
-  const themeLink = document.getElementById("theme-link");
-  if (!themeLink) return null;
-  const href = themeLink.getAttribute("href") || '';
-  if (href.includes('theme-dim')) return 'dim';
-  if (href.includes('theme-light')) return 'light';
-  if (href.includes('theme-dark')) return 'dark';
-  return null;
+  const themeLinks = getThemeLinks();
+  const activeLink = themeLinks.find((link) => link.media !== 'not all' && !link.disabled);
+  return activeLink?.dataset.themeScheme || null;
 };
 
 onMounted(() => {
@@ -55,42 +55,25 @@ const toggleTheme = () => {
 };
 
 const changeColorScheme = (newColorScheme) => {
-  const themeLink = document.getElementById("theme-link");
-  console.log(newColorScheme + " theme link :");
-  console.log(themeLink);
-  if (!themeLink) {
-    console.error("Error: themeLink is not set");
+  const themeLinks = getThemeLinks();
+  const targetLink = themeLinks.find(
+    (link) => link.dataset.themeScheme === newColorScheme
+  );
+
+  if (!targetLink) {
+    console.error(`Thème HEdS introuvable: ${newColorScheme}`);
     return;
   }
-  const href = themeLink.getAttribute("href");
-  const newHref = href.replace(/theme-(dim|light|dark)/g, 'theme-' + newColorScheme);
 
-  if (newHref === href) {
-    console.error("Error: newHref doesn't match with themeLink href");
-    return;
-  }
-  replaceLink(themeLink, newHref, () => {
-    layoutConfig.colorScheme.value = newColorScheme;
+  themeLinks.forEach((link) => {
+    const isActive = link === targetLink;
+    link.disabled = !isActive;
+    link.media = isActive ? 'all' : 'not all';
   });
+
+  layoutConfig.colorScheme.value = newColorScheme;
 };
 
-const replaceLink = (linkElement, href, onComplete) => {
-  if (!linkElement || !href) return;
-
-  const id = linkElement.getAttribute("id");
-  const cloneLinkElement = linkElement.cloneNode(true);
-
-  cloneLinkElement.setAttribute("href", href);
-  cloneLinkElement.setAttribute("id", `${id}-clone`);
-
-  linkElement.parentNode.insertBefore(cloneLinkElement, linkElement.nextSibling);
-
-  cloneLinkElement.addEventListener("load", () => {
-    linkElement.remove();
-    cloneLinkElement.setAttribute("id", id);
-    if (onComplete) onComplete();
-  });
-};
 </script>
 
 <style scoped>
