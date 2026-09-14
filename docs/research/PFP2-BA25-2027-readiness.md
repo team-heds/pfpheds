@@ -13,7 +13,7 @@ La correspondance fonctionnelle est correcte : pour l'année technique `2027`, l
 Le référentiel BA25 et son snapshot annuel sont maintenant prêts. Le parcours ne doit toutefois pas encore être ouvert. Deux prérequis restent bloquants :
 
 1. confirmer les dates exactes de la PFP2 ;
-2. compléter les places proposées, car la capacité actuellement exploitable est inférieure à l'effectif officiel.
+2. compléter ou valider les places proposées, car 58 propositions sont actuellement enregistrées pour 63 étudiants.
 
 ## État constaté en production
 
@@ -36,10 +36,13 @@ La cohorte technique correspond maintenant à l'effectif officiel de 63 étudian
 
 ### Offres et places PFP2
 
-- 24 places PFP2 sont proposées pour 2027 hors lignes `selectedOut` ;
-- 27 offres PFP2 brutes sont renseignées hors lignes `selectedOut` ;
-- 34 places proposées supplémentaires se trouvent sur des lignes `selectedOut` et ne doivent pas être comptées sans validation métier explicite ;
-- face à l'effectif officiel de 63 étudiants, il manque au minimum 39 places proposées exploitables dans l'état actuel.
+- 61 places PFP2 sont offertes pour 2026-2027 dans le champ canonique `PFP2['2027']` ;
+- 58 places PFP2 sont actuellement reprises dans `pfp2_proposition['2027']` ;
+- l'écart est donc de 2 places au niveau des offres et de 5 places au niveau des propositions pour une cohorte de 63 étudiants ;
+- 34 capacités offertes et proposées se trouvent sur des lignes portant `selectedOut`, mais le code actuel de Gestion des offres et de votation ne filtre pas ce champ ; elles ne doivent donc pas être retranchées automatiquement ;
+- les assignations imbriquées existantes concernent la BA24 et ne constituent pas des sièges BA25 supplémentaires.
+
+Le décompte initial de 24 propositions était erroné : il excluait les lignes `selectedOut` sans que cette exclusion soit appliquée par l'application. Le présent document utilise désormais les totaux réellement consommés par le parcours actuel.
 
 Les valeurs 2027 sont stockées avec la clé canonique `2027`. Le parcours Places → Supabase → Gestion des offres a déjà été contrôlé dans `docs/research/HEDS25-597-2027-offer-entry-audit.md`.
 
@@ -96,8 +99,8 @@ La contrainte unique `(user_id, year)` doit être respectée. Aucune copie globa
 
 - saisir les dates officielles de la PFP2 dans la source métier retenue ;
 - compléter les offres et propositions PFP2 sous la clé `2027` ;
-- décider explicitement du traitement des lignes `selectedOut` ;
-- obtenir au moins une place exploitable par étudiant, avec une marge pour les critères et incompatibilités ;
+- clarifier le sens métier de `selectedOut` et l'aligner avec le comportement de l'application ;
+- obtenir au moins 63 propositions, puis ajouter une marge pour les critères et incompatibilités ;
 - contrôler les sièges imbriqués et les éventuelles assignations préexistantes.
 
 ### Étape 4 — Simuler le parcours
@@ -122,7 +125,7 @@ La contrainte unique `(user_id, year)` doit être respectée. Aucune copie globa
 - exactement une ligne `StudentsPhysio` 2027 par étudiant — atteint ;
 - 100 % des étudiants avec un répondant HES renseigné — atteint ;
 - dates PFP2 officiellement confirmées ;
-- capacité PFP2 proposée suffisante, hors `selectedOut` non validé ;
+- capacité PFP2 proposée suffisante pour 63 étudiants, avec une marge validée ;
 - 0 session, vote ou résultat parasite avant le test ;
 - simulation locale réussie sans notification ni publication ;
 - validation métier explicite avant toute ouverture en production.
@@ -131,7 +134,7 @@ La contrainte unique `(user_id, year)` doit être respectée. Aucune copie globa
 
 - Le ciblage par `user_profiles.classe` inclut des historiques et peut ouvrir la votation au mauvais public.
 - Les composants qui chargent toutes les lignes `StudentsPhysio` sans filtrer l'année peuvent retenir un ancien snapshot selon l'ordre de retour.
-- `selectedOut` doit être exclu de façon cohérente dans toutes les vues de votation et d'attribution.
+- `selectedOut` n'est pas utilisé par le parcours actuel ; sa signification doit être clarifiée avant d'introduire un éventuel filtrage.
 - Les propositions numériques et les sièges imbriqués doivent être rapprochés pour éviter de compter deux fois une capacité.
 - Créer une session de test dans la base de production n'est pas neutre : le service d'ouverture ferme d'abord les sessions existantes correspondantes.
 

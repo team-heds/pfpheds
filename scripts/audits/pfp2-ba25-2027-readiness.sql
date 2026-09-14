@@ -71,10 +71,13 @@ with capacity as (
   from public.places
 )
 select
-  sum(proposition) filter (where not selected_out) as propositions_exploitables,
-  sum(offre) filter (where not selected_out) as offres_brutes_exploitables,
+  sum(proposition) as propositions_total,
+  sum(offre) as offres_total,
+  sum(proposition) filter (where not selected_out) as propositions_sans_selected_out,
   sum(proposition) filter (where selected_out) as propositions_selected_out,
-  count(*) filter (where proposition > 0 and not selected_out) as lieux_proposes
+  sum(offre) filter (where not selected_out) as offres_sans_selected_out,
+  sum(offre) filter (where selected_out) as offres_selected_out,
+  count(*) filter (where proposition > 0) as lieux_proposes
 from capacity;
 
 -- 4b. Sièges BA25 imbriqués dans les propositions.
