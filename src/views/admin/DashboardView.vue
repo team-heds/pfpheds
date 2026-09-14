@@ -492,8 +492,6 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { countStudents } from '@/service/studentDirectoryService'
-import { supabase } from '@/supabase'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
