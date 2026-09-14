@@ -4,43 +4,42 @@
 
 Préparer le parcours PFP2 de la cohorte BA25 pour l'année académique 2026-2027, avec la clé technique `2027`, sans ouvrir de votation, sans publier d'attribution et sans envoyer de notification.
 
-Ce document rassemble les contrôles du code et un audit agrégé, effectué en lecture seule sur la base de production le 14 septembre 2026. Aucune donnée de production n'a été modifiée.
+Ce document rassemble les contrôles du code, l'audit initial en lecture seule et la synchronisation contrôlée effectuée le 14 septembre 2026 à partir du fichier officiel `Répartitions étudiant-e-s CPT 2026-2027.xlsx`.
 
 ## Verdict actuel
 
 La correspondance fonctionnelle est correcte : pour l'année technique `2027`, la BA25 est la deuxième année et doit effectuer la `PFP2` (`src/composables/useVotationConfig.js`).
 
-Le parcours ne doit toutefois pas encore être ouvert. Trois prérequis restent bloquants :
+Le référentiel BA25 et son snapshot annuel sont maintenant prêts. Le parcours ne doit toutefois pas encore être ouvert. Deux prérequis restent bloquants :
 
-1. confirmer la liste officielle de la cohorte, car le champ `user_profiles.classe = BA25` contient des historiques mélangés ;
-2. créer ou valider le snapshot annuel `StudentsPhysio` pour `year = 2027` ;
-3. compléter les places proposées, car la capacité actuellement exploitable est inférieure à l'effectif probable.
+1. confirmer les dates exactes de la PFP2 ;
+2. compléter les places proposées, car la capacité actuellement exploitable est inférieure à l'effectif officiel.
 
 ## État constaté en production
 
 ### Cohorte et données annuelles
 
-- 115 profils actifs portent actuellement la classe BA25 dans `user_profiles`.
-- 113 de ces profils sont reconnus comme étudiants par les données de rôle disponibles.
-- aucun de ces profils ne possède encore de ligne annuelle `StudentsPhysio` pour `2027` ;
-- le snapshot `2026` contient 63 étudiants avec `StudentsPhysio.class = BA25` ;
-- le snapshot `2025` contient 64 étudiants avec `StudentsPhysio.class = BA25` ;
-- les autres lignes liées aux profils BA25 portent notamment des classes historiques vides, `BA00`, `BA23` ou `BA24`.
+- le fichier officiel contient 63 étudiants BA25 ;
+- les 63 étudiants ont été rapprochés de manière unique avec un profil existant ;
+- les 63 profils actifs portent maintenant la classe BA25 et le rôle `EtudiantPhysio` ;
+- les 52 anciennes étiquettes BA25 ne figurant pas dans la liste officielle ont été retirées sans désactiver les comptes ;
+- le snapshot `StudentsPhysio` 2027 a été créé pour les 63 étudiants à partir du snapshot 2026 ;
+- la contrainte unique `(user_id, year)` est respectée.
 
-La meilleure estimation technique actuelle de la cohorte est donc 63 étudiants, mais elle ne remplace pas une liste officielle validée. Une session ciblant les 115 profils BA25 serait incorrecte.
+La cohorte technique correspond maintenant à l'effectif officiel de 63 étudiants. Le ciblage PFP2 BA25 ne repose plus sur les 115 profils mélangés observés avant la correction.
 
 ### Répondants HES
 
 - 11 répondants HES actifs existent dans l'annuaire ;
-- les 63 lignes BA25 du snapshot 2026 ont toutes un répondant HES renseigné ;
-- le snapshot 2027 n'existant pas, cette couverture doit être reconduite et contrôlée pour la nouvelle année avant le lancement.
+- les 63 lignes BA25 du snapshot 2027 ont toutes un répondant HES renseigné ;
+- les 11 différences de libellé observées dans le fichier correspondent à l'abréviation « Marie Blanjean » de la même répondante déjà enregistrée sous son nom complet ; le libellé canonique et son identifiant ont été conservés.
 
 ### Offres et places PFP2
 
 - 24 places PFP2 sont proposées pour 2027 hors lignes `selectedOut` ;
 - 27 offres PFP2 brutes sont renseignées hors lignes `selectedOut` ;
 - 34 places proposées supplémentaires se trouvent sur des lignes `selectedOut` et ne doivent pas être comptées sans validation métier explicite ;
-- face à l'effectif probable de 63 étudiants, il manque au minimum 39 places proposées exploitables dans l'état actuel.
+- face à l'effectif officiel de 63 étudiants, il manque au minimum 39 places proposées exploitables dans l'état actuel.
 
 Les valeurs 2027 sont stockées avec la clé canonique `2027`. Le parcours Places → Supabase → Gestion des offres a déjà été contrôlé dans `docs/research/HEDS25-597-2027-offer-entry-audit.md`.
 
@@ -77,20 +76,19 @@ Les cas de reprise, d'échec ou de dérogation doivent être validés individuel
 
 ## Ordre de préparation recommandé
 
-### Étape 1 — Valider le référentiel étudiant
+### Étape 1 — Valider le référentiel étudiant — terminé
 
-- obtenir la liste officielle BA25 ;
-- rapprocher cette liste des 63 lignes BA25 du snapshot 2026 ;
-- identifier les entrées, sorties, répétitions et exceptions ;
-- produire une liste finale avec un identifiant utilisateur unique par étudiant.
+- liste officielle BA25 obtenue : 63 étudiants ;
+- rapprochement des 63 lignes avec les profils et le snapshot 2026 terminé ;
+- anciens profils hors liste retirés du ciblage BA25 sans désactivation ;
+- aucun compte supplémentaire créé.
 
-### Étape 2 — Préparer le snapshot 2027
+### Étape 2 — Préparer le snapshot 2027 — terminé
 
-- copier uniquement les données encore valides depuis le snapshot 2026 ;
-- mettre `year = 2027` et conserver `class = BA25` ;
-- revoir les critères, cas particuliers et répondants avant insertion ;
-- faire valider le nombre exact de créations et de mises à jour ;
-- appliquer l'opération dans une transaction contrôlée, avec rapport avant/après.
+- 63 lignes copiées depuis le snapshot 2026 ;
+- `year = 2027` et `class = BA25` appliqués ;
+- répondants HES présents sur 63 lignes sur 63 ;
+- aucune session, aucun vote et aucun résultat créés par cette opération.
 
 La contrainte unique `(user_id, year)` doit être respectée. Aucune copie globale de tous les profils marqués BA25 ne doit être exécutée.
 
@@ -120,9 +118,9 @@ La contrainte unique `(user_id, year)` doit être respectée. Aucune copie globa
 
 ## Critères de passage au vert
 
-- effectif officiel BA25 signé et identifiants rapprochés à 100 % ;
-- exactement une ligne `StudentsPhysio` 2027 par étudiant ;
-- 100 % des étudiants avec un répondant HES actif ;
+- effectif officiel BA25 et identifiants rapprochés à 100 % — atteint ;
+- exactement une ligne `StudentsPhysio` 2027 par étudiant — atteint ;
+- 100 % des étudiants avec un répondant HES renseigné — atteint ;
 - dates PFP2 officiellement confirmées ;
 - capacité PFP2 proposée suffisante, hors `selectedOut` non validé ;
 - 0 session, vote ou résultat parasite avant le test ;
@@ -139,10 +137,20 @@ La contrainte unique `(user_id, year)` doit être respectée. Aucune copie globa
 
 ## Décisions encore attendues
 
-1. Liste officielle et effectif BA25.
-2. Dates exactes de la PFP2.
-3. Politique applicable aux lignes `selectedOut`.
-4. Traitement des reprises, échecs et dérogations.
-5. Validation des répondants HES pour 2027.
-6. Seuil de marge de capacité avant ouverture.
+1. Dates exactes de la PFP2.
+2. Politique applicable aux lignes `selectedOut`.
+3. Traitement des reprises, échecs et dérogations.
+4. Seuil de marge de capacité avant ouverture.
 
+## Contrôle global des classes depuis le fichier officiel
+
+Les profils existants des cohortes BA23 à BA26 ont été rapprochés et alignés avec le fichier :
+
+- 197 profils officiels alignés ;
+- 3 rôles génériques `user` corrigés en `EtudiantPhysio` lors du contrôle global, en plus de la correction BA25 ;
+- 4 anciennes étiquettes de classe hors répartition retirées, sans désactivation de compte ;
+- le profil enseignant homonyme de l'étudiante BA23 n'a pas été modifié ;
+- le compte de Waser Abigael n'a pas été créé, conformément à la décision de le traiter plus tard si nécessaire ;
+- les comptes BA22 absents de la plateforme n'ont pas été recréés.
+
+Le fichier comporte par ailleurs 63 lignes d'étudiants dans la feuille BA24 alors que son titre en annonce 64. Aucun étudiant fictif n'a été ajouté pour compenser cet écart documentaire.
