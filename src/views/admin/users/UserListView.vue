@@ -3,7 +3,7 @@
     <template #header>
       <AdminPageHeader
         title="Liste des utilisateurs"
-        subtitle="Consultez et gérez la liste complète des utilisateurs"
+        subtitle="Gérez les profils et le premier accès sécurisé des étudiants BA26"
       >
         <template #breadcrumbs>
           <div class="flex align-items-center gap-2 text-sm text-600">
@@ -30,6 +30,7 @@
           filterDisplay="menu"
           :globalFilterFields="['Nom', 'Prenom', 'Role', 'Email']"
           showGridlines
+          responsiveLayout="scroll"
           class="surface-card border-round shadow-2"
         >
           <template #header>
@@ -66,22 +67,14 @@
                   showClear
                   class="w-20rem"
                 />
-                <Button
-                  label="Ajouter"
-                  icon="pi pi-plus"
-                  class="p-button-success"
-                  @click="goToUserForm"
-                />
               </div>
             </div>
           </template>
           <template #empty>
             <EmptyState
               title="Aucun utilisateur trouvé"
-              description="Ajustez les filtres ou ajoutez un utilisateur."
+              description="Ajustez les filtres pour retrouver un utilisateur."
               icon="pi-users"
-              actionLabel="Ajouter"
-              @action="goToUserForm"
             />
           </template>
           <Column field="Nom" header="Nom" style="min-width: 12rem" class="text-center">
@@ -147,6 +140,30 @@
               />
             </template>
           </Column>
+          <Column header="Premier accès" style="min-width: 14rem" class="text-center">
+            <template #body="{ data }">
+              <div v-if="canSendInitialAccess(data)" class="initial-access-cell">
+                <Tag
+                  :value="initialAccessView(data).label"
+                  :severity="initialAccessView(data).severity"
+                />
+                <small v-if="data.initialAccess?.lastSentAt" class="text-500">
+                  {{ formatAccessDate(data.initialAccess.lastSentAt) }}
+                </small>
+                <Button
+                  v-if="initialAccessView(data).action"
+                  :label="initialAccessView(data).action"
+                  icon="pi pi-send"
+                  size="small"
+                  text
+                  :loading="Boolean(initialAccessLoading[data.id])"
+                  :aria-label="`${initialAccessView(data).action} pour ${data.Forname} ${data.Name}`"
+                  @click="requestInitialAccess(data)"
+                />
+              </div>
+              <span v-else class="text-500 text-sm">Non concerné</span>
+            </template>
+          </Column>
           <Column header="Action" style="min-width: 12rem" class="text-center">
             <template #body="{ data }">
               <Button
@@ -171,157 +188,6 @@
       </div>
     </div>
 
-    <!-- Dialog d'ajout d'utilisateur -->
-    <Dialog
-      v-model:visible="showAddUserDialog"
-      modal
-      header="Créer un nouvel utilisateur"
-      :style="{ width: '48rem' }"
-      :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
-    >
-      <div class="flex flex-column gap-3 pt-3">
-        <div class="p-message p-message-info mb-2" style="border-radius: 8px">
-          <div class="p-message-wrapper" style="padding: 0.75rem 1rem">
-            <span class="p-message-icon pi pi-info-circle"></span>
-            <span class="p-message-detail"
-              >L'utilisateur sera créé directement dans Supabase avec email confirmé. Il pourra se
-              connecter immédiatement.</span
-            >
-          </div>
-        </div>
-
-        <div class="grid">
-          <div class="col-6">
-            <div class="flex flex-column gap-2">
-              <label for="newUserForname" class="font-semibold">Prénom *</label>
-              <InputText id="newUserForname" v-model="newUser.forname" placeholder="Prénom" />
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="flex flex-column gap-2">
-              <label for="newUserFamilyName" class="font-semibold">Nom de famille *</label>
-              <InputText
-                id="newUserFamilyName"
-                v-model="newUser.familyName"
-                placeholder="Nom de famille"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="flex flex-column gap-2">
-          <label for="newUserEmail" class="font-semibold">Email *</label>
-          <InputText
-            id="newUserEmail"
-            v-model="newUser.email"
-            type="email"
-            placeholder="prenom.nom@hedsvs.ch"
-            :class="{ 'p-invalid': emailError }"
-          />
-          <small v-if="emailError" class="p-error">Veuillez entrer un email valide</small>
-        </div>
-
-        <div class="flex flex-column gap-2">
-          <label for="newUserPassword" class="font-semibold">Mot de passe *</label>
-          <div class="flex gap-2 align-items-center">
-            <Password
-              id="newUserPassword"
-              v-model="newUser.password"
-              placeholder="Minimum 6 caractères"
-              toggleMask
-              :feedback="false"
-              :class="{ 'p-invalid': passwordError }"
-              class="flex-1"
-            />
-            <Button
-              icon="pi pi-refresh"
-              severity="secondary"
-              size="small"
-              v-tooltip.top="'Générer un mot de passe'"
-              @click="generatePassword"
-            />
-          </div>
-          <small v-if="passwordError" class="p-error"
-            >Le mot de passe doit contenir au moins 6 caractères</small
-          >
-        </div>
-
-        <div class="grid">
-          <div class="col-6">
-            <div class="flex flex-column gap-2">
-              <label for="newUserRole" class="font-semibold">Rôle</label>
-              <Dropdown
-                id="newUserRole"
-                v-model="newUser.role"
-                :options="roleOptions"
-                placeholder="Sélectionner un rôle"
-              />
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="flex flex-column gap-2">
-              <label for="newUserPermissions" class="font-semibold">Permissions</label>
-              <MultiSelect
-                id="newUserPermissions"
-                v-model="newUser.permissions"
-                :options="permissionOptions"
-                placeholder="Sélectionner les permissions"
-                display="chip"
-                :maxSelectedLabels="3"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="flex flex-column gap-2">
-          <label for="newUserDisplayName" class="font-semibold">Nom d'affichage</label>
-          <InputText
-            id="newUserDisplayName"
-            v-model="newUser.displayName"
-            :placeholder="
-              newUser.forname && newUser.familyName
-                ? newUser.forname + ' ' + newUser.familyName
-                : 'Généré automatiquement'
-            "
-          />
-          <small class="text-500">Laissez vide pour utiliser Prénom + Nom</small>
-        </div>
-
-        <div
-          v-if="createUserError"
-          class="p-message p-message-error mt-2"
-          style="border-radius: 8px"
-        >
-          <div class="p-message-wrapper" style="padding: 0.75rem 1rem">
-            <span class="p-message-icon pi pi-times-circle"></span>
-            <span class="p-message-detail">{{ createUserError }}</span>
-          </div>
-        </div>
-
-        <div
-          v-if="createdUserSummary"
-          class="p-message p-message-success mt-2"
-          style="border-radius: 8px"
-        >
-          <div class="p-message-wrapper" style="padding: 0.75rem 1rem">
-            <span class="p-message-icon pi pi-check-circle"></span>
-            <span class="p-message-detail">{{ createdUserSummary }}</span>
-          </div>
-        </div>
-      </div>
-
-      <template #footer>
-        <Button label="Annuler" icon="pi pi-times" @click="closeAddUserDialog" text />
-        <Button
-          label="Créer l'utilisateur"
-          icon="pi pi-check"
-          @click="createNewUser"
-          :loading="creatingUser"
-          severity="success"
-        />
-      </template>
-    </Dialog>
-
     <Toast />
   </AdminLayout>
 </template>
@@ -340,15 +206,16 @@ import InputIcon from 'primevue/inputicon'
 import Dropdown from 'primevue/dropdown'
 import Tag from 'primevue/tag'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
-import Dialog from 'primevue/dialog'
-import Password from 'primevue/password'
-import MultiSelect from 'primevue/multiselect'
-import Tooltip from 'primevue/tooltip'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
-import { useAuthStore } from '@/stores/authStore'
 import apiClient from '@/service/apiClient'
 import { nextTick } from 'vue'
+import {
+  canRequestInitialAccess,
+  initialAccessPresentation,
+  loadInitialAccessStates,
+  sendInitialAccess
+} from '@/service/studentInitialAccessService'
 // import Navbar from '@/components/common/utils/Navbar.vue';
 
 export default {
@@ -366,18 +233,11 @@ export default {
     Dropdown,
     Tag,
     AdminLayout,
-    Dialog,
-    Password,
-    MultiSelect,
     Toast
-  },
-  directives: {
-    tooltip: Tooltip
   },
   setup() {
     const toast = useToast()
-    const authStore = useAuthStore()
-    return { toast, authStore }
+    return { toast }
   },
   data() {
     return {
@@ -390,40 +250,7 @@ export default {
       selectedPermission: null,
       availableRoles: [],
       availablePermissions: [],
-      showAddUserDialog: false,
-      creatingUser: false,
-      emailError: false,
-      passwordError: false,
-      createUserError: '',
-      newUser: {
-        email: '',
-        password: '',
-        forname: '',
-        familyName: '',
-        displayName: '',
-        role: 'student',
-        permissions: []
-      },
-      createdUserSummary: '',
-      roleOptions: [
-        'student',
-        'teacher',
-        'admin',
-        'moderator',
-        'practitioner',
-        'EnseignantSoins',
-        'EnseignantPhysio',
-        'editor'
-      ],
-      permissionOptions: [
-        'EnseignantSoins',
-        'EnseignantPhysio',
-        'AdminSoins',
-        'AdminPhysio',
-        'Secretariat',
-        'RM',
-        'editor'
-      ]
+      initialAccessLoading: {}
     }
   },
   computed: {
@@ -485,7 +312,9 @@ export default {
         try {
           const { data, error } = await supabase
             .from('user_profiles')
-            .select('user_id,email,display_name,forname,family_name,role,is_active,permissions')
+            .select(
+              'user_id,email,display_name,forname,family_name,role,is_active,permissions,classe'
+            )
           if (error) throw error
           rows = data || []
         } catch (e) {
@@ -496,7 +325,7 @@ export default {
           ) {
             const { data, error } = await supabase
               .from('user_profiles')
-              .select('user_id,email,display_name,forname,family_name,role,is_active')
+              .select('user_id,email,display_name,forname,family_name,role,is_active,classe')
             if (error) throw error
             rows = data || []
           } else {
@@ -523,9 +352,29 @@ export default {
             Forname: Forname || '',
             rolesList,
             permsList,
-            is_active: u.is_active
+            role: u.role,
+            classe: u.classe,
+            is_active: u.is_active,
+            initialAccess: { status: 'pending', attemptCount: 0 }
           }
         })
+
+        try {
+          const initialAccessStates = await loadInitialAccessStates()
+          const statesByUser = new Map(initialAccessStates.map((state) => [state.userId, state]))
+          this.utilisateurs = this.utilisateurs.map((user) => ({
+            ...user,
+            initialAccess: statesByUser.get(user.id) || user.initialAccess
+          }))
+        } catch {
+          this.toast.add({
+            severity: 'warn',
+            summary: 'Suivi indisponible',
+            detail:
+              'Les utilisateurs restent visibles, mais les états de premier accès ne sont pas à jour.',
+            life: 5000
+          })
+        }
 
         this.availableRoles = Array.from(roleSet).sort()
         this.availablePermissions = Array.from(permSet).sort()
@@ -573,116 +422,44 @@ export default {
     goToUserFormModif(userId) {
       this.$router.push({ name: 'NewUserFormModif', params: { userId } })
     },
-    goToUserForm() {
-      this.showAddUserDialog = true
-      this.resetNewUserForm()
+    canSendInitialAccess(user) {
+      return canRequestInitialAccess(user)
     },
-    closeAddUserDialog() {
-      this.showAddUserDialog = false
-      this.resetNewUserForm()
+    initialAccessView(user) {
+      return initialAccessPresentation(user.initialAccess)
     },
-    resetNewUserForm() {
-      this.newUser = {
-        email: '',
-        password: '',
-        forname: '',
-        familyName: '',
-        displayName: '',
-        role: 'student',
-        permissions: []
-      }
-      this.emailError = false
-      this.passwordError = false
-      this.createUserError = ''
-      this.createdUserSummary = ''
+    formatAccessDate(value) {
+      return new Intl.DateTimeFormat('fr-CH', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      }).format(new Date(value))
     },
-    generatePassword() {
-      const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-      const specials = '!@#$%&*'
-      let pwd = ''
-      for (let i = 0; i < 10; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length))
-      pwd += specials.charAt(Math.floor(Math.random() * specials.length))
-      this.newUser.password = pwd
-    },
-    async createNewUser() {
-      this.emailError = false
-      this.passwordError = false
-      this.createUserError = ''
-      this.createdUserSummary = ''
+    async requestInitialAccess(user) {
+      const presentation = this.initialAccessView(user)
+      const confirmed = confirm(
+        `${presentation.action} à ${user.Forname} ${user.Name} ?\n\nUn lien individuel valable une heure sera envoyé à l’adresse vérifiée du compte.`
+      )
+      if (!confirmed) return
 
-      // Validation
-      const email = (this.newUser.email || '').trim().toLowerCase()
-      if (!email || !email.includes('@')) {
-        this.emailError = true
-        this.toast.add({
-          severity: 'warn',
-          summary: 'Email invalide',
-          detail: 'Veuillez entrer un email valide.',
-          life: 3000
-        })
-        return
-      }
-      if (!this.newUser.password || this.newUser.password.length < 6) {
-        this.passwordError = true
-        this.toast.add({
-          severity: 'warn',
-          summary: 'Mot de passe trop court',
-          detail: 'Le mot de passe doit contenir au moins 6 caractères.',
-          life: 3000
-        })
-        return
-      }
-      if (!this.newUser.forname || !this.newUser.familyName) {
-        this.toast.add({
-          severity: 'warn',
-          summary: 'Nom requis',
-          detail: 'Veuillez renseigner le prénom et le nom.',
-          life: 3000
-        })
-        return
-      }
-
-      this.creatingUser = true
-      const forname = this.newUser.forname.trim()
-      const familyName = this.newUser.familyName.trim()
-      const displayName = this.newUser.displayName.trim() || `${forname} ${familyName}`
-      const role = this.newUser.role || 'student'
-      const permissions = this.newUser.permissions || []
-
+      this.initialAccessLoading[user.id] = true
       try {
-        const { data: createdUser } = await apiClient.post('/admin/users', {
-          email,
-          password: this.newUser.password,
-          forname,
-          familyName,
-          displayName,
-          role,
-          permissions
-        })
-        this.createdUserSummary = `✅ ${displayName} (${email}) — ID: ${createdUser.id.slice(0, 8)}…`
-
-        // Recharger la liste
-        await nextTick()
-        await new Promise((resolve) => setTimeout(resolve, 300))
-        await this.fetchUsers()
-
+        user.initialAccess = await sendInitialAccess(user.id)
         this.toast.add({
           severity: 'success',
-          summary: 'Utilisateur créé',
-          detail: `${displayName} (${email}) — rôle: ${role}`,
+          summary: 'Accès initial envoyé',
+          detail:
+            'Le lien sécurisé est valable une heure. Toute relance invalide le lien précédent.',
           life: 5000
         })
       } catch (error) {
-        console.error('Erreur création utilisateur:', error)
-        this.createUserError = error.message || 'Erreur lors de la création.'
         this.toast.add({
           severity: 'error',
-          summary: 'Erreur',
-          detail: this.createUserError,
+          summary: 'Échec de l’envoi',
+          detail: error.message || 'L’accès initial n’a pas pu être envoyé.',
           life: 5000
         })
       } finally {
-        this.creatingUser = false
+        this.initialAccessLoading[user.id] = false
       }
     },
     goToAdminDashboard() {
@@ -734,6 +511,14 @@ export default {
 .is-compact :deep(.p-dropdown),
 .is-compact :deep(.p-button) {
   height: 2.5rem;
+}
+
+.initial-access-cell {
+  display: flex;
+  min-width: 11rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 @media (max-width: 768px) {

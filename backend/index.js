@@ -41,13 +41,12 @@ const adminUsersRoutes = require('./supabase/adminUsersBackend.js')
 const vimeoRoutes = require('./supabase/vimeoBackend.js')
 const githubRoutes = require('./supabase/githubBackend.js')
 const audienceDirectoryRoutes = require('./supabase/audienceDirectoryBackend.js')
-const {
-  createAdminDashboardStatsRouter
-} = require('./dashboard/adminDashboardStatsBackend.js')
+const { createAdminDashboardStatsRouter } = require('./dashboard/adminDashboardStatsBackend.js')
 const {
   createPasswordRecoveryRequestRouter
 } = require('./supabase/passwordRecoveryRequestBackend.js')
 const { createPfpOutcomeRouter } = require('./supabase/pfpOutcomeBackend.js')
+const { createStudentInitialAccessRouters } = require('./supabase/studentInitialAccessBackend.js')
 
 // push
 const pushRoutes = require('./supabase/pushBackend')
@@ -68,8 +67,7 @@ function isAllowedOrigin(origin) {
   try {
     const url = new URL(origin)
     return (
-      url.protocol === 'http:' &&
-      (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
+      url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
     )
   } catch {
     return false
@@ -120,6 +118,7 @@ app.use(
 // server-side limiter and always returns the same public response.
 app.use('/api/auth/password-recovery', createPasswordRecoveryRequestRouter())
 app.use('/api', authenticate)
+const studentInitialAccessRouters = createStudentInitialAccessRouters()
 
 // Routes - specific routes FIRST, then general ones
 console.log('[ROUTES] Mounting routes...')
@@ -137,6 +136,8 @@ app.use('/api/feedbacka', feedbackaRoutes)
 app.use('/api/push', requireAdmin, pushRoutes)
 app.use('/api/ftp', requireAdmin, ftpRoutes)
 app.use('/api/admin/users', requireAdmin, adminUsersRoutes)
+app.use('/api/admin/users', requireAdmin, studentInitialAccessRouters.adminRouter)
+app.use('/api/auth', studentInitialAccessRouters.selfRouter)
 app.use(
   '/api/audiences',
   requireAnyPermission(
