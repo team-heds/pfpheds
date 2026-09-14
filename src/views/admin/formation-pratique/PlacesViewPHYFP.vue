@@ -118,7 +118,20 @@
       <div class="places-table-shell surface-card fp-dark p-3 border-round shadow-2">
         <DataTableToolbar v-model:query="searchInput" :result-count="totalMatchingRows" placeholder="Rechercher une place…">
           <template #primary><Button icon="pi pi-plus" label="Nouvelle place" @click="showCreateDialog = true" severity="success" /></template>
-          <template #tools><Button icon="pi pi-filter-slash" label="Réinitialiser" outlined severity="secondary" @click="resetFilters" /><span v-if="isTruncated" class="text-orange-500">{{ displayedRows.length }} affichés</span></template>
+          <template #tools>
+            <Button
+              icon="pi pi-file-excel"
+              :label="`Exporter les offres ${selectedYearLabel}`"
+              severity="success"
+              class="export-button"
+              :loading="exporting"
+              :disabled="loading || totalMatchingRows === 0"
+              @click="exportPlacesExcel"
+              v-tooltip.top="'Exporter en Excel les offres de l’année sélectionnée'"
+            />
+            <Button icon="pi pi-filter-slash" label="Réinitialiser" outlined severity="secondary" @click="resetFilters" />
+            <span v-if="isTruncated" class="text-orange-500">{{ displayedRows.length }} affichés</span>
+          </template>
         </DataTableToolbar>
         <DataTable
           :value="displayedRows"
@@ -562,6 +575,7 @@ import Checkbox from 'primevue/checkbox'
 import ProgressBar from 'primevue/progressbar'
 import { storage } from '@/firebase'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { buildPlacesExportRows, createPlacesWorkbook, getAcademicYearLabel } from '@/utils/placesExcelExport'
 
 const store = usePlacesStore()
 const institutionsStore = useInstitutionsStore()
@@ -579,6 +593,7 @@ const years = ref([
 ])
 const CURRENT_PLANNING_YEAR = '2027'
 const selectedYear = ref(CURRENT_PLANNING_YEAR)
+const selectedYearLabel = computed(() => getAcademicYearLabel(selectedYear.value, years.value))
 // Nouvelle clé pour ne pas restaurer l'année 2025-2026 mémorisée avant l'ajout
 // des statistiques de planification 2026-2027.
 const FILTERS_KEY = 'fp_phy_places_filters_v2'
@@ -968,6 +983,7 @@ const selectedPraticiens = ref([])
 const selectedFile = ref(null)
 const fileInput = ref(null)
 const uploading = ref(false)
+const exporting = ref(false)
 
 // Visibilité des colonnes
 const visibleColumns = ref({
@@ -1104,6 +1120,54 @@ async function reload() {
   console.log('🔄 [PlacesView] Début du rechargement des places...')
   await store.fetchPlaces()
   console.log('✅ [PlacesView] Places rechargées:', store.places?.length || 0)
+}
+
+async function exportPlacesExcel() {
+  if (exporting.value || totalMatchingRows.value === 0) return
+
+  exporting.value = true
+  try {
+    const ExcelJS = await import('exceljs')
+    const rows = buildPlacesExportRows({
+      places: baseRows.value,
+      year: selectedYear.value,
+      institutionNameById: institutionNameById.value,
+      institutionCantonById: institutionCantonById.value
+    })
+    const workbook = createPlacesWorkbook(ExcelJS, {
+      rows,
+      yearLabel: selectedYearLabel.value
+    })
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const downloadUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = `offres_formation_pratique_${selectedYearLabel.value}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(downloadUrl)
+
+    toast.add({
+      severity: 'success',
+      summary: 'Export Excel créé',
+      detail: `${rows.length} offres exportées pour ${selectedYearLabel.value}.`,
+      life: 3500
+    })
+  } catch (error) {
+    console.error('Erreur lors de l’export Excel des places:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Export impossible',
+      detail: error?.message || 'Le fichier Excel n’a pas pu être généré.',
+      life: 5000
+    })
+  } finally {
+    exporting.value = false
+  }
 }
 
 async function onPlaceCreated(place) {
@@ -1410,6 +1474,9 @@ watch(() => praticiensStore.items, (newItems) => {
 }
 .surface-card {
   border: 1px solid var(--surface-border);
+}
+.export-button {
+  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.18);
 }
 @media (max-width: 768px) {
   .search-input { min-width: 180px; width: 100%; }
