@@ -126,7 +126,7 @@ const errors = ref({})
 const submitStatus = ref('idle')
 const submitMessage = ref('')
 
-const classOptions = ['BA22', 'BA23', 'BA24', 'BA25']
+const classOptions = ['BA22', 'BA23', 'BA24', 'BA25', 'BA26']
 
 const formData = ref({
   forname: '',

@@ -182,6 +182,7 @@ const classChartData = computed(() => {
     'BA23': '#f59e0b',
     'BA24': '#10b981',
     'BA25': '#3b82f6',
+    'BA26': '#6366f1',
     'Non défini': '#6b7280'
   }
   

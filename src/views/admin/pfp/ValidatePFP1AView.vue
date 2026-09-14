@@ -254,7 +254,7 @@ const comment = ref('')
 const pfpList = ref([])
 
 const statusOptions = ref(['En attente', 'Validé', 'Refusé', 'En révision'])
-const classes = ref(['BA22', 'BA23', 'BA24'])
+const classes = ref(['BA22', 'BA23', 'BA24', 'BA25', 'BA26'])
 const institutions = ref([])
 
 const stats = ref({
