@@ -76,6 +76,32 @@ test('the admin user list never creates or transmits an initial password', () =>
   assert.match(source, /sendInitialAccess\(user\.id\)/)
 })
 
+test('the role manager exposes the BA26 physio cohort permission', () => {
+  const source = fs.readFileSync(
+    path.resolve(__dirname, '..', '..', 'src', 'views', 'admin', 'users', 'ManageUserRoles.vue'),
+    'utf8'
+  )
+  assert.match(source, /['"]BA26-PHY['"]\s*:\s*false/)
+})
+
+test('student class selectors and dashboard colors include BA26', () => {
+  const files = [
+    'src/components/admin/forms/StudentCreateDialog.vue',
+    'src/components/admin/forms/StudentEditDialog.vue',
+    'src/components/admin/details/ValidatePFP1A.vue',
+    'src/views/admin/pfp/ValidatePFP1AView.vue',
+    'src/views/admin/pfp/ResultPreviewVotationView.vue',
+    'src/views/admin/formation-pratique/secretariat/VerificationCriteresEtudiants.vue',
+    'src/views/admin/users/StudentStatsView.vue',
+    'src/components/admin/widgets/KpiCard.vue',
+    'src/components/admin/widgets/ChartSelector.vue'
+  ]
+  for (const file of files) {
+    const source = fs.readFileSync(path.resolve(__dirname, '..', '..', file), 'utf8')
+    assert.match(source, /['"]?BA26['"]?/, `${file} must include BA26`)
+  }
+})
+
 test('every business API is behind the global JWT middleware', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8')
   const authIndex = source.indexOf("app.use('/api', authenticate)")

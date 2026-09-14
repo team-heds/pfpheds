@@ -90,7 +90,7 @@ export default {
   data() {
     return {
       userCommunities: [], // Communautés de l'utilisateur
-      hashtags: ["#BA22", "#BA23", "#BA24", "#BA25", "#ALL", "#PFP1A", "#PFP1B", "#PFP2", "#PFP3", "#PFP4", "#PHYSIO", "#LLB", '#HEdS'], // Hashtags à afficher
+      hashtags: ["#BA22", "#BA23", "#BA24", "#BA25", "#BA26", "#ALL", "#PFP1A", "#PFP1B", "#PFP2", "#PFP3", "#PFP4", "#PHYSIO", "#LLB", '#HEdS'], // Hashtags à afficher
       unsubscribeUserCommunities: null, // Fonction de désabonnement
       authStore: null, // Store d'authentification
       supabaseChannel: null,

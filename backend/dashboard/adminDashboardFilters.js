@@ -37,7 +37,10 @@ function rawValues(value) {
 }
 
 function normalizeFilterValues(key, value) {
-  const values = [...new Set(rawValues(value).map((entry) => entry.trim()).filter(Boolean))].sort((a, b) =>
+  const values = [...new Set(rawValues(value)
+    .map((entry) => entry.trim())
+    .map((entry) => key === 'class' ? entry.toUpperCase() : entry)
+    .filter(Boolean))].sort((a, b) =>
     a.localeCompare(b, 'fr-CH')
   )
   if (values.length > MAX_VALUES_PER_FILTER) {
@@ -59,6 +62,21 @@ function normalizeFilterValues(key, value) {
     throw filterError('Un statut PFP est invalide.')
   }
   return values
+}
+
+function normalizeClassCode(value) {
+  return String(value || '').trim().toUpperCase()
+}
+
+function resolveProfileClass(profile) {
+  const explicitClass = normalizeClassCode(profile?.classe)
+  if (explicitClass) return explicitClass
+
+  for (const permission of normalizePermissions(profile?.permissions)) {
+    const match = normalizeClassCode(permission).match(/^BA(\d{2})-PHY$/)
+    if (match) return `BA${match[1]}`
+  }
+  return ''
 }
 
 function parseDashboardFilters(query = {}) {
@@ -93,7 +111,7 @@ function filterProfiles(profiles, filters = {}) {
   const roleTokens = new Set((filters.role || []).map(normalizeAudienceToken))
   return (profiles || []).filter((profile) => {
     if (filters.track?.length && !filters.track.includes(String(profile.primary_track_id || ''))) return false
-    if (filters.class?.length && !filters.class.includes(String(profile.classe || ''))) return false
+    if (filters.class?.length && !filters.class.includes(resolveProfileClass(profile))) return false
     if (filters.cohort?.length && !filters.cohort.includes(String(profile.pfp_cohort || ''))) return false
     if (roleTokens.size) {
       const tokens = [
@@ -163,18 +181,41 @@ async function readOptions(client, table, columns, mapper) {
   return uniqueOptions((data || []).map(mapper))
 }
 
+async function readAllRows(client, table, columns) {
+  const pageSize = 1000
+  const rows = []
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await client.from(table).select(columns).range(offset, offset + pageSize - 1)
+    if (error) {
+      const wrapped = new Error(`Impossible de lire ${table}.`)
+      wrapped.code = error.code || 'UPSTREAM_QUERY_FAILED'
+      throw wrapped
+    }
+    rows.push(...(data || []))
+    if ((data || []).length < pageSize) return rows
+  }
+}
+
 async function loadDashboardFilterOptions(client, domains) {
   const includesPeople = domains.some((domain) => ['general', 'pfp', 'academic'].includes(domain))
   const includesPfp = domains.includes('pfp')
   const options = {}
 
   if (includesPeople) {
-    const [tracks, roles, classes] = await Promise.all([
+    const [tracks, roles, catalogClasses, profiles] = await Promise.all([
       readOptions(client, 'tracks', 'id,label,is_active', (row) =>
         row.is_active === false ? null : option(row.id, row.label)
       ),
       readOptions(client, 'roles', 'slug,label', (row) => option(row.slug, row.label || row.slug)),
-      readOptions(client, 'classes', 'code,name', (row) => option(row.code, row.code || row.name))
+      readOptions(client, 'classes', 'code,name', (row) => option(normalizeClassCode(row.code), row.code || row.name)),
+      readAllRows(client, 'user_profiles', 'classe,permissions')
+    ])
+    const classes = uniqueOptions([
+      ...catalogClasses,
+      ...profiles.map((profile) => {
+        const classCode = resolveProfileClass(profile)
+        return classCode ? option(classCode) : null
+      })
     ])
     Object.assign(options, {
       tracks,
@@ -218,5 +259,6 @@ module.exports = {
   normalizeFilterValues,
   parseDashboardFilters,
   publicApplicability,
+  resolveProfileClass,
   validateFilterCombination
 }

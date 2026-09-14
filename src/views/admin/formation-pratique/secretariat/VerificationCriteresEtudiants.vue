@@ -378,7 +378,7 @@ const expandedRows = ref({})
 const selectedStudents = ref([])
 const filterClasse = ref(null)
 const filterStatus = ref(null)
-const classes = ref(['BA23', 'BA24', 'BA25'])
+const classes = ref(['BA23', 'BA24', 'BA25', 'BA26'])
 const searchQuery = ref('')
 
 const criteriaLabels = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
