@@ -105,6 +105,16 @@ GoTrue charge le modèle depuis l’URL HTTPS publique et remplace exclusivement
 
 Enfin, `src/main.js` monte `/reset-password` et `/new-password` sans attendre la restauration d’une ancienne session ou le chargement d’un profil. Les autres routes conservent leur initialisation Auth complète.
 
+### Premier accès des étudiants BA26
+
+HEDS25-599 réutilise exactement le parcours de récupération ci-dessus : aucun mot de passe initial n’est généré, affiché, exporté ou envoyé par l’administration. Après que HEDS25-508 a créé le compte, un administrateur peut demander l’accès initial uniquement pour un profil étudiant actif dont la classe normalisée est `BA26` ou `BAC26`.
+
+Le navigateur transmet uniquement l’UUID du profil à `POST /api/admin/users/:id/initial-access`. Le backend relit le rôle, l’activité et la classe dans `user_profiles`, puis obtient l’adresse directement depuis Supabase Auth avec le client service role. Il impose lui-même la destination `/reset-password?flow=initial-access` et ne journalise ni l’adresse, ni le lien, ni le message du fournisseur. Ce marqueur sépare le premier accès d’un mot de passe oublié ordinaire.
+
+L’état courant (`pending`, `sent`, `used`, `expired`, `error`) et les événements append-only sont conservés dans `student_initial_access` et `student_initial_access_events`. Ces tables ont RLS activé, aucun accès `anon` ou `authenticated`, et ne comportent aucune colonne d’email, mot de passe, OTP, URL, jeton ou secret. Une relance met à jour la même ligne ; Supabase Auth invalide le lien précédent, de sorte qu’un seul accès reste actif.
+
+Après `supabase.auth.updateUser({ password })`, et uniquement lorsque l’URL contient le marqueur serveur `flow=initial-access`, l’écran appelle `POST /api/auth/initial-access/used` avec la session de récupération encore active. Cette route utilise exclusivement `req.auth.userId`, est idempotente et ne reçoit aucun identifiant utilisateur dans le corps. Si le suivi est temporairement indisponible après le changement du mot de passe, l’étudiant n’est pas bloqué et la session est tout de même fermée.
+
 ### Cette instance est self-hosted, pas Supabase Cloud
 
 `VITE_SUPABASE_URL=https://api2.hedsvs.ch` — ce n'est **pas** un projet `*.supabase.co`. Conséquence directe : les outils MCP Supabase standards (`list_projects`, `execute_sql`, etc.) ne voient pas ce projet. Toute inspection de schéma ou toute opération admin (créer un utilisateur, lister les comptes) doit passer par :

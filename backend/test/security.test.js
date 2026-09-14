@@ -67,6 +67,15 @@ test('student audiences are never inferred directly in frontend list queries', (
   assert.doesNotMatch(source, /studentsphysio_with_profiles/)
 })
 
+test('the admin user list never creates or transmits an initial password', () => {
+  const source = fs.readFileSync(
+    path.resolve(__dirname, '..', '..', 'src', 'views', 'admin', 'users', 'UserListView.vue'),
+    'utf8'
+  )
+  assert.doesNotMatch(source, /generatePassword|newUserPassword|newUser\.password|Math\.random/)
+  assert.match(source, /sendInitialAccess\(user\.id\)/)
+})
+
 test('every business API is behind the global JWT middleware', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8')
   const authIndex = source.indexOf("app.use('/api', authenticate)")
@@ -137,6 +146,9 @@ test('sensitive API routes reject anonymous requests', async () => {
       ['/api/ftp/diagnostic', 'GET'],
       ['/api/chat', 'POST'],
       ['/api/admin/users', 'POST'],
+      ['/api/admin/users/initial-access', 'GET'],
+      ['/api/admin/users/10000000-0000-4000-8000-000000000001/initial-access', 'POST'],
+      ['/api/auth/initial-access/used', 'POST'],
       ['/api/audiences/students', 'GET'],
       ['/api/audiences/si-teachers', 'GET'],
       ['/api/admin-dashboard/v1/stats', 'GET'],

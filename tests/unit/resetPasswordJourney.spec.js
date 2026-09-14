@@ -5,33 +5,37 @@ const recovery = vi.hoisted(() => ({
   resolveFromLocation: vi.fn(),
   authorizeWithOtp: vi.fn(),
   updatePassword: vi.fn(),
-  abandon: vi.fn(),
+  abandon: vi.fn()
 }))
 
 const routerPush = vi.hoisted(() => vi.fn())
 const layoutScheme = vi.hoisted(() => ({ value: 'dim' }))
 
 vi.mock('@/supabase.js', () => ({
-  supabase: { auth: {} },
+  supabase: { auth: {} }
 }))
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: routerPush }),
+  useRouter: () => ({ push: routerPush })
 }))
 
 vi.mock('@/layout/composables/layout', () => ({
   useLayout: () => ({
-    layoutConfig: { colorScheme: layoutScheme },
-  }),
+    layoutConfig: { colorScheme: layoutScheme }
+  })
 }))
 
 vi.mock('@/service/passwordRecoveryService', () => ({
   PASSWORD_RECOVERY_ERROR_CODES: {
     INVALID_CONTEXT: 'recovery_context_invalid',
     ALREADY_CONSUMED: 'recovery_context_consumed',
-    UPDATE_IN_PROGRESS: 'recovery_update_in_progress',
+    UPDATE_IN_PROGRESS: 'recovery_update_in_progress'
   },
-  createPasswordRecoveryService: () => recovery,
+  createPasswordRecoveryService: () => recovery
+}))
+
+vi.mock('@/service/studentInitialAccessService', () => ({
+  markInitialAccessUsed: vi.fn()
 }))
 
 import ResetPassword from '@/views/pages/ResetPassword.vue'
@@ -39,7 +43,8 @@ import ResetPassword from '@/views/pages/ResetPassword.vue'
 const ButtonStub = {
   props: ['label', 'type', 'disabled', 'loading'],
   emits: ['click'],
-  template: '<button :type="type || \'button\'" :disabled="disabled" @click="$emit(\'click\')">{{ label }}</button>',
+  template:
+    '<button :type="type || \'button\'" :disabled="disabled" @click="$emit(\'click\')">{{ label }}</button>'
 }
 
 const InputStub = {
@@ -56,11 +61,11 @@ const InputStub = {
       @input="$emit('update:modelValue', $event.target.value)"
       @blur="$emit('blur')"
     />
-  `,
+  `
 }
 
 const InlineMessageStub = {
-  template: '<div role="alert"><slot /></div>',
+  template: '<div role="alert"><slot /></div>'
 }
 
 async function mountJourney(result) {
@@ -71,9 +76,9 @@ async function mountJourney(result) {
         Button: ButtonStub,
         InputText: InputStub,
         Password: InputStub,
-        InlineMessage: InlineMessageStub,
-      },
-    },
+        InlineMessage: InlineMessageStub
+      }
+    }
   })
   await flushPromises()
   return wrapper
@@ -91,7 +96,7 @@ describe('parcours complet de réinitialisation du mot de passe', () => {
   it('utilise un logo lisible dans les thèmes sombre et clair', async () => {
     const darkWrapper = await mountJourney({ status: 'valid' })
     expect(darkWrapper.get('.reset-logo').attributes('src')).toBe(
-      '/assets/images/FR-DE_HEdS_rvb_neg.png',
+      '/assets/images/FR-DE_HEdS_rvb_neg.png'
     )
 
     layoutScheme.value = 'light'

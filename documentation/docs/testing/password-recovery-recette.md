@@ -12,21 +12,38 @@ Cette recette valide le parcours Supabase Auth sans conserver de mot de passe, d
 - Utiliser un compte de test Supabase actif dont la boîte mail est accessible.
 - Vérifier que l’environnement cible affiche la version attendue.
 - Ouvrir les outils réseau sans activer la conservation permanente des requêtes sensibles.
-- Préparer un mot de passe temporaire conforme, différent du précédent.
+- Préparer un nouveau mot de passe conforme, différent du précédent. Aucun mot de passe temporaire ne doit être généré ni transmis par un administrateur.
 
 ## Scénarios automatisés
 
 ```bash
-npm run test:unit -- --run \
+npm run test:unit -- \
   tests/unit/passwordRecoveryService.spec.js \
   tests/unit/passwordResetValidation.spec.js \
   tests/unit/passwordRecoveryRoute.spec.js \
-  tests/unit/resetPasswordJourney.spec.js
+  tests/unit/resetPasswordJourney.spec.js \
+  tests/unit/studentInitialAccessService.spec.js
+
+npm --prefix backend test
 
 npx playwright test tests/e2e/password-recovery.spec.js
 ```
 
 Ils couvrent le routage public, le jeton valide, expiré ou déjà consommé, le code OTP, les règles du mot de passe, la confirmation, la fermeture de session et les rendus mobile/ordinateur.
+
+## Premier accès BA26 — HEDS25-599
+
+Cette partie ne peut être exécutée avec un envoi réel qu’après la livraison de l’import/création des comptes HEDS25-508 et la validation manuelle d’un compte BA26 de test. Ne jamais utiliser une adresse d’étudiant réelle pour la recette.
+
+1. Importer ou créer un compte de test avec un profil actif, un rôle étudiant et la classe `BA26` ou `BAC26`.
+2. Dans **Administration > Utilisateurs**, vérifier l’état **À envoyer** et l’action **Envoyer l’accès**. Un rôle non étudiant, un compte inactif ou une autre classe doit afficher **Non concerné**.
+3. Confirmer l’envoi. Vérifier l’état **Envoyé**, la date et la réponse HTTP `202`. Le lien doit aboutir au parcours marqué `flow=initial-access`, sans copier l’adresse, le lien ni le contenu de l’email dans les preuves.
+4. Relancer une fois. Vérifier que le compteur serveur augmente, qu’il n’existe toujours qu’une ligne d’état pour le compte et que seul le dernier lien reçu est valide.
+5. Ouvrir le dernier lien, définir le mot de passe et vérifier que l’état admin devient **Utilisé**. Rejouer l’appel de finalisation doit rester sans effet secondaire.
+6. Vérifier qu’un ancien lien, un lien déjà utilisé et un lien expiré sont refusés par Supabase Auth.
+7. Simuler un échec de livraison sur l’environnement de test : l’admin doit voir **Erreur** et pouvoir **Réessayer**, sans détail SMTP ni donnée personnelle.
+
+Les tables `student_initial_access` et `student_initial_access_events` sont réservées au serveur. Les rôles navigateur `anon` et `authenticated` ne doivent avoir aucun privilège direct. Les événements ne contiennent que l’identifiant utilisateur, l’acteur, l’identifiant de corrélation et une catégorie générique.
 
 ## Recette réelle
 
