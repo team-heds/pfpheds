@@ -173,6 +173,7 @@ const CATEGORY_COLOR_MAP = {
   BA23: '#3b82f6',
   BA24: '#8b5cf6',
   BA25: '#10b981',
+  BA26: '#6366f1',
   'NON DÉFINI': '#9ca3af',
   'NON DEFINI': '#9ca3af'
 }

@@ -197,7 +197,7 @@ const viewMode = ref('student')
 const studentResults = ref([])
 const institutionResults = ref([])
 
-const classes = ref(['BA22', 'BA23', 'BA24'])
+const classes = ref(['BA22', 'BA23', 'BA24', 'BA25', 'BA26'])
 const resultOptions = ref(['Choix 1', 'Choix 2', 'Choix 3', 'Non attribué'])
 const viewModes = ref([
   { label: 'Par Étudiant', value: 'student' },
