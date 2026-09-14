@@ -92,7 +92,8 @@ export const SUPABASE_SELECTS = Object.freeze({
   dashboardRecentPlaces: 'PlaceId,NomPlace,CreatedAt',
   dashboardVotes:
     'id,status,pfp_type,pfp_validee,pfp_echec,pfp_arret,assigned_place_id,created_at,updated_at',
-  dashboardSessions: 'id,pfp_type,target_class,status,is_priority,opened_at,closed_at'
+  dashboardSessions: 'id,pfp_type,target_class,status,is_priority,opened_at,closed_at',
+  dashboardInstitutions: 'InstitutionId,Canton'
 })
 
 export function getCriticalContractSelect(table) {

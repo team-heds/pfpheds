@@ -174,10 +174,15 @@ test('the v1 contract contains deterministic aggregates from real table sources'
   assert.equal(response.domains.pfp.metrics.students.value, 2)
   assert.equal(response.domains.pfp.metrics.pfpInProgress.value, 4)
   assert.equal(response.domains.academic.metrics.teachers.value, 2)
+  assert.equal(response.domains.academic.metrics.courses.value, 8)
+  assert.equal(response.domains.academic.metrics.media.value, 9)
+  assert.equal(response.domains.academic.metrics.modules.value, 6)
+  assert.equal(response.domains.academic.metrics.teachers.semantics, 'snapshot')
+  assert.equal(response.domains.academic.metrics.courses.comparison.status, 'unavailable')
   assert.equal(response.domains.gamification.metrics.completedQuests.value, 7)
   assert.equal(response.domains.gamification.metrics.activeUsers.value, 2)
   assert.equal(response.domains.general.metrics.routes.source, 'public.dynamic_routes')
-  assert.equal(queries.length, 28)
+  assert.equal(queries.length, 22)
   assert.equal(response.domains.general.metrics.users.semantics, 'flow')
   assert.equal(response.domains.general.metrics.users.comparison.value, 17)
   assert.equal(response.domains.general.metrics.users.comparison.percentChange, 0)
@@ -202,15 +207,8 @@ test('the v1 contract contains deterministic aggregates from real table sources'
   )
 })
 
-test('period selection changes real query bounds and comparison values', async () => {
-  const { client, queries } = createFakeClient({
-    resolveCount(state, fallback) {
-      const lowerBound = state.filters.find(([operator]) => operator === 'gte')?.[2]
-      if (state.table === 'courses' && lowerBound === '2026-08-25T22:00:00.000Z') return 3
-      if (state.table === 'courses' && lowerBound === '2026-08-24T22:00:00.000Z') return 2
-      return fallback
-    }
-  })
+test('academic inventory metrics are global snapshots independent of the selected period', async () => {
+  const { client, queries } = createFakeClient()
   const service = createAdminDashboardStatsService({
     client,
     now: () => new Date('2026-08-26T08:00:00.000Z')
@@ -220,22 +218,16 @@ test('period selection changes real query bounds and comparison values', async (
     key: 'day',
     reference: '2026-08-26T08:00:00.000Z'
   })
-  const courses = response.domains.academic.metrics.courses
 
-  assert.equal(courses.value, 3)
-  assert.equal(courses.comparison.value, 2)
-  assert.equal(courses.comparison.absoluteChange, 1)
-  assert.equal(courses.comparison.percentChange, 50)
-  assert.ok(
-    queries.some(
-      (query) =>
-        query.table === 'courses' &&
-        query.filters.some(
-          ([operator, column, value]) =>
-            operator === 'gte' && column === 'created_at' && value === response.period.start
-        )
-    )
-  )
+  for (const key of ['teachers', 'courses', 'media', 'modules']) {
+    const metric = response.domains.academic.metrics[key]
+    assert.equal(metric.semantics, 'snapshot')
+    assert.equal(metric.comparison.status, 'unavailable')
+  }
+  for (const table of ['courses', 'video_library', 'modules']) {
+    const query = queries.find((entry) => entry.table === table)
+    assert.equal(query.filters.length, 0)
+  }
 })
 
 test('dashboard aggregate production code contains no random value generator', () => {
@@ -306,7 +298,7 @@ test('a previous-period failure preserves the current value and marks comparison
   const { client } = createFakeClient({
     resolveError(state) {
       const lowerBound = state.filters.find(([operator]) => operator === 'gte')?.[2]
-      if (state.table === 'courses' && lowerBound === '2026-07-31T22:00:00.000Z') {
+      if (state.table === 'dynamic_routes' && lowerBound === '2026-07-31T22:00:00.000Z') {
         return { code: 'PGRST500', message: 'sensitive previous period detail' }
       }
       return null
@@ -318,16 +310,16 @@ test('a previous-period failure preserves the current value and marks comparison
     onMetricError: (event) => events.push(event)
   })
 
-  const response = await service.loadStats(['academic'], { key: 'month' })
-  const metric = response.domains.academic.metrics.courses
+  const response = await service.loadStats(['general'], { key: 'month' })
+  const metric = response.domains.general.metrics.routes
 
-  assert.equal(metric.value, 8)
+  assert.equal(metric.value, 91)
   assert.equal(metric.status, 'ok')
   assert.equal(metric.comparison.status, 'error')
   assert.equal(metric.comparison.error, 'PGRST500')
   assert.equal(metric.comparison.value, null)
-  assert.equal(response.domains.academic.status, 'partial')
-  assert.equal(events[0].key, 'courses.previous')
+  assert.equal(response.domains.general.status, 'partial')
+  assert.equal(events[0].key, 'routes.previous')
   assert.equal(JSON.stringify(response).includes('sensitive previous period detail'), false)
 })
 

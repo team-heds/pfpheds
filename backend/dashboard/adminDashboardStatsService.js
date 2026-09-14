@@ -225,12 +225,12 @@ function generalDefinitions(client, filters = {}) {
 
 function pfpDefinitions(client, filters = {}) {
   return {
-    students: flow(async (period) => {
-      const profiles = await selectRows(
+    students: snapshot(async () => {
+      const profiles = await selectAllRows(
         client,
         'user_profiles',
         'user_id,role,permissions,is_active,classe,pfp_cohort,primary_track_id',
-        (query) => applyPeriod(query, 'created_at', period)
+        (query) => query
       )
       return filterProfiles(filterStudentProfiles(profiles), filters).length
     }),
@@ -242,9 +242,9 @@ function pfpDefinitions(client, filters = {}) {
       'snapshot',
       'SOURCE_HAS_NO_CREATED_AT'
     ),
-    places: flow((period) =>
+    places: snapshot(() =>
       countRows(client, 'places', 'PlaceId', (query) =>
-        applyPeriod(applyPlaceFilters(query, filters), 'CreatedAt', period)
+        applyPlaceFilters(query, filters)
       )
     ),
     pfpInProgress: flow((period) =>
@@ -266,26 +266,17 @@ function pfpDefinitions(client, filters = {}) {
 
 function academicDefinitions(client, filters = {}) {
   return {
-    teachers: flow(async (period) => {
-      const profiles = await selectRows(
+    teachers: snapshot(async () => {
+      const profiles = await selectAllRows(
         client,
         'user_profiles',
-        'role,permissions,is_active,classe,pfp_cohort,primary_track_id',
-        (query) => applyPeriod(query, 'created_at', period)
+        'role,permissions,is_active,classe,pfp_cohort,primary_track_id'
       )
       return filterProfiles(filterTeacherProfiles(profiles), filters).length
     }),
-    courses: flow((period) =>
-      countRows(client, 'courses', 'id', (query) => applyPeriod(query, 'created_at', period))
-    ),
-    media: flow((period) =>
-      countRows(client, 'video_library', 'id', (query) =>
-        applyPeriod(query, 'published_date', period)
-      )
-    ),
-    modules: flow((period) =>
-      countRows(client, 'modules', 'id', (query) => applyPeriod(query, 'created_at', period))
-    )
+    courses: snapshot(() => countRows(client, 'courses', 'id')),
+    media: snapshot(() => countRows(client, 'video_library', 'id')),
+    modules: snapshot(() => countRows(client, 'modules', 'id'))
   }
 }
 

@@ -181,8 +181,8 @@
       </div>
 
       <!-- Graphiques -->
-      <div class="grid mb-4" v-if="!statsLoading && pfpTypeBreakdownData.length">
-        <div class="col-12 md:col-6">
+      <div class="grid mb-4" v-if="!statsLoading && (pfpTypeBreakdownData.length || cantonChartData.length)">
+        <div class="col-12 md:col-4" v-if="pfpTypeBreakdownData.length">
           <div class="surface-card p-4 border-round-xl shadow-2 h-full">
             <div class="flex align-items-center gap-2 mb-3">
               <i class="pi pi-chart-pie text-primary text-xl"></i>
@@ -199,7 +199,7 @@
             />
           </div>
         </div>
-        <div class="col-12 md:col-6">
+        <div class="col-12 md:col-4" v-if="pfpTypeBreakdownData.length">
           <div class="surface-card p-4 border-round-xl shadow-2 h-full">
             <div class="flex align-items-center gap-2 mb-3">
               <i class="pi pi-chart-bar text-primary text-xl"></i>
@@ -209,6 +209,23 @@
               :data="barChartData"
               :height="260"
               title=""
+            />
+          </div>
+        </div>
+        <div class="col-12 md:col-4" v-if="cantonChartData.length">
+          <div class="surface-card p-4 border-round-xl shadow-2 h-full">
+            <div class="flex align-items-center gap-2 mb-3">
+              <i class="pi pi-building text-primary text-xl"></i>
+              <h2 class="text-lg font-semibold text-900 m-0">Institutions par canton</h2>
+            </div>
+            <DoughnutChart
+              :data="cantonChartData"
+              :height="260"
+              :showLegend="true"
+              showCenterText
+              :centerValue="String(totalCantons)"
+              centerLabel="cantons"
+              cutout="85%"
             />
           </div>
         </div>
@@ -365,6 +382,7 @@ const quickActions = [
 ]
 
 const pfpTypeBreakdownData = ref([])
+const institutionsList = ref([])
 
 const pfpStatusItems = computed(() => {
   const validated = extraStats.value.find(s => s.key === 'validated')?.value || 0
@@ -419,6 +437,27 @@ const barChartData = computed(() => {
   }
   return items
 })
+
+const cantonColors = [
+  '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b',
+  '#ec4899', '#14b8a6', '#f97316', '#6366f1',
+  '#22c55e', '#0ea5e9', '#a855f7', '#eab308',
+  '#06b6d4', '#f43f5e', '#84cc16', '#d946ef'
+]
+
+const cantonChartData = computed(() => {
+  const counts = {}
+  for (const inst of institutionsList.value) {
+    const raw = (inst.Canton || '').trim()
+    const canton = raw ? raw.toUpperCase() : 'Non défini'
+    counts[canton] = (counts[canton] || 0) + 1
+  }
+  return Object.entries(counts)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([canton, value], i) => ({ label: canton, value, color: cantonColors[i % cantonColors.length] }))
+})
+
+const totalCantons = computed(() => cantonChartData.value.length)
 
 const periodRangeLabel = computed(() => {
   const d = selectedDate.value
@@ -507,21 +546,28 @@ const loadOpenSessions = async () => {
 
 const loadExtraStats = async () => {
   try {
-    const [studentDirectory, placesRes, votesRes] = await Promise.all([
+    const [studentDirectory, placesRes, votesRes, institutionsRes] = await Promise.all([
       getAllStudents(),
       supabase
         .from('places')
         .select(SUPABASE_SELECTS.dashboardPlaces),
       supabase
         .from('student_result_vote')
-        .select(SUPABASE_SELECTS.dashboardVotes)
+        .select(SUPABASE_SELECTS.dashboardVotes),
+      supabase
+        .from('institutions')
+        .select(SUPABASE_SELECTS.dashboardInstitutions)
     ])
 
     if (placesRes.error) throw placesRes.error
     if (votesRes.error) throw votesRes.error
+    if (institutionsRes.error) throw institutionsRes.error
+
+    institutionsList.value = institutionsRes.data || []
 
     const profiles = studentDirectory.filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
     const places = (placesRes.data || []).filter((p) => isInSelectedPeriod(p.UpdatedAt || p.CreatedAt))
+    const totalStudents = studentDirectory.filter((p) => p.is_active !== false).length
     const votesInPeriod = (votesRes.data || []).filter((v) => isInSelectedPeriod(v.updated_at || v.created_at))
     const allVotes = votesRes.data || []
 
@@ -558,8 +604,8 @@ const loadExtraStats = async () => {
       .map(t => ({ type: t, ...byType[t] }))
 
     extraStats.value = [
-      { key: 'active_students', label: 'Étudiants actifs', value: activeStudents, color: '#22c55e', icon: 'pi pi-users' },
-      { key: 'open_places', label: 'Places ouvertes', value: openPlaces, color: '#3b82f6', icon: 'pi pi-map-marker' },
+      { key: 'active_students', label: 'Étudiants actifs', value: totalStudents, color: '#22c55e', icon: 'pi pi-users' },
+      { key: 'open_places', label: 'Places ouvertes', value: (placesRes.data || []).filter((p) => p.InstitutionId && p.NomPlace).length, color: '#3b82f6', icon: 'pi pi-map-marker' },
       { key: 'published_assignments', label: 'Attributions publiées', value: publishedAssignments, color: '#eab308', icon: 'pi pi-send' },
       { key: 'incomplete_profiles', label: 'Dossiers incomplets', value: incompleteProfiles, color: '#ef4444', icon: 'pi pi-exclamation-triangle' },
       { key: 'validated', label: 'PFP validées', value: validated, color: '#16a34a', icon: 'pi pi-check-circle' },
