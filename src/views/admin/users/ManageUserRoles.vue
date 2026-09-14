@@ -347,6 +347,7 @@ const permissions = ref({
   'BA24-PHY': false,
   'BA23-PHY': false,
   'BA25-PHY': false,
+  'BA26-PHY': false,
   'B25-SI': false,
   'B24-SI': false,
   'B23-SI': false

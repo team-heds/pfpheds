@@ -24,6 +24,7 @@ const {
 const {
   loadDashboardFilterOptions,
   parseDashboardFilters,
+  resolveProfileClass,
   validateFilterCombination
 } = require('../dashboard/adminDashboardFilters')
 
@@ -363,7 +364,7 @@ test('domain authorization is derived from server-side permissions', () => {
 })
 
 test('dashboard filters are canonical, bounded and domain-aware', () => {
-  assert.deepEqual(parseDashboardFilters({ class: ['BA25', 'BA24', 'BA25'], pfp: 'PFP2' }), {
+  assert.deepEqual(parseDashboardFilters({ class: ['ba25', 'BA24', 'BA25'], pfp: 'PFP2' }), {
     class: ['BA24', 'BA25'],
     pfp: ['PFP2']
   })
@@ -373,6 +374,12 @@ test('dashboard filters are canonical, bounded and domain-aware', () => {
     () => validateFilterCombination({ institution: ['Clinique Test'] }, ['academic']),
     (error) => error.code === 'FILTER_COMBINATION_INVALID'
   )
+})
+
+test('BA26 physio cohort permission resolves to the academic class used by statistics', () => {
+  assert.equal(resolveProfileClass({ classe: 'ba26', permissions: [] }), 'BA26')
+  assert.equal(resolveProfileClass({ permissions: ['EtudiantPhysio', 'BA26-PHY'] }), 'BA26')
+  assert.equal(resolveProfileClass({ permissions: ['EtudiantPhysio', 'BA26-SI'] }), '')
 })
 
 test('profile and PFP filters are applied to current and previous queries', async () => {
@@ -431,7 +438,14 @@ test('profile and PFP filters are applied to current and previous queries', asyn
 })
 
 test('filter options contain authorized references and no personal data', async () => {
-  const { client } = createFakeClient()
+  const { client } = createFakeClient({
+    rows: {
+      user_profiles: [
+        { classe: 'BA25', permissions: ['EtudiantPhysio'] },
+        { classe: null, permissions: ['EtudiantPhysio', 'BA26-PHY'] }
+      ]
+    }
+  })
   const result = await loadDashboardFilterOptions(client, ['pfp'])
 
   assert.equal(result.version, '1')
@@ -439,6 +453,7 @@ test('filter options contain authorized references and no personal data', async 
     { value: 'Clinique Test', label: 'Clinique Test' }
   ])
   assert.equal(result.options.pfpTypes.length, 5)
+  assert.deepEqual(result.options.classes.map((entry) => entry.value), ['BA25', 'BA26'])
   assert.equal(JSON.stringify(result).includes('email'), false)
   assert.deepEqual(result.applicability.status.domains, ['pfp'])
 })

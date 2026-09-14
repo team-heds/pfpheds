@@ -67,6 +67,41 @@ test('student audiences are never inferred directly in frontend list queries', (
   assert.doesNotMatch(source, /studentsphysio_with_profiles/)
 })
 
+test('the admin user list never creates or transmits an initial password', () => {
+  const source = fs.readFileSync(
+    path.resolve(__dirname, '..', '..', 'src', 'views', 'admin', 'users', 'UserListView.vue'),
+    'utf8'
+  )
+  assert.doesNotMatch(source, /generatePassword|newUserPassword|newUser\.password|Math\.random/)
+  assert.match(source, /sendInitialAccess\(user\.id\)/)
+})
+
+test('the role manager exposes the BA26 physio cohort permission', () => {
+  const source = fs.readFileSync(
+    path.resolve(__dirname, '..', '..', 'src', 'views', 'admin', 'users', 'ManageUserRoles.vue'),
+    'utf8'
+  )
+  assert.match(source, /['"]BA26-PHY['"]\s*:\s*false/)
+})
+
+test('student class selectors and dashboard colors include BA26', () => {
+  const files = [
+    'src/components/admin/forms/StudentCreateDialog.vue',
+    'src/components/admin/forms/StudentEditDialog.vue',
+    'src/components/admin/details/ValidatePFP1A.vue',
+    'src/views/admin/pfp/ValidatePFP1AView.vue',
+    'src/views/admin/pfp/ResultPreviewVotationView.vue',
+    'src/views/admin/formation-pratique/secretariat/VerificationCriteresEtudiants.vue',
+    'src/views/admin/users/StudentStatsView.vue',
+    'src/components/admin/widgets/KpiCard.vue',
+    'src/components/admin/widgets/ChartSelector.vue'
+  ]
+  for (const file of files) {
+    const source = fs.readFileSync(path.resolve(__dirname, '..', '..', file), 'utf8')
+    assert.match(source, /['"]?BA26['"]?/, `${file} must include BA26`)
+  }
+})
+
 test('every business API is behind the global JWT middleware', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8')
   const authIndex = source.indexOf("app.use('/api', authenticate)")
@@ -137,6 +172,9 @@ test('sensitive API routes reject anonymous requests', async () => {
       ['/api/ftp/diagnostic', 'GET'],
       ['/api/chat', 'POST'],
       ['/api/admin/users', 'POST'],
+      ['/api/admin/users/initial-access', 'GET'],
+      ['/api/admin/users/10000000-0000-4000-8000-000000000001/initial-access', 'POST'],
+      ['/api/auth/initial-access/used', 'POST'],
       ['/api/audiences/students', 'GET'],
       ['/api/audiences/si-teachers', 'GET'],
       ['/api/admin-dashboard/v1/stats', 'GET'],
