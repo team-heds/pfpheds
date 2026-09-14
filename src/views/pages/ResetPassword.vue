@@ -3,9 +3,9 @@
     <section class="reset-shell" aria-labelledby="reset-title">
       <header class="reset-brand">
         <img
-          :src="darkMode
-            ? '/assets/images/FR-DE_HEdS_rvb_neg.png'
-            : '/assets/images/FR-DE_HEdS.png'"
+          :src="
+            darkMode ? '/assets/images/FR-DE_HEdS_rvb_neg.png' : '/assets/images/FR-DE_HEdS.png'
+          "
           alt="Haute école de santé HES-SO Valais-Wallis"
           class="reset-logo"
         />
@@ -41,7 +41,9 @@
               @click="goToLogin"
             />
 
-            <div class="code-separator" aria-hidden="true"><span>ou utiliser le code reçu</span></div>
+            <div class="code-separator" aria-hidden="true">
+              <span>ou utiliser le code reçu</span>
+            </div>
 
             <form class="code-form" @submit.prevent="verifyWithCode" novalidate>
               <div class="form-row">
@@ -114,7 +116,11 @@
               <p>Les règles se valident automatiquement pendant votre saisie.</p>
             </div>
 
-            <div id="password-rules" class="rules-panel" aria-label="Règles de complexité du mot de passe">
+            <div
+              id="password-rules"
+              class="rules-panel"
+              aria-label="Règles de complexité du mot de passe"
+            >
               <div
                 v-for="rule in passwordRuleStates"
                 :key="rule.id"
@@ -141,7 +147,7 @@
                   name: 'new-password',
                   autocomplete: 'new-password',
                   'aria-describedby': 'password-rules form-message',
-                  'aria-invalid': String(Boolean(msg && !ok)),
+                  'aria-invalid': String(Boolean(msg && !ok))
                 }"
                 placeholder="Votre nouveau mot de passe"
                 :feedback="false"
@@ -161,7 +167,7 @@
                   name: 'confirm-password',
                   autocomplete: 'new-password',
                   'aria-describedby': 'match-help form-message',
-                  'aria-invalid': String(Boolean(confirmationTouched && !passwordsMatch)),
+                  'aria-invalid': String(Boolean(confirmationTouched && !passwordsMatch))
                 }"
                 :feedback="false"
                 placeholder="Confirmez le mot de passe"
@@ -172,7 +178,12 @@
               </small>
             </div>
 
-            <InlineMessage v-if="msg" id="form-message" :severity="ok ? 'success' : 'error'" class="w-full">
+            <InlineMessage
+              v-if="msg"
+              id="form-message"
+              :severity="ok ? 'success' : 'error'"
+              class="w-full"
+            >
               {{ msg }}
             </InlineMessage>
 
@@ -216,13 +227,16 @@ import { supabase } from '@/supabase.js'
 import { useLayout } from '@/layout/composables/layout'
 import {
   createPasswordRecoveryService,
-  PASSWORD_RECOVERY_ERROR_CODES,
+  PASSWORD_RECOVERY_ERROR_CODES
 } from '@/service/passwordRecoveryService'
+import { markInitialAccessUsed } from '@/service/studentInitialAccessService'
 import { getPasswordRuleStates, validateNewPassword } from '@/utils/passwordResetValidation'
 
 const router = useRouter()
 const { layoutConfig } = useLayout()
-const recoveryService = createPasswordRecoveryService(supabase.auth)
+const recoveryService = createPasswordRecoveryService(supabase.auth, undefined, {
+  markUsed: markInitialAccessUsed
+})
 
 const darkMode = computed(() => layoutConfig.colorScheme.value !== 'light')
 
@@ -332,7 +346,7 @@ async function save() {
   const validation = validateNewPassword(pwd1.value, pwd2.value)
   if (!validation.valid) {
     msg.value = validation.message
-    const passwordRuleMissing = passwordRuleStates.value.some(rule => !rule.valid)
+    const passwordRuleMissing = passwordRuleStates.value.some((rule) => !rule.valid)
     focusField(!pwd1.value || passwordRuleMissing ? pwd1Field : pwd2Field)
     return
   }
@@ -538,7 +552,11 @@ async function goToLogin() {
   gap: 0.75rem 1rem;
   padding: 1rem;
   border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--app-color-brand, #f3c300) 12%, var(--app-color-surface, white));
+  background: color-mix(
+    in srgb,
+    var(--app-color-brand, #f3c300) 12%,
+    var(--app-color-surface, white)
+  );
 }
 
 .rule-item {

@@ -1,7 +1,7 @@
 export const PASSWORD_RECOVERY_ERROR_CODES = Object.freeze({
   INVALID_CONTEXT: 'recovery_context_invalid',
   ALREADY_CONSUMED: 'recovery_context_consumed',
-  UPDATE_IN_PROGRESS: 'recovery_update_in_progress',
+  UPDATE_IN_PROGRESS: 'recovery_update_in_progress'
 })
 
 const PASSWORD_RECOVERY_PATHS = new Set(['/reset-password', '/new-password'])
@@ -18,7 +18,8 @@ export function getPasswordRecoveryCallbackTarget(location) {
   const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''))
   const searchParams = new URLSearchParams(location.search)
   const isRecoveryCallback =
-    hashParams.get('type') === 'recovery' || searchParams.get('flow') === 'recovery'
+    hashParams.get('type') === 'recovery' ||
+    ['recovery', 'initial-access'].includes(searchParams.get('flow'))
 
   if (!isRecoveryCallback) return null
 
@@ -38,25 +39,29 @@ function defaultNavigation() {
     getLocation: () => window.location,
     clearSensitiveUrl: () => {
       window.history.replaceState(window.history.state, '', window.location.pathname)
-    },
+    }
   }
 }
 
 function classifyRecoveryError(error) {
   const normalized = String(error?.code || error?.message || '').toLowerCase()
-  return normalized.includes('expired') || normalized.includes('otp_expired')
-    ? 'expired'
-    : 'error'
+  return normalized.includes('expired') || normalized.includes('otp_expired') ? 'expired' : 'error'
 }
 
-export function createPasswordRecoveryService(auth, navigation = defaultNavigation()) {
+export function createPasswordRecoveryService(
+  auth,
+  navigation = defaultNavigation(),
+  initialAccessTracker = { markUsed: async () => undefined }
+) {
   let authorized = false
   let consumed = false
   let updateInProgress = false
+  let initialAccess = false
 
-  function authorize() {
+  function authorize(options = {}) {
     authorized = true
     consumed = false
+    initialAccess = Boolean(options.initialAccess)
   }
 
   async function resolveFromLocation() {
@@ -68,27 +73,28 @@ export function createPasswordRecoveryService(auth, navigation = defaultNavigati
     const refreshToken = hashParams.get('refresh_token')
     const hashType = hashParams.get('type')
     const code = searchParams.get('code')
+    const initialAccessFlow = searchParams.get('flow') === 'initial-access'
     const linkError = hashParams.get('error') || searchParams.get('error')
     const linkErrorCode = hashParams.get('error_code') || searchParams.get('error_code')
     const containsSensitiveParameters = Boolean(
-      accessToken || refreshToken || code || linkError || linkErrorCode,
+      accessToken || refreshToken || code || linkError || linkErrorCode
     )
 
     try {
       if (linkError) {
         return {
           status: 'invalid',
-          reason: linkErrorCode === 'otp_expired' ? 'expired' : 'error',
+          reason: linkErrorCode === 'otp_expired' ? 'expired' : 'error'
         }
       }
 
       if (accessToken && refreshToken && hashType === 'recovery') {
         const { error } = await auth.setSession({
           access_token: accessToken,
-          refresh_token: refreshToken,
+          refresh_token: refreshToken
         })
         if (error) throw error
-        authorize()
+        authorize({ initialAccess: initialAccessFlow })
         return { status: 'valid' }
       }
 
@@ -99,7 +105,7 @@ export function createPasswordRecoveryService(auth, navigation = defaultNavigati
       if (code) {
         const { error } = await auth.exchangeCodeForSession(code)
         if (error) throw error
-        authorize()
+        authorize({ initialAccess: initialAccessFlow })
         return { status: 'valid' }
       }
 
@@ -115,7 +121,7 @@ export function createPasswordRecoveryService(auth, navigation = defaultNavigati
     const { error } = await auth.verifyOtp({
       email,
       token,
-      type: 'recovery',
+      type: 'recovery'
     })
     if (error) throw error
     authorize()
@@ -140,21 +146,21 @@ export function createPasswordRecoveryService(auth, navigation = defaultNavigati
     if (consumed) {
       throw new PasswordRecoveryError(
         PASSWORD_RECOVERY_ERROR_CODES.ALREADY_CONSUMED,
-        'Ce contexte de récupération a déjà été utilisé.',
+        'Ce contexte de récupération a déjà été utilisé.'
       )
     }
 
     if (!authorized) {
       throw new PasswordRecoveryError(
         PASSWORD_RECOVERY_ERROR_CODES.INVALID_CONTEXT,
-        'Aucun contexte de récupération valide.',
+        'Aucun contexte de récupération valide.'
       )
     }
 
     if (updateInProgress) {
       throw new PasswordRecoveryError(
         PASSWORD_RECOVERY_ERROR_CODES.UPDATE_IN_PROGRESS,
-        'Une modification est déjà en cours.',
+        'Une modification est déjà en cours.'
       )
     }
 
@@ -165,6 +171,13 @@ export function createPasswordRecoveryService(auth, navigation = defaultNavigati
 
       consumed = true
       authorized = false
+      if (initialAccess) {
+        try {
+          await initialAccessTracker.markUsed()
+        } catch {
+          // The password is already changed. Tracking must never lock the student out.
+        }
+      }
       await closeSession()
     } finally {
       updateInProgress = false
@@ -181,6 +194,6 @@ export function createPasswordRecoveryService(auth, navigation = defaultNavigati
     resolveFromLocation,
     authorizeWithOtp,
     updatePassword,
-    abandon,
+    abandon
   }
 }
