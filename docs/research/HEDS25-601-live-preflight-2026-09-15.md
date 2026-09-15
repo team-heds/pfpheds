@@ -49,14 +49,16 @@ Ce volet est techniquement valide, mais les quatre priorités restent soumises �
 
 - 98 institutions exportées, dont 1 masquée.
 - 113 places exportées.
-- 42 places marquées `selectedOut`, exclues du calcul.
-- 71 places actives reliées aux 97 institutions visibles.
-- 18 institutions visibles proposent au moins une capacité PFP2 en 2027.
-- 27 places offertes actives pour 63 personnes.
-- 25 places reprises dans `pfp2_proposition`.
+- 42 places portent encore le marqueur historique `selectedOut`. Elles restent dans le calcul PFP2, car ce marqueur n'est lié ni à l'année ni au type de PFP.
+- 111 places correctement reliées aux 97 institutions visibles ; 1 place dépend d'une institution masquée et 1 place n'a pas de référence d'institution.
+- 40 institutions visibles proposent au moins une capacité PFP2 en 2027.
+- 61 places offertes pour 63 personnes.
+- 59 places reprises dans `pfp2_proposition`.
 - 0 affectation PFP2 existante pour 2027 ou 2026-2027.
 
-La capacité active manque de 36 places. Les propositions sont inférieures de 2 aux offres actives et de 38 à l'effectif attendu.
+La capacité offerte manque de 2 places. Les propositions sont inférieures de 2 aux offres et de 4 à l'effectif attendu. L'ancien écart de 36 provenait de l'exclusion incorrecte des lignes `selectedOut`, qui retirait 34 capacités valides du calcul PFP2.
+
+Le rapprochement par fiche révèle aussi 12 sous-propositions représentant 12 capacités non reprises, et 9 sur-propositions représentant 10 capacités proposées au-delà de l'offre de leur fiche. Ces écarts se compensent presque dans le total, mais doivent être corrigés individuellement avant la votation.
 
 ## État de la votation
 
@@ -72,8 +74,8 @@ La simulation d'affectation n'est donc pas lancée : elle ne serait pas représe
 
 1. résoudre manuellement les 7 correspondances d'identité ;
 2. valider la source de vérité des répondants et corriger les 26 divergences, dont les 14 libellés inconnus du registre ;
-3. confirmer que les 42 places `selectedOut` doivent bien rester retirées ;
-4. obtenir au minimum 36 capacités actives supplémentaires ;
+3. conserver les 42 marqueurs `selectedOut` comme information historique sans les appliquer à PFP2 ;
+4. obtenir au minimum 2 capacités offertes supplémentaires ;
 5. aligner ensuite `pfp2_proposition` sur l'offre validée ;
 6. confirmer humainement les quatre dossiers prioritaires détectés ;
 7. relancer les contrôles de population, d'éligibilité et de capacité avant une simulation non persistante.

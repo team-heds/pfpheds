@@ -1,4 +1,4 @@
-import { PFP_TYPES, formatAcademicYear, getTargetClass, requireAcademicYear } from './academicPeriod.js'
+import { PFP_TYPES, formatAcademicYear, getTargetClass, readAcademicCapacity, requireAcademicYear } from './academicPeriod.js'
 import { getReconciliationMetric, reconcileOfferProposals } from '../../service/offerProposalMatchingService.js'
 
 const clean = value => typeof value === 'string' ? value.trim() : ''
@@ -31,11 +31,18 @@ export function inspectOfferCapacity({
     .map(institution => identifier(institution?.InstitutionId ?? institution?.id))
     .filter(Boolean))
   const eligibleInstitutions = institutions.filter(institution => institution?.is_hidden !== true)
-  const withdrawnPlaces = places.filter(place => place?.selectedOut === true)
+  const eligibleInstitutionIds = new Set(eligibleInstitutions
+    .map(institution => identifier(institution?.InstitutionId ?? institution?.id))
+    .filter(Boolean))
+  // `selectedOut` is a legacy, campaign-agnostic PFP4 assignment marker. It is
+  // not keyed by academic year or PFP type, so it cannot safely withdraw a
+  // place from a PFP2 campaign. Keep it visible in the report without using it
+  // as a capacity filter.
+  const legacySelectedOutPlaces = places.filter(place => place?.selectedOut === true)
   const placesAtHiddenInstitutions = places.filter(place =>
-    place?.selectedOut !== true && hiddenInstitutionIds.has(identifier(place?.InstitutionId)))
+    hiddenInstitutionIds.has(identifier(place?.InstitutionId)))
   const eligiblePlaces = places.filter(place =>
-    place?.selectedOut !== true && !hiddenInstitutionIds.has(identifier(place?.InstitutionId)))
+    !hiddenInstitutionIds.has(identifier(place?.InstitutionId)))
   const reconciliation = reconcileOfferProposals({
     institutions: eligibleInstitutions,
     places: eligiblePlaces,
@@ -49,6 +56,32 @@ export function inspectOfferCapacity({
   }))
   if (sourcesComplete !== true) issues.push({ severity: 'blocked', code: 'incomplete_sources' })
   if (studentsToPlace === null) issues.push({ severity: 'blocked', code: 'missing_population_size' })
+
+  for (const place of eligiblePlaces) {
+    const placeId = identifier(place?.PlaceId ?? place?.id)
+    const institutionId = identifier(place?.InstitutionId)
+    if (!placeId || !eligibleInstitutionIds.has(institutionId)) continue
+    const offer = readAcademicCapacity(place?.[pfpType], canonicalYear)
+    const proposal = readAcademicCapacity(place?.[`${pfpType.toLowerCase()}_proposition`], canonicalYear)
+    if (offer.error || proposal.error) continue
+    if (proposal.value > offer.value) {
+      issues.push({
+        severity: 'blocked',
+        code: 'place_proposals_exceed_capacity',
+        placeId,
+        institutionId,
+        excess: proposal.value - offer.value
+      })
+    } else if (proposal.value < offer.value) {
+      issues.push({
+        severity: 'warning',
+        code: 'place_proposal_capacity_difference',
+        placeId,
+        institutionId,
+        difference: proposal.value - offer.value
+      })
+    }
+  }
 
   let offered = 0
   let proposed = 0
@@ -96,7 +129,7 @@ export function inspectOfferCapacity({
       hiddenInstitutions: hiddenInstitutionIds.size,
       institutionsWithOffers,
       places: reconciliation.totals.places,
-      withdrawnPlaces: withdrawnPlaces.length,
+      legacySelectedOutPlaces: legacySelectedOutPlaces.length,
       placesAtHiddenInstitutions: placesAtHiddenInstitutions.length,
       studentsToPlace,
       existingAssignments,

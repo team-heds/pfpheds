@@ -69,6 +69,18 @@ describe('local PFP offer and capacity preflight', () => {
     expect(report.summary.issueCounts.proposals_exceed_capacity).toBe(1)
   })
 
+  it('blocks a proposal that exceeds its own place even when campaign totals are balanced', () => {
+    const input = snapshot()
+    input.places = [
+      { PlaceId: 'p1', InstitutionId: 'i1', PFP2: { 2027: 1 }, pfp2_proposition: { 2027: 2 } },
+      { PlaceId: 'p2', InstitutionId: 'i1', PFP2: { 2027: 1 }, pfp2_proposition: { 2027: 0 } }
+    ]
+    const report = inspectOfferCapacity(input)
+    expect(report.summary).toMatchObject({ offered: 2, proposed: 2 })
+    expect(report.offersReady).toBe(false)
+    expect(report.summary.issueCounts.place_proposals_exceed_capacity).toBe(1)
+  })
+
   it('does not claim readiness without exhaustive sources and a population size', () => {
     const input = snapshot()
     delete input.sourcesComplete
@@ -105,7 +117,7 @@ describe('local PFP offer and capacity preflight', () => {
     expect(countExistingAssignments(rows, { year: '2026-2027', pfpType: 'PFP2' })).toBe(1)
   })
 
-  it('does not count withdrawn places or places belonging to hidden institutions', () => {
+  it('reports legacy selectedOut markers without treating them as PFP2 campaign exclusions', () => {
     const input = snapshot()
     input.institutions.push({ InstitutionId: 'i2', Name: 'Hidden', is_hidden: true })
     input.places.push(
@@ -114,9 +126,9 @@ describe('local PFP offer and capacity preflight', () => {
     )
     const report = inspectOfferCapacity(input)
     expect(report.summary).toMatchObject({
-      offered: 2,
+      offered: 12,
       hiddenInstitutions: 1,
-      withdrawnPlaces: 1,
+      legacySelectedOutPlaces: 1,
       placesAtHiddenInstitutions: 1
     })
   })
