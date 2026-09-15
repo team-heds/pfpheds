@@ -101,4 +101,20 @@ describe('offerProposalMatchingService', () => {
     }))
     expect(getReconciliationMetric(result.institutions[0], '2026', 'PFP1A').offers).toBe(0)
   })
+
+  it('rejects fractional capacities', () => {
+    const result = reconcileOfferProposals({
+      institutions,
+      years: ['2027'],
+      pfpTypes: ['PFP2'],
+      places: [{ PlaceId: 1, InstitutionId: 10, PFP2: { 2027: 1.5 } }]
+    })
+
+    expect(result.anomalies).toContainEqual(expect.objectContaining({
+      type: 'invalid_metric_value',
+      placeId: '1',
+      pfp: 'PFP2'
+    }))
+    expect(getReconciliationMetric(result.institutions[0], '2027', 'PFP2').offers).toBe(0)
+  })
 })

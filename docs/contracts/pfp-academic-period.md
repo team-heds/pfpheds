@@ -10,7 +10,7 @@
 | Type de campagne | PFP2 |
 | Numéro ordinal du stage | 2 |
 
-`src/domain/pfp/academicPeriod.js` centralise la résolution frontend. `normalizeAcademicYear` retourne une clé ou `null`; `requireAcademicYear` rejette une valeur invalide avant écriture. `getAcademicYearKeys` retourne les deux clés historiques pour les lectures, quelle que soit la forme fournie à l'entrée. Les libellés historiques inconnus restent lisibles, mais ne sont pas acceptés par les nouvelles écritures de sessions et de votes.
+`backend/domain/academicPeriod.mjs` centralise la résolution frontend/backend. Le frontend le réexporte depuis `src/domain/pfp/academicPeriod.js`. Le module pur reste dans le contexte de construction Docker du backend et ne dépend d'aucun client privilégié. `normalizeAcademicYear` retourne une clé ou `null`; `requireAcademicYear` rejette une valeur invalide avant écriture. `getAcademicYearKeys` retourne les deux clés historiques pour les lectures, quelle que soit la forme fournie à l'entrée. Les libellés historiques inconnus restent lisibles, mais ne sont pas acceptés par les nouvelles écritures de sessions et de votes.
 
 L'année par défaut bascule au 1er septembre selon la convention déjà présente dans les écrans de votation. Elle ne représente pas nécessairement l'année civile du début de stage. Les dates effectives restent à renseigner dans la préparation de campagne.
 
@@ -28,6 +28,11 @@ Le calcul des besoins et certains lecteurs d'offres gardent leurs règles de rap
 
 ## Limites de livraison
 
-Le backend Express et les RPC SQL conservent encore certains filtres exacts et leur format d'écriture historique. Le lot frontend ne remplace pas leur audit. Aucune donnée existante n'est migrée et aucune campagne n'est ouverte par ce changement.
+Le routeur Express des résultats normalise les années des payloads (année globale et lignes de confirmation) avant les handlers. Deux lignes de confirmation pour un même étudiant/PFP/année canonique sont rejetées ensemble. Les middlewares d'autorisation et les règles d'attribution sont inchangés. Ce contrôle détecte les doublons du payload, pas les doublons déjà stockés.
+
+L'exécution de l'algorithme est une simulation par défaut (`persist: false`) côté client et backend. Une chaîne telle que `"false"` est rejetée afin qu'elle ne puisse jamais être interprétée comme vraie. L'écriture reste une action explicite et la simulation échoue si les affectations existantes ne peuvent pas être contrôlées.
+Les journaux individuels de cette boucle ne contiennent plus le nom ou le prénom des étudiants.
+
+Certains filtres Express et les RPC SQL restent exacts : leur compatibilité historique complète reste à auditer. Les paramètres de lecture ne sont donc pas réécrits implicitement. Aucune donnée existante n'est migrée et aucune campagne n'est ouverte par ce changement. Aucun déploiement n'est effectué.
 
 Avant la campagne PFP2 BA25 : aligner les écritures backend/SQL, inventorier les années réelles et les doublons, contrôler la population/répondants/capacités et réaliser la répétition HEDS25-601.

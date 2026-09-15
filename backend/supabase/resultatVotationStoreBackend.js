@@ -2,14 +2,9 @@ const { Router } = require('express')
 const { supabaseAdmin } = require('../supabaseClient')
 const { v4: uuidv4 } = require('uuid')
 const { requireAdmin: requireCentralAdmin, requireSelfParam } = require('../middleware/auth')
+const { normalizePfpRequest } = require('../middleware/pfpAcademicPeriod')
 
 const router = Router()
-
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
 
 const parsePfpValided = (value) => {
   if (!value) return []
@@ -78,6 +73,7 @@ const setUser = (req, _res, next) => {
 
 // Appliquer le middleware
 router.use(setUser)
+router.use(normalizePfpRequest)
 
 // Middleware pour vérifier si l'utilisateur est admin
 const requireAdmin = async (req, res, next) => {
@@ -90,7 +86,7 @@ const requireAdmin = async (req, res, next) => {
  */
 router.post('/run-algorithm', requireAdmin, async (req, res) => {
   try {
-    const { pfpType, year, students, places, persist = true } = req.body
+    const { pfpType, year, students, places, persist = false } = req.body
 
     if (!pfpType || !year || !students || !places) {
       return res.status(400).json({
@@ -115,10 +111,10 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
         'user_id, assigned_place_id, assigned_place_name, assigned_institution_name, assigned_rank, status, notes, priority_score, original_choices, algorithm_run_id'
       )
       .eq('pfp_type', pfpType)
-      .in('year', getAcademicYearKeys(year))
+      .in('year', req.academicPeriod.getAcademicYearKeys(year))
 
     if (existingError) {
-      console.warn('⚠️ Impossible de charger les assignations existantes:', existingError.message)
+      throw new Error('Impossible de vérifier les affectations existantes.')
     }
 
     const preAssigned = new Set()
@@ -355,7 +351,6 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       const best = candidatePlaces[0]
 
       if (!best) {
-        console.warn(`⚠️ Aucune place disponible pour ${student.nom} ${student.prenom}`)
         errors.push({ userId: student.userId, error: 'No available place' })
         continue
       }
@@ -363,9 +358,6 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
       assignedStudents.add(student.userId)
       const livePlace = placesMap.get(best.PlaceId)
       if (!livePlace || livePlace.remainingCapacity <= 0) {
-        console.warn(
-          `⚠️ Capacité expirée pour ${best.NomPlace} lors de l'attribution de ${student.nom} ${student.prenom}`
-        )
         errors.push({ userId: student.userId, error: 'Place capacity exhausted' })
         continue
       }
@@ -393,10 +385,6 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
         priority_score: student.priorityScore || null,
         notes: `${fallbackAssignment ? '⚠️ HORS CIBLAGE' : 'Algo v5.0'} — logique votation générique — ${criteriaCovered} critères couverts [${livePlace.criteriaCovered.filter((c) => (student.missingCriteria || []).includes(c)).join(',')}] | manquants=[${(student.missingCriteria || []).join(',')}] | fallback=${best._fallbackType} | score=${student.priorityScore}`
       })
-
-      console.log(
-        `   ✅ ${student.nom} ${student.prenom} → ${livePlace.NomPlace} (${criteriaCovered} crit. couverts, fallback=${best._fallbackType})`
-      )
     }
 
     if (randomAssignmentCount > 0) {
@@ -462,7 +450,10 @@ router.post('/run-algorithm', requireAdmin, async (req, res) => {
     const combinedResults = [...preAssignedResults, ...resultsToInsert]
 
     const stats = {
-      totalStudents: students.length + preAssignedResults.length,
+      totalStudents: new Set([
+        ...students.map((student) => student.userId),
+        ...preAssignedResults.map((result) => result.user_id)
+      ]).size,
       preAssignedCount: preAssigned.size,
       eligibleStudents: eligibleStudents.length,
       successfulAssignments: combinedResults.length,
@@ -671,7 +662,7 @@ router.get('/assignment-counts/:pfpType/:year', requireAdmin, async (req, res) =
       .from('student_result_vote')
       .select('assigned_place_id, user_id')
       .eq('pfp_type', pfpType)
-      .in('year', getAcademicYearKeys(year))
+      .in('year', req.academicPeriod.getAcademicYearKeys(year))
       .not('assigned_place_id', 'is', null)
 
     if (error) {

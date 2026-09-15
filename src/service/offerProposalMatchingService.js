@@ -2,7 +2,7 @@ export const OFFER_PROPOSAL_PFP_TYPES = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4
 
 const canonicalId = value => String(value ?? '').trim()
 
-import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
+import { getAcademicYearKeys, readAcademicCapacity } from '@/domain/pfp/academicPeriod'
 export { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 
 function readMetric(place, field, year, context, anomalies) {
@@ -14,26 +14,16 @@ function readMetric(place, field, year, context, anomalies) {
     return 0
   }
 
-  const populatedValues = getAcademicYearKeys(year)
-    .filter(key => Object.prototype.hasOwnProperty.call(source, key))
-    .map(key => ({ key, value: source[key] }))
-    .filter(entry => entry.value !== null && entry.value !== '')
-
-  if (populatedValues.length === 0) return 0
-
-  const distinctValues = new Set(populatedValues.map(entry => String(entry.value)))
-  if (distinctValues.size > 1) {
-    anomalies.push({ type: 'conflicting_year_values', ...context, field, keys: populatedValues.map(entry => entry.key) })
+  const result = readAcademicCapacity(source, year)
+  if (result.error === 'conflicting_year_values') {
+    anomalies.push({ type: result.error, ...context, field, keys: getAcademicYearKeys(year).filter(key => Object.hasOwn(source, key)) })
     return 0
   }
-
-  const value = Number(populatedValues[0].value)
-  if (!Number.isFinite(value) || value < 0) {
+  if (result.error) {
     anomalies.push({ type: 'invalid_metric_value', ...context, field, year: canonicalId(year) })
     return 0
   }
-
-  return value
+  return result.value
 }
 
 function createMetrics(years, pfpTypes) {
