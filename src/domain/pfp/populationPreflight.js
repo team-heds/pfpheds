@@ -1,4 +1,4 @@
-import { formatAcademicYear, getTargetClass, requireAcademicYear } from './academicPeriod'
+import { formatAcademicYear, getTargetClass, requireAcademicYear } from './academicPeriod.js'
 
 const clean = value => typeof value === 'string' ? value.trim() : ''
 const normalized = value => clean(value).normalize('NFC').replace(/\s+/g, ' ').toUpperCase()

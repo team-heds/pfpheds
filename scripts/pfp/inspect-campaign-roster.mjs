@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx'
 const clean = value => String(value ?? '').trim()
 const normalized = value => clean(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').toUpperCase()
 
-export function inspectRosterRows(rows, { sheetName = '', expectedCount = null } = {}) {
+function locateRoster(rows, expectedCount) {
   if (!Array.isArray(rows)) throw new Error('Feuille Excel invalide.')
   const headerIndex = rows.findIndex(row => normalized(row?.[0]) === 'NOM' && normalized(row?.[1]) === 'PRENOM')
   if (headerIndex < 0) throw new Error('Colonnes Nom et Prénom introuvables.')
@@ -27,7 +27,28 @@ export function inspectRosterRows(rows, { sheetName = '', expectedCount = null }
   const rosterStartIndex = rows.findIndex((row, index) =>
     index > headerIndex && clean(row?.[0]) && clean(row?.[1]))
   if (rosterStartIndex < 0) throw new Error('Première ligne étudiante introuvable.')
-  const rosterRows = rows.slice(rosterStartIndex, rosterStartIndex + resolvedExpected)
+  return {
+    respondentColumn,
+    expectedCount: resolvedExpected,
+    rosterStartIndex,
+    rosterRows: rows.slice(rosterStartIndex, rosterStartIndex + resolvedExpected)
+  }
+}
+
+export function extractRosterEntries(rows, { expectedCount = null } = {}) {
+  const located = locateRoster(rows, expectedCount)
+  return located.rosterRows.map((row, offset) => ({
+    row: located.rosterStartIndex + offset + 1,
+    familyName: clean(row?.[0]),
+    givenName: clean(row?.[1]),
+    respondent: clean(row?.[located.respondentColumn])
+  }))
+}
+
+export function inspectRosterRows(rows, { sheetName = '', expectedCount = null } = {}) {
+  const located = locateRoster(rows, expectedCount)
+  const { respondentColumn, rosterStartIndex, rosterRows } = located
+  const resolvedExpected = located.expectedCount
   const issues = []
   const seen = new Set()
   let completeIdentities = 0
@@ -69,17 +90,20 @@ export function inspectRosterRows(rows, { sheetName = '', expectedCount = null }
 }
 
 export async function inspectCampaignRosterWorkbook(filePath, { sheetName = 'Répartition CPT BA 25', expectedCount = null } = {}) {
+  const { source, report } = await loadCampaignRosterWorkbook(filePath, { sheetName, expectedCount })
+  return { source, ...report }
+}
+
+export async function loadCampaignRosterWorkbook(filePath, { sheetName = 'Répartition CPT BA 25', expectedCount = null } = {}) {
   const bytes = await readFile(filePath)
   const workbook = XLSX.read(bytes, { type: 'buffer', dense: true })
   const sheet = workbook.Sheets[sheetName]
   if (!sheet) throw new Error(`Feuille introuvable : ${sheetName}`)
   const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' })
   return {
-    source: {
-      fileName: path.basename(filePath),
-      sha256: createHash('sha256').update(bytes).digest('hex')
-    },
-    ...inspectRosterRows(rows, { sheetName, expectedCount })
+    source: { fileName: path.basename(filePath), sha256: createHash('sha256').update(bytes).digest('hex') },
+    report: inspectRosterRows(rows, { sheetName, expectedCount }),
+    entries: extractRosterEntries(rows, { expectedCount })
   }
 }
 
