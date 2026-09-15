@@ -1,7 +1,8 @@
-import { PFP_TYPES, formatAcademicYear, getTargetClass, requireAcademicYear } from './academicPeriod'
-import { getReconciliationMetric, reconcileOfferProposals } from '@/service/offerProposalMatchingService'
+import { PFP_TYPES, formatAcademicYear, getTargetClass, requireAcademicYear } from './academicPeriod.js'
+import { getReconciliationMetric, reconcileOfferProposals } from '../../service/offerProposalMatchingService.js'
 
 const clean = value => typeof value === 'string' ? value.trim() : ''
+const identifier = value => String(value ?? '').trim()
 
 // Pure preparation report. It never opens a session or persists assignments.
 export function inspectOfferCapacity({
@@ -25,9 +26,19 @@ export function inspectOfferCapacity({
     throw new Error('Nombre d’affectations existantes invalide.')
   }
 
+  const hiddenInstitutionIds = new Set(institutions
+    .filter(institution => institution?.is_hidden === true)
+    .map(institution => identifier(institution?.InstitutionId ?? institution?.id))
+    .filter(Boolean))
+  const eligibleInstitutions = institutions.filter(institution => institution?.is_hidden !== true)
+  const withdrawnPlaces = places.filter(place => place?.selectedOut === true)
+  const placesAtHiddenInstitutions = places.filter(place =>
+    place?.selectedOut !== true && hiddenInstitutionIds.has(identifier(place?.InstitutionId)))
+  const eligiblePlaces = places.filter(place =>
+    place?.selectedOut !== true && !hiddenInstitutionIds.has(identifier(place?.InstitutionId)))
   const reconciliation = reconcileOfferProposals({
-    institutions,
-    places,
+    institutions: eligibleInstitutions,
+    places: eligiblePlaces,
     years: [canonicalYear],
     pfpTypes: [pfpType]
   })
@@ -82,8 +93,11 @@ export function inspectOfferCapacity({
     campaignReady: false,
     summary: {
       institutions: reconciliation.totals.institutions,
+      hiddenInstitutions: hiddenInstitutionIds.size,
       institutionsWithOffers,
       places: reconciliation.totals.places,
+      withdrawnPlaces: withdrawnPlaces.length,
+      placesAtHiddenInstitutions: placesAtHiddenInstitutions.length,
       studentsToPlace,
       existingAssignments,
       offered,

@@ -2,8 +2,8 @@ export const OFFER_PROPOSAL_PFP_TYPES = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4
 
 const canonicalId = value => String(value ?? '').trim()
 
-import { getAcademicYearKeys, readAcademicCapacity } from '@/domain/pfp/academicPeriod'
-export { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
+import { getAcademicYearKeys, readAcademicCapacity } from '../domain/pfp/academicPeriod.js'
+export { getAcademicYearKeys } from '../domain/pfp/academicPeriod.js'
 
 function readMetric(place, field, year, context, anomalies) {
   const source = place?.[field]

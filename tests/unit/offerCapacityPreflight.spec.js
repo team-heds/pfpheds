@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { inspectOfferCapacity } from '../../src/domain/pfp/offerCapacityPreflight'
+import { countExistingAssignments } from '../../scripts/pfp/inspect-offer-capacity-snapshot.mjs'
 
 function snapshot() {
   return {
@@ -91,5 +92,32 @@ describe('local PFP offer and capacity preflight', () => {
     const before = structuredClone(input)
     inspectOfferCapacity(input)
     expect(input).toEqual(before)
+  })
+
+  it('counts assigned students only once across canonical academic-year aliases', () => {
+    const rows = [
+      { user_id: 'student-1', pfp_type: 'PFP2', year: '2027', assigned_place_id: 'place-1' },
+      { user_id: 'student-1', pfp_type: 'PFP2', year: '2026-2027', assigned_place_id: 'place-1' },
+      { user_id: 'student-2', pfp_type: 'PFP2', year: '2027', assigned_place_id: null },
+      { user_id: 'student-3', pfp_type: 'PFP3', year: '2027', assigned_place_id: 'place-2' },
+      { user_id: 'student-4', pfp_type: 'PFP2', year: '2026', assigned_place_id: 'place-3' }
+    ]
+    expect(countExistingAssignments(rows, { year: '2026-2027', pfpType: 'PFP2' })).toBe(1)
+  })
+
+  it('does not count withdrawn places or places belonging to hidden institutions', () => {
+    const input = snapshot()
+    input.institutions.push({ InstitutionId: 'i2', Name: 'Hidden', is_hidden: true })
+    input.places.push(
+      { PlaceId: 'p2', InstitutionId: 'i1', PFP2: { 2027: 10 }, selectedOut: true },
+      { PlaceId: 'p3', InstitutionId: 'i2', PFP2: { 2027: 10 } }
+    )
+    const report = inspectOfferCapacity(input)
+    expect(report.summary).toMatchObject({
+      offered: 2,
+      hiddenInstitutions: 1,
+      withdrawnPlaces: 1,
+      placesAtHiddenInstitutions: 1
+    })
   })
 })
