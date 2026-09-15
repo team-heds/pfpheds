@@ -86,16 +86,14 @@ Les sauvegardes restent disponibles ; elles ne sont pas supprimées automatiquem
 Aucune migration SQL n'est appliquée. Toute migration requise par une release doit être
 revue et exécutée selon sa procédure avant la publication du code dépendant.
 
-### Espace disque : constat du 15 septembre 2026
+### Espace disque et sauvegardes
 
-Le VPS expose un disque système de 20 Go avec environ 2,6 Go libres et un second disque de
-250 Go sans point de montage dans `lsblk`. Le script exige au moins 4 Gio libres sur les
-volumes de `/opt`, `/var/www` et `/tmp`. C'est un seuil minimal, pas une garantie suffisante
-pour toutes les releases. Prévoir aussi la taille des sauvegardes et des images à construire.
-
-Avant la première publication complète, préparer une intervention de stockage : examiner
-le disque de 250 Go et les sauvegardes existantes, puis libérer ou augmenter l'espace utile.
-Ne pas formater le disque secondaire sans vérifier son contenu et la stratégie de sauvegarde.
+Le disque secondaire de 250 Go est destiné au stockage Docker via un montage dans
+`/var/lib/docker`. PostgreSQL et Supabase Storage conservent leurs dossiers dans `/opt/supabase`.
+Voir [Stockage et récupération](./storage-recovery.md) pour la sauvegarde testée, la bascule
+et le retour arrière. Le précontrôle exige au moins 4 Gio libres sur les volumes de
+`/opt`, `/var/www` et `/tmp`. Ce seuil minimal ne remplace pas une estimation de la taille
+des prochaines sauvegardes et images. Les anciennes sauvegardes ne sont pas purgées automatiquement.
 
 ### En cas d'échec
 
