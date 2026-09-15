@@ -9,7 +9,9 @@ La commande `pfp:reconcile-snapshot` rapproche quatre fichiers locaux sans appel
 
 ## Colonnes minimales
 
-`user_profiles` doit contenir `user_id`, `family_name`, `forname`, `classe`, `is_active`, `role` et `permissions`. Les alias français Nom/Prénom et `class` sont acceptés. Le filtre étudiant réutilise la règle de l'application afin qu'un profil admin ou enseignant ne soit jamais compté comme étudiant, même s'il porte une ancienne permission étudiante. `StudentsPhysio` doit contenir `user_id`, `class` et `repondant_hes`. Le registre des répondants doit contenir `first_name`, `last_name` et `is_active`.
+`user_profiles` doit contenir `user_id`, `family_name`, `forname`, `classe`, `is_active`, `role` et `permissions`. Les alias français Nom/Prénom et `class` sont acceptés. Le filtre étudiant réutilise la règle de l'application afin qu'un profil admin ou enseignant ne soit jamais compté comme étudiant, même s'il porte une ancienne permission étudiante. `StudentsPhysio` doit contenir `user_id`, `class`, `repondant_hes` et `year`. Le registre des répondants doit contenir `first_name`, `last_name` et `is_active`.
+
+`StudentsPhysio` est un historique annuel : un même `user_id` peut donc apparaître plusieurs fois dans l'export complet. Le rapprochement PFP2 BA25 sélectionne exclusivement l'année académique canonique `2027` (libellé d'affichage `2026-2027`) avant de contrôler l'unicité, la classe et le répondant. Les lignes 2025 et 2026 ne doivent pas créer de faux doublons.
 
 Le rapprochement classeur/profils utilise uniquement Nom + Prénom après normalisation de la casse, des accents et des espaces. Il n'effectue aucune correspondance approximative. Zéro ou plusieurs profils correspondants produisent une anomalie. Les autres contrôles continuent ensuite par `user_id`.
 

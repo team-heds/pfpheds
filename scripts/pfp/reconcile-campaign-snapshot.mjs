@@ -4,6 +4,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import * as XLSX from 'xlsx'
 import { inspectPfpPopulation } from '../../src/domain/pfp/populationPreflight.js'
+import { normalizeAcademicYear, requireAcademicYear } from '../../src/domain/pfp/academicPeriod.js'
 import { isStudentProfile } from '../../src/utils/userAudience.js'
 import { loadCampaignRosterWorkbook } from './inspect-campaign-roster.mjs'
 
@@ -45,6 +46,8 @@ export function reconcileRosterSnapshot({
     }
   }
   // Keep inactive student accounts visible for the population audit, while excluding staff roles.
+  const canonicalYear = requireAcademicYear(year)
+  const campaignPhysioRows = physioRows.filter(row => normalizeAcademicYear(row.year) === canonicalYear)
   const studentProfiles = profiles.filter(profile => isStudentProfile({ ...profile, is_active: true }))
   const profileByName = new Map()
   studentProfiles.forEach(profile => {
@@ -72,7 +75,7 @@ export function reconcileRosterSnapshot({
     workbookRowByUser.set(userId, entry.row)
   })
 
-  const matchedPhysio = physioRows.filter(row => matchedUserIds.has(clean(row.user_id)))
+  const matchedPhysio = campaignPhysioRows.filter(row => matchedUserIds.has(clean(row.user_id)))
   const physioByUser = new Map()
   matchedPhysio.forEach(row => {
     const userId = clean(row.user_id)
@@ -117,6 +120,7 @@ export function reconcileRosterSnapshot({
       profileRows: profiles.length,
       studentProfileRows: studentProfiles.length,
       physioRows: physioRows.length,
+      campaignPhysioRows: campaignPhysioRows.length,
       respondentRows: respondents.length,
       exactMatches,
       unmatchedRosterRows: ownIssueCounts.roster_unmatched_profile || 0,
@@ -166,7 +170,7 @@ export async function reconcileCampaignSnapshotFiles({ workbookPath, profilesPat
     ['classe', 'class'], ['is_active'], ['role'], ['permissions']
   ], 'user_profiles')
   requireTableColumns(physioFile.headers, [
-    ['user_id'], ['class', 'classe'], ['repondant_hes']
+    ['user_id'], ['class', 'classe'], ['repondant_hes'], ['year', 'annee', 'année']
   ], 'StudentsPhysio')
   requireTableColumns(respondentsFile.headers, [
     ['first_name', 'forname', 'prénom', 'prenom'], ['last_name', 'family_name', 'nom'], ['is_active']
@@ -183,7 +187,8 @@ export async function reconcileCampaignSnapshotFiles({ workbookPath, profilesPat
   const physioRows = physioFile.rows.map(row => ({
     user_id: pick(row, ['user_id']),
     class: pick(row, ['class', 'classe']),
-    repondant_hes: pick(row, ['repondant_hes'])
+    repondant_hes: pick(row, ['repondant_hes']),
+    year: pick(row, ['year', 'annee', 'année'])
   }))
   const respondents = respondentsFile.rows.map(row => ({
     first_name: pick(row, ['first_name', 'forname', 'prénom', 'prenom']),

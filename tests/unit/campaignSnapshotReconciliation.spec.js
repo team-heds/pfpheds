@@ -11,7 +11,7 @@ function snapshot() {
       { user_id: 'synthetic-1', family_name: 'PrivateFamily', forname: 'PrivateGiven', classe: 'BA25', is_active: true, role: 'EtudiantPhysio', permissions: [] }
     ],
     physioRows: [
-      { user_id: 'synthetic-1', class: 'BA25', repondant_hes: 'Hes Tutor' }
+      { user_id: 'synthetic-1', class: 'BA25', repondant_hes: 'Hes Tutor', year: '2027' }
     ],
     respondents: [
       { first_name: 'Hes', last_name: 'Tutor', is_active: true }
@@ -57,6 +57,19 @@ describe('local campaign snapshot reconciliation', () => {
     expect(report.populationReady).toBe(false)
     expect(report.summary.respondentDifferences).toBe(1)
     expect(report.issueRows.respondent_differs_from_workbook).toEqual([4])
+  })
+
+  it('uses only the canonical campaign year from the annual StudentsPhysio history', () => {
+    const input = snapshot()
+    input.physioRows.unshift({
+      user_id: 'synthetic-1', class: 'BA24', repondant_hes: 'Former Tutor', year: '2026'
+    })
+    const report = reconcileRosterSnapshot(input)
+    expect(report.populationReady).toBe(true)
+    expect(report.summary).toMatchObject({ physioRows: 2, campaignPhysioRows: 1, respondentDifferences: 0 })
+    expect(report.summary.issueCounts.duplicate_physio).toBeUndefined()
+    expect(report.summary.issueCounts.conflicting_classes).toBeUndefined()
+    expect(report.summary.issueCounts.conflicting_respondents).toBeUndefined()
   })
 
   it('finds BA25 profiles absent from the reference roster', () => {
