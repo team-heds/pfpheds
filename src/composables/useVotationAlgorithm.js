@@ -1,3 +1,4 @@
+import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 import { ref } from 'vue'
 import { supabase } from '@/supabase'
 import { usePlacesStore } from '@/stores/placesStore'
@@ -18,11 +19,7 @@ export function useVotationAlgorithm(toast) {
     return Number.isNaN(parsed) ? 0 : parsed
   }
 
-  const getAcademicYearKeys = (year) => {
-    const y = Number(year)
-    if (!Number.isFinite(y)) return [String(year)]
-    return [String(y), `${y - 1}-${y}`]
-  }
+  // Shared academic year lookup.
 
   const getPropositionCapacityForYear = (place, pfpType, year) => {
     const proposition = place?.[`${pfpType.toLowerCase()}_proposition`]

@@ -2,12 +2,8 @@ export const OFFER_PROPOSAL_PFP_TYPES = ['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4
 
 const canonicalId = value => String(value ?? '').trim()
 
-export function getAcademicYearKeys(year) {
-  const normalized = canonicalId(year)
-  const numericYear = Number(normalized)
-  if (!normalized || !Number.isInteger(numericYear)) return normalized ? [normalized] : []
-  return [normalized, `${numericYear - 1}-${numericYear}`]
-}
+import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
+export { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 
 function readMetric(place, field, year, context, anomalies) {
   const source = place?.[field]

@@ -5,11 +5,7 @@
 
 import { supabase } from '@/supabase'
 
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+import { getAcademicYearKeys, requireAcademicYear } from '@/domain/pfp/academicPeriod'
 
 export const votesBackendService = {
   /**
@@ -45,6 +41,7 @@ export const votesBackendService = {
    * @returns {Promise<Object>}
    */
   async upsertStudentVote(userId, pfpType, year, choices) {
+    year = requireAcademicYear(year)
     try {
       const { data, error } = await supabase.rpc('upsert_student_vote', {
         p_user_id: userId,

@@ -672,6 +672,7 @@
 </template>
 
 <script>
+import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import RadioButton from 'primevue/radiobutton'
@@ -794,9 +795,7 @@ export default {
     },
 
     getAcademicYearKeys(year) {
-      const y = Number(year)
-      if (!Number.isFinite(y)) return [String(year)]
-      return [String(y), `${y - 1}-${y}`]
+      return getAcademicYearKeys(year)
     },
 
     getValueForYearKey(source, year) {

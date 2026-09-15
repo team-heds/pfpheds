@@ -1,10 +1,9 @@
 import { ref, computed, watch } from 'vue'
+import { currentAcademicYear, normalizeAcademicYear, getTargetClass } from '@/domain/pfp/academicPeriod'
 
 export function useVotationConfig() {
   const filterPFP = ref(null)
-  const currentVotationYear = new Date().getMonth() >= 8
-    ? new Date().getFullYear() + 1
-    : new Date().getFullYear()
+  const currentVotationYear = Number(currentAcademicYear())
 
   const MIN_VOTATION_YEAR = 2025
   const MAX_VOTATION_YEAR = 2030
@@ -26,19 +25,12 @@ export function useVotationConfig() {
   // Ex: en 2025-2026 → 1ère=BA25, 2ème=BA24, 3ème=BA23
   //     en 2026-2027 → 1ère=BA26, 2ème=BA25, 3ème=BA24
 
-  const buildBaCode = (year) => {
-    const yy = ((year % 100) + 100) % 100
-    return `BA${String(yy).padStart(2, '0')}`
-  }
-
   const buildPfpConfigForYear = (votationYear) => {
-    const year = Number(votationYear)
-    if (!Number.isFinite(year)) return {}
-
-    const academicStartYear = year - 1
-    const ba1 = buildBaCode(academicStartYear)
-    const ba2 = buildBaCode(academicStartYear - 1)
-    const ba3 = buildBaCode(academicStartYear - 2)
+    const year = normalizeAcademicYear(votationYear)
+    if (!year) return {}
+    const ba1 = getTargetClass(year, 'PFP1A')
+    const ba2 = getTargetClass(year, 'PFP2')
+    const ba3 = getTargetClass(year, 'PFP3')
 
     return {
       [ba1]: { label: `${ba1} (1ère année)`, pfps: ['PFP1A', 'PFP1B'] },

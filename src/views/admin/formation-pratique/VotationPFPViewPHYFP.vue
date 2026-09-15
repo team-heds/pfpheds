@@ -1867,11 +1867,7 @@ const parseIntSafe = (value) => {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 
 const isYearMatch = (candidateYear, selectedYear) => {
   if (!candidateYear || !selectedYear) return false
