@@ -12,6 +12,7 @@
     "pfp:inspect-roster": "node scripts/pfp/inspect-campaign-roster.mjs",
     "pfp:reconcile-snapshot": "node scripts/pfp/reconcile-campaign-snapshot.mjs",
     "pfp:inspect-offers": "node scripts/pfp/inspect-offer-capacity-snapshot.mjs",
+    "pfp:inspect-eligibility": "node scripts/pfp/inspect-eligibility-snapshot.mjs",
     "build": "vite build",
     "presentation:dev": "npm --prefix presentation run dev",
     "presentation:build": "npm --prefix presentation run build",

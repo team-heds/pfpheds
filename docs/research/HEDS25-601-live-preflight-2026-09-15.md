@@ -19,6 +19,32 @@ Ce rapport provient exclusivement d'exports complets lus localement. Il n'a modi
 
 Le volet population reste bloqué. Aucun nom approximatif n'a été fusionné automatiquement.
 
+Une comparaison locale non persistante indique que trois des sept lignes ont un candidat unique à une seule modification de caractère et qu'une autre diffère uniquement après normalisation de la ponctuation. Les trois autres écarts sont plus importants. Ces indications servent uniquement à organiser la revue humaine et ne modifient aucune correspondance.
+
+## Éligibilité et priorité
+
+- 63 candidats techniques issus des fiches BA25 de l'année 2027.
+- 63 candidats techniquement éligibles.
+- 0 exclusion et 0 dossier techniquement non résolu.
+- 4 dossiers à revoir comme prioritaires en raison d'une attribution aléatoire antérieure (`assigned_rank = 99`).
+- 0 indicateur SAE, cas particulier ou ancien champ `lese` actif dans le snapshot.
+- Scores de priorité de base compris entre 15 et 65, sans départage aléatoire.
+
+Nombre d'étudiants auxquels il manque encore chaque critère :
+
+| Critère | Effectif |
+| --- | ---: |
+| MSQ | 34 |
+| SYSINT | 47 |
+| NEUROGER | 37 |
+| AIGU | 44 |
+| REHAB | 17 |
+| AMBU | 58 |
+| FR | 15 |
+| DE | 45 |
+
+Ce volet est techniquement valide, mais les quatre priorités restent soumises à une confirmation humaine.
+
 ## Offres et capacités
 
 - 98 institutions exportées, dont 1 masquée.
@@ -32,6 +58,14 @@ Le volet population reste bloqué. Aucun nom approximatif n'a été fusionné au
 
 La capacité active manque de 36 places. Les propositions sont inférieures de 2 aux offres actives et de 38 à l'effectif attendu.
 
+## État de la votation
+
+- 0 vote PFP2 enregistré pour 2027.
+- 0 session PFP2 créée pour 2027.
+- 0 session PFP2 ouverte pour 2027.
+
+La simulation d'affectation n'est donc pas lancée : elle ne serait pas représentative sans choix étudiants et avec une capacité active limitée à 27 places.
+
 ## Décision
 
 `campaignReady` reste faux. Avant toute simulation de votation :
@@ -41,8 +75,9 @@ La capacité active manque de 36 places. Les propositions sont inférieures de 2
 3. confirmer que les 42 places `selectedOut` doivent bien rester retirées ;
 4. obtenir au minimum 36 capacités actives supplémentaires ;
 5. aligner ensuite `pfp2_proposition` sur l'offre validée ;
-6. relancer les contrôles de population, d'éligibilité et de capacité avant une simulation non persistante.
+6. confirmer humainement les quatre dossiers prioritaires détectés ;
+7. relancer les contrôles de population, d'éligibilité et de capacité avant une simulation non persistante.
 
 ## Traçabilité
 
-Les commandes `pfp:reconcile-snapshot` et `pfp:inspect-offers` ne produisent que des agrégats, codes d'anomalie, numéros de lignes et empreintes de fichiers. Elles n'impriment ni noms, ni adresses email, ni `user_id`.
+Les commandes `pfp:reconcile-snapshot`, `pfp:inspect-offers` et `pfp:inspect-eligibility` ne produisent que des agrégats, codes d'anomalie, numéros de lignes et empreintes de fichiers. Elles n'impriment ni noms, ni adresses email, ni `user_id`.

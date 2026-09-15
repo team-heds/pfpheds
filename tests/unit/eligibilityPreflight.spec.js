@@ -5,7 +5,7 @@ function snapshot() {
   return {
     year: '2026-2027', pfpType: 'PFP2', sourcesComplete: true,
     candidates: [{ userId: 'student-1' }],
-    physioRows: [{ user_id: 'student-1', sae: false, cas_particulier: false, pfp_valided: [] }],
+    physioRows: [{ user_id: 'student-1', sae: false, cas_particulier: false, lese: false, pfp_valided: [] }],
     resultRows: [], manualExclusions: [],
     places: [{ PlaceId: 'place-1', MSQ: true, FR: true }]
   }
@@ -51,6 +51,18 @@ describe('local PFP eligibility preflight', () => {
     expect(report.eligible[0].basePriorityScore).toBe(85)
   })
 
+  it('sends legacy lese flags and previous random assignments to human priority review', () => {
+    const input = snapshot()
+    input.physioRows[0].lese = true
+    input.resultRows = [{
+      user_id: 'student-1', pfp_type: 'PFP1B', year: '2026', assigned_place_id: 'place-1', assigned_rank: 99
+    }]
+    const row = inspectEligibility(input).eligible[0]
+    expect(row.requiresPriorityReview).toBe(true)
+    expect(row.priorityReasons).toEqual(['legacy_lese', 'previous_random_assignment'])
+    expect(row.basePriorityScore).toBe(65)
+  })
+
   it('combines validated stages and results while deduplicating completed places', () => {
     const input = snapshot()
     input.physioRows[0].pfp_valided = [{ PlaceId: 'place-1' }]
@@ -74,12 +86,16 @@ describe('local PFP eligibility preflight', () => {
   })
 
   it('does not treat non-empty false strings as true', () => {
-    const input = snapshot()
+    let input = snapshot()
     input.physioRows[0].sae = 'false'
     input.physioRows[0].cas_particulier = 'false'
+    input.physioRows[0].lese = 'false'
     expect(inspectEligibility(input).eligible[0].requiresPriorityReview).toBe(false)
     input.physioRows[0].sae = 'yes'
     expect(inspectEligibility(input).summary.issueCounts.invalid_sae).toBe(1)
+    input = snapshot()
+    input.physioRows[0].lese = 'yes'
+    expect(inspectEligibility(input).summary.issueCounts.invalid_lese).toBe(1)
   })
 
   it('reconciles each identified candidate into exactly one outcome', () => {

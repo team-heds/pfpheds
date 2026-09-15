@@ -1,5 +1,5 @@
-import { PFP_TYPES, getAcademicYearKeys, requireAcademicYear } from './academicPeriod'
-import { computePriorityScore, CRITERIA_KEYS } from '@/composables/helpers/computePriorityScore'
+import { PFP_TYPES, getAcademicYearKeys, requireAcademicYear } from './academicPeriod.js'
+import { computePriorityScore, CRITERIA_KEYS } from '../../composables/helpers/computePriorityScore.js'
 
 const clean = value => String(value ?? '').trim()
 const isTrue = value => value === true || value === 'true' || value === 1 || value === '1'
@@ -92,7 +92,7 @@ export function inspectEligibility({
     if (!physio.length) flag('missing_physio')
     if (physio.length > 1) flag('duplicate_physio')
     const source = physio[0] || {}
-    for (const field of ['sae', 'cas_particulier']) {
+    for (const field of ['sae', 'cas_particulier', 'lese']) {
       if (!isTrue(source[field]) && !isFalse(source[field])) flag(`invalid_${field}`)
     }
     const parsed = parseStages(source.pfp_valided)
@@ -119,6 +119,8 @@ export function inspectEligibility({
 
     const sae = isTrue(source.sae)
     const specialCase = isTrue(source.cas_particulier)
+    const legacyLese = isTrue(source.lese)
+    const previousRandomAssignment = results.some(result => Number(result?.assigned_rank) === 99)
     const missingCriteria = CRITERIA_KEYS.filter(key => criteria[key] === 0)
     const audit = {
       userId,
@@ -126,8 +128,13 @@ export function inspectEligibility({
       donePlaceIds: [...donePlaceIds].sort(),
       missingCriteria,
       basePriorityScore: computePriorityScore({ criteria, sae, casParticulier: specialCase }, pfpType, () => 0),
-      requiresPriorityReview: sae || specialCase,
-      priorityReasons: [sae && 'sae', specialCase && 'special_case'].filter(Boolean),
+      requiresPriorityReview: sae || specialCase || legacyLese || previousRandomAssignment,
+      priorityReasons: [
+        sae && 'sae',
+        specialCase && 'special_case',
+        legacyLese && 'legacy_lese',
+        previousRandomAssignment && 'previous_random_assignment'
+      ].filter(Boolean),
       issues: studentIssues
     }
     if (studentIssues.length) unresolved.push(audit)
