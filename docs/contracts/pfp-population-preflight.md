@@ -33,4 +33,10 @@ Les détails contiennent des identifiants étudiants et doivent rester internes,
 - Ajouter offres/capacités, dates et éligibilité avant tout bilan go/no-go.
 - Vérifier séparément le mode non persistant de l'algorithme avant répétition.
 
+## Import du classeur de répartition
+
+`scripts/pfp/inspect-campaign-roster.mjs` contrôle un classeur local sans en extraire les données nominatives dans sa sortie. Il repère les colonnes Nom/Prénom, choisit la dernière colonne Répondant comme valeur actuelle, utilise l'effectif annoncé dans le titre et ignore le récapitulatif qui suit cette liste. Une empreinte SHA-256 identifie précisément la version contrôlée.
+
+La commande valide uniquement la structure, l'effectif, l'unicité stricte des noms et la présence des répondants. Comme le classeur ne contient ni `user_id` ni email, `identityReady` et `campaignReady` restent toujours faux.
+
 Aucune population réelle n'a été vérifiée par ce lot. Aucun SQL ni aucune donnée de production n'a été modifié.
