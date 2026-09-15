@@ -32,7 +32,11 @@
     "test:unit:watch": "vitest",
     "test:coverage": "vitest --run --coverage",
     "test:e2e": "npx playwright test",
-    "test:e2e:ui": "npx playwright test --ui"
+    "test:e2e:ui": "npx playwright test --ui",
+    "deploy:check": "bash deploy_hedsvs.sh --check",
+    "deploy:build": "bash deploy_hedsvs.sh --build-only",
+    "deploy:prod": "bash deploy_hedsvs.sh --deploy",
+    "test:deploy": "node --test scripts/deployment/deploy.test.mjs"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.19",
