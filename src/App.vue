@@ -1,9 +1,9 @@
 <!-- src/App.vue -->
 <template>
-  <div class="app-shell">
+  <div class="app-shell" :class="{ 'app-shell--immersive': isImmersiveRoute }">
     <a class="skip-link" href="#main-content">Aller au contenu principal</a>
     <!-- Cercles de fond -->
-    <div class="background-container">
+    <div v-if="!isImmersiveRoute" class="background-container">
       <div class="bg-circle_jaune"></div>
       <div class="bg-circle_violet"></div>
     </div>
@@ -15,7 +15,7 @@
       <ConfirmDialog />
       <router-view />
       <MobileBottomNav v-if="showMobileBottomNav" />
-      <VersionningComponent />
+      <VersionningComponent v-if="!isImmersiveRoute" />
       <PwaInstallPrompt />
       <!-- Intégration du widget ConvAI -->
       <!-- <ConvaiWidget /> -->
@@ -72,6 +72,9 @@ export default {
     },
     showMobileBottomNav() {
       return this.$route.meta?.hideMobileNav !== true;
+    },
+    isImmersiveRoute() {
+      return this.$route.meta?.immersive === true;
     },
     showHeaderIconsMobile() {
       const routeName = this.$route.name;
@@ -175,6 +178,15 @@ export default {
   flex-grow: 1; /* Take remaining space */
   overflow-y: auto; /* Allow scrolling */
   padding: var(--content-pad);
+}
+
+.app-shell--immersive {
+  background: #ffffff;
+}
+
+.app-shell--immersive .content {
+  padding: 0;
+  background: #ffffff;
 }
 
 /* Responsive : masquer les cercles sur mobile */

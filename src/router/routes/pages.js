@@ -20,6 +20,6 @@ export default [
   { path: '/router-inspector', component: () => import('@/views/home/RouterView.vue'), name: 'RouterInspector', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/permissions', component: () => import('@/views/home/PermissionsView.vue'), name: 'PermissionsView', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/feedbacka/:id', component: () => import('@/views/pages/FeedbackaStudentView.vue'), name: 'FeedbackaStudentView', props: true, meta: { requiresAuth: true } },
-  { path: '/alpinphysio', component: () => import('@/views/associations/AlpinPhysioView.vue'), name: 'AlpinPhysio', meta: { requiresAuth: false } },
+  { path: '/alpinphysio', component: () => import('@/views/associations/AlpinPhysioView.vue'), name: 'AlpinPhysio', meta: { requiresAuth: false, hideMobileNav: true, immersive: true } },
   { path: '/docs/primevue', component: () => import('@/views/documentation/PrimeVueDocsView.vue'), name: 'PrimeVueDocs', meta: { requiresAuth: true, need: ['admin'] } },
 ]

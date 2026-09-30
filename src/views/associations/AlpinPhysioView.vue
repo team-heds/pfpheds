@@ -1,2943 +1,998 @@
 <template>
-  <div class="alpin-physio-modern">
-    <!-- Navigation Classique -->
-    <nav class="modern-nav" :class="{ 'nav-active': isScrolled, 'nav-hidden': isNavHidden }">
-      <div class="nav-content">
-        <div class="nav-links">
-          <a 
-            v-for="section in sections" 
-            :key="section.id"
-            class="nav-link"
-            :class="{ active: activeSection === section.id }"
-            @click.prevent="scrollToSection(section.id)"
-            :href="`#${section.id}`"
-          >
-            {{ section.name }}
-          </a>
-        </div>
-      </div>
-    </nav>
+  <div class="alpin-page">
+    <a class="skip-link" href="#main">Aller au contenu</a>
 
-    <!-- Hero Ultra-Moderne avec Carousel Background -->
-    <section id="hero" class="hero-modern">
-      <!-- Photo Carousel en arrière-plan -->
-      <div class="hero-carousel-bg">
-        <div 
-          v-for="(photo, index) in carouselPhotos" 
-          :key="index"
-          class="carousel-slide"
-          :class="{ active: currentCarouselSlide === index }"
-        >
-          <img :src="getImagePath(photo)" :alt="`Alp'in Physio ${index + 1}`" />
-        </div>
-      </div>
-      
-      <!-- Overlay sombre -->
-      <div class="hero-overlay"></div>
-      
-      <div class="hero-container">
-        <div class="hero-content">
-          <div class="hero-badge">Association Étudiante</div>
-          <h1 class="hero-title">
-            <span class="title-main">Alp'in</span>
-            <span class="title-accent">Physio</span>
-          </h1>
-          <p class="hero-description">
-            Association étudiante depuis 2012
-          </p>
-          <div class="hero-stats">
-            <div class="stat-item">
-              <div class="stat-number">13</div>
-              <div class="stat-label">Années</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-number">50+</div>
-              <div class="stat-label">Événements</div>
-            </div>
+    <header class="header" :class="{ scrolled: isScrolled }">
+      <a class="brand" href="#hero" aria-label="Alp'in Physio — accueil" @click.prevent="scrollTo('hero')">
+        <img :src="logoMarkPath" alt="" /><span>Alp’in <strong>physio</strong></span>
+      </a>
+      <nav id="main-navigation" class="nav" :class="{ open: isMenuOpen }" aria-label="Navigation principale">
+        <a v-for="item in navigation" :key="item.id" :href="`#${item.id}`" :class="{ active: activeSection === item.id }" @click.prevent="scrollTo(item.id)">{{ item.label }}</a>
+      </nav>
+      <a class="header-cta" href="mailto:alpinphysio@hevs.ch?subject=Proposition%20de%20collaboration">Nous contacter directement <i class="pi pi-arrow-up-right" /></a>
+      <button class="menu-button" type="button" :aria-expanded="isMenuOpen" aria-controls="main-navigation" :aria-label="isMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'" @click="isMenuOpen = !isMenuOpen"><i :class="isMenuOpen ? 'pi pi-times' : 'pi pi-bars'" /></button>
+    </header>
 
+    <main id="main">
+      <section id="hero" class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="hero-kicker">Association Étudiante</p>
+          <h1 id="hero-title"><span>Alp’in</span><strong>Physio</strong></h1>
+          <p class="hero-lead">Association étudiante depuis 2012</p>
+          <div class="hero-actions">
+            <a class="button button--primary" href="#about" @click.prevent="scrollTo('about')">Découvrir <i class="pi pi-arrow-down" /></a>
           </div>
-          <Button 
-            @click="scrollToSection('about')"
-            class="hero-cta"
-            label="Découvrir"
-            icon="pi pi-arrow-down"
-          />
         </div>
-      </div>
-    </section>
+        <figure class="hero-photo">
+          <img :src="getImagePath('JPhotos/Divers/Comité25-26/DSC05361.JPG')" alt="Le comité Alp’in Physio 2025–2026 réuni devant les montagnes" fetchpriority="high" />
+          <figcaption><strong>Photo du comité 2025-2026</strong></figcaption>
+        </figure>
+        <div class="hero-facts" aria-label="Alp'in Physio en bref">
+          <span><strong>13</strong>Années</span>
+          <span><strong>50+</strong>Événements</span>
+        </div>
+      </section>
 
-    <!-- About Section -->
-    <section id="about" class="section-modern">
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">Notre Histoire</h2>
-          <p class="section-subtitle">Une passion partagée depuis 2012</p>
+      <section id="about" class="about section" aria-labelledby="about-title">
+        <div class="about-copy">
+          <p class="eyebrow">Notre Histoire</p>
+          <h2 id="about-title">Une passion partagée depuis 2012</h2>
+          <p class="lead">Nous sommes des <strong>étudiants et étudiantes en physiothérapie</strong>, <strong>sportifs et sportives</strong>, autant de caractéristiques qui nous ont poussés à mettre sur pied l'association Alp'in Physio en 2012.</p>
+          <p>En effet, l'association nous permet de <strong>conjuguer nos compétences en physiothérapie et la pratique sur le terrain sportif</strong>.</p>
         </div>
-        
-        <!-- Histoire principale avec layout asymétrique -->
-        <div class="story-layout">
-          <div class="story-main">
-            <div class="story-badge">
-              <span class="badge-year">2012</span>
-              <span class="badge-text">Création</span>
-            </div>
-            <h3 class="story-title">Nos Origines</h3>
-            <div class="story-content-text">
-              <p class="story-paragraph highlight">
-                Nous sommes des <strong>étudiants et étudiantes en physiothérapie</strong>, 
-                <strong>sportifs et sportives</strong>, autant de caractéristiques qui nous ont 
-                poussés à mettre sur pied l'association Alp'in Physio en 2012.
-              </p>
-              <p class="story-paragraph">
-                En effet, l'association nous permet de <strong>conjuguer nos compétences en 
-                physiothérapie et la pratique sur le terrain sportif</strong>.
-              </p>
-            </div>
-          </div>
-          <div class="story-visual">
-            <div class="visual-element">
-              <div class="floating-icon">
-                <i class="pi pi-heart-fill"></i>
-              </div>
-              <div class="visual-stats">
-                <div class="mini-stat">
-                  <span class="stat-num">13+</span>
-                  <span class="stat-text">Années</span>
-                </div>
-                <div class="mini-stat">
-                  <span class="stat-num">100+</span>
-                  <span class="stat-text">Événements</span>
-                </div>
-              </div>
+        <figure class="about-photo"><img :src="getImagePath('JPhotos/Divers/Comité25-26/DSC05389.JPG')" alt="Photo du comité 2025-2026" loading="lazy" /></figure>
+      </section>
+
+      <section id="team" class="team section" aria-labelledby="team-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">Le comité 2025–2026</p><h2 id="team-title">Notre Comité</h2></div>
+          <p>Notre comité est composé d'étudiants des trois années de Bachelor ayant chacun son rôle clé au sein de l'association.</p>
+        </div>
+        <div class="team-grid">
+          <article v-for="member in committee" :key="member.name" class="member-card">
+            <figure><img :src="getImagePath(member.image)" :alt="`Portrait de ${member.name}`" loading="lazy" :style="{ objectPosition: member.position || 'center' }" /></figure>
+            <div class="member-copy"><p>{{ member.role }}</p><h3>{{ member.name }}</h3><details><summary>En savoir plus <i class="pi pi-plus" /></summary><p>{{ member.bio }}</p></details></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="services" class="services" aria-labelledby="services-title">
+        <div class="services-intro section">
+          <div><p class="eyebrow eyebrow--light">Nos Prestations</p><h2 id="services-title">Organisateurs d'événements sportifs</h2></div>
+          <p>Si vous êtes organisateur d'un évènement sportif et que vous cherchez un groupe d'étudiants pour les massages de récupération, vous êtes au bon endroit !</p>
+        </div>
+        <div class="activity-grid">
+          <article v-for="activity in activities" :key="activity.title" class="activity">
+            <figure><img :src="getImagePath(activity.image)" :alt="activity.alt" loading="lazy" /></figure>
+            <div><span>{{ activity.number }}</span><h3>{{ activity.title }}</h3><p>{{ activity.description }}</p></div>
+          </article>
+        </div>
+        <div class="process section">
+          <div class="process-title"><p class="eyebrow eyebrow--light">Comment ça marche ?</p><h2>Comment Fonctionne un Partenariat avec Alp'in Physio ?</h2></div>
+          <ol><li v-for="(step, index) in partnershipSteps" :key="step.title"><span>{{ String(index + 1).padStart(2, '0') }}</span><div><h3>{{ step.title }}</h3><p>{{ step.description }}</p></div></li></ol>
+          <div class="partnership-cta">
+            <div><p class="eyebrow eyebrow--light">Intéressé par un Partenariat ?</p><h3>Contactez-nous dès maintenant pour organiser votre événement avec nos étudiants masseurs !</h3></div>
+            <div class="partnership-actions">
+              <a class="button button--outline-light" href="mailto:alpinphysio@hevs.ch?subject=Demande%20du%20contrat%20de%20partenariat%20V_juin_2025" title="Demander le document par e-mail"><i class="pi pi-file-pdf" /> Contrat de partenariat (V_juin_2025)</a>
+              <a class="button button--turquoise" href="mailto:alpinphysio@hevs.ch?subject=Proposition%20de%20collaboration">Nous contacter directement <i class="pi pi-arrow-up-right" /></a>
             </div>
           </div>
         </div>
+      </section>
 
-        <!-- Timeline des activités -->
-        <div class="activities-timeline">
-          <div class="timeline-header">
-            <h4>Nos Activités</h4>
-          </div>
-          
-          <div class="timeline-items">
-            <div class="timeline-item reverse">
-              <div class="timeline-image-side">
-                <img :src="getImagePath('JPhotos/Photocourses/Tour des Stations/TDS_2024_1.jpeg')" alt="Partenariats Sportifs" />
-              </div>
-              <div class="timeline-marker">
-                <i class="pi pi-flag"></i>
-              </div>
-              <div class="timeline-content">
-                <div class="timeline-card border-primary">
-                  <h5>Partenariats Sportifs</h5>
-                  <p>
-                    Alp'in physio crée des partenariats avec petites et grandes manifestations 
-                    sportives (Sierre-Zinal, le Grand Raid...), essentiellement en Suisse romande 
-                    de par la localisation de notre école.
-                  </p>
-                </div>
-              </div>
-            </div>
+      <section id="calendar" class="calendar section" aria-labelledby="calendar-title">
+        <div class="section-heading"><div><p class="eyebrow">Notre calendrier</p><h2 id="calendar-title">Rejoignez-nous lors de nos prochains événements</h2></div></div>
+        <ol class="event-list"><li v-for="event in events" :key="event.title"><time><strong>{{ event.day }}</strong><span>{{ event.month }}</span></time><div><h3>{{ event.title }}</h3><p><i class="pi pi-map-marker" />{{ event.location }}</p></div><i class="pi pi-arrow-up-right" /></li></ol>
+      </section>
 
-            <div class="timeline-item">
-              <div class="timeline-image-side">
-                <img :src="getImagePath('JPhotos/Photocourses/Grand Raid/grand_raid_24_1.JPG')" alt="Massage Post-Effort" />
-              </div>
-              <div class="timeline-marker">
-                <i class="pi pi-users"></i>
-              </div>
-              <div class="timeline-content">
-                <div class="timeline-card border-primary">
-                  <h5>Massage Post-Effort</h5>
-                  <p>
-                    Les étudiants de Loèche-les-Bains se mettent à disposition lors de courses 
-                    pour le massage post-effort des participants. Cela permet aux sportifs de 
-                    bénéficier de massages de qualité.
-                  </p>
-                </div>
-              </div>
-            </div>
+      <section id="gallery" class="gallery section" aria-labelledby="gallery-title">
+        <div class="section-heading"><div><p class="eyebrow">Nos Moments</p><h2 id="gallery-title">Découvrez Alp'in Physio en action lors des événements sportifs</h2></div><div class="gallery-count">{{ currentSlide + 1 }} / {{ galleryPhotos.length }}</div></div>
+        <figure class="gallery-main"><img :src="activePhoto.src" :alt="activePhoto.alt" /><figcaption><span>{{ activePhoto.date }} · {{ activePhoto.location }}</span><h3>{{ activePhoto.title }}</h3><p>{{ activePhoto.description }}</p></figcaption><div class="gallery-controls"><button type="button" aria-label="Photo précédente" @click="previousSlide"><i class="pi pi-arrow-left" /></button><button type="button" aria-label="Photo suivante" @click="nextSlide"><i class="pi pi-arrow-right" /></button></div></figure>
+        <div class="gallery-strip" aria-label="Choisir une photo"><button v-for="(photo, index) in galleryPhotos" :key="photo.src" type="button" :class="{ active: index === currentSlide }" :aria-label="`Afficher ${photo.title}`" @click="currentSlide = index"><img :src="photo.src" alt="" loading="lazy" /><span>{{ photo.title }}</span></button></div>
+      </section>
 
-            <div class="timeline-item reverse">
-              <div class="timeline-image-side">
-                <img :src="getImagePath('JPhotos/Photoconférences/Conférence Bastien Murith/DSC03767.JPG')" alt="Formations et Conférences" />
-              </div>
-              <div class="timeline-marker">
-                <i class="pi pi-book"></i>
-              </div>
-              <div class="timeline-content">
-                <div class="timeline-card border-primary">
-                  <h5>Formations et Conférences</h5>
-                  <p>
-                    Au-delà de la pratique sur le terrain, nous mettons sur pied diverses 
-                    conférences et formations au sein de l'école pour développer le réseau 
-                    professionnel et approfondir les connaissances.
-                  </p>
-                  <div class="timeline-features">
-                    <div class="feature">
-                      <i class="pi pi-users"></i>
-                      <span>Réseau Pro</span>
-                    </div>
-                    <div class="feature">
-                      <i class="pi pi-graduation-cap"></i>
-                      <span>Connaissances</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <section class="partners section" aria-labelledby="partners-title"><div><p class="eyebrow">Des partenaires fidèles qui nous accompagnent depuis de nombreuses années.</p><h2 id="partners-title">Nos Sponsors</h2></div><div class="partner-grid"><a v-for="partner in partners" :key="partner.name" :href="partner.url" target="_blank" rel="noopener noreferrer"><img :src="getImagePath(partner.logo)" :alt="partner.name" loading="lazy" /></a></div></section>
+
+      <section id="contact" class="contact" aria-labelledby="contact-title">
+        <div class="contact-photo"><img :src="getImagePath('JPhotos/Photoformations/DSC05665.JPG')" alt="Formation pratique au massage sportif organisée par Alp’in Physio" loading="lazy" /></div>
+        <div class="contact-copy">
+          <p class="eyebrow eyebrow--light">Contactez-nous</p>
+          <h2 id="contact-title">Nous sommes là pour répondre à vos questions</h2>
+          <p>Cliquez pour nous envoyer un email</p>
+          <a class="contact-mail" href="mailto:alpinphysio@hevs.ch">alpinphysio@hevs.ch <i class="pi pi-arrow-up-right" /></a>
+          <div class="contact-meta">
+            <a class="contact-card contact-card--instagram" href="https://instagram.com/alpinphysio" target="_blank" rel="noopener noreferrer"><i class="pi pi-instagram" /><span><small>Suivez nos aventures sportives</small><strong>@alpinphysio</strong></span><i class="pi pi-arrow-up-right" /></a>
+            <a class="contact-card" href="https://maps.google.com/?q=HES-SO+Valais+Thermenstrasse+41+Leukerbad" target="_blank" rel="noopener noreferrer"><i class="pi pi-map-marker" /><span><small>Notre Adresse</small><strong>Thermenstrasse 41 · 3954 Leukerbad</strong></span><i class="pi pi-arrow-up-right" /></a>
           </div>
         </div>
-
-        <!-- Section Comité -->
-        <div class="committee-section">
-          <div class="committee-intro">
-            <div class="intro-card">
-              <h4>Notre Comité</h4>
-              <p>Des étudiants des trois années de Bachelor, chacun avec son rôle clé</p>
-              <p>
-                Notre comité est composé d'étudiants des trois années de Bachelor ayant chacun 
-                son rôle clé au sein de l'association.
-              </p>
-              <div class="">
-                <img :src="getImagePath('JPhotos/Divers/Comité25-26/DSC05361.JPG')" alt="Photo du comité 2025-2026" style="width: 100%; border-radius: 12px; margin-top: 1rem;" />
-              </div>
-            </div>
-          </div>
-
-          <div class="committee-grid">
-            <!-- Présidente - Leanne -->
-            <div class="committee-member">
-              <div class="member-photo">
-                <img :src="getImagePath('JPhotos/Divers/photocomite/DSC09605.JPG')" alt="Leanne" />
-              </div>
-              <div class="member-icon">
-                <i class="pi pi-bell"></i>
-              </div>
-              <h5>Présidente – Leanne</h5>
-              <h6>Coordination des événements et représentation de l'association</h6>
-              <p>
-                Sportive et amoureuse de ma Gruyère natale, je me sens chez moi dès que je mets les pieds 
-                en montagne. L'appareil photo à la main, je chasse les couchers de soleil en altitude. 
-                Ah oui et… j'adore les hélicoptères… !
-              </p>
-            </div>
-
-            <!-- Vice-président - Romain -->
-            <div class="committee-member">
-              <div class="member-photo">
-                <img :src="getImagePath('JPhotos/Divers/photocomite/romain_de_pury.jpeg')" alt="Romain" />
-              </div>
-              <div class="member-icon">
-                <i class="pi pi-user-plus"></i>
-              </div>
-              <h5>Vice-président – Romain</h5>
-              <h6>Soutient à la présidence et gestion des projets</h6>
-              <p>
-                Passionné de sport (et de bonne bouffe), je dis rarement non à un petit verre pour fêter l'effort. 
-                Sur les courses, je suis là pour masser… et surtout pour obéir aux ordres de Leanne !
-              </p>
-            </div>
-
-            <!-- Secrétaire - Salomé -->
-            <div class="committee-member">
-              <div class="member-photo">
-                <img :src="getImagePath('JPhotos/Divers/photocomite/salome_clemons.jpeg')" alt="Salomé" />
-              </div>
-              <div class="member-icon">
-                <i class="pi pi-file-edit"></i>
-              </div>
-              <h5>Secrétaire – Salomé</h5>
-              <h6>Gestion administrative</h6>
-              <p>
-                Hello, moi c'est Salomé et vous me trouverez soit en train de gambader dans les montagnes 
-                soit à la découverte d'un autre pays. Toujours le smile, je suis une pub Colgate ambulante 
-                et fière de l'être !
-              </p>
-            </div>
-
-            <!-- Secrétaire - Rosalie -->
-            <div class="committee-member">
-              <div class="member-photo">
-                <img :src="getImagePath('JPhotos/Divers/photocomite/rosalie_menoud.jpeg')" alt="Rosalie" />
-              </div>
-              <div class="member-icon">
-                <i class="pi pi-file-edit"></i>
-              </div>
-              <h5>Secrétaire – Rosalie</h5>
-              <h6>Gestion administrative</h6>
-              <p>
-                Je viens du Valais, une région que j'adore… mais dès que l'occasion se présente, je pars 
-                explorer le monde et faire de la plongée sous-marine. Après des années d'athlétisme, 
-                je me consacre désormais au volley, au ski et aux sorties en peau de phoque. Et pour me 
-                ressourcer, rien de tel que du temps passé avec ma famille, mes amis et mes chats ;)
-              </p>
-            </div>
-
-            <!-- Caissière - Océane -->
-            <div class="committee-member">
-              <div class="member-photo">
-                <img :src="getImagePath('JPhotos/Divers/photocomite/oceane_fornay.jpeg')" alt="Océane" />
-              </div>
-              <div class="member-icon">
-                <i class="pi pi-wallet"></i>
-              </div>
-              <h5>Caissière – Océane (& Leanne)</h5>
-              <h6>Gestion financière et comptabilité</h6>
-              <p>
-                Archère dans l'âme et accro aux sentiers de trail, j'aime repousser mes limites au grand air. 
-                L'appareil photo me suit dans mes aventures, comme un autre moyen de prolonger l'effort. 
-                Et pour le carburant… rien ne vaut une pause chocolatée !
-              </p>
-            </div>
-
-            <!-- Responsable Web & Communication - Loïc -->
-            <div class="committee-member">
-              <div class="member-photo">
-                <img :src="getImagePath('JPhotos/Divers/photocomite/loic_orny.JPG')" alt="Loïc" />
-              </div>
-              <div class="member-icon">
-                <i class="pi pi-megaphone"></i>
-              </div>
-              <h5>Responsable Web & Communication – Loïc</h5>
-              <h6>Communication digitale et gestion du site web</h6>
-              <p>Entre des longueurs de nage, des kilomètres à vélo et un bon run, je garde toujours de l’énergie pour rigoler, écouter de la musique et dévorer tout ce qui passe à table!</p>
-            </div>
-
-            <!-- Responsables Formations - Groupe -->
-            <div class="committee-member">
-              <div class="member-photo">
-                <img :src="getImagePath('JPhotos/Divers/Comité25-26/DSC05389.JPG')" alt="Julie, Marine, Méline & Romain" />
-              </div>
-              <div class="member-icon">
-                <i class="pi pi-calendar"></i>
-              </div>
-              <h5>Responsables Formations & Activités – Julie, Marine, Méline & Romain</h5>
-              <h6>Organisation des événements extra-sportifs</h6>
-              <p>
-                <strong>Julie :</strong> Amoureuse de nature, de sport, de ski et du Valais, je ne dis jamais 
-                non à une aventure en montagne… ou à un voyage peu importe la destination.<br><br>
-                <strong>Marine :</strong> Curieuse et sportive, j'aime créer des événements qui rassemblent 
-                et puiser mon énergie dans la nature et les nouvelles aventures.<br><br>
-                <strong>Méline :</strong> Neuchâteloise dans l'âme, je navigue entre lac et montagne. 
-                Je vis au rythme du sport et des souvenirs que j'aime figer… surtout quand la photo est 
-                réussie du premier coup ! ;)
-              </p>
-            </div>
-
-            <!-- Responsable Matériel - Léa -->
-            <div class="committee-member">
-              <div class="member-photo">
-                <img :src="getImagePath('JPhotos/Divers/photocomite/lea_volpe.jpeg')" alt="Léa" />
-              </div>
-              <div class="member-icon">
-                <i class="pi pi-flag"></i>
-              </div>
-              <h5>Responsable Matériel – Léa</h5>
-              <h6>Logistique et gestion du matériel</h6>
-              <p>
-                Passionnée par le sport en tout genre, j'apprécie l'aventure et me lancer de nouveaux challenges. 
-                Rien de tel que la montagne pour me ressourcer et me reconnecter à l'essentiel. Quant à ma créativité, 
-                je lui laisse libre cours dans la pâtisserie et la réalisation de petits bijoux homemade.
-              </p>
-            </div>
-
-            <!-- Responsable des Responsables - Luca -->
-            <div class="committee-member">
-              <div class="member-photo">
-                <img :src="getImagePath('JPhotos/Divers/photocomite/luca_fleury.jpeg')" alt="Luca" />
-              </div>
-              <div class="member-icon">
-                <i class="pi pi-users"></i>
-              </div>
-              <h5>Responsable des Responsables de course – Luca</h5>
-              <h6>Soutien organisationnel pour les événements sportifs</h6>
-              <p>
-                L'équilibre de ma vie : les études, le sport et faire la fête ! Je trouve mon bonheur dans la 
-                diversité de mes activités. Épicurien dans l'âme, j'aime autant cuisiner que bien manger. 
-                Toujours à la recherche des plus beaux paysages au fil de mes voyages.
-              </p>
-            </div>
-          </div>
-
-
-        </div>
-
-        <!-- Section Sponsors -->
-        <div class="sponsors-section">
-          
-          <div class="sponsors-intro">
-            <div class="intro-text">
-              <h4>Nos Sponsors</h4>
-              <p>Des partenaires fidèles qui nous accompagnent depuis de nombreuses années.</p>
-              <p>
-                Nos sponsors sont à nos côtés depuis de nombreuses années. Nous pouvons compter sur eux 
-                puisqu'ils nous apportent leur soutien précieux dans nos projets et contribuent à la réussite 
-                de nos divers événements tout au long de l'année.
-              </p>
-            </div>
-          </div>
-
-          <div class="sponsors-grid">
-            <div class="sponsor-card premium">
-              <div class="sponsor-logo">
-                <img :src="getImagePath('JPhotos/Divers/logosponsors/COMPEX-logo.jpg')" alt="Compex" />
-              </div>
-              <div class="sponsor-info">
-                <h5>Compex</h5>
-                <p>Électrostimulation et récupération sportive</p>
-                <a href="https://www.compex.com/" target="_blank" rel="noopener noreferrer" class="sponsor-link">
-                  <i class="pi pi-external-link"></i>
-                  <span>Visiter le site</span>
-                </a>
-              </div>
-            </div>
-
-            <div class="sponsor-card premium">
-              <div class="sponsor-logo">
-                <img :src="getImagePath('JPhotos/Divers/logosponsors/perskindol_2.jpg')" alt="Perskindol" />
-              </div>
-              <div class="sponsor-info">
-                <h5>Perskindol</h5>
-                <p>Produits de soins et récupération</p>
-                <a href="https://www.perskindol.ch/" target="_blank" rel="noopener noreferrer" class="sponsor-link">
-                  <i class="pi pi-external-link"></i>
-                  <span>Visiter le site</span>
-                </a>
-              </div>
-            </div>
-
-            <div class="sponsor-card premium">
-              <div class="sponsor-logo">
-                <img :src="getImagePath('JPhotos/Divers/logosponsors/PhysioValais_logo_unique.gif')" alt="PhysioSwiss" />
-              </div>
-              <div class="sponsor-info">
-                <h5>PhysioSwiss</h5>
-                <p>Association suisse de physiothérapie</p>
-                <a href="https://www.physioswiss.ch/" target="_blank" rel="noopener noreferrer" class="sponsor-link">
-                  <i class="pi pi-external-link"></i>
-                  <span>Visiter le site</span>
-                </a>
-              </div>
-            </div>
-
-            <div class="sponsor-card institutional">
-              <div class="sponsor-logo">
-                <img :src="getImagePath('JPhotos/Divers/logosponsors/FR-DE_HEdS.png')" alt="HES-SO Valais" />
-              </div>
-              <div class="sponsor-info">
-                <h5>HES-SO Valais // Wallis</h5>
-                <p>Haute École Spécialisée de Suisse Occidentale</p>
-                <a href="https://www.hevs.ch/" target="_blank" rel="noopener noreferrer" class="sponsor-link">
-                  <i class="pi pi-external-link"></i>
-                  <span>Visiter le site</span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Events Section -->
-    <section id="events" class="section-modern alt-bg">
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">Notre calendrier</h2>
-          <p class="section-subtitle">Rejoignez-nous lors de nos prochains événements</p>
-        </div>
-        
-        <div class="events-container ">
-          <div v-for="event in events" :key="event.id" class="event-card border-primary">
-            <div class="event-date">
-              <span class="date-day">{{ event.day }}</span>
-              <span class="date-month">{{ event.month }}</span>
-            </div>
-            <div class="event-content">
-              <h4 class="event-title">{{ event.title }}</h4>
-              <p class="event-location">{{ event.location }}</p>
-            </div>
-            <div class="event-action">
-              <Button icon="pi pi-arrow-right" class="p-button-text" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Services Section -->
-    <section id="services" class="section-modern">
-      <div class="section-container">
-        
-        <!-- Introduction organisateurs -->
-        <div class="services-intro">
-          <div class="intro-highlight">
-            <h2 class="section-title">Nos Prestations</h2>
-            <h3>Organisateurs d'événements sportifs</h3>
-            <p>
-              Si vous êtes organisateur d'un évènement sportif et que vous cherchez un groupe d'étudiants pour les
-              massages de récupération, vous êtes au bon endroit !
-            </p>
-          </div>
-        </div>
-
-        <!-- Prestations principales -->
-        <div class="services-main">
-          <div class="service-description">
-            <h4>Nos Prestations de Massage Post-Effort</h4>
-            <p>
-              Nous proposons des prestations de massage post-effort aux participants de tout évènement sportif,
-              comme les courses de trail, de cyclisme, les triathlons, les tournois de badminton et bien plus encore.
-            </p>
-          </div>
-        </div>
-
-        <!-- Contexte et formation -->
-        <div class="services-context">
-          <div class="context-grid">
-            <div class="context-card">
-              <div class="context-icon context-icon-image">
-                <img :src="getImagePath('JPhotos/Photoformations/DSC05665.JPG')" alt="Formation massage" />
-              </div>
-              <h5>Un peu de contexte...</h5>
-              <p>
-                Au début de l'année scolaire, Alp'in Physio propose un cours de massage pour permettre aux étudiants
-                d'acquérir les bases nécessaires au massage sportif. De plus, dans les premières semaines du Bachelor,
-                quelques cours de massage sont dispensés par l'école. Chaque étudiant est donc prêt très tôt à venir
-                masser sur les événements !
-              </p>
-            </div>
-            
-            <div class="context-card">
-              <div class="context-icon context-icon-image">
-                <img :src="getImagePath('JPhotos/Photoformations/DSC05699.JPG')" alt="Notre vision" />
-              </div>
-              <h5>Notre Vision</h5>
-              <p>
-                À nos yeux, il est important de donner l'opportunité aux futurs physiothérapeutes de se faire la main
-                et d'acquérir de l'expérience. Parallèlement, nous offrons aux sportifs une récupération de qualité
-                après leurs efforts, généralement très appréciée. Ce moment, réunissant bien-être physique et mental,
-                permet au corps de se détendre afin de mieux se régénérer.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bénéfices mutuels -->
-        <div class="services-benefits">
-        </div>
-
-        <!-- Processus de partenariat -->
-        <div class="partnership-process">
-          <div class="process-header">
-            <h4>Comment Fonctionne un Partenariat avec Alp'in Physio ?</h4>
-          </div>
-          
-          <div class="process-steps">
-            <div class="step-item">
-              <div class="step-number">1</div>
-              <div class="step-content">
-                <h5>Premier Contact</h5>
-                <p>
-                  Pour toute demande de partenariat, veuillez contacter le comité de l'association à l'adresse suivante :
-                  alpinphysio@hevs.ch. Décrivez les besoins nécessaires pour votre évènement (date et lieu, horaire,
-                  estimation de nombre de masseurs...) et nous ferons un premier sondage auprès des étudiants pour
-                  trouver un responsable de course avec qui vous aurez contact pour la suite de l'organisation.
-                </p>
-              </div>
-            </div>
-
-            <div class="step-item">
-              <div class="step-number">2</div>
-              <div class="step-content">
-                <h5>Recrutement des Étudiants</h5>
-                <p>
-                  Après cette première prise de contact entre les organisateurs et Alp'in Physio, l'association
-                  recrute le nombre d'étudiants souhaité qui feront ensuite le déplacement le jour de course.
-                </p>
-              </div>
-            </div>
-
-            <div class="step-item">
-              <div class="step-number">3</div>
-              <div class="step-content">
-                <h5>Matériel et Logistique</h5>
-                <p>
-                  Si besoin, nous pouvons amener notre propre matériel de massage (tables, huile, tape…)
-                  afin d'assurer la bonne tenue de notre stand.
-                </p>
-              </div>
-            </div>
-
-            <div class="step-item">
-              <div class="step-number">4</div>
-              <div class="step-content">
-                <h5>Conditions Contractuelles</h5>
-                <p>
-                  Vous trouverez ci-dessous un document décrivant les conditions contractuelles d'un partenariat avec
-                  Alp'in Physio.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- CTA Section -->
-        <div class="services-cta">
-          <div class="cta-content">
-            <h4>Intéressé par un Partenariat ?</h4>
-            <p>Contactez-nous dès maintenant pour organiser votre événement avec nos étudiants masseurs !</p>
-            <div class="cta-buttons">
-              <Button 
-                label="Contrat de partenariat (V_juin_2025)"
-                icon="pi pi-download"
-                class="p-button-outlined cta-btn"
-                @click="downloadContract"
-              />
-              <Button 
-                label="Nous contacter directement"
-                icon="pi pi-envelope"
-                class="cta-btn primary"
-                @click="openContact"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Gallery Section -->
-    <section id="gallery" class="section-modern gallery-section">
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">Nos Moments</h2>
-          <p class="section-subtitle">Découvrez Alp'in Physio en action lors des événements sportifs</p>
-        </div>
-        
-        <!-- Diaporama -->
-        <div class="gallery-slideshow">
-          <div class="slideshow-container">
-            <!-- Slides -->
-            <div 
-              v-for="(photo, index) in galleryPhotos" 
-              :key="index"
-              class="slide"
-              :class="{ active: currentSlide === index }"
-            >
-              <div class="slide-image">
-                <img :src="photo.src" :alt="photo.alt" />
-              </div>
-              <div class="slide-content">
-                <h4>{{ photo.title }}</h4>
-                <p>{{ photo.description }}</p>
-                <div class="slide-meta">
-                  <span class="slide-date">
-                    <i class="pi pi-calendar"></i>
-                    {{ photo.date }}
-                  </span>
-                  <span class="slide-location">
-                    <i class="pi pi-map-marker"></i>
-                    {{ photo.location }}
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Navigation Arrows -->
-            <button class="slide-nav prev" @click="previousSlide">
-              <i class="pi pi-chevron-left"></i>
-            </button>
-            <button class="slide-nav next" @click="nextSlide">
-              <i class="pi pi-chevron-right"></i>
-            </button>
-          </div>
-          
-          <!-- Dots Indicator -->
-          <div class="slide-dots">
-            <button 
-              v-for="(photo, index) in galleryPhotos"
-              :key="index"
-              class="dot"
-              :class="{ active: currentSlide === index }"
-              @click="goToSlide(index)"
-            ></button>
-          </div>
-        </div>
-        
-
-      </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="section-modern contact-section">
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">Contactez-nous</h2>
-          <p class="section-subtitle">Nous sommes là pour répondre à vos questions</p>
-        </div>
-        
-        <div class="contact-grid">
-          <!-- Email Card -->
-          <div class="contact-card email-card" @click="openEmail">
-            <div class="card-background">
-              <div class="card-glow"></div>
-            </div>
-            <div class="card-content">
-              <div class="contact-icon">
-                <i class="pi pi-envelope"></i>
-              </div>
-              <h4>Email Direct</h4>
-              <p class="contact-value">alpinphysio@hevs.ch</p>
-              <p class="contact-description">Cliquez pour nous envoyer un email</p>
-              <div class="card-action">
-                <i class="pi pi-arrow-right"></i>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Instagram Card -->
-          <div class="contact-card instagram-card" @click="openInstagram">
-            <div class="card-background">
-              <div class="card-glow"></div>
-            </div>
-            <div class="card-content">
-              <div class="contact-icon">
-                <i class="pi pi-instagram"></i>
-              </div>
-              <h4>Instagram</h4>
-              <p class="contact-value">@alpinphysio</p>
-              <p class="contact-description">Suivez nos aventures sportives</p>
-              <div class="card-action">
-                <i class="pi pi-external-link"></i>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Location Card -->
-          <div class="contact-card location-card" @click="openMaps">
-            <div class="card-background">
-              <div class="card-glow"></div>
-            </div>
-            <div class="card-content">
-              <div class="contact-icon">
-                <i class="pi pi-map-marker"></i>
-              </div>
-              <h4>Notre Adresse</h4>
-              <p class="contact-value">HES-SO Valais</p>
-              <p class="contact-address">
-                Thermenstrasse 41<br>
-                3954 Leukerbad
-              </p>
-              <p class="contact-description">Voir sur Google Maps</p>
-              <div class="card-action">
-                <i class="pi pi-map"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-
-      </div>
-    </section>
+      </section>
+    </main>
+    <footer class="footer"><img :src="logoPath" alt="" /><span>Association étudiante · HES-SO Valais-Wallis</span><span>© {{ new Date().getFullYear() }} Alp’in Physio</span></footer>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import Button from 'primevue/button'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-// État réactif
-const activeSection = ref('hero')
-const isScrolled = ref(false)
-const isNavHidden = ref(false)
-const currentSlide = ref(0)
-let scrollTimeout = null
-let lastScrollY = 0
-
-// Configuration
-const sections = [
-  { id: 'hero', name: 'Accueil' },
-  { id: 'about', name: 'Notre Histoire' },
-  { id: 'events', name: 'Notre Calendrier' },
-  { id: 'services', name: 'Nos Prestations' },
-  { id: 'gallery', name: 'Nos Moments' },
-  { id: 'contact', name: 'Contact' }
+const getImagePath = (path) => `/assets/images/heds/AlpinPhysioPhoto/${path}`
+const logoPath = getImagePath('JPhotos/Divers/logoalpin/ALPINPHYSIO-logo-bleu-impression_transparent.jpg')
+const logoMarkPath = getImagePath('JPhotos/Divers/logoalpin/alpinphysio-mark.jpg')
+const navigation = [{ id: 'about', label: 'Notre Histoire' }, { id: 'team', label: 'Notre Comité' }, { id: 'services', label: 'Nos Prestations' }, { id: 'calendar', label: 'Notre Calendrier' }, { id: 'gallery', label: 'Nos Moments' }]
+const committee = [
+  { name: 'Leanne', role: 'Présidente', image: 'JPhotos/Divers/photocomite/DSC09605-portrait.JPG', position: 'center 42%', bio: `Sportive et amoureuse de ma Gruyère natale, je me sens chez moi dès que je mets les pieds en montagne. L'appareil photo à la main, je chasse les couchers de soleil en altitude. Ah oui et… j'adore les hélicoptères… !` },
+  { name: 'Romain', role: 'Vice-président', image: 'JPhotos/Divers/photocomite/romain_de_pury.jpeg', bio: `Passionné de sport (et de bonne bouffe), je dis rarement non à un petit verre pour fêter l'effort. Sur les courses, je suis là pour masser… et surtout pour obéir aux ordres de Leanne !` },
+  { name: 'Salomé', role: 'Secrétaire', image: 'JPhotos/Divers/photocomite/salome_clemons.jpeg', bio: `Hello, moi c'est Salomé et vous me trouverez soit en train de gambader dans les montagnes soit à la découverte d'un autre pays. Toujours le smile, je suis une pub Colgate ambulante et fière de l'être !` },
+  { name: 'Rosalie', role: 'Secrétaire', image: 'JPhotos/Divers/photocomite/rosalie_menoud.jpeg', position: 'center 35%', bio: `Je viens du Valais, une région que j'adore… mais dès que l'occasion se présente, je pars explorer le monde et faire de la plongée sous-marine. Après des années d'athlétisme, je me consacre désormais au volley, au ski et aux sorties en peau de phoque. Et pour me ressourcer, rien de tel que du temps passé avec ma famille, mes amis et mes chats ;)` },
+  { name: 'Océane', role: 'Caissière (& Leanne)', image: 'JPhotos/Divers/photocomite/oceane_fornay.jpeg', bio: `Archère dans l'âme et accro aux sentiers de trail, j'aime repousser mes limites au grand air. L'appareil photo me suit dans mes aventures, comme un autre moyen de prolonger l'effort. Et pour le carburant… rien ne vaut une pause chocolatée !` },
+  { name: 'Loïc', role: 'Responsable Web & Communication', image: 'JPhotos/Divers/photocomite/loic_orny.JPG', bio: `Entre des longueurs de nage, des kilomètres à vélo et un bon run, je garde toujours de l’énergie pour rigoler, écouter de la musique et dévorer tout ce qui passe à table!` },
+  { name: 'Julie, Marine, Méline & Romain', role: 'Responsables Formations & Activités', image: 'JPhotos/Divers/Comité25-26/DSC05389.JPG', bio: `Julie : Amoureuse de nature, de sport, de ski et du Valais, je ne dis jamais non à une aventure en montagne… ou à un voyage peu importe la destination. Marine : Curieuse et sportive, j'aime créer des événements qui rassemblent et puiser mon énergie dans la nature et les nouvelles aventures. Méline : Neuchâteloise dans l'âme, je navigue entre lac et montagne. Je vis au rythme du sport et des souvenirs que j'aime figer… surtout quand la photo est réussie du premier coup ! ;)` },
+  { name: 'Léa', role: 'Responsable Matériel', image: 'JPhotos/Divers/photocomite/lea_volpe.jpeg', bio: `Passionnée par le sport en tout genre, j'apprécie l'aventure et me lancer de nouveaux challenges. Rien de tel que la montagne pour me ressourcer et me reconnecter à l'essentiel. Quant à ma créativité, je lui laisse libre cours dans la pâtisserie et la réalisation de petits bijoux homemade.` },
+  { name: 'Luca', role: 'Responsable des Responsables de course', image: 'JPhotos/Divers/photocomite/luca_fleury.jpeg', bio: `L'équilibre de ma vie : les études, le sport et faire la fête ! Je trouve mon bonheur dans la diversité de mes activités. Épicurien dans l'âme, j'aime autant cuisiner que bien manger. Toujours à la recherche des plus beaux paysages au fil de mes voyages.` }
 ]
-
-const mainRoles = ['Président', 'Secrétaire', 'Caissier', 'Communication']
-const partners = ['Compex', 'Perskindol', 'PhysioSwiss', 'HES-SO Valais']
-
-const events = [
-  { id: 1, day: '06', month: 'SEP', title: 'Grand Raid BCVS', location: 'Verbier' },
-  { id: 2, day: '17', month: 'SEP', title: 'Présentation BA25', location: 'HES-SO' },
-  { id: 3, day: '28', month: 'SEP', title: 'RunMate', location: 'Montreux' },
-  { id: 4, day: '12', month: 'NOV', title: 'Distribution habits', location: 'HES-SO' }
+const activities = [
+  { number: '01', title: 'Massage Post-Effort', description: 'Les étudiants de Loèche-les-Bains se mettent à disposition lors de courses pour le massage post-effort des participants. Cela permet aux sportifs de bénéficier de massages de qualité.', image: 'JPhotos/Photocourses/Grand Raid/grand_raid_24_1.JPG', alt: 'Massage Post-Effort' },
+  { number: '02', title: 'Partenariats Sportifs', description: `Alp'in physio crée des partenariats avec petites et grandes manifestations sportives (Sierre-Zinal, le Grand Raid...), essentiellement en Suisse romande de par la localisation de notre école.`, image: 'JPhotos/Photocourses/Tour des Stations/TDS_2024_1.jpeg', alt: 'Partenariats Sportifs' },
+  { number: '03', title: 'Formations et Conférences', description: `Au-delà de la pratique sur le terrain, nous mettons sur pied diverses conférences et formations au sein de l'école pour développer le réseau professionnel et approfondir les connaissances.`, image: 'JPhotos/Photoconférences/Conférence Bastien Murith/DSC03767.JPG', alt: 'Formations et Conférences' }
 ]
-
-// Fonction helper pour les chemins d'images (évite l'analyse statique de Vite)
-const getImagePath = (relativePath) => `/assets/images/heds/AlpinPhysioPhoto/${relativePath}`
-
-// Photos du carousel hero
-const carouselPhotos = [
-  'JPhotos/Divers/Comité25-26/DSC05374.JPG',
-  'JPhotos/Divers/Comité25-26/DSC05389.JPG',
-  'JPhotos/Divers/Comité25-26/DSC05365.JPG'
+const partnershipSteps = [
+  { title: 'Premier Contact', description: `Pour toute demande de partenariat, veuillez contacter le comité de l'association à l'adresse suivante : alpinphysio@hevs.ch. Décrivez les besoins nécessaires pour votre évènement (date et lieu, horaire, estimation de nombre de masseurs...) et nous ferons un premier sondage auprès des étudiants pour trouver un responsable de course avec qui vous aurez contact pour la suite de l'organisation.` },
+  { title: 'Recrutement des Étudiants', description: `Après cette première prise de contact entre les organisateurs et Alp'in Physio, l'association recrute le nombre d'étudiants souhaité qui feront ensuite le déplacement le jour de course.` },
+  { title: 'Matériel et Logistique', description: `Si besoin, nous pouvons amener notre propre matériel de massage (tables, huile, tape…) afin d'assurer la bonne tenue de notre stand.` },
+  { title: 'Conditions Contractuelles', description: `Vous trouverez ci-dessous un document décrivant les conditions contractuelles d'un partenariat avec Alp'in Physio.` }
 ]
-
-const currentCarouselSlide = ref(0)
-
+const events = [{ day: '06', month: 'SEP', title: 'Grand Raid BCVS', location: 'Verbier' }, { day: '17', month: 'SEP', title: 'Présentation BA25', location: 'HES-SO' }, { day: '28', month: 'SEP', title: 'RunMate', location: 'Montreux' }, { day: '12', month: 'NOV', title: 'Distribution habits', location: 'HES-SO' }]
+const partners = [{ name: 'Compex', logo: 'JPhotos/Divers/logosponsors/COMPEX-logo.jpg', url: 'https://www.compex.com/' }, { name: 'Perskindol', logo: 'JPhotos/Divers/logosponsors/perskindol_2.jpg', url: 'https://www.perskindol.ch/' }, { name: 'PhysioValais', logo: 'JPhotos/Divers/logosponsors/PhysioValais_logo_unique.gif', url: 'https://www.physioswiss.ch/' }, { name: 'HES-SO Valais-Wallis', logo: 'JPhotos/Divers/logosponsors/FR-DE_HEdS.png', url: 'https://www.hevs.ch/' }]
 const galleryPhotos = [
-  {
-    src: getImagePath('JPhotos/Photocourses/Grand Raid/grand_raid_24_1.JPG'),
-    alt: 'Grand Raid BCVS 2024',
-    title: 'Grand Raid BCVS 2024',
-    description: 'Nos étudiants en action lors du Grand Raid offrant des massages de récupération aux coureurs après plusieurs heures de course.',
-    date: 'Août 2024',
-    location: 'Verbier - Grimentz'
-  },
-  {
-    src: getImagePath('JPhotos/Photoformations/DSC05658.JPG'),
-    alt: 'Formation au Massage Sportif',
-    title: 'Formation au Massage Sportif',
-    description: 'Session de formation annuelle pour préparer nos nouveaux étudiants aux techniques de massage post-effort.',
-    date: 'Octobre 2024',
-    location: 'HES-SO Valais, Leukerbad'
-  },
-  {
-    src: getImagePath('JPhotos/Photocourses/SKA-skieurs/ska_torrent_2024.png'),
-    alt: 'Récupération pour les skieurs du SKA',
-    title: 'Récupération pour les skieurs du SKA',
-    description: 'Aperçu des séances de récupération et d\'étirements, proposées aux jeunes skieurs du SKA Torrent durant l\'hiver 2024.',
-    date: 'Hiver 24-25',
-    location: 'Torrent'
-  },
-  {
-    src: getImagePath('JPhotos/Photocourses/Trail Verbier - St-Bernard by UTMB/trail_VSB_2024_3.JPG'),
-    alt: 'Trail du Grand Saint-Bernard 2024',
-    title: 'Trail du Grand Saint-Bernard 2024',
-    description: 'Deux belles journées de massage pour notre équipe d\'étudiants sur le Trail Verbier Saint-Bernard by UTMB.',
-    date: 'Juillet 2024',
-    location: 'Verbier - Saint-Bernard'
-  },
-  {
-    src: getImagePath('JPhotos/Photocourses/Fête Fédérale de Gym 2025/FFG_25_3.JPG'),
-    alt: 'Fête Fédérale de gymnastique 2025',
-    title: 'Fête Fédérale de gymnastique 2025',
-    description: 'Alp\'in Physio a eu l\'honneur de masser durant le week-end de la FFG 2025 en partenariat avec le cabinet EnMouvement. Une chouette expérience sur une fête d\'une telle ampleur !',
-    date: 'Juin 2025',
-    location: 'Suisse'
-  }
+  { src: getImagePath('JPhotos/Photocourses/Grand Raid/grand_raid_24_1.JPG'), alt: 'Grand Raid BCVS 2024', title: 'Grand Raid BCVS 2024', description: 'Nos étudiants en action lors du Grand Raid offrant des massages de récupération aux coureurs après plusieurs heures de course.', date: 'Août 2024', location: 'Verbier - Grimentz' },
+  { src: getImagePath('JPhotos/Photoformations/DSC05658.JPG'), alt: 'Formation au Massage Sportif', title: 'Formation au Massage Sportif', description: 'Session de formation annuelle pour préparer nos nouveaux étudiants aux techniques de massage post-effort.', date: 'Octobre 2024', location: 'HES-SO Valais, Leukerbad' },
+  { src: getImagePath('JPhotos/Photocourses/SKA-skieurs/ska_torrent_2024.png'), alt: 'Récupération pour les skieurs du SKA', title: 'Récupération pour les skieurs du SKA', description: `Aperçu des séances de récupération et d'étirements, proposées aux jeunes skieurs du SKA Torrent durant l'hiver 2024.`, date: 'Hiver 24-25', location: 'Torrent' },
+  { src: getImagePath('JPhotos/Photocourses/Trail Verbier - St-Bernard by UTMB/trail_VSB_2024_3.JPG'), alt: 'Trail du Grand Saint-Bernard 2024', title: 'Trail du Grand Saint-Bernard 2024', description: `Deux belles journées de massage pour notre équipe d'étudiants sur le Trail Verbier Saint-Bernard by UTMB.`, date: 'Juillet 2024', location: 'Verbier - Saint-Bernard' },
+  { src: getImagePath('JPhotos/Photocourses/Fête Fédérale de Gym 2025/FFG_25_3.JPG'), alt: 'Fête Fédérale de gymnastique 2025', title: 'Fête Fédérale de gymnastique 2025', description: `Alp'in Physio a eu l'honneur de masser durant le week-end de la FFG 2025 en partenariat avec le cabinet EnMouvement. Une chouette expérience sur une fête d'une telle ampleur !`, date: 'Juin 2025', location: 'Suisse' }
 ]
-
-// Méthodes
-const scrollToSection = (sectionId) => {
-  const element = document.getElementById(sectionId)
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-}
-
-const handleScroll = () => {
-  // Utiliser requestAnimationFrame pour de meilleures performances
-  if (!scrollTimeout) {
-    scrollTimeout = requestAnimationFrame(() => {
-      const scrollY = window.scrollY
-
-      // Détection direction du scroll et cacher/montrer la nav
-      if (scrollY > lastScrollY && scrollY > 200) {
-        isNavHidden.value = true
-      } else {
-        isNavHidden.value = false
-      }
-      isScrolled.value = scrollY > 100
-      lastScrollY = scrollY
-
-      // Détection section active avec une meilleure logique
-      let currentSectionId = 'hero'
-      let minDistance = Infinity
-      
-      sections.forEach(section => {
-        const element = document.getElementById(section.id)
-        if (element) {
-          const rect = element.getBoundingClientRect()
-          const distance = Math.abs(rect.top)
-          
-          // La section la plus proche du haut de la page devient active
-          if (rect.top <= 200 && distance < minDistance) {
-            minDistance = distance
-            currentSectionId = section.id
-          }
-        }
-      })
-
-      // Mise à jour seulement si la section a changé
-      if (activeSection.value !== currentSectionId) {
-        console.log('Section active changée:', activeSection.value, '->', currentSectionId)
-        activeSection.value = currentSectionId
-      }
-      
-      scrollTimeout = null
-    })
-  }
-}
-
-const downloadContract = () => {
-  console.log('Téléchargement du contrat')
-}
-
-const downloadSponsoring = () => {
-  console.log('Téléchargement du dossier sponsoring')
-}
-
-const openContact = () => {
-  window.location.href = 'mailto:alpinphysio@hevs.ch'
-}
-
-// Fonctions diaporama
-const nextSlide = () => {
-  currentSlide.value = (currentSlide.value + 1) % galleryPhotos.length
-}
-
-const previousSlide = () => {
-  currentSlide.value = currentSlide.value === 0 ? galleryPhotos.length - 1 : currentSlide.value - 1
-}
-
-const goToSlide = (index) => {
-  currentSlide.value = index
-}
-
-// Fonctions contact
-const openEmail = () => {
-  window.location.href = 'mailto:alpinphysio@hevs.ch'
-}
-
-const openInstagram = () => {
-  window.open('https://instagram.com/alpinphysio', '_blank')
-}
-
-const openMaps = () => {
-  window.open('https://maps.google.com/?q=HES-SO+Valais+Thermenstrasse+41+Leukerbad', '_blank')
-}
-
-// Carousel auto-play
-let carouselInterval = null
-
-// Lifecycle
-onMounted(() => {
-  console.log('Component mounted - attaching scroll listener')
-  window.addEventListener('scroll', handleScroll)
-  handleScroll() // Appel initial
-  
-  // Vérifier que les sections existent
-  sections.forEach(section => {
-    const element = document.getElementById(section.id)
-    console.log(`Section ${section.id}:`, element ? 'trouvée' : 'NON TROUVÉE')
-  })
-  
-  // Démarrer le carousel automatique
-  carouselInterval = setInterval(() => {
-    currentCarouselSlide.value = (currentCarouselSlide.value + 1) % carouselPhotos.length
-  }, 5000) // Change toutes les 5 secondes
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-  if (carouselInterval) {
-    clearInterval(carouselInterval)
-  }
-})
+const currentSlide = ref(0)
+const activePhoto = computed(() => galleryPhotos[currentSlide.value])
+const activeSection = ref('about')
+const isMenuOpen = ref(false)
+const isScrolled = ref(false)
+let scrollRoot
+const scrollTo = (id) => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); isMenuOpen.value = false }
+const nextSlide = () => { currentSlide.value = (currentSlide.value + 1) % galleryPhotos.length }
+const previousSlide = () => { currentSlide.value = currentSlide.value ? currentSlide.value - 1 : galleryPhotos.length - 1 }
+const updateNavigation = () => { isScrolled.value = (scrollRoot?.scrollTop ?? window.scrollY) > 20; const rootTop = scrollRoot === document.scrollingElement ? 0 : (scrollRoot?.getBoundingClientRect().top ?? 0); navigation.forEach(({ id }) => { const top = document.getElementById(id)?.getBoundingClientRect().top; if (typeof top === 'number' && top <= rootTop + 170) activeSection.value = id }) }
+onMounted(() => { scrollRoot = document.getElementById('main-content') || document.scrollingElement; scrollRoot?.addEventListener?.('scroll', updateNavigation, { passive: true }); updateNavigation() })
+onUnmounted(() => scrollRoot?.removeEventListener?.('scroll', updateNavigation))
 </script>
 
 <style scoped>
-/* Variables modernes */
-:root {
-  --primary: #0B213F;
-  --secondary: #1976D2;
-  --accent: #4CAF50;
-  --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --text-primary: #1a1a1a;
-  --text-secondary: #6b7280;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-  --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
-  --shadow-lg: 0 10px 40px rgba(0,0,0,0.15);
-  --radius: 16px;
-  --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
+.alpin-page{--ink:#172123;--muted:#5c6a6d;--line:#dce3e1;--paper:#fbfcfa;--mist:#eef3f1;--aqua:#75d9df;--aqua-dark:#168794;--white:#fff;color:var(--ink);background:var(--paper);font-family:var(--app-font-family,'Poppins',sans-serif);-webkit-font-smoothing:antialiased;overflow:clip}.alpin-page *{box-sizing:border-box}.alpin-page img{image-orientation:from-image}.alpin-page ::selection{background:var(--aqua);color:var(--ink)}a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--aqua-dark);outline-offset:4px}.skip-link{position:fixed;z-index:2000;top:.75rem;left:.75rem;padding:.75rem 1rem;color:#fff;background:var(--ink);transform:translateY(-150%)}.skip-link:focus{transform:none}.section{width:min(1240px,calc(100% - 5rem));margin-inline:auto}.header{position:fixed;z-index:1000;inset:0 0 auto;height:82px;display:grid;grid-template-columns:190px 1fr auto;align-items:center;gap:2rem;padding:0 clamp(1.5rem,4vw,4rem);background:rgba(255,255,255,.94);border-bottom:1px solid rgba(23,33,35,.08);backdrop-filter:blur(16px);transition:box-shadow .2s ease}.header.scrolled{box-shadow:0 12px 35px rgba(23,33,35,.08)}.brand{width:150px;height:62px;display:grid;place-items:center;overflow:hidden}.brand img{width:144px;display:block}.nav{display:flex;align-items:center;justify-content:center;gap:clamp(.8rem,2vw,2rem)}.nav a{position:relative;padding:.7rem 0;color:#556164;font-size:.8rem;font-weight:600;text-decoration:none}.nav a:after{content:'';position:absolute;right:0;bottom:.35rem;left:0;height:2px;background:var(--aqua-dark);transform:scaleX(0);transform-origin:left;transition:transform .18s ease}.nav a:hover,.nav a.active{color:var(--ink)}.nav a:hover:after,.nav a.active:after{transform:scaleX(1)}.header-cta{display:inline-flex;align-items:center;gap:.55rem;padding:.75rem 1rem;color:#fff;background:var(--ink);font-size:.78rem;font-weight:700;text-decoration:none;border-radius:4px}.menu-button{display:none}.eyebrow{margin:0 0 1rem;color:var(--aqua-dark);font-size:.74rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase}.eyebrow--light{color:var(--aqua)}.hero{padding:calc(82px + clamp(3.5rem,7vw,7rem)) clamp(2rem,5vw,5rem) clamp(3rem,5vw,5rem);background:linear-gradient(180deg,#f5f8f7 0%,#fff 100%)}.hero-copy{width:min(1240px,100%);margin:0 auto 3rem}.hero h1{max-width:1020px;margin:0;font-size:clamp(3.2rem,7vw,7.2rem);line-height:.96;letter-spacing:-.05em;text-wrap:balance}.hero h1 em{color:var(--aqua-dark);font-style:normal}.hero-lead{max-width:67ch;margin:1.8rem 0 0;color:var(--muted);font-size:clamp(1.05rem,1.5vw,1.25rem);line-height:1.7}.hero-actions{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:2rem}.button{min-height:52px;display:inline-flex;align-items:center;justify-content:center;gap:.65rem;padding:.8rem 1.15rem;border:1px solid transparent;border-radius:4px;font-size:.85rem;font-weight:700;text-decoration:none;transition:transform .16s ease,background .16s ease}.button:active{transform:scale(.97)}.button--primary{color:#fff;background:var(--ink)}.button--primary:hover{background:#293638}.button--ghost{color:var(--ink);border-color:#aab6b4;background:#fff}.button--ghost:hover{border-color:var(--ink)}.button--turquoise{color:var(--ink);background:var(--aqua)}.hero-photo{position:relative;width:min(1450px,100%);margin:0 auto;overflow:hidden;background:#dce6e3;border-radius:6px}.hero-photo img{width:100%;height:auto;max-height:800px;display:block;object-fit:cover;object-position:center}.hero-photo figcaption{position:absolute;right:1rem;bottom:1rem;display:flex;flex-direction:column;gap:.15rem;padding:.85rem 1rem;color:#fff;background:rgba(23,33,35,.86);border-radius:3px}.hero-photo figcaption strong{font-size:.84rem}.hero-photo figcaption span{font-size:.68rem;opacity:.75}.hero-facts{width:min(1240px,100%);display:grid;grid-template-columns:repeat(3,1fr);margin:1.5rem auto 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.hero-facts span{display:flex;align-items:baseline;gap:.7rem;padding:1.1rem 1.5rem;color:var(--muted);font-size:.76rem}.hero-facts span+span{border-left:1px solid var(--line)}.hero-facts strong{color:var(--ink);font-size:1.5rem}.about{display:grid;grid-template-columns:.28fr .87fr .85fr;gap:clamp(2rem,6vw,6rem);align-items:start;padding-block:clamp(7rem,11vw,11rem)}.section-label{display:flex;align-items:center;gap:.6rem;color:#7c898b;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.section-label span{color:var(--aqua-dark)}.about h2,.section-heading h2,.services h2,.process h2,.contact h2{margin:0;font-size:clamp(2.6rem,5vw,5.1rem);line-height:1.02;letter-spacing:-.045em;text-wrap:balance}.about .lead{margin:2rem 0 1rem;font-size:1.12rem;font-weight:600;line-height:1.7}.about-copy>p:last-child{margin:0;color:var(--muted);line-height:1.75}.about-photo{margin:0}.about-photo img{width:100%;aspect-ratio:4/3;display:block;object-fit:cover;border-radius:5px}.about-photo figcaption{margin-top:.8rem;color:var(--muted);font-size:.75rem}.team{padding-bottom:clamp(7rem,11vw,11rem)}.section-heading{display:grid;grid-template-columns:1.15fr .65fr;gap:clamp(3rem,9vw,9rem);align-items:end;margin-bottom:3.5rem}.section-heading>p{max-width:52ch;margin:0;color:var(--muted);line-height:1.7}.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem}.member-card{min-width:0;background:#fff;border:1px solid var(--line);border-radius:5px;overflow:hidden}.member-card:nth-child(1),.member-card:nth-child(7){grid-column:span 2}.member-card figure{margin:0;overflow:hidden;background:var(--mist)}.member-card figure img{width:100%;aspect-ratio:4/5;display:block;object-fit:cover;transition:transform .45s ease}.member-card:nth-child(1) figure img,.member-card:nth-child(7) figure img{aspect-ratio:8/5}.member-card:hover figure img{transform:scale(1.025)}.member-copy{padding:1.2rem}.member-copy>p{margin:0 0 .35rem;color:var(--aqua-dark);font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.member-copy h3{margin:0;font-size:1.08rem}.member-copy details{margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--line)}.member-copy summary{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:.73rem;font-weight:600;cursor:pointer;list-style:none}.member-copy summary::-webkit-details-marker{display:none}.member-copy details[open] summary i{transform:rotate(45deg)}.member-copy details>p{margin:.8rem 0 0;color:var(--muted);font-size:.8rem;line-height:1.6}.services{color:#fff;background:var(--ink)}.services-intro{display:grid;grid-template-columns:.28fr 1fr .7fr;gap:clamp(2rem,6vw,6rem);align-items:end;padding-block:clamp(7rem,10vw,10rem) 4rem}.section-label--light{color:rgba(255,255,255,.48)}.services-intro>p{margin:0;color:rgba(255,255,255,.65);line-height:1.75}.activity-grid{width:min(1450px,calc(100% - 5rem));display:grid;grid-template-columns:1.15fr .85fr .85fr;gap:1rem;margin-inline:auto}.activity{position:relative;min-height:580px;overflow:hidden;border-radius:5px}.activity figure{position:absolute;inset:0;margin:0}.activity img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .55s ease}.activity:hover img{transform:scale(1.03)}.activity:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(10,18,20,.9),transparent 62%)}.activity>div{position:absolute;z-index:1;right:0;bottom:0;left:0;padding:1.5rem}.activity span{color:var(--aqua);font-size:.7rem;font-weight:700}.activity h3{margin:.6rem 0;font-size:clamp(1.5rem,2.5vw,2.5rem);line-height:1.05}.activity p{max-width:44ch;margin:0;color:rgba(255,255,255,.72);font-size:.85rem;line-height:1.65}.process{display:grid;grid-template-columns:.65fr 1fr;gap:clamp(3rem,8vw,8rem);padding-block:clamp(7rem,10vw,10rem)}.process-title h2{font-size:clamp(2.7rem,4.5vw,4.6rem)}.process ol{margin:0;padding:0;list-style:none;border-top:1px solid rgba(255,255,255,.18)}.process li{display:grid;grid-template-columns:48px 1fr;gap:1rem;padding:1.25rem 0;border-bottom:1px solid rgba(255,255,255,.18)}.process li>span{color:var(--aqua);font-size:.72rem;font-weight:700}.process h3{margin:0;font-size:1rem}.process p{margin:.35rem 0 0;color:rgba(255,255,255,.62);font-size:.82rem;line-height:1.6}.process>.button{grid-column:2;justify-self:start}.calendar{padding-block:clamp(7rem,11vw,11rem)}.event-list{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}.event-list li{display:grid;grid-template-columns:140px 1fr 24px;gap:2rem;align-items:center;padding:1.25rem 0;border-bottom:1px solid var(--line)}.event-list time{display:flex;align-items:baseline;gap:.6rem}.event-list time strong{font-size:3.1rem;line-height:1;letter-spacing:-.06em}.event-list time span{color:var(--aqua-dark);font-size:.7rem;font-weight:700}.event-list h3{margin:0;font-size:1.15rem}.event-list p{display:flex;align-items:center;gap:.4rem;margin:.35rem 0 0;color:var(--muted);font-size:.8rem}.event-list>li>i{color:var(--aqua-dark)}.gallery{padding-bottom:clamp(7rem,11vw,11rem)}.gallery-count{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}.gallery-main{position:relative;display:grid;grid-template-columns:1.4fr .6fr;min-height:620px;margin:0;color:#fff;background:var(--ink);border-radius:5px;overflow:hidden}.gallery-main>img{width:100%;height:100%;min-height:620px;display:block;object-fit:cover}.gallery-main figcaption{display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(2rem,4vw,4rem)}.gallery-main figcaption span{color:var(--aqua);font-size:.68rem;font-weight:700;text-transform:uppercase}.gallery-main h3{margin:1rem 0;font-size:clamp(2rem,3.2vw,3.2rem);line-height:1.04}.gallery-main p{margin:0;color:rgba(255,255,255,.68);line-height:1.7}.gallery-controls{position:absolute;right:0;bottom:0;display:flex}.gallery-controls button{width:54px;height:54px;border:0;color:var(--ink);background:var(--aqua);cursor:pointer}.gallery-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-top:.7rem}.gallery-strip button{position:relative;height:120px;padding:0;overflow:hidden;border:0;border-radius:3px;background:var(--ink);cursor:pointer;opacity:.55}.gallery-strip button:hover,.gallery-strip button.active{opacity:1}.gallery-strip button.active{outline:3px solid var(--aqua-dark);outline-offset:2px}.gallery-strip img{width:100%;height:100%;display:block;object-fit:cover}.gallery-strip span{position:absolute;right:.6rem;bottom:.5rem;left:.6rem;overflow:hidden;color:#fff;font-size:.68rem;font-weight:700;text-align:left;text-overflow:ellipsis;white-space:nowrap}.partners{display:grid;grid-template-columns:.5fr 1.5fr;gap:4rem;align-items:center;padding-block:clamp(5rem,8vw,8rem);border-top:1px solid var(--line)}.partners h2{margin:0;font-size:2.7rem}.partner-grid{display:grid;grid-template-columns:repeat(4,1fr)}.partner-grid a{min-height:120px;display:grid;place-items:center;padding:1rem;border-left:1px solid var(--line)}.partner-grid img{width:min(145px,85%);height:66px;object-fit:contain;filter:grayscale(1);opacity:.7}.partner-grid a:hover img{filter:none;opacity:1}.contact{display:grid;grid-template-columns:1fr 1fr;min-height:720px;color:#fff;background:var(--ink)}.contact-photo{min-width:0}.contact-photo img{width:100%;height:100%;display:block;object-fit:cover}.contact-copy{display:flex;flex-direction:column;justify-content:center;padding:clamp(3rem,7vw,7rem)}.contact h2{font-size:clamp(2.7rem,4.7vw,5rem)}.contact-copy>p{max-width:55ch;margin:1.5rem 0;color:rgba(255,255,255,.68);line-height:1.7}.contact-mail{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1.2rem 0;color:var(--aqua);border-top:1px solid rgba(255,255,255,.2);border-bottom:1px solid rgba(255,255,255,.2);font-size:clamp(1.1rem,2vw,1.7rem);font-weight:700;text-decoration:none;overflow-wrap:anywhere}.contact-meta{display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:1.5rem}.contact-meta a{color:#fff;font-size:.78rem;text-underline-offset:.3rem}.footer{min-height:100px;display:flex;align-items:center;justify-content:space-between;gap:2rem;padding:1.5rem clamp(2rem,5vw,5rem);background:#fff;border-top:1px solid var(--line);font-size:.7rem;color:var(--muted)}.footer img{width:130px}
+@media(max-width:1050px){.header{grid-template-columns:165px 1fr auto;gap:1rem}.header-cta{display:none}.about{grid-template-columns:.25fr 1fr}.about-photo{grid-column:2}.team-grid{grid-template-columns:repeat(3,1fr)}.member-card:nth-child(1),.member-card:nth-child(7){grid-column:span 1}.member-card:nth-child(1) figure img,.member-card:nth-child(7) figure img{aspect-ratio:4/5}.services-intro{grid-template-columns:.25fr 1fr}.services-intro>p{grid-column:2}.activity-grid{grid-template-columns:repeat(3,1fr)}.process{grid-template-columns:.75fr 1fr}.gallery-main{grid-template-columns:1.1fr .9fr}}
+@media(max-width:800px){.section{width:min(100% - 2.5rem,1240px)}.header{height:72px;grid-template-columns:150px 1fr 46px;padding-inline:1rem}.brand{width:140px;height:58px}.brand img{width:132px}.menu-button{width:44px;height:44px;display:grid;place-items:center;grid-column:3;border:1px solid var(--line);background:#fff}.nav{position:absolute;top:72px;right:0;left:0;display:none;flex-direction:column;align-items:stretch;padding:1rem 1.25rem 1.5rem;background:#fff;border-bottom:1px solid var(--line)}.nav.open{display:flex}.nav a{min-height:46px;display:flex;align-items:center;border-bottom:1px solid var(--line)}.hero{padding:calc(72px + 3.5rem) 1.25rem 3rem}.hero-photo img{min-height:430px;object-fit:cover}.hero-facts{grid-template-columns:1fr}.hero-facts span+span{border-top:1px solid var(--line);border-left:0}.about,.services-intro,.section-heading,.process,.partners,.contact{grid-template-columns:1fr}.section-label{margin-bottom:1rem}.about-photo,.services-intro>p,.process>.button{grid-column:1}.team-grid{grid-template-columns:repeat(2,1fr)}.activity-grid{width:calc(100% - 2.5rem);grid-template-columns:1fr}.activity{min-height:520px}.process-title{margin-bottom:1rem}.gallery-main{grid-template-columns:1fr}.gallery-main>img{min-height:460px}.gallery-main figcaption{min-height:250px;padding-bottom:5rem}.gallery-strip{grid-template-columns:repeat(4,180px);overflow-x:auto;padding:4px}.partner-grid{grid-template-columns:repeat(2,1fr)}.partner-grid a{border-bottom:1px solid var(--line)}.contact-photo{min-height:500px}.footer{align-items:flex-start;flex-direction:column}}
+@media(max-width:520px){.hero h1{font-size:clamp(3rem,15vw,4.4rem)}.hero-actions{align-items:stretch;flex-direction:column}.hero-photo img{min-height:360px;object-position:center}.hero-photo figcaption{position:static;border-radius:0}.about h2,.section-heading h2,.services h2,.process h2,.contact h2{font-size:clamp(2.45rem,12vw,3.5rem)}.team-grid{grid-template-columns:1fr}.member-card figure img,.member-card:nth-child(1) figure img,.member-card:nth-child(7) figure img{aspect-ratio:4/4.4}.activity{min-height:450px}.event-list li{grid-template-columns:82px 1fr 20px;gap:1rem}.event-list time strong{font-size:2.5rem}.gallery-main>img{min-height:340px}.contact-photo{min-height:380px}.contact-copy{padding:4rem 1.25rem}.footer{padding-inline:1.25rem}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+.brand{width:auto;height:62px;display:flex;align-items:center;gap:.45rem;overflow:visible;color:var(--ink);text-decoration:none;white-space:nowrap}.brand img{width:72px;height:42px;display:block;object-fit:cover}.brand span{font-size:1.05rem;font-weight:600;letter-spacing:-.035em}.brand strong{color:var(--aqua-dark);font-weight:600}.hero h1{color:var(--ink);-webkit-text-fill-color:var(--ink)}.hero h1 em{color:var(--aqua-dark);-webkit-text-fill-color:var(--aqua-dark)}
+@media(max-width:800px){.brand{width:auto;height:58px}.brand img{width:62px;height:36px}.brand span{font-size:.95rem}}
+.about h2,.team h2,.calendar h2,.gallery h2,.partners h2{color:var(--ink);-webkit-text-fill-color:var(--ink)}.services h2,.contact h2{color:#fff;-webkit-text-fill-color:#fff}.member-copy h3,.event-list h3{color:var(--ink);-webkit-text-fill-color:var(--ink)}.activity h3,.gallery-main h3,.process h3{color:#fff;-webkit-text-fill-color:#fff}
+.hero,.about,.team,.services,.calendar,.gallery,.contact{scroll-margin-top:100px}
+.menu-button{color:var(--ink)}
+</style>
 
-/* Base */
-.alpin-physio-modern {
-  scroll-behavior: smooth;
-  overflow-x: hidden;
-  margin: 0;
-  padding: 0;
-}
-
-/* Standardisation des tailles de texte */
-.alpin-physio-modern h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.alpin-physio-modern h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.alpin-physio-modern h4 {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.alpin-physio-modern h5 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-.alpin-physio-modern p {
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-/* Navigation Classique */
-.modern-nav {
-  position: fixed;
-  top: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  background: rgba(11, 33, 63, 0.9);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  border-radius: 50px;
-  padding: 0.75rem 2rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 1;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  max-width: fit-content;
-}
-
-.modern-nav.nav-hidden {
-  transform: translateX(-50%) translateY(-150%);
-  opacity: 0;
-}
-
-.modern-nav.nav-active {
-  background: rgba(11, 33, 63, 0.95);
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
-  border-color: rgba(102, 126, 234, 0.5);
-}
-
-.nav-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-}
-
-.nav-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-}
-
-.nav-brand:hover {
-  transform: translateY(-2px);
-}
-
-.brand-logo {
-  height: 40px;
-  width: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.2));
-  transition: filter 0.3s ease;
-}
-
-.nav-brand:hover .brand-logo {
-  filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.4));
-}
-
-.brand-text {
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: white;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.nav-links {
-  display: flex;
-  gap: 0.25rem;
-  align-items: center;
-}
-
-.nav-link {
-  color: rgba(255, 255, 255, 0.85);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.nav-link::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  transform: translateX(-50%);
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-link::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
+<style scoped>
+/* Modern standalone visual layer */
+.alpin-page {
+  --ink: #102f33;
+  --ink-soft: #1d454a;
+  --muted: #52696c;
+  --line: #d8e4e2;
+  --paper: #ffffff;
+  --mist: #eef7f6;
+  --aqua: #64d0d8;
+  --aqua-dark: #147e88;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
-  border-radius: 20px;
-  opacity: 0;
-  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: -1;
+  min-height: 100%;
+  color: var(--ink);
+  background: var(--paper);
+  overflow: clip;
 }
 
-.nav-link:hover {
-  background: rgba(102, 126, 234, 0.15);
-  color: white;
-  transform: translateY(-2px);
+.section {
+  width: min(1240px, calc(100% - 4rem));
 }
 
-.nav-link:hover::before {
-  width: 80%;
+.header {
+  height: 86px;
+  grid-template-columns: 210px 1fr auto;
+  padding-inline: max(2rem, calc((100vw - 1440px) / 2));
+  background: color-mix(in srgb, #ffffff 92%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--ink) 9%, transparent);
 }
 
-.nav-link.active {
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+.header.scrolled {
+  box-shadow: 0 12px 40px rgba(16, 47, 51, .08);
+}
+
+.brand {
+  height: 64px;
+  gap: .65rem;
+}
+
+.brand img {
+  width: 80px;
+  height: 42px;
+}
+
+.brand span {
+  font-size: 1.08rem;
+}
+
+.nav {
+  gap: clamp(1rem, 2.2vw, 2.4rem);
+}
+
+.nav a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  font-size: .82rem;
+}
+
+.nav a::after {
+  bottom: 4px;
+  height: 3px;
+  border-radius: 3px;
+}
+
+.header-cta {
+  min-height: 48px;
+  padding: .8rem 1.15rem;
+  border-radius: 999px;
+  transition: transform 140ms cubic-bezier(.16, 1, .3, 1), background-color 140ms ease;
+}
+
+.header-cta:hover {
+  background: var(--ink-soft);
   transform: translateY(-1px);
 }
 
-.nav-link.active::after {
-  opacity: 1;
-}
-
-.nav-link.active::before {
-  width: 100%;
-}
-
-/* Hero Ultra-Moderne */
-.hero-modern {
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.hero {
   position: relative;
-  background: var(--gradient);
-  color: white;
-  text-align: center;
-  margin: 0;
-  padding: 0;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
-}
-
-.hero-container {
-  max-width: 800px;
-  padding: 0 2rem;
-  position: relative;
-  z-index: 2;
-}
-
-.hero-badge {
-  display: inline-block;
-  padding: 0.5rem 1.5rem;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 2rem;
-  animation: fadeInUp 1s ease 0.2s both;
-}
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 800;
-  margin-bottom: 1.5rem;
-  line-height: 1.1;
-}
-
-.title-main {
-  display: block;
-  animation: fadeInUp 1s ease 0.4s both;
-}
-
-.title-accent {
-  display: block;
-  background: linear-gradient(45deg, #fff, #e0e7ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: fadeInUp 1s ease 0.6s both;
-}
-
-.hero-description {
-  margin-bottom: 3rem;
-  opacity: 0.9;
-  animation: fadeInUp 1s ease 0.8s both;
-}
-
-.hero-stats {
-  display: flex;
-  justify-content: center;
-  gap: 3rem;
-  margin-bottom: 3rem;
-  animation: fadeInUp 1s ease 1s both;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 2.5rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  opacity: 0.8;
-  margin-top: 0.5rem;
-}
-
-.hero-cta {
-  animation: fadeInUp 1s ease 1.2s both;
-}
-
-/* Hero Carousel Background */
-.hero-carousel-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden;
-  z-index: 0;
-}
-
-.carousel-slide {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  transition: opacity 2s ease-in-out;
-  z-index: 0;
-}
-
-.carousel-slide.active {
-  opacity: 1;
-  z-index: 1;
-}
-
-.carousel-slide img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  filter: brightness(0.6);
-  display: block;
-  transform: scale(1);
-  transition: transform 5s ease-out;
-}
-
-.carousel-slide.active img {
-  transform: scale(1.05);
-}
-
-/* Overlay sombre pour améliorer la lisibilité */
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-/* Sections Modernes */
-.section-modern {
-  padding: 8rem 0;
-  position: relative;
-}
-
-.section-modern.alt-bg {
-  background: var(--bg-secondary);
-}
-
-.section-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 5rem;
-}
-
-.section-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-}
-
-.section-subtitle {
-  color: var(--text-secondary);
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-/* About Section - Layout Asymétrique */
-.story-layout {
+  min-height: 100svh;
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 4rem;
-  margin-bottom: 6rem;
+  grid-template-columns: minmax(350px, .78fr) minmax(540px, 1.22fr);
+  grid-template-rows: 1fr auto;
+  gap: clamp(2.5rem, 4vw, 5rem);
   align-items: center;
+  padding: 118px max(2rem, calc((100vw - 1440px) / 2)) 2rem;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(100, 208, 216, .17), transparent 26rem),
+    linear-gradient(90deg, #f1f8f7 0 42%, #ffffff 42%);
+  isolation: isolate;
 }
 
-.story-main {
+.hero::before,
+.hero::after {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.hero::before {
+  width: 430px;
+  height: 430px;
+  left: -245px;
+  bottom: 80px;
+  border: 1px solid rgba(20, 126, 136, .16);
+  box-shadow:
+    0 0 0 54px rgba(100, 208, 216, .055),
+    0 0 0 108px rgba(100, 208, 216, .035);
+}
+
+.hero::after {
+  width: 10px;
+  height: 10px;
+  top: 22%;
+  left: calc(42% - 5px);
+  background: var(--aqua);
+  box-shadow: 0 32px 0 rgba(100, 208, 216, .48), 0 64px 0 rgba(100, 208, 216, .24);
+}
+
+.hero-copy {
   position: relative;
+  width: auto;
+  margin: 0;
+  padding: 2rem 0 3rem;
+  animation: hero-copy-in 560ms cubic-bezier(.16, 1, .3, 1) both;
 }
 
-.story-badge {
+.hero-kicker {
+  width: fit-content;
+  max-width: 34ch;
   display: inline-flex;
+  gap: .55rem;
   align-items: center;
-  gap: 0.5rem;
-  background: var(--gradient);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
+  margin: 0 0 1.5rem;
+  padding: .55rem .8rem;
+  color: var(--aqua-dark);
+  border: 1px solid rgba(20, 126, 136, .2);
+  background: rgba(255, 255, 255, .58);
+  border-radius: 999px;
+  font-size: .88rem;
   font-weight: 600;
-  margin-bottom: 2rem;
-  box-shadow: var(--shadow-md);
+  line-height: 1.5;
+  backdrop-filter: blur(8px);
 }
 
-.badge-year {
-  font-size: 1.2rem;
-  font-weight: 800;
-}
-
-.badge-text {
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.story-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 2rem;
-  line-height: 1.2;
-}
-
-.story-content-text {
-  space-y: 1.5rem;
-}
-
-.story-paragraph {
-  font-size: 1.1rem;
-  line-height: 1.7;
-  color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-}
-
-.story-paragraph.highlight {
-  font-size: 1.2rem;
-  color: var(--text-primary);
-}
-
-.story-visual {
-  position: relative;
-  height: 300px;
-}
-
-.visual-element {
-  position: relative;
-  height: 100%;
-  background: var(--gradient);
-  border-radius: var(--radius);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.floating-icon {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
+.hero-kicker::before {
+  width: 7px;
+  height: 7px;
+  content: '';
+  background: var(--aqua-dark);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: white;
-  margin-bottom: 2rem;
-  animation: float 3s ease-in-out infinite;
 }
 
-.visual-stats {
-  display: flex;
-  gap: 2rem;
+.hero h1 {
+  width: max-content;
+  max-width: 100%;
+  display: grid;
+  color: var(--ink);
+  font-size: clamp(3.7rem, 6.2vw, 6.9rem);
+  font-weight: 650;
+  line-height: .88;
+  letter-spacing: -.06em;
 }
 
-.mini-stat {
-  text-align: center;
-  color: white;
-}
-
-.stat-num {
+.hero h1 span,
+.hero h1 strong {
   display: block;
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 1;
 }
 
-.stat-text {
-  display: block;
-  font-size: 0.8rem;
-  opacity: 0.8;
-  margin-top: 0.25rem;
+.hero h1 strong {
+  color: var(--aqua-dark);
+  font: inherit;
+  -webkit-text-fill-color: var(--aqua-dark);
 }
 
-/* Timeline des Activités */
-.activities-timeline {
-  margin-bottom: 6rem;
-  padding: 4rem 2rem;
-  background: linear-gradient(to bottom, transparent 0%, rgba(102, 126, 234, 0.02) 50%, transparent 100%);
+.hero-lead {
+  max-width: 54ch;
+  margin-top: 1.8rem;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.35vw, 1.18rem);
+  line-height: 1.72;
 }
 
-.timeline-header {
-  text-align: center;
-  margin-bottom: 5rem;
-  position: relative;
+.hero-actions {
+  gap: .65rem;
+  margin-top: 1.8rem;
 }
 
-.timeline-header h4 {
-  color: white;
-  margin-bottom: 1.5rem;
-  letter-spacing: -0.5px;
-}
-
-.timeline-line {
-  width: 120px;
-  height: 5px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  margin: 0 auto;
-  border-radius: 3px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.timeline-items {
-  position: relative;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.timeline-items::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(to bottom, #667eea 0%, #764ba2 50%, #667eea 100%);
-  transform: translateX(-50%);
-  border-radius: 2px;
-  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
-}
-
-.timeline-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 4rem;
-  position: relative;
-  gap: 8rem;
-}
-
-.timeline-item.reverse {
-  flex-direction: row-reverse;
-}
-
-.timeline-marker {
-  position: absolute;
-  left: 50%;
-  top: 2rem;
-  transform: translateX(-50%);
-  width: 70px;
-  height: 70px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.6rem;
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-  z-index: 2;
-  border: 4px solid white;
-  transition: all 0.3s ease;
-}
-
-.timeline-item:hover .timeline-marker {
-  transform: translateX(-50%) scale(1.1) rotate(5deg);
-  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
-}
-
-.timeline-content {
-  flex: 1;
-  max-width: 45%;
-}
-
-.timeline-item:not(.reverse) .timeline-content {
-  margin-right: auto;
-}
-
-.timeline-item.reverse .timeline-content {
-  margin-left: auto;
-}
-
-.timeline-item:not(.reverse) .timeline-image-side {
-  margin-left: auto;
-}
-
-.timeline-item.reverse .timeline-image-side {
-  margin-right: auto;
-}
-
-.timeline-card {
-  background: var(--bg-primary);
-  padding: 2.5rem;
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(102, 126, 234, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.timeline-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--gradient);
-  transform: scaleY(0);
-  transition: transform 0.4s ease;
-}
-
-.timeline-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
-  border-color: rgba(102, 126, 234, 0.3);
-}
-
-.timeline-card:hover::before {
-  transform: scaleY(1);
-}
-
-.timeline-image-side {
-  width: 45%;
-  height: 320px;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-}
-
-.timeline-image-side::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: 1;
-}
-
-.timeline-image-side img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.timeline-item:hover .timeline-image-side {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
-}
-
-.timeline-item:hover .timeline-image-side::before {
-  opacity: 1;
-}
-
-.timeline-item:hover .timeline-image-side img {
-  transform: scale(1.08);
-}
-
-.timeline-card h5 {
-  color: white;
-  margin-bottom: 1rem;
-}
-
-.timeline-card p {
-  color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-}
-
-.timeline-tags {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.tag {
-  background: var(--gradient);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.timeline-highlight {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--secondary);
-  font-weight: 600;
-}
-
-.timeline-features {
-  display: flex;
+.hero-actions .button--primary {
+  min-height: 56px;
+  padding-inline: 1.35rem .75rem;
   gap: 1rem;
-  margin-top: 1.5rem;
+  box-shadow: 0 12px 28px rgba(16, 47, 51, .15);
 }
 
-.feature {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-radius: 50px;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
+.hero-actions .button--primary i {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: var(--aqua);
+  border-radius: 50%;
 }
 
-.feature i {
-  color: #667eea;
+.button {
+  min-height: 52px;
+  padding-inline: 1.25rem;
+  border-radius: 999px;
+  transition: transform 140ms cubic-bezier(.16, 1, .3, 1), border-color 140ms ease, background-color 140ms ease;
 }
 
-.feature:hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+.button:hover {
   transform: translateY(-2px);
 }
 
-/* Section Sponsors */
-.sponsors-section {
-  margin-bottom: 6rem;
-}
-
-.sponsors-header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.sponsors-header h4 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-}
-
-.sponsors-header p {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-}
-
-.sponsors-intro {
-  margin-bottom: 4rem;
-}
-
-.intro-text {
-  max-width: 800px;
-  margin: 0 auto;
-  text-align: center;
-  background: var(--bg-secondary);
-  padding: 2.5rem;
-  border-radius: var(--radius);
-  border-left: 4px solid var(--secondary);
-}
-
-.intro-text p {
-  font-size: 1.1rem;
-  line-height: 1.7;
-  color: var(--text-primary);
+.hero-photo {
+  width: 100%;
+  height: min(720px, calc(100svh - 150px));
+  min-height: 540px;
   margin: 0;
+  border: 1px solid rgba(16, 47, 51, .08);
+  border-radius: 28px;
+  box-shadow: 0 28px 70px rgba(16, 47, 51, .12);
+  animation: hero-photo-in 720ms 80ms cubic-bezier(.16, 1, .3, 1) both;
 }
 
-.sponsors-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-bottom: 4rem;
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  object-position: 52% center;
 }
 
-.sponsor-card {
-  background: var(--bg-primary);
-  border-radius: var(--radius);
+.hero-photo figcaption {
+  right: 1.25rem;
+  bottom: 1.25rem;
+  padding: .9rem 1.1rem;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+}
+
+.hero-facts {
+  grid-column: 1 / -1;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border: 0;
+  background: var(--ink);
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: var(--shadow-md);
-  transition: var(--transition);
-  border: 1px solid rgba(0,0,0,0.05);
-  cursor: pointer;
 }
 
-.sponsor-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-lg);
-}
-
-.sponsor-card.premium {
-  border-top: 4px solid var(--gradient);
-}
-
-.sponsor-card.institutional {
-  border-top: 4px solid var(--accent);
-}
-
-.sponsor-logo {
-  height: 150px;
-  display: flex;
-  align-items: center;
+.hero-facts span {
+  min-height: 88px;
   justify-content: center;
-  background: white;
-  position: relative;
-  padding: 1.5rem;
-}
-
-.sponsor-logo img {
-  width: 180px;
-  height: 100px;
-  object-fit: contain;
-  transition: transform 0.3s ease;
-}
-
-.sponsor-card:hover .sponsor-logo img {
-  transform: scale(1.05);
-}
-
-.logo-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  transition: var(--transition);
-}
-
-.sponsor-card:hover .logo-placeholder {
-  transform: scale(1.05);
-  color: var(--secondary);
-}
-
-.logo-placeholder i {
-  font-size: 2.5rem;
-}
-
-.logo-placeholder span {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.institutional-logo {
-  color: var(--accent) !important;
-}
-
-.sponsor-info {
-  padding: 2rem;
-}
-
-.sponsor-info h5 {
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.sponsor-info p {
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
-}
-
-.sponsor-link {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: var(--transition);
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.sponsor-link:hover {
-  color: var(--primary);
-  transform: translateX(5px);
-}
-
-.sponsor-card:hover .sponsor-link {
-  color: var(--primary);
-}
-
-.sponsors-cta {
-  background: var(--gradient);
-  color: white;
-  padding: 3rem;
-  border-radius: var(--radius);
-  text-align: center;
-  box-shadow: var(--shadow-lg);
-}
-
-.cta-content h5 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-
-.cta-content p {
-  font-size: 1rem;
-  opacity: 0.9;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-}
-
-.cta-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.cta-actions .p-button {
   padding: 1rem 2rem;
-  border-radius: 50px;
+  color: rgba(255,255,255,.72);
+  font-size: .8rem;
+}
+
+.hero-facts span + span {
+  border-left-color: rgba(255,255,255,.14);
+}
+
+.hero-facts strong {
+  color: var(--aqua);
+  font-size: 2rem;
+}
+
+.eyebrow {
+  margin-bottom: 1.2rem;
+  color: var(--aqua-dark);
+  font-size: .88rem;
   font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-.cta-actions .p-button-outlined {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: white;
-}
-
-.cta-actions .p-button-outlined:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-/* Section Comité */
-.committee-section {
-  margin-bottom: 6rem;
-}
-
-.committee-header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.committee-header h4 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-}
-
-.committee-header p {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-}
-
-.committee-intro {
-  margin-bottom: 4rem;
-}
-
-.intro-card {
-  max-width: 600px;
-  margin: 0 auto;
-  background: var(--gradient);
-  color: white;
-  padding: 3rem;
-  border-radius: var(--radius);
-  text-align: center;
-  box-shadow: var(--shadow-lg);
-}
-
-.intro-icon {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 2rem;
-  font-size: 2rem;
-}
-
-.intro-card p {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  margin-bottom: 2rem;
-  opacity: 0.95;
-}
-
-.photo-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  transition: var(--transition);
-}
-
-.photo-placeholder:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.photo-placeholder i {
-  font-size: 2rem;
-  opacity: 0.7;
-}
-
-.photo-placeholder span {
-  font-size: 0.9rem;
-  opacity: 0.8;
-}
-
-.committee-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+.about {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 2rem;
-  margin-bottom: 3rem;
-}
-
-.committee-member {
-  background: var(--bg-primary);
-  padding: 2.5rem 2rem;
-  border-radius: var(--radius);
-  text-align: center;
-  box-shadow: var(--shadow-md);
-  transition: var(--transition);
-  border: 1px solid rgba(0,0,0,0.05);
-  position: relative;
-  overflow: hidden;
-}
-
-.committee-member::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--gradient);
-  transform: scaleX(0);
-  transition: var(--transition);
-}
-
-.committee-member:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-lg);
-}
-
-.committee-member:hover::before {
-  transform: scaleX(1);
-}
-
-.member-photo {
-  width: 200px;
-  height: 200px;
-  margin: 0 auto 1.5rem;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid var(--secondary);
-  box-shadow: var(--shadow-md);
-}
-
-.member-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
-
-.member-icon {
-  width: 70px;
-  height: 70px;
-  background: var(--gradient);
-  border-radius: 50%;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  color: white;
-  font-size: 1.8rem;
-  transition: var(--transition);
+  padding-block: clamp(7rem, 11vw, 11rem);
 }
 
-.committee-member:hover .member-icon {
-  transform: scale(1.1) rotate(5deg);
+.about-copy {
+  grid-column: 1 / 7;
 }
 
-.committee-member h5 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  text-align: center;
+.about-photo {
+  grid-column: 8 / 13;
 }
 
-.committee-member h6 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--secondary);
-  margin-bottom: 1rem;
-  text-align: center;
+.about h2,
+.section-heading h2,
+.services h2,
+.process h2,
+.contact h2 {
+  font-size: clamp(2.65rem, 4.9vw, 5rem);
+  font-weight: 620;
+  line-height: 1.02;
+  letter-spacing: -.05em;
 }
 
-.committee-member p {
-  color: var(--text-secondary);
-  line-height: 1.5;
-  font-size: 0.95rem;
-  text-align: center;
-}
-
-.committee-note {
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
-  padding: 2rem;
-  border-left: 4px solid var(--secondary);
-}
-
-.note-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.note-content i {
-  color: var(--secondary);
-  font-size: 1.2rem;
-  margin-top: 0.2rem;
-  flex-shrink: 0;
-}
-
-.note-content p {
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin: 0;
-}
-
-.note-content em {
-  font-style: italic;
-  opacity: 0.9;
-}
-
-/* Animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-/* Events */
-.events-container {
-  display: grid;
-  gap: 1.5rem;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.event-card {
-  display: flex;
-  align-items: center;
-  background: var(--bg-primary);
-  padding: 2rem;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition);
-  border: 1px solid rgba(0,0,0,0.05);
-}
-
-.event-card:hover {
-  transform: translateX(10px);
-  box-shadow: var(--shadow-md);
-}
-
-.event-date {
-  text-align: center;
-  margin-right: 2rem;
-  min-width: 80px;
-}
-
-.date-day {
-  display: block;
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--secondary);
-  line-height: 1;
-}
-
-.date-month {
-  display: block;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-top: 0.25rem;
-}
-
-.event-content {
-  flex: 1;
-}
-
-.event-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.event-location {
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-/* Services - Prestations */
-.services-intro {
-  margin-bottom: 4rem;
-}
-
-.intro-highlight {
-  max-width: 700px;
-  margin: 0 auto;
-  background: var(--gradient);
-  color: white;
-  padding: 3rem;
-  border-radius: var(--radius);
-  text-align: center;
-  box-shadow: var(--shadow-lg);
-}
-
-.highlight-icon {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 2rem;
-  font-size: 2rem;
-}
-
-.intro-highlight h3 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-}
-
-.intro-highlight p {
-  font-size: 1.2rem;
-  line-height: 1.6;
-  opacity: 0.95;
-}
-
-.services-main {
-  margin-bottom: 4rem;
-}
-
-.service-description {
-  max-width: 800px;
-  margin: 0 auto;
-  text-align: center;
-  background: var(--bg-secondary);
-  padding: 3rem;
-  border-radius: var(--radius);
-  border-left: 4px solid var(--secondary);
-}
-
-.service-description h4 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1.5rem;
-}
-
-.service-description p {
-  font-size: 1.2rem;
-  line-height: 1.7;
-  color: var(--text-primary);
-}
-
-.services-context {
-  margin-bottom: 4rem;
-}
-
-.context-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.context-card {
-  background: var(--bg-primary);
-  padding: 2.5rem;
-  border-radius: var(--radius);
-  text-align: center;
-  box-shadow: var(--shadow-md);
-  transition: var(--transition);
-  border: 1px solid rgba(0,0,0,0.05);
-}
-
-.context-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
-}
-
-.context-icon {
-  width: 70px;
-  height: 70px;
-  background: var(--gradient);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  color: white;
-  font-size: 1.8rem;
-}
-
-.context-icon-image {
-  width: 100%;
-  max-width: 400px;
-  height: 250px;
-  background: transparent;
-  overflow: hidden;
-  padding: 0;
-  border-radius: var(--radius);
-}
-
-.context-icon-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-}
-
-.context-card h5 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-}
-
-.context-card p {
-  color: var(--text-secondary);
-  line-height: 1.6;
-  font-size: 1.2rem;
-}
-
-.services-benefits {
-  margin-bottom: 5rem;
-}
-
-.benefits-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.benefits-header h4 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.benefits-content {
-  max-width: 900px;
-  margin: 0 auto;
-  background: var(--bg-primary);
-  padding: 3rem;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  text-align: center;
-}
-
-.benefits-content p {
-  font-size: 1.2rem;
-  line-height: 1.7;
-  color: var(--text-primary);
-}
-
-.partnership-process {
-  margin-bottom: 4rem;
-}
-
-.process-header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.process-header h4 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.process-steps {
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.step-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 2rem;
-  margin-bottom: 3rem;
-  background: var(--bg-primary);
-  padding: 2.5rem;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  transition: var(--transition);
-}
-
-.step-item:hover {
-  transform: translateX(10px);
-  box-shadow: var(--shadow-lg);
-}
-
-.step-number {
-  width: 50px;
-  height: 50px;
-  background: var(--gradient);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.step-content h5 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-}
-
-.step-content p {
-  color: var(--text-secondary);
-  line-height: 1.6;
-  font-size: 1.2rem;
-}
-
-.services-cta {
-  background: var(--gradient);
-  color: white;
-  padding: 4rem 3rem;
-  border-radius: var(--radius);
-  text-align: center;
-  box-shadow: var(--shadow-lg);
-}
-
-.services-cta .cta-content h4 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-
-.services-cta .cta-content p {
-  font-size: 1.2rem;
-  opacity: 0.95;
-  margin-bottom: 2.5rem;
-  line-height: 1.6;
-}
-
-.cta-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.cta-btn {
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  font-weight: 600;
-}
-
-.services-cta .p-button-outlined {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: white;
-}
-
-.services-cta .p-button-outlined:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-/* Gallery Section */
-.gallery-section {
-  background: var(--bg-secondary);
-  padding: 6rem 0;
-}
-
-.gallery-slideshow {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.slideshow-container {
-  position: relative;
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  height: 600px;
-}
-
-.slide {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-  display: flex;
-  align-items: center;
-}
-
-.slide.active {
-  opacity: 1;
-}
-
-.slide-image {
-  flex: 1;
-  height: 100%;
-}
-
-.slide-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.slide-content {
-  flex: 1;
-  padding: 3rem;
-  background: var(--bg-primary);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.slide-content h4 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-}
-
-.slide-content p {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 2rem;
-}
-
-.slide-meta {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
-}
-
-.slide-date,
-.slide-location {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.slide-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-  color: white;
-  border: none;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: var(--transition);
-  z-index: 10;
-}
-
-.slide-nav:hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-  transform: translateY(-50%) scale(1.1);
-}
-
-.slide-nav.prev {
-  left: 0rem;
-}
-
-.slide-nav.next {
-  right: 0rem;
-}
-
-.slide-dots {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
+.about .lead {
+  max-width: 58ch;
   margin-top: 2rem;
 }
 
-.dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-  transition: var(--transition);
+.about-photo img {
+  aspect-ratio: 4 / 5;
+  border-radius: 24px;
 }
 
-.dot.active,
-.dot:hover {
-  background: var(--primary);
-  transform: scale(1.2);
+.about-photo figcaption {
+  margin-top: 1rem;
+  font-size: .8rem;
 }
 
-/* Contact */
-.contact-section {
-  background: var(--gradient);
-  color: white;
+.team {
+  width: 100%;
+  padding: clamp(7rem, 10vw, 10rem) max(2rem, calc((100vw - 1240px) / 2));
+  background: var(--mist);
 }
 
-.contact-section .section-title,
-.contact-section .section-subtitle {
-  color: white;
-}
-
-.contact-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+.section-heading {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto 4rem;
+  align-items: end;
+  margin-bottom: 4rem;
 }
 
-.contact-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius);
-  padding: 0;
+.section-heading > div {
+  grid-column: 1 / 8;
+}
+
+.section-heading > p,
+.section-heading > .gallery-count {
+  grid-column: 9 / 13;
+}
+
+.team-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.5rem 1.35rem;
+}
+
+.member-card,
+.member-card:nth-child(1),
+.member-card:nth-child(7) {
+  grid-column: auto;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.member-card figure {
+  border-radius: 20px;
   overflow: hidden;
-  cursor: pointer;
-  transition: var(--transition);
 }
 
-.contact-card:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}
-
-.card-background {
-  position: absolute;
-  top: 0;
-  left: 0;
+.member-card figure img,
+.member-card:nth-child(1) figure img,
+.member-card:nth-child(7) figure img {
   width: 100%;
-  height: 100%;
-  opacity: 0;
-  transition: var(--transition);
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
 }
 
-.contact-card:hover .card-background {
-  opacity: 1;
+.member-card:hover figure img {
+  transform: scale(1.018);
 }
 
-.card-glow {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+.member-copy {
+  padding: 1.1rem .2rem 0;
 }
 
-.email-card:hover .card-glow {
-  background: linear-gradient(45deg, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2));
+.member-copy > p {
+  margin-bottom: .3rem;
+  font-size: .76rem;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-.instagram-card:hover .card-glow {
-  background: linear-gradient(45deg, rgba(225, 29, 72, 0.2), rgba(251, 146, 60, 0.2));
+.member-copy h3 {
+  font-size: 1.25rem;
+  font-weight: 650;
 }
 
-.location-card:hover .card-glow {
-  background: linear-gradient(45deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2));
+.member-copy details {
+  margin-top: .9rem;
+  padding-top: .8rem;
 }
 
-.card-content {
-  position: relative;
-  padding: 2.5rem;
-  text-align: center;
-  z-index: 2;
+.member-copy summary {
+  min-height: 32px;
+  color: var(--muted);
 }
 
-.contact-icon {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+.member-copy summary i {
+  transition: transform 200ms cubic-bezier(.65, 0, .35, 1);
+}
+
+.services-intro {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2rem;
+  align-items: end;
+  padding-block: clamp(7rem, 10vw, 10rem) 4rem;
+}
+
+.services-intro > div {
+  grid-column: 1 / 8;
+}
+
+.services-intro > p {
+  grid-column: 9 / 13;
+}
+
+.activity-grid {
+  width: min(1440px, calc(100% - 4rem));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.activity {
+  min-height: 600px;
+  border-radius: 24px;
+}
+
+.activity > div {
+  min-height: 260px;
+  display: grid;
+  grid-template-rows: auto minmax(2.25em, auto) minmax(8.2em, auto);
+  align-content: end;
+  padding: 1.8rem;
+}
+
+.activity h3 {
+  align-self: end;
+  font-size: clamp(1.6rem, 2.3vw, 2.4rem);
+}
+
+.activity p {
+  align-self: start;
+}
+
+.process {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 2rem;
+}
+
+.process-title {
+  grid-column: 1 / 6;
+}
+
+.process ol,
+.process > .button,
+.partnership-cta {
+  grid-column: 7 / 13;
+}
+
+.partnership-cta {
+  display: grid;
+  gap: 1.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, .18);
+}
+
+.partnership-cta h3 {
+  max-width: 34ch;
+  margin: 0;
+  font-size: clamp(1.25rem, 2vw, 1.8rem);
+  line-height: 1.35;
+}
+
+.partnership-actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  font-size: 2rem;
-  color: white;
-  transition: var(--transition);
+  flex-wrap: wrap;
+  gap: .75rem;
 }
 
-.contact-card:hover .contact-icon {
-  transform: scale(1.1);
-  background: rgba(255, 255, 255, 0.3);
+.button--outline-light {
+  color: #fff;
+  border-color: rgba(255, 255, 255, .45);
+  background: transparent;
 }
 
-.contact-card h4 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 0.5rem;
+.button--outline-light:hover {
+  border-color: var(--aqua);
+  background: rgba(255, 255, 255, .07);
 }
 
-.contact-value {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.5rem;
+.calendar,
+.gallery {
+  padding-block: clamp(7rem, 10vw, 10rem);
 }
 
-.contact-address {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.9);
-  line-height: 1.5;
-  margin-bottom: 1rem;
+.event-list li {
+  grid-template-columns: 130px 1fr 32px;
+  min-height: 108px;
+  padding-inline: .35rem;
+  transition: background-color 180ms ease;
 }
 
-.contact-description {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 1.5rem;
+.event-list li:hover {
+  background: var(--mist);
 }
 
-.card-action {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
+.gallery {
+  padding-top: 0;
+}
+
+.gallery-main {
+  height: 640px;
+  min-height: 0;
+  border-radius: 24px;
+}
+
+.gallery-main > img {
+  height: 640px;
+  min-height: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+.gallery-controls {
+  right: 1rem;
+  bottom: 1rem;
+  gap: .35rem;
+}
+
+.gallery-controls button {
   border-radius: 50%;
-  display: flex;
+}
+
+.gallery-strip button {
+  height: 130px;
+  border-radius: 14px;
+}
+
+.partners {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.partners > div:first-child {
+  grid-column: 1 / 4;
+}
+
+.partner-grid {
+  grid-column: 5 / 13;
+}
+
+.contact {
+  min-height: 760px;
+}
+
+.contact-photo img {
+  object-position: center;
+}
+
+.contact-meta {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: .75rem;
+  margin-top: 1.5rem;
+}
+
+.contact-meta .contact-card {
+  min-height: 86px;
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 1rem;
   align-items: center;
-  justify-content: center;
-  color: white;
-  transition: var(--transition);
+  padding: 1rem 1.1rem;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 16px;
+  text-decoration: none;
+  transition: transform 150ms cubic-bezier(.16, 1, .3, 1), border-color 150ms ease, background-color 150ms ease;
 }
 
-.contact-card:hover .card-action {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
-}
-
-.contact-cta {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius);
-  padding: 3rem;
-  text-align: center;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.contact-cta h3 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 1rem;
-}
-
-.contact-cta p {
-  font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.9);
-  line-height: 1.6;
-  margin-bottom: 2rem;
-}
-
-.cta-button {
-  background: white !important;
-  color: var(--primary) !important;
-  border: none !important;
-  font-weight: 600 !important;
-  padding: 1rem 2rem !important;
-  border-radius: 50px !important;
-}
-
-.cta-button:hover {
-  background: rgba(255, 255, 255, 0.9) !important;
+.contact-meta .contact-card:hover {
+  border-color: rgba(255, 255, 255, .4);
+  background: rgba(255, 255, 255, .06);
   transform: translateY(-2px);
 }
 
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
+.contact-card > i:first-child {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  background: var(--aqua);
+  border-radius: 50%;
+  font-size: 1.05rem;
+}
+
+.contact-card span {
+  min-width: 0;
+  display: grid;
+  gap: .2rem;
+}
+
+.contact-card small {
+  color: rgba(255, 255, 255, .6);
+  font-size: .72rem;
+}
+
+.contact-card strong {
+  overflow-wrap: anywhere;
+  font-size: .9rem;
+}
+
+.contact-card--instagram {
+  background: linear-gradient(115deg, rgba(100, 208, 216, .14), rgba(255, 255, 255, .03));
+  border-color: rgba(100, 208, 216, .45) !important;
+}
+
+.footer {
+  min-height: 118px;
+  padding-inline: max(2rem, calc((100vw - 1440px) / 2));
+}
+
+@keyframes hero-copy-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hero-photo-in {
+  from { opacity: 0; transform: translateX(24px) scale(.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@media (max-width: 1050px) {
+  .header {
+    grid-template-columns: 190px 1fr auto;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .hero {
+    grid-template-columns: minmax(320px, .8fr) minmax(430px, 1.2fr);
+    gap: 2rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(3.5rem, 7vw, 5.5rem);
+  }
+
+  .team-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .modern-nav {
-    top: 1rem;
-    padding: 0.75rem 1.5rem;
+@media (max-width: 800px) {
+  .section {
+    width: min(100% - 2.5rem, 1240px);
   }
-  
-  .nav-content {
-    gap: 2rem;
+
+  .header {
+    height: 72px;
+    grid-template-columns: 1fr 46px;
+    padding-inline: 1rem;
   }
-  
-  .hero-stats {
-    gap: 2rem;
+
+  .brand {
+    height: 58px;
   }
-  
-  .stat-number {
-    font-size: 2rem;
+
+  .menu-button {
+    border-radius: 50%;
   }
-  
-  .carousel-slide img {
-    object-position: center center;
-  }
-  
-  /* Story Layout Mobile */
-  .story-layout {
+
+  .hero {
+    min-height: auto;
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
     gap: 2rem;
-    margin-bottom: 4rem;
+    padding: 120px 1.25rem 2rem;
+    background: #f4faf9;
   }
-  
-  .story-title {
-    font-size: 2rem;
-  }
-  
-  .story-visual {
-    height: 200px;
-  }
-  
-  .visual-stats {
-    gap: 1rem;
-  }
-  
-  /* Timeline Mobile */
-  .timeline-items::before {
-    left: 30px;
-  }
-  
-  .timeline-item,
-  .timeline-item.reverse {
-    flex-direction: column;
-    padding-left: 80px;
-  }
-  
-  .timeline-marker {
-    left: 30px;
-    transform: translateX(-50%);
-  }
-  
-  .timeline-content {
-    max-width: 100%;
-    text-align: left !important;
-  }
-  
-  .timeline-item:not(.reverse) .timeline-content,
-  .timeline-item.reverse .timeline-content {
-    margin: 0;
+
+  .hero-copy {
     padding: 0;
   }
-  
-  .timeline-card {
-    padding: 1.5rem;
+
+  .hero h1 {
+    max-width: 11ch;
+    font-size: clamp(3.2rem, 13vw, 5rem);
   }
-  
-  .timeline-image-side {
-    width: 100%;
-    height: 200px;
-    margin-bottom: 1rem;
+
+  .hero-photo {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 4 / 3;
+    border-radius: 20px;
   }
-  
-  /* Sponsors Mobile */
-  .sponsors-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
+
+  .hero-photo img {
+    min-height: 0;
   }
-  
-  .intro-text {
-    padding: 2rem 1.5rem;
+
+  .hero-facts {
+    grid-column: 1;
   }
-  
-  .sponsors-cta {
-    padding: 2rem 1.5rem;
-  }
-  
-  .cta-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  /* Services Mobile */
-  .intro-highlight {
-    padding: 2rem 1.5rem;
-  }
-  
-  .service-description {
-    padding: 2rem 1.5rem;
-  }
-  
-  .context-grid {
+
+  .about,
+  .section-heading,
+  .services-intro,
+  .process,
+  .partners {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
   }
-  
-  .context-card {
-    padding: 2rem 1.5rem;
+
+  .about-copy,
+  .about-photo,
+  .section-heading > div,
+  .section-heading > p,
+  .section-heading > .gallery-count,
+  .services-intro > div,
+  .services-intro > p,
+  .process-title,
+  .process ol,
+  .process > .button,
+  .partnership-cta,
+  .partners > div:first-child,
+  .partner-grid {
+    grid-column: 1;
   }
-  
-  .benefits-content {
-    padding: 2rem 1.5rem;
+
+  .about-photo img {
+    aspect-ratio: 4 / 3;
   }
-  
-  .step-item {
+
+  .team {
+    padding-inline: 1.25rem;
+  }
+
+  .team-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem 1rem;
+  }
+
+  .activity-grid {
+    width: calc(100% - 2.5rem);
+    grid-template-columns: 1fr;
+  }
+
+  .activity {
+    min-height: 520px;
+  }
+
+  .activity > div {
+    min-height: 250px;
+  }
+
+  .gallery-main {
+    height: auto;
+    min-height: 0;
+  }
+
+  .gallery-main > img {
+    height: clamp(360px, 72vw, 460px);
+    min-height: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero-actions {
     flex-direction: column;
-    text-align: center;
-    padding: 2rem 1.5rem;
   }
-  
-  .step-item:hover {
-    transform: translateY(-5px);
+
+  .hero-photo {
+    aspect-ratio: 1 / 1;
   }
-  
-  .services-cta {
-    padding: 2rem 1.5rem;
+
+  .hero-facts {
+    border-radius: 14px;
   }
-  
-  /* Gallery Mobile */
-  .slide-nav.prev {
-    left: 1rem;
+
+  .team-grid {
+    grid-template-columns: 1fr;
   }
-  
-  .slide-nav.next {
-    right: 1rem;
+
+  .member-card figure img,
+  .member-card:nth-child(1) figure img,
+  .member-card:nth-child(7) figure img {
+    aspect-ratio: 4 / 4.6;
   }
-  
-  /* Committee Mobile */
-  .committee-grid {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+
+  .event-list li {
+    grid-template-columns: 80px 1fr 22px;
   }
-  
-  .committee-member {
-    padding: 2rem 1.5rem;
+
+  .activity > div {
+    min-height: 280px;
+    grid-template-rows: auto auto auto;
   }
-  
-  .intro-card {
-    padding: 2rem 1.5rem;
+
+  .gallery-main > img {
+    height: 340px;
   }
-  
-  .committee-note {
-    padding: 1.5rem;
+
+  .contact-photo {
+    min-height: 420px;
   }
-  
-  .event-card {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .event-date {
-    margin-right: 0;
-    margin-bottom: 1rem;
-  }
-  
-  .cta-buttons {
-    flex-direction: column;
-    align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-copy,
+  .hero-photo {
+    animation: none;
   }
 }
 </style>
