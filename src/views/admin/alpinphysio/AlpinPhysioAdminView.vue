@@ -135,19 +135,7 @@
       </template>
 
       <template v-else-if="section === 'site'">
-        <form class="panel site-editor" @submit.prevent="saveContent">
-          <div class="panel-heading"><div><p class="eyebrow">Contenu public</p><h2>Modifier la vitrine</h2><p>Ces champs remplacent les textes correspondants sans toucher à la mise en page.</p></div><RouterLink to="/alpinphysio" target="_blank">Prévisualiser</RouterLink></div>
-          <div class="form-grid">
-            <label class="field"><span>Surtitre</span><input v-model.trim="siteForm.heroEyebrow" /></label>
-            <label class="field"><span>Sous-titre</span><input v-model.trim="siteForm.heroLead" /></label>
-            <label class="field field--wide"><span>Titre de l’histoire</span><input v-model.trim="siteForm.aboutTitle" /></label>
-            <label class="field field--wide"><span>Présentation principale</span><textarea v-model.trim="siteForm.aboutLead" rows="4" /></label>
-            <label class="field field--wide"><span>Présentation complémentaire</span><textarea v-model.trim="siteForm.aboutBody" rows="4" /></label>
-            <label class="field"><span>Email</span><input v-model.trim="siteForm.email" type="email" /></label>
-            <label class="field"><span>Instagram</span><input v-model.trim="siteForm.instagram" /></label>
-          </div>
-          <div class="form-actions"><button class="primary-button" type="submit" :disabled="saving"><i class="pi pi-check" />Publier les modifications</button></div>
-        </form>
+        <AlpinPhysioSiteEditor :content="siteForm" :saving="saving" @save="saveContent" />
       </template>
 
       <template v-else-if="section === 'team'">
@@ -208,7 +196,9 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import OperationalEventPicker from '@/components/alpinphysio/OperationalEventPicker.vue'
+import AlpinPhysioSiteEditor from '@/components/alpinphysio/AlpinPhysioSiteEditor.vue'
 import { useAuthStore } from '@/stores/authStore'
+import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
 import {
   addAlpinTeamMember, deactivateAlpinTeamMember, deleteAlpinEvent, deleteMaterial,
   getSiteContent, listAlpinEvents, listAlpinTeam, listAttendance, listMaterials,
@@ -241,7 +231,7 @@ const notice = reactive({ text: '', kind: 'success' })
 const defaultEvent = () => ({ id: null, title: '', description: '', lieu: '', meeting_point: '', contact_email: 'alpinphysio@hevs.ch', start_date: '', end_date: '', registration_deadline: '', capacity: null, image_url: '', status: 'draft', show_on_public_site: true, show_in_feed: true })
 const eventForm = reactive(defaultEvent())
 const materialForm = reactive({ label: '', quantity: 1, assigned_to: '', notes: '' })
-const siteForm = reactive({ heroEyebrow: 'Association étudiante', heroLead: 'Association étudiante depuis 2012', aboutTitle: 'Une passion partagée depuis 2012', aboutLead: '', aboutBody: '', email: 'alpinphysio@hevs.ch', instagram: '@alpinphysio' })
+const siteForm = reactive(cloneAlpinPhysioSiteContent())
 
 const upcomingEvents = computed(() => events.value.filter((event) => new Date(event.end_date) >= new Date() && event.status !== 'cancelled'))
 const filteredEvents = computed(() => {
@@ -278,7 +268,7 @@ async function reload() {
     if (['dashboard', 'attendance', 'materials'].includes(section.value)) await loadOperations()
     if (section.value === 'site') {
       const { content } = await getSiteContent()
-      Object.assign(siteForm, content || {})
+      Object.assign(siteForm, cloneAlpinPhysioSiteContent(content || {}))
     }
     if (section.value === 'team') team.value = await listAlpinTeam()
   } catch (error) { flash(`Impossible de charger les données : ${error.message}`, 'error') }
@@ -322,9 +312,13 @@ async function removeMaterial(item) {
   try { await deleteMaterial(item.id); await loadOperations() }
   catch (error) { flash(`Suppression impossible : ${error.message}`, 'error') }
 }
-async function saveContent() {
+async function saveContent(content = siteForm) {
   saving.value = true
-  try { await saveSiteContent({ ...siteForm }, authStore.user?.id); flash('La vitrine a été mise à jour.') }
+  try {
+    await saveSiteContent(cloneAlpinPhysioSiteContent(content), authStore.user?.id)
+    Object.assign(siteForm, cloneAlpinPhysioSiteContent(content))
+    flash('La vitrine a été mise à jour.')
+  }
   catch (error) { flash(`Publication impossible : ${error.message}`, 'error') }
   finally { saving.value = false }
 }
@@ -359,7 +353,7 @@ onMounted(reload)
 </script>
 
 <style scoped>
-.alpin-admin{--ink:#172123;--muted:#5c6a6d;--line:#dce3e1;--paper:#fbfcfa;--mist:#eef3f1;--aqua:#75d9df;--aqua-dark:#168794;--alpin:var(--aqua-dark);--alpin-dark:var(--ink);--alpin-pale:var(--mist);--surface:#fff;max-width:1440px;margin:0 auto;padding:1rem 1rem 4rem;color:var(--ink);background:linear-gradient(180deg,var(--paper),#fff 38%);border-radius:1.25rem}
+.alpin-admin{--heds-navy:#0b213f;--heds-navy-deep:#071426;--heds-yellow:#f3c300;--heds-yellow-ink:#8a6a00;--alpin:var(--heds-yellow-ink);--alpin-dark:var(--heds-navy);--alpin-pale:#fff8d8;--surface:#fff;--line:#d8e0ea;--muted:#66758a;max-width:1440px;margin:0 auto;padding:1rem 1rem 4rem;color:var(--text-color,#172123)}
 .page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;padding:1.25rem 0 2rem}.eyebrow{margin:0 0 .45rem;color:var(--alpin);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase}.page-heading h1{margin:0;font-size:clamp(2.2rem,4vw,4.1rem);line-height:1;letter-spacing:-.045em}.heading-copy{max-width:62ch;margin:.9rem 0 0;color:var(--muted);line-height:1.6}.public-link,.primary-button,.secondary-button,.danger-button{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:.55rem;padding:.7rem 1rem;border-radius:.65rem;font:inherit;font-size:.85rem;font-weight:700;text-decoration:none;cursor:pointer}.public-link,.primary-button{border:1px solid var(--alpin-dark);color:#fff;background:var(--alpin-dark)}.secondary-button{border:1px solid var(--line);color:inherit;background:var(--surface)}.danger-button{border:1px solid #e7b9b9;color:#a92727;background:#fff5f5}.primary-button:active,.secondary-button:active,.danger-button:active,.public-link:active{transform:scale(.96)}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #64d0d8;outline-offset:2px}.section-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;padding:.4rem;background:var(--alpin-pale);border-radius:.85rem;overflow-x:auto}.section-tabs a{min-height:44px;display:flex;align-items:center;gap:.55rem;padding:.65rem .9rem;color:var(--alpin-dark);border-radius:.6rem;font-size:.82rem;font-weight:600;text-decoration:none;white-space:nowrap}.section-tabs a.active{background:#fff;box-shadow:0 4px 16px rgba(16,59,64,.1)}.notice,.loading-state{display:flex;align-items:center;gap:.65rem;margin-bottom:1rem;padding:1rem;border-radius:.7rem}.notice--success{color:#145b3b;background:#e9f7ef}.notice--error{color:#842525;background:#fff0f0}.loading-state{color:var(--muted);background:var(--alpin-pale)}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1rem}.metric-grid--three{grid-template-columns:repeat(3,1fr)}.metric-grid article{position:relative;min-height:138px;padding:1.25rem;background:var(--surface);border:1px solid var(--line);border-radius:1rem;box-shadow:0 8px 30px rgba(16,59,64,.05)}.metric-grid span{display:block;color:var(--muted);font-size:.78rem}.metric-grid strong{display:block;margin-top:.45rem;font-size:2.25rem;font-variant-numeric:tabular-nums}.metric-grid article>i{position:absolute;right:1.2rem;bottom:1.2rem;color:var(--alpin);font-size:1.35rem}.panel{padding:1.25rem;background:var(--surface);border:1px solid var(--line);border-radius:1rem;box-shadow:0 12px 40px rgba(16,59,64,.05)}.panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}.panel-heading h2{margin:0;font-size:1.3rem}.panel-heading p:not(.eyebrow){max-width:68ch;margin:.45rem 0 0;color:var(--muted);font-size:.85rem}.panel-heading>a{color:var(--alpin);font-size:.82rem;font-weight:700}.event-stack{display:flex;flex-direction:column;gap:.55rem}.event-stack.compact{max-height:620px;overflow:auto}.event-row{width:100%;display:grid;grid-template-columns:64px minmax(0,1fr) auto 80px 20px;align-items:center;gap:1rem;padding:.75rem;border:1px solid transparent;border-radius:.75rem;color:inherit;background:#f8fbfa;text-align:start;cursor:pointer}.compact .event-row{grid-template-columns:54px minmax(0,1fr) auto}.event-row:hover,.event-row.selected{border-color:#9bcfcb;background:var(--alpin-pale)}.event-row time{display:flex;align-items:baseline;gap:.3rem;color:var(--alpin)}.event-row time strong{font-size:1.45rem}.event-row time span{font-size:.65rem;font-weight:700}.event-main{min-width:0}.event-main strong,.event-main small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.event-main small,.event-count small{margin-top:.2rem;color:var(--muted);font-size:.72rem}.event-count{text-align:center}.status,.response{display:inline-flex;align-items:center;padding:.3rem .55rem;border-radius:999px;font-size:.68rem;font-weight:700;white-space:nowrap}.status--published,.response--going,.material--ready{color:#12613b;background:#def5e8}.status--draft,.response--maybe,.material--to_prepare{color:#745b12;background:#fff3c7}.status--cancelled,.response--not_going,.material--missing{color:#8a2424;background:#ffe5e5}.split-layout{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(480px,1.4fr);gap:1rem}.materials-layout{grid-template-columns:minmax(320px,.75fr) minmax(480px,1.25fr)}.search-field{min-height:44px;display:flex;align-items:center;gap:.65rem;margin-bottom:1rem;padding:0 .8rem;border:1px solid var(--line);border-radius:.65rem}.search-field input{width:100%;border:0;outline:0;background:transparent;font:inherit}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.field{display:flex;flex-direction:column;gap:.45rem}.field--wide{grid-column:1/-1}.field>span{font-size:.76rem;font-weight:700}.field input,.field textarea,.field select{width:100%;min-height:44px;padding:.7rem .75rem;border:1px solid var(--line);border-radius:.6rem;color:inherit;background:#fbfdfc;font:inherit;font-size:16px}.field textarea{resize:vertical;line-height:1.5}.toggles{display:flex;align-items:flex-start;gap:1.25rem;padding:1rem;background:var(--alpin-pale);border-radius:.7rem}.toggles label{display:flex;align-items:center;gap:.55rem;font-size:.82rem;font-weight:600}.toggles input{width:18px;min-height:auto;height:18px}.form-actions{display:flex;justify-content:flex-end;gap:.65rem;margin-top:1.5rem}.autosave-hint,.progress-copy{color:var(--muted);font-size:.72rem}.event-picker{margin-bottom:1rem}.table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{padding:.9rem .75rem;border-bottom:1px solid var(--line);font-size:.8rem;text-align:start}th{color:var(--muted);font-size:.69rem;letter-spacing:.05em;text-transform:uppercase}.material-list{display:flex;flex-direction:column;gap:.65rem}.material-list article{display:grid;grid-template-columns:42px minmax(0,1fr) auto 42px;align-items:center;gap:.75rem;padding:.75rem;background:#f8fbfa;border-radius:.7rem}.material-list small{display:block;margin-top:.25rem;color:var(--muted);font-size:.72rem}.material-check,.icon-button{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--line);border-radius:.55rem;color:var(--alpin);background:#fff;cursor:pointer}.icon-button.danger{color:#a92727}.empty-state{display:grid;place-items:center;padding:3.5rem 1rem;text-align:center}.empty-state.small{padding:2rem 1rem}.empty-state>i{color:var(--alpin);font-size:2rem}.empty-state h3{margin:1rem 0 .35rem}.empty-state p{max-width:48ch;margin:.25rem 0;color:var(--muted);font-size:.82rem}.empty-state a{margin-top:1rem;color:var(--alpin);font-weight:700}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:1050px){.metric-grid{grid-template-columns:repeat(2,1fr)}.split-layout,.materials-layout{grid-template-columns:1fr}.event-list-panel{max-height:none}}@media(max-width:680px){.alpin-admin{padding-inline:0}.page-heading{align-items:flex-start;flex-direction:column}.public-link{width:100%}.metric-grid,.metric-grid--three,.form-grid{grid-template-columns:1fr}.field--wide{grid-column:1}.event-row{grid-template-columns:52px minmax(0,1fr) auto}.event-count,.event-row>i{display:none}.compact .event-row{grid-template-columns:48px minmax(0,1fr)}.compact .status{grid-column:2;justify-self:start}.form-actions,.toggles{align-items:stretch;flex-direction:column}.form-actions button{width:100%}.panel{padding:1rem}.section-tabs{margin-inline:-.25rem}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 .team-layout{grid-template-columns:minmax(300px,.7fr) minmax(480px,1.3fr)}
 .team-submit{width:100%;margin-top:1rem}
@@ -369,4 +363,7 @@ onMounted(reload)
 .avatar{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;color:#fff;background:var(--alpin-dark);font-size:.78rem;font-weight:800;letter-spacing:.04em}
 @media(max-width:1050px){.team-layout{grid-template-columns:1fr}}
 @media(max-width:680px){.team-list article{grid-template-columns:44px minmax(0,1fr) 42px}.team-list .status{grid-column:2;justify-self:start}.team-list .icon-button{grid-column:3;grid-row:1/3}}
+.page-heading{padding:1.5rem;color:#fff;background:linear-gradient(135deg,var(--heds-navy-deep),var(--heds-navy));border-radius:1rem}.page-heading .eyebrow{color:var(--heds-yellow)}.page-heading .heading-copy{color:rgba(255,255,255,.72)}.page-heading .public-link{color:var(--heds-navy);background:var(--heds-yellow);border-color:var(--heds-yellow)}
+.section-tabs{background:var(--heds-navy)}.section-tabs a{color:rgba(255,255,255,.78)}.section-tabs a:hover{color:#fff;background:rgba(255,255,255,.08)}.section-tabs a.active{color:var(--heds-navy);background:var(--heds-yellow);box-shadow:0 5px 18px rgba(7,20,38,.22)}
+.primary-button{color:var(--heds-navy);background:var(--heds-yellow);border-color:var(--heds-yellow)}.metric-grid article>i,.event-row time,.empty-state>i,.material-check,.icon-button{color:var(--heds-yellow-ink)}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline-color:var(--heds-yellow)}
 </style>

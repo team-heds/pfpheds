@@ -24,29 +24,29 @@
           </div>
         </div>
         <figure class="hero-photo">
-          <img :src="getImagePath('JPhotos/Divers/Comité25-26/DSC05361.JPG')" alt="Le comité Alp’in Physio 2025–2026 réuni devant les montagnes" fetchpriority="high" />
-          <figcaption><strong>Photo du comité 2025-2026</strong></figcaption>
+          <img :src="getImagePath(siteContent.heroImage)" alt="Le comité Alp’in Physio réuni" fetchpriority="high" />
+          <figcaption><strong>{{ siteContent.heroCaption }}</strong></figcaption>
         </figure>
         <div class="hero-facts" aria-label="Alp'in Physio en bref">
-          <span><strong>13</strong>Années</span>
-          <span><strong>50+</strong>Événements</span>
+          <span><strong>{{ siteContent.yearsCount }}</strong>Années</span>
+          <span><strong>{{ siteContent.eventsCount }}</strong>Événements</span>
         </div>
       </section>
 
       <section id="about" class="about section" aria-labelledby="about-title">
         <div class="about-copy">
-          <p class="eyebrow">Notre Histoire</p>
+          <p class="eyebrow">{{ siteContent.aboutEyebrow }}</p>
           <h2 id="about-title">{{ siteContent.aboutTitle }}</h2>
           <p class="lead">{{ siteContent.aboutLead }}</p>
           <p>{{ siteContent.aboutBody }}</p>
         </div>
-        <figure class="about-photo"><img :src="getImagePath('JPhotos/Divers/Comité25-26/DSC05389.JPG')" alt="Photo du comité 2025-2026" loading="lazy" /></figure>
+        <figure class="about-photo"><img :src="getImagePath(siteContent.aboutImage)" alt="Photo du comité Alp’in Physio" loading="lazy" /></figure>
       </section>
 
       <section id="team" class="team section" aria-labelledby="team-title">
         <div class="section-heading">
-          <div><p class="eyebrow">Le comité 2025–2026</p><h2 id="team-title">Notre Comité</h2></div>
-          <p>Notre comité est composé d'étudiants des trois années de Bachelor ayant chacun son rôle clé au sein de l'association.</p>
+          <div><p class="eyebrow">{{ siteContent.teamEyebrow }}</p><h2 id="team-title">{{ siteContent.teamTitle }}</h2></div>
+          <p>{{ siteContent.teamLead }}</p>
         </div>
         <div class="team-grid">
           <article v-for="member in committee" :key="member.name" class="member-card">
@@ -58,8 +58,8 @@
 
       <section id="services" class="services" aria-labelledby="services-title">
         <div class="services-intro section">
-          <div><p class="eyebrow eyebrow--light">Nos Prestations</p><h2 id="services-title">Organisateurs d'événements sportifs</h2></div>
-          <p>Si vous êtes organisateur d'un évènement sportif et que vous cherchez un groupe d'étudiants pour les massages de récupération, vous êtes au bon endroit !</p>
+          <div><p class="eyebrow eyebrow--light">{{ siteContent.servicesEyebrow }}</p><h2 id="services-title">{{ siteContent.servicesTitle }}</h2></div>
+          <p>{{ siteContent.servicesLead }}</p>
         </div>
         <div class="activity-grid">
           <article v-for="activity in activities" :key="activity.title" class="activity">
@@ -68,12 +68,12 @@
           </article>
         </div>
         <div class="process section">
-          <div class="process-title"><p class="eyebrow eyebrow--light">Comment ça marche ?</p><h2>Comment Fonctionne un Partenariat avec Alp'in Physio ?</h2></div>
+          <div class="process-title"><p class="eyebrow eyebrow--light">{{ siteContent.partnershipEyebrow }}</p><h2>{{ siteContent.partnershipTitle }}</h2></div>
           <ol><li v-for="(step, index) in partnershipSteps" :key="step.title"><span>{{ String(index + 1).padStart(2, '0') }}</span><div><h3>{{ step.title }}</h3><p>{{ step.description }}</p></div></li></ol>
           <div class="partnership-cta">
-            <div><p class="eyebrow eyebrow--light">Intéressé par un Partenariat ?</p><h3>Contactez-nous dès maintenant pour organiser votre événement avec nos étudiants masseurs !</h3></div>
+            <div><p class="eyebrow eyebrow--light">Intéressé par un Partenariat ?</p><h3>{{ siteContent.partnershipCtaTitle }}</h3></div>
             <div class="partnership-actions">
-              <a class="button button--outline-light" href="mailto:alpinphysio@hevs.ch?subject=Demande%20du%20contrat%20de%20partenariat%20V_juin_2025" title="Demander le document par e-mail"><i class="pi pi-file-pdf" /> Contrat de partenariat (V_juin_2025)</a>
+              <a class="button button--outline-light" :href="`mailto:${siteContent.email}?subject=Demande%20du%20contrat%20de%20partenariat`" title="Demander le document par e-mail"><i class="pi pi-file-pdf" /> {{ siteContent.contractLabel }}</a>
               <a class="button button--turquoise" href="mailto:alpinphysio@hevs.ch?subject=Proposition%20de%20collaboration">Nous contacter directement <i class="pi pi-arrow-up-right" /></a>
             </div>
           </div>
@@ -81,29 +81,29 @@
       </section>
 
       <section id="calendar" class="calendar section" aria-labelledby="calendar-title">
-        <div class="section-heading"><div><p class="eyebrow">Notre calendrier</p><h2 id="calendar-title">Rejoignez-nous lors de nos prochains événements</h2></div></div>
+        <div class="section-heading"><div><p class="eyebrow">{{ siteContent.calendarEyebrow }}</p><h2 id="calendar-title">{{ siteContent.calendarTitle }}</h2></div></div>
         <ol v-if="events.length" class="event-list"><li v-for="event in events" :key="event.id || event.title"><time :datetime="event.start_date"><strong>{{ event.day }}</strong><span>{{ event.month }}</span></time><div><h3>{{ event.title }}</h3><p><i class="pi pi-map-marker" />{{ event.location }}</p></div><i class="pi pi-arrow-up-right" /></li></ol>
         <div v-else class="public-empty-state"><i class="pi pi-calendar" /><p>Les prochaines dates seront publiées ici.</p></div>
       </section>
 
       <section id="gallery" class="gallery section" aria-labelledby="gallery-title">
-        <div class="section-heading"><div><p class="eyebrow">Nos Moments</p><h2 id="gallery-title">Découvrez Alp'in Physio en action lors des événements sportifs</h2></div><div class="gallery-count">{{ currentSlide + 1 }} / {{ galleryPhotos.length }}</div></div>
+        <div class="section-heading"><div><p class="eyebrow">{{ siteContent.galleryEyebrow }}</p><h2 id="gallery-title">{{ siteContent.galleryTitle }}</h2></div><div class="gallery-count">{{ currentSlide + 1 }} / {{ galleryPhotos.length }}</div></div>
         <figure class="gallery-main"><img :src="activePhoto.src" :alt="activePhoto.alt" /><figcaption><span>{{ activePhoto.date }} · {{ activePhoto.location }}</span><h3>{{ activePhoto.title }}</h3><p>{{ activePhoto.description }}</p></figcaption><div class="gallery-controls"><button type="button" aria-label="Photo précédente" @click="previousSlide"><i class="pi pi-arrow-left" /></button><button type="button" aria-label="Photo suivante" @click="nextSlide"><i class="pi pi-arrow-right" /></button></div></figure>
         <div class="gallery-strip" aria-label="Choisir une photo"><button v-for="(photo, index) in galleryPhotos" :key="photo.src" type="button" :class="{ active: index === currentSlide }" :aria-label="`Afficher ${photo.title}`" @click="currentSlide = index"><img :src="photo.src" alt="" loading="lazy" /><span>{{ photo.title }}</span></button></div>
       </section>
 
-      <section class="partners section" aria-labelledby="partners-title"><div><p class="eyebrow">Des partenaires fidèles qui nous accompagnent depuis de nombreuses années.</p><h2 id="partners-title">Nos Sponsors</h2></div><div class="partner-grid"><a v-for="partner in partners" :key="partner.name" :href="partner.url" target="_blank" rel="noopener noreferrer"><img :src="getImagePath(partner.logo)" :alt="partner.name" loading="lazy" /></a></div></section>
+      <section class="partners section" aria-labelledby="partners-title"><div><p class="eyebrow">{{ siteContent.partnersEyebrow }}</p><h2 id="partners-title">{{ siteContent.partnersTitle }}</h2></div><div class="partner-grid"><a v-for="partner in partners" :key="partner.name" :href="partner.url" target="_blank" rel="noopener noreferrer"><img :src="getImagePath(partner.logo)" :alt="partner.name" loading="lazy" /></a></div></section>
 
       <section id="contact" class="contact" aria-labelledby="contact-title">
-        <div class="contact-photo"><img :src="getImagePath('JPhotos/Photoformations/DSC05665.JPG')" alt="Formation pratique au massage sportif organisée par Alp’in Physio" loading="lazy" /></div>
+        <div class="contact-photo"><img :src="getImagePath(siteContent.contactImage)" alt="Formation pratique au massage sportif organisée par Alp’in Physio" loading="lazy" /></div>
         <div class="contact-copy">
-          <p class="eyebrow eyebrow--light">Contactez-nous</p>
-          <h2 id="contact-title">Nous sommes là pour répondre à vos questions</h2>
-          <p>Cliquez pour nous envoyer un email</p>
+          <p class="eyebrow eyebrow--light">{{ siteContent.contactEyebrow }}</p>
+          <h2 id="contact-title">{{ siteContent.contactTitle }}</h2>
+          <p>{{ siteContent.contactLead }}</p>
           <a class="contact-mail" :href="`mailto:${siteContent.email}`">{{ siteContent.email }} <i class="pi pi-arrow-up-right" /></a>
           <div class="contact-meta">
-            <a class="contact-card contact-card--instagram" href="https://instagram.com/alpinphysio" target="_blank" rel="noopener noreferrer"><i class="pi pi-instagram" /><span><small>Suivez nos aventures sportives</small><strong>{{ siteContent.instagram }}</strong></span><i class="pi pi-arrow-up-right" /></a>
-            <a class="contact-card" href="https://maps.google.com/?q=HES-SO+Valais+Thermenstrasse+41+Leukerbad" target="_blank" rel="noopener noreferrer"><i class="pi pi-map-marker" /><span><small>Notre Adresse</small><strong>Thermenstrasse 41 · 3954 Leukerbad</strong></span><i class="pi pi-arrow-up-right" /></a>
+            <a class="contact-card contact-card--instagram" :href="siteContent.instagramUrl" target="_blank" rel="noopener noreferrer"><i class="pi pi-instagram" /><span><small>Suivez nos aventures sportives</small><strong>{{ siteContent.instagram }}</strong></span><i class="pi pi-arrow-up-right" /></a>
+            <a class="contact-card" :href="siteContent.addressUrl" target="_blank" rel="noopener noreferrer"><i class="pi pi-map-marker" /><span><small>Notre Adresse</small><strong>{{ siteContent.address }}</strong></span><i class="pi pi-arrow-up-right" /></a>
           </div>
         </div>
       </section>
@@ -115,12 +115,13 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { getSiteContent, listAlpinEvents } from '@/service/alpinPhysioAdminService'
+import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
 
 const getImagePath = (path) => `/assets/images/heds/AlpinPhysioPhoto/${path}`
 const logoPath = getImagePath('JPhotos/Divers/logoalpin/ALPINPHYSIO-logo-bleu-impression_transparent.jpg')
 const logoMarkPath = getImagePath('JPhotos/Divers/logoalpin/alpinphysio-mark.jpg')
 const navigation = [{ id: 'about', label: 'Notre Histoire' }, { id: 'team', label: 'Notre Comité' }, { id: 'services', label: 'Nos Prestations' }, { id: 'calendar', label: 'Notre Calendrier' }, { id: 'gallery', label: 'Nos Moments' }]
-const committee = [
+const builtInCommittee = [
   { name: 'Leanne', role: 'Présidente', image: 'JPhotos/Divers/photocomite/DSC09605-portrait.JPG', position: 'center 42%', bio: `Sportive et amoureuse de ma Gruyère natale, je me sens chez moi dès que je mets les pieds en montagne. L'appareil photo à la main, je chasse les couchers de soleil en altitude. Ah oui et… j'adore les hélicoptères… !` },
   { name: 'Romain', role: 'Vice-président', image: 'JPhotos/Divers/photocomite/romain_de_pury.jpeg', bio: `Passionné de sport (et de bonne bouffe), je dis rarement non à un petit verre pour fêter l'effort. Sur les courses, je suis là pour masser… et surtout pour obéir aux ordres de Leanne !` },
   { name: 'Salomé', role: 'Secrétaire', image: 'JPhotos/Divers/photocomite/salome_clemons.jpeg', bio: `Hello, moi c'est Salomé et vous me trouverez soit en train de gambader dans les montagnes soit à la découverte d'un autre pays. Toujours le smile, je suis une pub Colgate ambulante et fière de l'être !` },
@@ -131,33 +132,24 @@ const committee = [
   { name: 'Léa', role: 'Responsable Matériel', image: 'JPhotos/Divers/photocomite/lea_volpe.jpeg', bio: `Passionnée par le sport en tout genre, j'apprécie l'aventure et me lancer de nouveaux challenges. Rien de tel que la montagne pour me ressourcer et me reconnecter à l'essentiel. Quant à ma créativité, je lui laisse libre cours dans la pâtisserie et la réalisation de petits bijoux homemade.` },
   { name: 'Luca', role: 'Responsable des Responsables de course', image: 'JPhotos/Divers/photocomite/luca_fleury.jpeg', bio: `L'équilibre de ma vie : les études, le sport et faire la fête ! Je trouve mon bonheur dans la diversité de mes activités. Épicurien dans l'âme, j'aime autant cuisiner que bien manger. Toujours à la recherche des plus beaux paysages au fil de mes voyages.` }
 ]
-const activities = [
+const builtInActivities = [
   { number: '01', title: 'Massage Post-Effort', description: 'Les étudiants de Loèche-les-Bains se mettent à disposition lors de courses pour le massage post-effort des participants. Cela permet aux sportifs de bénéficier de massages de qualité.', image: 'JPhotos/Photocourses/Grand Raid/grand_raid_24_1.JPG', alt: 'Massage Post-Effort' },
   { number: '02', title: 'Partenariats Sportifs', description: `Alp'in physio crée des partenariats avec petites et grandes manifestations sportives (Sierre-Zinal, le Grand Raid...), essentiellement en Suisse romande de par la localisation de notre école.`, image: 'JPhotos/Photocourses/Tour des Stations/TDS_2024_1.jpeg', alt: 'Partenariats Sportifs' },
   { number: '03', title: 'Formations et Conférences', description: `Au-delà de la pratique sur le terrain, nous mettons sur pied diverses conférences et formations au sein de l'école pour développer le réseau professionnel et approfondir les connaissances.`, image: 'JPhotos/Photoconférences/Conférence Bastien Murith/DSC03767.JPG', alt: 'Formations et Conférences' }
 ]
-const partnershipSteps = [
+const builtInPartnershipSteps = [
   { title: 'Premier Contact', description: `Pour toute demande de partenariat, veuillez contacter le comité de l'association à l'adresse suivante : alpinphysio@hevs.ch. Décrivez les besoins nécessaires pour votre évènement (date et lieu, horaire, estimation de nombre de masseurs...) et nous ferons un premier sondage auprès des étudiants pour trouver un responsable de course avec qui vous aurez contact pour la suite de l'organisation.` },
   { title: 'Recrutement des Étudiants', description: `Après cette première prise de contact entre les organisateurs et Alp'in Physio, l'association recrute le nombre d'étudiants souhaité qui feront ensuite le déplacement le jour de course.` },
   { title: 'Matériel et Logistique', description: `Si besoin, nous pouvons amener notre propre matériel de massage (tables, huile, tape…) afin d'assurer la bonne tenue de notre stand.` },
   { title: 'Conditions Contractuelles', description: `Vous trouverez ci-dessous un document décrivant les conditions contractuelles d'un partenariat avec Alp'in Physio.` }
 ]
-const defaultSiteContent = {
-  heroEyebrow: 'Association Étudiante',
-  heroLead: 'Association étudiante depuis 2012',
-  aboutTitle: 'Une passion partagée depuis 2012',
-  aboutLead: `Nous sommes des étudiants et étudiantes en physiothérapie, sportifs et sportives, autant de caractéristiques qui nous ont poussés à mettre sur pied l'association Alp'in Physio en 2012.`,
-  aboutBody: `En effet, l'association nous permet de conjuguer nos compétences en physiothérapie et la pratique sur le terrain sportif.`,
-  email: 'alpinphysio@hevs.ch',
-  instagram: '@alpinphysio',
-}
-const siteContent = reactive({ ...defaultSiteContent })
+const siteContent = reactive(cloneAlpinPhysioSiteContent())
 const fallbackEvents = [{ id: 'fallback-1', day: '06', month: 'SEP', title: 'Grand Raid BCVS', location: 'Verbier' }, { id: 'fallback-2', day: '28', month: 'SEP', title: 'RunMate', location: 'Montreux' }]
 const events = ref([])
 const loadPublicContent = async () => {
   try {
     const [{ content }, rows] = await Promise.all([getSiteContent(), listAlpinEvents({ publicOnly: true })])
-    Object.assign(siteContent, defaultSiteContent, content || {})
+    Object.assign(siteContent, cloneAlpinPhysioSiteContent(content || {}))
     events.value = rows.map((event) => {
       const date = new Date(event.start_date)
       return {
@@ -172,23 +164,31 @@ const loadPublicContent = async () => {
     events.value = fallbackEvents
   }
 }
-const partners = [{ name: 'Compex', logo: 'JPhotos/Divers/logosponsors/COMPEX-logo.jpg', url: 'https://www.compex.com/' }, { name: 'Perskindol', logo: 'JPhotos/Divers/logosponsors/perskindol_2.jpg', url: 'https://www.perskindol.ch/' }, { name: 'PhysioValais', logo: 'JPhotos/Divers/logosponsors/PhysioValais_logo_unique.gif', url: 'https://www.physioswiss.ch/' }, { name: 'HES-SO Valais-Wallis', logo: 'JPhotos/Divers/logosponsors/FR-DE_HEdS.png', url: 'https://www.hevs.ch/' }]
-const galleryPhotos = [
+const builtInPartners = [{ name: 'Compex', logo: 'JPhotos/Divers/logosponsors/COMPEX-logo.jpg', url: 'https://www.compex.com/' }, { name: 'Perskindol', logo: 'JPhotos/Divers/logosponsors/perskindol_2.jpg', url: 'https://www.perskindol.ch/' }, { name: 'PhysioValais', logo: 'JPhotos/Divers/logosponsors/PhysioValais_logo_unique.gif', url: 'https://www.physioswiss.ch/' }, { name: 'HES-SO Valais-Wallis', logo: 'JPhotos/Divers/logosponsors/FR-DE_HEdS.png', url: 'https://www.hevs.ch/' }]
+const builtInGalleryPhotos = [
   { src: getImagePath('JPhotos/Photocourses/Grand Raid/grand_raid_24_1.JPG'), alt: 'Grand Raid BCVS 2024', title: 'Grand Raid BCVS 2024', description: 'Nos étudiants en action lors du Grand Raid offrant des massages de récupération aux coureurs après plusieurs heures de course.', date: 'Août 2024', location: 'Verbier - Grimentz' },
   { src: getImagePath('JPhotos/Photoformations/DSC05658.JPG'), alt: 'Formation au Massage Sportif', title: 'Formation au Massage Sportif', description: 'Session de formation annuelle pour préparer nos nouveaux étudiants aux techniques de massage post-effort.', date: 'Octobre 2024', location: 'HES-SO Valais, Leukerbad' },
   { src: getImagePath('JPhotos/Photocourses/SKA-skieurs/ska_torrent_2024.png'), alt: 'Récupération pour les skieurs du SKA', title: 'Récupération pour les skieurs du SKA', description: `Aperçu des séances de récupération et d'étirements, proposées aux jeunes skieurs du SKA Torrent durant l'hiver 2024.`, date: 'Hiver 24-25', location: 'Torrent' },
   { src: getImagePath('JPhotos/Photocourses/Trail Verbier - St-Bernard by UTMB/trail_VSB_2024_3.JPG'), alt: 'Trail du Grand Saint-Bernard 2024', title: 'Trail du Grand Saint-Bernard 2024', description: `Deux belles journées de massage pour notre équipe d'étudiants sur le Trail Verbier Saint-Bernard by UTMB.`, date: 'Juillet 2024', location: 'Verbier - Saint-Bernard' },
   { src: getImagePath('JPhotos/Photocourses/Fête Fédérale de Gym 2025/FFG_25_3.JPG'), alt: 'Fête Fédérale de gymnastique 2025', title: 'Fête Fédérale de gymnastique 2025', description: `Alp'in Physio a eu l'honneur de masser durant le week-end de la FFG 2025 en partenariat avec le cabinet EnMouvement. Une chouette expérience sur une fête d'une telle ampleur !`, date: 'Juin 2025', location: 'Suisse' }
 ]
+const committee = computed(() => siteContent.committee?.length ? siteContent.committee : builtInCommittee)
+const activities = computed(() => siteContent.activities?.length ? siteContent.activities : builtInActivities)
+const partnershipSteps = computed(() => siteContent.partnershipSteps?.length ? siteContent.partnershipSteps : builtInPartnershipSteps)
+const partners = computed(() => siteContent.partners?.length ? siteContent.partners : builtInPartners)
+const galleryPhotos = computed(() => (siteContent.galleryPhotos?.length ? siteContent.galleryPhotos : builtInGalleryPhotos).map((photo) => ({
+  ...photo,
+  src: photo.src || getImagePath(photo.image),
+})))
 const currentSlide = ref(0)
-const activePhoto = computed(() => galleryPhotos[currentSlide.value])
+const activePhoto = computed(() => galleryPhotos.value[currentSlide.value] || galleryPhotos.value[0])
 const activeSection = ref('about')
 const isMenuOpen = ref(false)
 const isScrolled = ref(false)
 let scrollRoot
 const scrollTo = (id) => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); isMenuOpen.value = false }
-const nextSlide = () => { currentSlide.value = (currentSlide.value + 1) % galleryPhotos.length }
-const previousSlide = () => { currentSlide.value = currentSlide.value ? currentSlide.value - 1 : galleryPhotos.length - 1 }
+const nextSlide = () => { currentSlide.value = (currentSlide.value + 1) % galleryPhotos.value.length }
+const previousSlide = () => { currentSlide.value = currentSlide.value ? currentSlide.value - 1 : galleryPhotos.value.length - 1 }
 const updateNavigation = () => { isScrolled.value = (scrollRoot?.scrollTop ?? window.scrollY) > 20; const rootTop = scrollRoot === document.scrollingElement ? 0 : (scrollRoot?.getBoundingClientRect().top ?? 0); navigation.forEach(({ id }) => { const top = document.getElementById(id)?.getBoundingClientRect().top; if (typeof top === 'number' && top <= rootTop + 170) activeSection.value = id }) }
 onMounted(() => { loadPublicContent(); scrollRoot = document.getElementById('main-content') || document.scrollingElement; scrollRoot?.addEventListener?.('scroll', updateNavigation, { passive: true }); updateNavigation() })
 onUnmounted(() => scrollRoot?.removeEventListener?.('scroll', updateNavigation))

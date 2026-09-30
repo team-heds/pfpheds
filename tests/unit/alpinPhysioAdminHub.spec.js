@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
+import { defaultAlpinPhysioSiteContent } from '../../src/data/alpinPhysioSiteContent'
 
 const read = (file) => fs.readFileSync(path.resolve(process.cwd(), file), 'utf8')
 
@@ -46,5 +47,21 @@ describe('Alp’in Physio administration hub', () => {
     expect(service).toContain("event.status !== 'published' || !event.show_in_feed")
     expect(service).toContain("upsert(post, { onConflict: 'event_id' })")
     expect(service).toContain('event_id: event.id')
+  })
+
+  it('keeps the complete public content editable from the administration', () => {
+    const editor = read('src/components/alpinphysio/AlpinPhysioSiteEditor.vue')
+    const publicPage = read('src/views/associations/AlpinPhysioView.vue')
+
+    expect(defaultAlpinPhysioSiteContent.committee).toHaveLength(9)
+    expect(defaultAlpinPhysioSiteContent.activities).toHaveLength(3)
+    expect(defaultAlpinPhysioSiteContent.partnershipSteps).toHaveLength(4)
+    expect(defaultAlpinPhysioSiteContent.galleryPhotos).toHaveLength(5)
+    expect(defaultAlpinPhysioSiteContent.partners).toHaveLength(4)
+    expect(editor).toContain('Modifier toute la vitrine')
+    expect(editor).toContain("add('committee'")
+    expect(editor).toContain("add('galleryPhotos'")
+    expect(publicPage).toContain('siteContent.committee')
+    expect(publicPage).toContain('siteContent.galleryPhotos')
   })
 })
