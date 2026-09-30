@@ -55,9 +55,17 @@ select set_config('request.jwt.claim.sub', current_setting('heds_test.alpin_stud
 do $student$
 declare
   visible_other integer;
+  foreign_track_roles integer;
   changed_events integer;
   forbidden boolean := false;
 begin
+  select count(*) into foreign_track_roles
+  from public.user_track_roles
+  where user_id <> auth.uid();
+  if foreign_track_roles <> 0 then
+    raise exception 'A student must not see another person''s track roles';
+  end if;
+
   select count(*) into visible_other
   from public.event_registrations
   where event_id = 'a1100000-0000-0000-0000-000000000001';
@@ -100,10 +108,18 @@ select set_config('request.jwt.claim.sub', current_setting('heds_test.alpin_mana
 do $manager$
 declare
   visible_responses integer;
+  visible_alpin_roles integer;
   changed_events integer;
 begin
   if not public.app_is_alpinphysio_manager() then
     raise exception 'The ALPIN ADMIN track role must grant manager access';
+  end if;
+
+  select count(*) into visible_alpin_roles
+  from public.user_track_roles
+  where track_id = 'ALPIN';
+  if visible_alpin_roles < 1 then
+    raise exception 'The ALPIN manager must see ALPIN track roles';
   end if;
 
   select count(*) into visible_responses
