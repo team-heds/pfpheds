@@ -373,6 +373,7 @@ function getSectionClass(section) {
   if (label === 'admin général') return 'admin-general-section';
   if (label === 'physiothérapie') return 'physio-section';
   if (label === 'soins infirmiers' || label === 'académique') return 'academic-section';
+  if (label === "alp'in physio") return 'alpinphysio-section';
   if (label === 'général') return 'tools-section';
   return '';
 }
@@ -409,6 +410,14 @@ function shouldShowSection(section) {
         roleStore.can('AdminSoins') ||
         roleStore.can('EnseignantSoins') ||
         roleStore.can('RMSoins') ||
+        roleStore.isSuper
+      );
+    case "alp'in physio":
+      return (
+        roleStore.can('alpinphysio.view') ||
+        roleStore.can('alpinphysio.events.manage') ||
+        roleStore.can('admin') ||
+        roleStore.can('super.all') ||
         roleStore.isSuper
       );
     case 'général': // Outils transversaux

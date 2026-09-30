@@ -16,9 +16,9 @@
     <main id="main">
       <section id="hero" class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
-          <p class="hero-kicker">Association Étudiante</p>
+          <p class="hero-kicker">{{ siteContent.heroEyebrow }}</p>
           <h1 id="hero-title"><span>Alp’in</span><strong>Physio</strong></h1>
-          <p class="hero-lead">Association étudiante depuis 2012</p>
+          <p class="hero-lead">{{ siteContent.heroLead }}</p>
           <div class="hero-actions">
             <a class="button button--primary" href="#about" @click.prevent="scrollTo('about')">Découvrir <i class="pi pi-arrow-down" /></a>
           </div>
@@ -36,9 +36,9 @@
       <section id="about" class="about section" aria-labelledby="about-title">
         <div class="about-copy">
           <p class="eyebrow">Notre Histoire</p>
-          <h2 id="about-title">Une passion partagée depuis 2012</h2>
-          <p class="lead">Nous sommes des <strong>étudiants et étudiantes en physiothérapie</strong>, <strong>sportifs et sportives</strong>, autant de caractéristiques qui nous ont poussés à mettre sur pied l'association Alp'in Physio en 2012.</p>
-          <p>En effet, l'association nous permet de <strong>conjuguer nos compétences en physiothérapie et la pratique sur le terrain sportif</strong>.</p>
+          <h2 id="about-title">{{ siteContent.aboutTitle }}</h2>
+          <p class="lead">{{ siteContent.aboutLead }}</p>
+          <p>{{ siteContent.aboutBody }}</p>
         </div>
         <figure class="about-photo"><img :src="getImagePath('JPhotos/Divers/Comité25-26/DSC05389.JPG')" alt="Photo du comité 2025-2026" loading="lazy" /></figure>
       </section>
@@ -82,7 +82,8 @@
 
       <section id="calendar" class="calendar section" aria-labelledby="calendar-title">
         <div class="section-heading"><div><p class="eyebrow">Notre calendrier</p><h2 id="calendar-title">Rejoignez-nous lors de nos prochains événements</h2></div></div>
-        <ol class="event-list"><li v-for="event in events" :key="event.title"><time><strong>{{ event.day }}</strong><span>{{ event.month }}</span></time><div><h3>{{ event.title }}</h3><p><i class="pi pi-map-marker" />{{ event.location }}</p></div><i class="pi pi-arrow-up-right" /></li></ol>
+        <ol v-if="events.length" class="event-list"><li v-for="event in events" :key="event.id || event.title"><time :datetime="event.start_date"><strong>{{ event.day }}</strong><span>{{ event.month }}</span></time><div><h3>{{ event.title }}</h3><p><i class="pi pi-map-marker" />{{ event.location }}</p></div><i class="pi pi-arrow-up-right" /></li></ol>
+        <div v-else class="public-empty-state"><i class="pi pi-calendar" /><p>Les prochaines dates seront publiées ici.</p></div>
       </section>
 
       <section id="gallery" class="gallery section" aria-labelledby="gallery-title">
@@ -99,9 +100,9 @@
           <p class="eyebrow eyebrow--light">Contactez-nous</p>
           <h2 id="contact-title">Nous sommes là pour répondre à vos questions</h2>
           <p>Cliquez pour nous envoyer un email</p>
-          <a class="contact-mail" href="mailto:alpinphysio@hevs.ch">alpinphysio@hevs.ch <i class="pi pi-arrow-up-right" /></a>
+          <a class="contact-mail" :href="`mailto:${siteContent.email}`">{{ siteContent.email }} <i class="pi pi-arrow-up-right" /></a>
           <div class="contact-meta">
-            <a class="contact-card contact-card--instagram" href="https://instagram.com/alpinphysio" target="_blank" rel="noopener noreferrer"><i class="pi pi-instagram" /><span><small>Suivez nos aventures sportives</small><strong>@alpinphysio</strong></span><i class="pi pi-arrow-up-right" /></a>
+            <a class="contact-card contact-card--instagram" href="https://instagram.com/alpinphysio" target="_blank" rel="noopener noreferrer"><i class="pi pi-instagram" /><span><small>Suivez nos aventures sportives</small><strong>{{ siteContent.instagram }}</strong></span><i class="pi pi-arrow-up-right" /></a>
             <a class="contact-card" href="https://maps.google.com/?q=HES-SO+Valais+Thermenstrasse+41+Leukerbad" target="_blank" rel="noopener noreferrer"><i class="pi pi-map-marker" /><span><small>Notre Adresse</small><strong>Thermenstrasse 41 · 3954 Leukerbad</strong></span><i class="pi pi-arrow-up-right" /></a>
           </div>
         </div>
@@ -112,7 +113,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { getSiteContent, listAlpinEvents } from '@/service/alpinPhysioAdminService'
 
 const getImagePath = (path) => `/assets/images/heds/AlpinPhysioPhoto/${path}`
 const logoPath = getImagePath('JPhotos/Divers/logoalpin/ALPINPHYSIO-logo-bleu-impression_transparent.jpg')
@@ -140,7 +142,36 @@ const partnershipSteps = [
   { title: 'Matériel et Logistique', description: `Si besoin, nous pouvons amener notre propre matériel de massage (tables, huile, tape…) afin d'assurer la bonne tenue de notre stand.` },
   { title: 'Conditions Contractuelles', description: `Vous trouverez ci-dessous un document décrivant les conditions contractuelles d'un partenariat avec Alp'in Physio.` }
 ]
-const events = [{ day: '06', month: 'SEP', title: 'Grand Raid BCVS', location: 'Verbier' }, { day: '17', month: 'SEP', title: 'Présentation BA25', location: 'HES-SO' }, { day: '28', month: 'SEP', title: 'RunMate', location: 'Montreux' }, { day: '12', month: 'NOV', title: 'Distribution habits', location: 'HES-SO' }]
+const defaultSiteContent = {
+  heroEyebrow: 'Association Étudiante',
+  heroLead: 'Association étudiante depuis 2012',
+  aboutTitle: 'Une passion partagée depuis 2012',
+  aboutLead: `Nous sommes des étudiants et étudiantes en physiothérapie, sportifs et sportives, autant de caractéristiques qui nous ont poussés à mettre sur pied l'association Alp'in Physio en 2012.`,
+  aboutBody: `En effet, l'association nous permet de conjuguer nos compétences en physiothérapie et la pratique sur le terrain sportif.`,
+  email: 'alpinphysio@hevs.ch',
+  instagram: '@alpinphysio',
+}
+const siteContent = reactive({ ...defaultSiteContent })
+const fallbackEvents = [{ id: 'fallback-1', day: '06', month: 'SEP', title: 'Grand Raid BCVS', location: 'Verbier' }, { id: 'fallback-2', day: '28', month: 'SEP', title: 'RunMate', location: 'Montreux' }]
+const events = ref([])
+const loadPublicContent = async () => {
+  try {
+    const [{ content }, rows] = await Promise.all([getSiteContent(), listAlpinEvents({ publicOnly: true })])
+    Object.assign(siteContent, defaultSiteContent, content || {})
+    events.value = rows.map((event) => {
+      const date = new Date(event.start_date)
+      return {
+        ...event,
+        day: new Intl.DateTimeFormat('fr-CH', { day: '2-digit' }).format(date),
+        month: new Intl.DateTimeFormat('fr-CH', { month: 'short' }).format(date).replace('.', '').toUpperCase(),
+        location: event.lieu || 'Lieu à confirmer',
+      }
+    })
+  } catch (error) {
+    console.warn('[AlpinPhysio] Contenu dynamique indisponible, utilisation du contenu intégré.', error)
+    events.value = fallbackEvents
+  }
+}
 const partners = [{ name: 'Compex', logo: 'JPhotos/Divers/logosponsors/COMPEX-logo.jpg', url: 'https://www.compex.com/' }, { name: 'Perskindol', logo: 'JPhotos/Divers/logosponsors/perskindol_2.jpg', url: 'https://www.perskindol.ch/' }, { name: 'PhysioValais', logo: 'JPhotos/Divers/logosponsors/PhysioValais_logo_unique.gif', url: 'https://www.physioswiss.ch/' }, { name: 'HES-SO Valais-Wallis', logo: 'JPhotos/Divers/logosponsors/FR-DE_HEdS.png', url: 'https://www.hevs.ch/' }]
 const galleryPhotos = [
   { src: getImagePath('JPhotos/Photocourses/Grand Raid/grand_raid_24_1.JPG'), alt: 'Grand Raid BCVS 2024', title: 'Grand Raid BCVS 2024', description: 'Nos étudiants en action lors du Grand Raid offrant des massages de récupération aux coureurs après plusieurs heures de course.', date: 'Août 2024', location: 'Verbier - Grimentz' },
@@ -159,7 +190,7 @@ const scrollTo = (id) => { document.getElementById(id)?.scrollIntoView({ behavio
 const nextSlide = () => { currentSlide.value = (currentSlide.value + 1) % galleryPhotos.length }
 const previousSlide = () => { currentSlide.value = currentSlide.value ? currentSlide.value - 1 : galleryPhotos.length - 1 }
 const updateNavigation = () => { isScrolled.value = (scrollRoot?.scrollTop ?? window.scrollY) > 20; const rootTop = scrollRoot === document.scrollingElement ? 0 : (scrollRoot?.getBoundingClientRect().top ?? 0); navigation.forEach(({ id }) => { const top = document.getElementById(id)?.getBoundingClientRect().top; if (typeof top === 'number' && top <= rootTop + 170) activeSection.value = id }) }
-onMounted(() => { scrollRoot = document.getElementById('main-content') || document.scrollingElement; scrollRoot?.addEventListener?.('scroll', updateNavigation, { passive: true }); updateNavigation() })
+onMounted(() => { loadPublicContent(); scrollRoot = document.getElementById('main-content') || document.scrollingElement; scrollRoot?.addEventListener?.('scroll', updateNavigation, { passive: true }); updateNavigation() })
 onUnmounted(() => scrollRoot?.removeEventListener?.('scroll', updateNavigation))
 </script>
 
@@ -173,6 +204,7 @@ onUnmounted(() => scrollRoot?.removeEventListener?.('scroll', updateNavigation))
 @media(max-width:800px){.brand{width:auto;height:58px}.brand img{width:62px;height:36px}.brand span{font-size:.95rem}}
 .about h2,.team h2,.calendar h2,.gallery h2,.partners h2{color:var(--ink);-webkit-text-fill-color:var(--ink)}.services h2,.contact h2{color:#fff;-webkit-text-fill-color:#fff}.member-copy h3,.event-list h3{color:var(--ink);-webkit-text-fill-color:var(--ink)}.activity h3,.gallery-main h3,.process h3{color:#fff;-webkit-text-fill-color:#fff}
 .hero,.about,.team,.services,.calendar,.gallery,.contact{scroll-margin-top:100px}
+.public-empty-state{display:flex;align-items:center;justify-content:center;gap:.75rem;min-height:150px;color:var(--muted);background:var(--mist);border-radius:5px}.public-empty-state i{color:var(--aqua-dark);font-size:1.4rem}.public-empty-state p{margin:0}
 .menu-button{color:var(--ink)}
 </style>
 

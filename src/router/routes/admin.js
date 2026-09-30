@@ -33,6 +33,14 @@ export default [
   { path: '/admin/security/rbac', component: () => import('@/views/admin/security/RBACAdminView.vue'), name: 'RBACAdmin', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/routes-editor', component: () => import('@/views/home/DynamicRoutesEditorView.vue'), name: 'DynamicRoutesEditor', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
 
+  // Alp'in Physio
+  { path: '/admin/alpinphysio', component: () => import('@/views/admin/alpinphysio/AlpinPhysioAdminView.vue'), name: 'AlpinPhysioAdmin', props: { section: 'dashboard' }, meta: { requiresAuth: true, need: ['super.all', 'admin', 'alpinphysio.view'] } },
+  { path: '/admin/alpinphysio/events', component: () => import('@/views/admin/alpinphysio/AlpinPhysioAdminView.vue'), name: 'AlpinPhysioEventsAdmin', props: { section: 'events' }, meta: { requiresAuth: true, need: ['super.all', 'admin', 'alpinphysio.events.manage'] } },
+  { path: '/admin/alpinphysio/presences', component: () => import('@/views/admin/alpinphysio/AlpinPhysioAdminView.vue'), name: 'AlpinPhysioAttendanceAdmin', props: { section: 'attendance' }, meta: { requiresAuth: true, need: ['super.all', 'admin', 'alpinphysio.attendance.manage'] } },
+  { path: '/admin/alpinphysio/materiel', component: () => import('@/views/admin/alpinphysio/AlpinPhysioAdminView.vue'), name: 'AlpinPhysioMaterialsAdmin', props: { section: 'materials' }, meta: { requiresAuth: true, need: ['super.all', 'admin', 'alpinphysio.material.manage'] } },
+  { path: '/admin/alpinphysio/site', component: () => import('@/views/admin/alpinphysio/AlpinPhysioAdminView.vue'), name: 'AlpinPhysioSiteAdmin', props: { section: 'site' }, meta: { requiresAuth: true, need: ['super.all', 'admin', 'alpinphysio.site.manage'] } },
+  { path: '/admin/alpinphysio/equipe', component: () => import('@/views/admin/alpinphysio/AlpinPhysioAdminView.vue'), name: 'AlpinPhysioTeamAdmin', props: { section: 'team' }, meta: { requiresAuth: true, need: ['super.all', 'admin', 'alpinphysio.events.manage'] } },
+
   // Admin Lists
   { path: '/admin/programs', component: () => import('@/views/admin/lists/ProgramListView.vue'), name: 'ProgramList', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/modules', component: () => import('@/views/admin/lists/ModuleListView.vue'), name: 'ModuleList', meta: { requiresAuth: true, need: 'admin' } },

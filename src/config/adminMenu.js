@@ -54,6 +54,22 @@ export default [
   },
 
   // ========================================
+  // 🏔️ ALP'IN PHYSIO - Association étudiante
+  // ========================================
+  {
+    label: "Alp'in Physio",
+    icon: 'pi pi-compass',
+    items: [
+      { label: 'Tableau de bord', icon: 'pi pi-th-large', to: '/admin/alpinphysio' },
+      { label: 'Événements', icon: 'pi pi-calendar', to: '/admin/alpinphysio/events' },
+      { label: 'Présences', icon: 'pi pi-users', to: '/admin/alpinphysio/presences' },
+      { label: 'Matériel', icon: 'pi pi-box', to: '/admin/alpinphysio/materiel' },
+      { label: 'Site vitrine', icon: 'pi pi-desktop', to: '/admin/alpinphysio/site' },
+      { label: 'Équipe & accès', icon: 'pi pi-id-card', to: '/admin/alpinphysio/equipe' }
+    ]
+  },
+
+  // ========================================
   // 🏃 PHYSIOTHÉRAPIE - Formation Pratique & Gamification
   // ========================================
   {
