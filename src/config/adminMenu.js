@@ -154,6 +154,7 @@ export default [
           { label: 'Vue Hebdomadaire', icon: 'pi pi-calendar', to: '/admin/planning/weekly' },
           { label: 'Vue Journalière / Salles', icon: 'pi pi-building', to: '/admin/soins-infirmiers/planning-journalier' },
           { label: 'Feuille de charges', icon: 'pi pi-chart-bar', to: '/admin/soins-infirmiers/feuille-de-charges' },
+          { label: 'Qualité du planning', icon: 'pi pi-shield', to: '/admin/soins-infirmiers/qualite-planning' },
           { label: 'Gestion Planning', icon: 'pi pi-pencil', to: '/admin/planning/manage' },
           { label: 'Années Académiques', icon: 'pi pi-calendar-plus', to: '/admin/planning/years' }
         ]

@@ -47,6 +47,9 @@ const {
 } = require('./supabase/passwordRecoveryRequestBackend.js')
 const { createPfpOutcomeRouter } = require('./supabase/pfpOutcomeBackend.js')
 const { createStudentInitialAccessRouters } = require('./supabase/studentInitialAccessBackend.js')
+const {
+  createSIPlanningRemediationRouter
+} = require('./supabase/siPlanningRemediationBackend.js')
 
 // push
 const pushRoutes = require('./supabase/pushBackend')
@@ -166,6 +169,11 @@ app.use(
   '/api/pfp-outcomes',
   requireAnyPermission('page1.access', 'AdminPhysio', 'SECRETARIAT'),
   createPfpOutcomeRouter({ client: supabaseAdmin })
+)
+app.use(
+  '/api/si/planning-remediations',
+  requireAnyPermission('page2.access', 'AdminSoins'),
+  createSIPlanningRemediationRouter({ client: supabaseAdmin })
 )
 app.use('/api/integrations/vimeo', requireAnyPermission('editor'), vimeoRoutes)
 app.use('/api/integrations/github', requireAnyPermission('editor'), githubRoutes)
