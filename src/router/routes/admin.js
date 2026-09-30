@@ -1,4 +1,5 @@
 import { modulePermissionGuard } from '@/router/guards/modulePermissionGuard'
+import { SI_SECRETARIAT_ACCESS } from '@/config/siAccess'
 
 // Routes dashboard & administration
 export default [
@@ -50,6 +51,7 @@ export default [
   { path: '/admin/planning/annual', component: () => import('@/views/admin/planning/AnnualPlanningView.vue'), name: 'AnnualPlanningView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/soins-infirmiers/planning-journalier', component: () => import('@/views/admin/soins-infirmiers/DailyPlanningView.vue'), name: 'DailyPlanningView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/soins-infirmiers/feuille-de-charges', component: () => import('@/views/admin/soins-infirmiers/WorkloadView.vue'), name: 'WorkloadView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/admin/soins-infirmiers/qualite-planning', component: () => import('@/views/admin/soins-infirmiers/PlanningRemediationView.vue'), name: 'PlanningRemediationView', meta: { requiresAuth: true, need: SI_SECRETARIAT_ACCESS } },
   { path: '/admin/soins-infirmiers/cours-postulation', component: () => import('@/views/admin/soins-infirmiers/SIPostulationCoursesView.vue'), name: 'SIPostulationCoursesView', meta: { requiresAuth: true, need: ['authenticated', 'admin', 'RMSoins', 'EnseignantSoins'] } },
 
   // Gestion académique (Kanban & Contenu)
