@@ -6,6 +6,17 @@
     // ✅ Lis les variables d’environnement de Vite
     let supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_KEY
+
+    // Le tunnel Portly publie toute la stack de test (SPA + API Supabase) sur
+    // la même origine. Utiliser cette origine évite les blocages CSP/CORS et
+    // permet de se connecter depuis un réseau qui ne peut pas joindre
+    // directement test.hedsvs.ch. Le domaine de test et la production gardent
+    // leur URL configurée par Vite.
+    const isStagingTunnel = ['127.0.0.1', 'localhost'].includes(window.location.hostname)
+      && window.location.port === '8180'
+    if (isStagingTunnel) {
+    supabaseUrl = window.location.origin
+    }
     if (supabaseUrl && /\/rest\/v1\/?$/i.test(supabaseUrl)) {
     console.warn('[Supabase] VITE_SUPABASE_URL ne doit pas contenir /rest/v1. Normalisation appliquée.')
     supabaseUrl = supabaseUrl.replace(/\/rest\/v1\/?$/i, '')
