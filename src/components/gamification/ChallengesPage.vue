@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrapper">
-    <Navbar />
+    <GamificationNavbar />
     <div class="challenges-page" :style="{ '--house-color': houseColor }">
       
       <!-- Loading State -->
@@ -196,16 +196,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
+import { useGamificationAuth } from './useGamificationAuth'
 import challengesService from '@/service/challengesService'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import GamificationNavbar from './GamificationNavbar.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 
 // Router and auth
 const router = useRouter()
-const authStore = useAuthStore()
+const { user: authUser, ready: authReady } = useGamificationAuth()
 
 // Reactive state
 const loading = ref(true)
@@ -238,7 +238,7 @@ const normalizeHouse = (val) => {
 }
 
 const houseColor = computed(() => {
-  const h = normalizeHouse(authStore.user?.user_metadata?.maison || authStore.user?.maison)
+  const h = normalizeHouse(authUser.value?.user_metadata?.maison)
   if (!h) return '#6B7280'
   return houseConfig[h]?.color || '#6B7280'
 })
@@ -344,11 +344,11 @@ const loadData = async () => {
     loading.value = true
     loadError.value = ''
     
-    if (!authStore.user?.id) {
+    if (!authUser.value?.id) {
       throw new Error('Utilisateur non connecté')
     }
     
-    const userId = authStore.user.id
+    const userId = authUser.value.id
     
     // Load active challenges
     activeChallenges.value = await challengesService.getUserActiveChallenges(userId)
@@ -379,8 +379,9 @@ const getCurrentWeekNumber = () => {
 }
 
 // Lifecycle
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  await authReady
+  await loadData()
 })
 </script>
 

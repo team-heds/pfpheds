@@ -1,370 +1,127 @@
-/**
- * Service Gamification Unifié
- * Centralise toutes les données gamification pour l'écosystème complet
- * Utilisé par : Admin Dashboard, Composants User, Profile, Gestion
- */
+import { supabase } from '../supabase.js'
 
-import { ref as dbRef, get, set, push, remove, onValue, off } from 'firebase/database'
-import { db, auth } from '../../firebase.js'
-import notificationService from './notificationService.js'
+const POLL_INTERVAL = 30_000
 
 class GamificationService {
   constructor() {
-    this.listeners = new Map() // Pour gérer les listeners temps réel
-    this.cache = new Map() // Cache pour optimiser les performances
+    this.listeners = new Map()
   }
 
-  // ==================== DONNÉES UNIFIÉES ====================
-
-  /**
-   * Obtient toutes les statistiques gamification en temps réel
-   */
   async getUnifiedStats() {
-    try {
-      const [users, challenges, quests, badges, houses, logs] = await Promise.all([
-        this.getAllUsers(),
-        this.getAllChallenges(),
-        this.getAllQuests(),
-        this.getAllBadges(),
-        this.getAllHouses(),
-        this.getRecentLogs()
-      ])
+    const today = new Date().toISOString().slice(0, 10)
+    const [profilesResult, gamificationResult, challengesResult, activeChallengesResult, questsResult, completedQuestsResult, badgesResult, awardedBadgesResult, housesResult, logsResult] = await Promise.all([
+      supabase.from('user_profiles').select('user_id', { count: 'exact', head: true }),
+      supabase.from('gamification_data').select('user_id', { count: 'exact', head: true }),
+      supabase.from('challenges').select('id', { count: 'exact', head: true }),
+      supabase.from('challenges').select('id', { count: 'exact', head: true }).eq('is_active', true).or(`start_date.is.null,start_date.lte.${today}`).or(`end_date.is.null,end_date.gte.${today}`),
+      supabase.from('quests').select('id', { count: 'exact', head: true }),
+      supabase.from('user_quest_progress').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
+      supabase.from('badges').select('id', { count: 'exact', head: true }),
+      supabase.from('user_badges').select('badge_id', { count: 'exact', head: true }),
+      supabase.from('houses').select('id,name,motto,color,description,total_xp,member_count,level'),
+      supabase.from('xp_history').select('id,user_id,amount,action,description,created_at').order('created_at', { ascending: false }).limit(50)
+    ])
 
-      const stats = {
-        // Statistiques générales
-        totalUsers: Object.keys(users).length,
-        gamificationUsers: Object.values(users).filter(user => 
-          user.gamification && user.gamification.maison
-        ).length,
-        
-        // Contenu gamification
-        totalChallenges: Object.keys(challenges).length,
-        activeChallenges: Object.values(challenges).filter(c => c.status === 'active').length,
-        totalQuests: Object.keys(quests).length,
-        completedQuests: Object.values(quests).filter(q => q.status === 'completed').length,
-        totalBadges: Object.keys(badges).length,
-        
-        // Maisons
-        totalHouses: Object.keys(houses).length,
-        houses: this.processHousesStats(houses, users),
-        
-        // Activité récente
-        recentLogs: logs.slice(0, 10),
-        
-        // Données brutes pour composants
-        rawData: {
-          users,
-          challenges,
-          quests,
-          badges,
-          houses
-        },
-        
-        lastUpdated: new Date().toISOString()
-      }
+    const results = [profilesResult, gamificationResult, challengesResult, activeChallengesResult, questsResult, completedQuestsResult, badgesResult, awardedBadgesResult, housesResult, logsResult]
+    const failed = results.find(({ error }) => error)
+    if (failed) throw failed.error
 
-      // Mettre en cache
-      this.cache.set('unifiedStats', stats)
-      return stats
-
-    } catch (error) {
-      console.error('[GamificationService] Erreur lors du chargement des statistiques:', error)
-      return this.getDefaultStats()
+    const houses = Object.fromEntries((housesResult.data || []).map((house) => [house.id, {
+      ...house,
+      memberCount: Number(house.member_count || 0),
+      totalXP: Number(house.total_xp || 0),
+      averageLevel: Number(house.level || 1)
+    }]))
+    return {
+      totalUsers: profilesResult.count || 0,
+      gamificationUsers: gamificationResult.count || 0,
+      totalChallenges: challengesResult.count || 0,
+      activeChallenges: activeChallengesResult.count || 0,
+      totalQuests: questsResult.count || 0,
+      completedQuests: completedQuestsResult.count || 0,
+      totalBadges: badgesResult.count || 0,
+      awardedBadges: awardedBadgesResult.count || 0,
+      totalHouses: Object.keys(houses).length,
+      houses,
+      recentLogs: this.formatXPHistory(logsResult.data || []),
+      rawData: { houses },
+      lastUpdated: new Date().toISOString()
     }
   }
 
-  /**
-   * Obtient les données d'un utilisateur spécifique avec gamification
-   */
   async getUserGamificationData(userId) {
-    try {
-      const userRef = dbRef(db, `Users/${userId}`)
-      const snapshot = await get(userRef)
-      const userData = snapshot.val()
+    if (!userId) return null
 
-      if (!userData) return null
+    const [profileResult, gamificationResult, challengeProgressResult, questProgressResult, badgeResult, xpHistoryResult] = await Promise.all([
+      supabase.from('user_profiles').select('user_id,email,forname,family_name,display_name,avatar_url,house_id,login_streak').eq('user_id', userId).maybeSingle(),
+      supabase.from('gamification_data').select('user_id,total_xp,current_level,house_id,house_points').eq('user_id', userId).maybeSingle(),
+      supabase.from('user_challenge_progress').select('completed').eq('user_id', userId),
+      supabase.from('user_quest_progress').select('status').eq('user_id', userId),
+      supabase.from('user_badges').select('earned_at,notified,badge:badges(id,name,description,icon,rarity,xp_bonus,conditions,is_active)').eq('user_id', userId).order('earned_at', { ascending: false }),
+      supabase.from('xp_history').select('id,user_id,amount,action,description,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(20)
+    ])
 
-      // Enrichir avec données gamification
-      const [userChallenges, userQuests, userBadges, houseData] = await Promise.all([
-        this.getUserChallenges(userId),
-        this.getUserQuests(userId),
-        this.getUserBadges(userId),
-        userData.gamification?.maison ? this.getHouseData(userData.gamification.maison) : null
-      ])
+    const results = [profileResult, gamificationResult, challengeProgressResult, questProgressResult, badgeResult, xpHistoryResult]
+    const failed = results.find(({ error }) => error)
+    if (failed) throw failed.error
 
+    const profile = profileResult.data || {}
+    const data = gamificationResult.data || {}
+    const totalXP = Number(data.total_xp || 0)
+    const level = this.calculateLevel(totalXP)
+    const badges = (badgeResult.data || []).filter((row) => row.badge).map((row) => {
+      const badge = row.badge
+      const category = badge.conditions?.category || badge.conditions?.type || 'general'
       return {
-        ...userData,
-        gamification: {
-          ...userData.gamification,
-          challenges: userChallenges,
-          quests: userQuests,
-          badges: userBadges,
-          house: houseData,
-          stats: {
-            totalXP: userData.gamification?.xp || 0,
-            level: this.calculateLevel(userData.gamification?.xp || 0),
-            challengesCompleted: userChallenges.filter(c => c.completed).length,
-            questsCompleted: userQuests.filter(q => q.completed).length,
-            badgesEarned: userBadges.length
-          }
+        ...badge,
+        color: badge.conditions?.color || '#64748B',
+        category,
+        unlockedAt: row.earned_at,
+        unlocked_at: row.earned_at
+      }
+    })
+    const houseId = data.house_id || profile.house_id || null
+
+    return {
+      ...profile,
+      displayName: profile.display_name || [profile.forname, profile.family_name].filter(Boolean).join(' ') || profile.email || 'Utilisateur',
+      photoURL: profile.avatar_url || null,
+      gamification: {
+        maison: houseId,
+        xp: totalXP,
+        totalXP,
+        niveau: level,
+        loginStreak: profile.login_streak || 0,
+        badges,
+        quests: [],
+        challenges: [],
+        stats: {
+          totalXP,
+          level,
+          challengesCompleted: (challengeProgressResult.data || []).filter((progress) => progress.completed).length,
+          questsCompleted: (questProgressResult.data || []).filter((progress) => progress.status === 'completed').length,
+          badgesEarned: badges.length
         }
-      }
-
-    } catch (error) {
-      console.error('[GamificationService] Erreur lors du chargement des données utilisateur:', error)
-      return null
+      },
+      recentActivity: this.formatXPHistory(xpHistoryResult.data || [])
     }
   }
 
-  // ==================== GESTION DES DONNÉES ====================
-
-  /**
-   * Obtient tous les utilisateurs
-   */
-  async getAllUsers() {
-    const snapshot = await get(dbRef(db, 'users'))
-    return snapshot.val() || {}
-  }
-
-  /**
-   * Obtient tous les défis
-   */
-  async getAllChallenges() {
-    const snapshot = await get(dbRef(db, 'challenges'))
-    return snapshot.val() || {}
-  }
-
-  /**
-   * Obtient toutes les quêtes
-   */
-  async getAllQuests() {
-    const snapshot = await get(dbRef(db, 'quests'))
-    return snapshot.val() || {}
-  }
-
-  /**
-   * Obtient tous les badges
-   */
-  async getAllBadges() {
-    const snapshot = await get(dbRef(db, 'gamification/badges'))
-    return snapshot.val() || {}
-  }
-
-  /**
-   * Obtient toutes les maisons
-   */
-  async getAllHouses() {
-    const snapshot = await get(dbRef(db, 'gamification/houses'))
-    return snapshot.val() || {}
-  }
-
-  /**
-   * Obtient les logs récents
-   */
-  async getRecentLogs() {
-    const snapshot = await get(dbRef(db, 'gamification/logs'))
-    const logs = snapshot.val() || {}
-    
-    return Object.entries(logs)
-      .map(([id, log]) => ({ id, ...log }))
-      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-      .slice(0, 20)
-  }
-
-  // ==================== DONNÉES UTILISATEUR SPÉCIFIQUES ====================
-
-  /**
-   * Obtient les défis d'un utilisateur
-   */
-  async getUserChallenges(userId) {
-    const snapshot = await get(dbRef(db, `Users/${userId}/gamification/challenges`))
-    return Object.values(snapshot.val() || {})
-  }
-
-  /**
-   * Obtient les quêtes d'un utilisateur
-   */
-  async getUserQuests(userId) {
-    const snapshot = await get(dbRef(db, `Users/${userId}/gamification/quests`))
-    return Object.values(snapshot.val() || {})
-  }
-
-  /**
-   * Obtient les badges d'un utilisateur
-   */
-  async getUserBadges(userId) {
-    const snapshot = await get(dbRef(db, `Users/${userId}/gamification/badges`))
-    return Object.values(snapshot.val() || {})
-  }
-
-  /**
-   * Obtient les données d'une maison
-   */
   async getHouseData(houseId) {
-    const snapshot = await get(dbRef(db, `gamification/houses/${houseId}`))
-    return snapshot.val()
+    if (!houseId) return null
+    const { data, error } = await supabase
+      .from('houses')
+      .select('id,name,motto,color,description,total_xp,member_count,level')
+      .eq('id', houseId)
+      .maybeSingle()
+    if (error) throw error
+    return data
   }
 
-  // ==================== TEMPS RÉEL ====================
-
-  /**
-   * S'abonne aux mises à jour temps réel des statistiques
-   */
-  subscribeToStats(callback) {
-    const statsRef = dbRef(db, 'gamification')
-    const listenerId = `stats_${Date.now()}`
-    
-    const unsubscribe = onValue(statsRef, async () => {
-      try {
-        const stats = await this.getUnifiedStats()
-        callback(stats)
-      } catch (error) {
-        console.error('Erreur lors de la mise à jour des stats temps réel:', error)
-        callback(this.getDefaultStats())
-      }
-    })
-
-    this.listeners.set(listenerId, unsubscribe)
-    return listenerId
+  calculateLevel(xp = 0) {
+    return Math.min(20, Math.max(1, Math.floor(Math.sqrt(Math.max(0, Number(xp) || 0) / 100)) + 1))
   }
 
-  /**
-   * S'abonne aux mises à jour temps réel des logs d'activité
-   */
-  subscribeToActivity(callback, limit = 20) {
-    const logsRef = dbRef(db, 'gamification/logs')
-    const listenerId = `activity_${Date.now()}`
-    
-    const unsubscribe = onValue(logsRef, async (snapshot) => {
-      try {
-        const logs = snapshot.val() || {}
-        const recentLogs = Object.entries(logs)
-          .map(([id, log]) => ({ id, ...log }))
-          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-          .slice(0, limit)
-        
-        callback(recentLogs)
-      } catch (error) {
-        console.error('Erreur lors de la mise à jour des logs temps réel:', error)
-        callback([])
-      }
-    })
-
-    this.listeners.set(listenerId, unsubscribe)
-    return listenerId
-  }
-
-  /**
-   * S'abonne aux mises à jour temps réel des maisons
-   */
-  subscribeToHouses(callback) {
-    const housesRef = dbRef(db, 'gamification/houses')
-    const usersRef = dbRef(db, 'users')
-    const listenerId = `houses_${Date.now()}`
-    
-    const updateHousesStats = async () => {
-      try {
-        const [housesSnapshot, usersSnapshot] = await Promise.all([
-          get(housesRef),
-          get(usersRef)
-        ])
-        
-        const houses = housesSnapshot.val() || {}
-        const users = usersSnapshot.val() || {}
-        const housesStats = this.processHousesStats(houses, users)
-        
-        callback(housesStats)
-      } catch (error) {
-        console.error('Erreur lors de la mise à jour des maisons temps réel:', error)
-        callback({})
-      }
-    }
-    
-    const unsubscribeHouses = onValue(housesRef, updateHousesStats)
-    const unsubscribeUsers = onValue(usersRef, updateHousesStats)
-    
-    const combinedUnsubscribe = () => {
-      unsubscribeHouses()
-      unsubscribeUsers()
-    }
-
-    this.listeners.set(listenerId, combinedUnsubscribe)
-    return listenerId
-  }
-
-  /**
-   * S'abonne aux mises à jour d'un utilisateur
-   */
-  subscribeToUser(userId, callback) {
-    const userRef = dbRef(db, `Users/${userId}`)
-    const listenerId = `user_${userId}_${Date.now()}`
-    
-    const unsubscribe = onValue(userRef, async () => {
-      const userData = await this.getUserGamificationData(userId)
-      callback(userData)
-    })
-
-    this.listeners.set(listenerId, unsubscribe)
-    return listenerId
-  }
-
-  /**
-   * Se désabonne d'un listener
-   */
-  unsubscribe(listenerId) {
-    const unsubscribe = this.listeners.get(listenerId)
-    if (unsubscribe) {
-      unsubscribe()
-      this.listeners.delete(listenerId)
-    }
-  }
-
-  // ==================== UTILITAIRES ====================
-
-  /**
-   * Traite les statistiques des maisons
-   */
-  processHousesStats(houses, users) {
-    const housesStats = {}
-    
-    Object.keys(houses).forEach(houseId => {
-      const house = houses[houseId]
-      const houseUsers = Object.values(users).filter(user => 
-        user.gamification?.maison === houseId
-      )
-      
-      housesStats[houseId] = {
-        name: house.name || houseId,
-        memberCount: houseUsers.length,
-        totalXP: houseUsers.reduce((sum, user) => sum + (user.gamification?.xp || 0), 0),
-        averageLevel: houseUsers.length > 0 
-          ? houseUsers.reduce((sum, user) => sum + this.calculateLevel(user.gamification?.xp || 0), 0) / houseUsers.length
-          : 0,
-        color: house.color || '#3498db'
-      }
-    })
-    
-    return housesStats
-  }
-
-  /**
-   * Calcule le niveau basé sur l'XP
-   */
-  calculateLevel(xp) {
-    return Math.floor(xp / 100) + 1
-  }
-
-  /**
-   * Calcule l'XP nécessaire pour le prochain niveau
-   */
-  calculateXPToNextLevel(level, currentXP) {
-    const nextLevelXP = level * 100
-    return Math.max(0, nextLevelXP - currentXP)
-  }
-
-  /**
-   * Retourne des statistiques par défaut
-   */
   getDefaultStats() {
     return {
       totalUsers: 0,
@@ -377,171 +134,102 @@ class GamificationService {
       totalHouses: 0,
       houses: {},
       recentLogs: [],
-      rawData: {
-        users: {},
-        challenges: {},
-        quests: {},
-        badges: {},
-        houses: {}
-      },
+      rawData: { challenges: [], quests: [], houses: {} },
       lastUpdated: new Date().toISOString()
     }
   }
 
-  // ==================== ACTIONS ====================
-
-  /**
-   * Crée un nouveau défi
-   */
-  async createChallenge(challengeData) {
-    const challengesRef = dbRef(db, 'challenges')
-    const newChallengeRef = push(challengesRef)
-    
-    const challenge = {
-      ...challengeData,
-      id: newChallengeRef.key,
-      createdAt: new Date().toISOString(),
-      createdBy: auth.currentUser?.uid,
-      status: 'active'
-    }
-    
-    await set(newChallengeRef, challenge)
-    await this.logAction('challenge_created', challenge.id)
-    
-    return challenge
+  async getRecentLogs(limit = 20) {
+    const { data, error } = await supabase
+      .from('xp_history')
+      .select('id,user_id,amount,action,description,created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    if (error) throw error
+    return this.formatXPHistory(data || [])
   }
 
-  /**
-   * Crée une nouvelle quête
-   */
-  async createQuest(questData) {
-    const questsRef = dbRef(db, 'quests')
-    const newQuestRef = push(questsRef)
-    
-    const quest = {
-      ...questData,
-      id: newQuestRef.key,
-      createdAt: new Date().toISOString(),
-      createdBy: auth.currentUser?.uid,
-      status: 'active'
-    }
-    
-    await set(newQuestRef, quest)
-    await this.logAction('quest_created', quest.id)
-    
-    return quest
-  }
-
-  /**
-   * Log une action et déclenche une notification si approprié
-   */
-  async logAction(action, targetId, additionalData = {}) {
-    const logsRef = dbRef(db, 'gamification/logs')
-    const newLogRef = push(logsRef)
-    
-    const logEntry = {
-      action,
-      targetId,
-      userId: auth.currentUser?.uid,
-      timestamp: Date.now(),
-      ...additionalData
-    }
-    
-    await set(newLogRef, logEntry)
-    
-    // Déclencher une notification si approprié
-    await this.triggerNotificationForAction(action, targetId, additionalData)
-  }
-
-  /**
-   * Déclenche une notification basée sur l'action gamification
-   */
-  async triggerNotificationForAction(action, targetId, additionalData = {}) {
-    try {
-      const userId = auth.currentUser?.uid
-      if (!userId) return
-
-      let notificationData = null
-
-      switch (action) {
-        case 'xp_gained':
-          notificationData = {
-            type: 'xp',
-            title: 'XP Gagné !',
-            message: `+${additionalData.amount || 0} XP`,
-            data: { xp: additionalData.amount, source: additionalData.source }
-          }
-          break
-
-        case 'level_up':
-          notificationData = {
-            type: 'level_up',
-            title: 'Niveau Supérieur !',
-            message: `Félicitations ! Vous êtes maintenant niveau ${additionalData.newLevel}`,
-            data: { level: additionalData.newLevel, previousLevel: additionalData.previousLevel }
-          }
-          break
-
-        case 'badge_earned':
-          notificationData = {
-            type: 'badge',
-            title: 'Nouveau Badge !',
-            message: `Badge "${additionalData.badgeName}" débloqué !`,
-            data: { badgeId: targetId, badgeName: additionalData.badgeName }
-          }
-          break
-
-        case 'quest_completed':
-          notificationData = {
-            type: 'quest',
-            title: 'Quête Terminée !',
-            message: `Quête "${additionalData.questName}" complétée !`,
-            data: { questId: targetId, questName: additionalData.questName }
-          }
-          break
-
-        case 'challenge_completed':
-          notificationData = {
-            type: 'challenge',
-            title: 'Défi Relevé !',
-            message: `Défi "${additionalData.challengeName}" terminé !`,
-            data: { challengeId: targetId, challengeName: additionalData.challengeName }
-          }
-          break
-
-        case 'house_assigned':
-          notificationData = {
-            type: 'house',
-            title: 'Maison Assignée !',
-            message: `Bienvenue dans la maison ${additionalData.houseName} !`,
-            data: { house: additionalData.houseName }
-          }
-          break
-      }
-
-      if (notificationData) {
-        await notificationService.createNotification(userId, notificationData)
-      }
-    } catch (error) {
-      console.error('Erreur lors du déclenchement de notification:', error)
+  async getActivitySummary() {
+    const now = new Date()
+    const today = new Date(now)
+    today.setHours(0, 0, 0, 0)
+    const weekAgo = new Date(now)
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    const [todayResult, weekResult, activeUsersResult] = await Promise.all([
+      supabase.from('xp_history').select('id', { count: 'exact', head: true }).gte('created_at', today.toISOString()),
+      supabase.from('xp_history').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo.toISOString()),
+      supabase.from('user_profiles').select('user_id', { count: 'exact', head: true }).gte('last_login', weekAgo.toISOString())
+    ])
+    const failed = [todayResult, weekResult, activeUsersResult].find(({ error }) => error)
+    if (failed) throw failed.error
+    return {
+      todayActivities: todayResult.count || 0,
+      weekActivities: weekResult.count || 0,
+      activeUsers: activeUsersResult.count || 0
     }
   }
 
-  // ==================== NETTOYAGE ====================
+  formatXPHistory(rows) {
+    return rows.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      action: 'xp_gained',
+      sourceAction: row.action,
+      amount: row.amount,
+      description: row.description || `+${row.amount} XP`,
+      timestamp: row.created_at ? new Date(row.created_at).getTime() : null
+    }))
+  }
 
-  /**
-   * Nettoie tous les listeners
-   */
-  cleanup() {
-    this.listeners.forEach((unsubscribe) => {
-      unsubscribe()
+  subscribeToStats(callback) {
+    return this.subscribe('stats', async () => callback(await this.getUnifiedStats()))
+  }
+
+  subscribeToActivity(callback, limit = 20) {
+    return this.subscribe('activity', async () => {
+      const [logs, summary] = await Promise.all([this.getRecentLogs(limit), this.getActivitySummary()])
+      callback(logs, summary)
     })
+  }
+
+  subscribeToUser(userId, callback) {
+    if (!userId) return null
+    return this.subscribe(`user_${userId}`, async () => callback(await this.getUserGamificationData(userId)))
+  }
+
+  subscribe(key, callback) {
+    const listenerId = `${key}_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    let running = false
+    const refresh = async () => {
+      if (running) return
+      running = true
+      try {
+        await callback()
+      } catch (error) {
+        console.error('[GamificationService] Erreur de mise à jour Supabase:', error)
+      } finally {
+        running = false
+      }
+    }
+    const interval = setInterval(refresh, POLL_INTERVAL)
+    this.listeners.set(listenerId, () => clearInterval(interval))
+    refresh()
+    return listenerId
+  }
+
+  unsubscribe(listenerId) {
+    const unsubscribe = this.listeners.get(listenerId)
+    if (unsubscribe) {
+      unsubscribe()
+      this.listeners.delete(listenerId)
+    }
+  }
+
+  cleanup() {
+    this.listeners.forEach((unsubscribe) => unsubscribe())
     this.listeners.clear()
-    this.cache.clear()
   }
 }
 
-// Instance singleton
 const gamificationService = new GamificationService()
-
 export default gamificationService

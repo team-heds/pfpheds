@@ -25,7 +25,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-number">{{ stats.gamificationUsers || 0 }}</div>
-            <div class="stat-label">Utilisateurs Actifs</div>
+            <div class="stat-label">Profils gamifiés</div>
             <div class="stat-detail">sur {{ stats.totalUsers || 0 }} total</div>
           </div>
         </div>
@@ -68,7 +68,7 @@
           <div class="stat-content">
             <div class="stat-number">{{ stats.totalBadges || 0 }}</div>
             <div class="stat-label">Badges Totaux</div>
-            <div class="stat-detail">{{ Math.floor((stats.totalBadges || 0) * 0.7) }} débloqués</div>
+            <div class="stat-detail">{{ stats.awardedBadges || 0 }} attributions</div>
           </div>
         </div>
       </div>
@@ -139,11 +139,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+
 import Button from 'primevue/button'
 import gamificationService from '@/service/gamificationService'
 
-const props = defineProps({
+defineProps({
   showActions: {
     type: Boolean,
     default: true
@@ -158,7 +158,7 @@ const props = defineProps({
   }
 })
 
-const router = useRouter()
+
 const stats = ref({})
 const loading = ref(false)
 const lastUpdated = ref('')
@@ -205,7 +205,6 @@ const subscribeToUpdates = () => {
 
 // Lifecycle
 onMounted(() => {
-  loadData()
   subscribeToUpdates()
 })
 

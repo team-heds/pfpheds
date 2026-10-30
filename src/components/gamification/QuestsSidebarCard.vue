@@ -88,15 +88,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
+import { useGamificationAuth } from './useGamificationAuth'
 import Button from 'primevue/button'
 import userQuestsService from '@/service/userQuestsService'
 import { supabase } from '@/supabase'
 
 const router = useRouter()
-const authStore = useAuthStore()
+const { user: authUser } = useGamificationAuth()
 
 // State
 const newQuests = ref([])
@@ -126,7 +126,7 @@ const getDifficultyLabel = (difficulty) => {
 
 const loadUserHouseColor = async () => {
   try {
-    const userId = authStore.user?.id
+    const userId = authUser.value?.id
     if (!userId) return
 
     const { data } = await supabase
@@ -161,10 +161,8 @@ const loadUserHouseColor = async () => {
 const loadNewQuests = async () => {
   try {
     loading.value = true
-    const user = authStore.user
-    if (!user) return
-    
-    const userId = user.id
+    const userId = authUser.value?.id
+    if (!userId) return
 
     console.log('🔍 Chargement des nouvelles quêtes pour:', userId)
 
@@ -191,10 +189,8 @@ const loadNewQuests = async () => {
 }
 
 const subscribeToQuestUpdates = () => {
-  const user = authStore.user
-  if (!user) return
-  
-  const userId = user.id
+  const userId = authUser.value?.id
+  if (!userId) return
 
   console.log('🔔 Abonnement aux nouvelles quêtes pour:', userId)
 
@@ -214,11 +210,15 @@ const goToQuests = () => {
 }
 
 // Lifecycle
-onMounted(async () => {
+watch(() => [props.userId, authUser.value?.id], async () => {
+  if (realtimeChannel) {
+    userQuestsService.unsubscribeFromQuestUpdates(realtimeChannel)
+    realtimeChannel = null
+  }
   await loadUserHouseColor()
   await loadNewQuests()
   subscribeToQuestUpdates()
-})
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   if (realtimeChannel) {

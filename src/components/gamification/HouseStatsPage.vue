@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrapper">
-    <Navbar />
+    <GamificationNavbar />
     <div class="house-stats-page">
     <!-- Bandeau de la maison -->
     <div class="house-banner" >
@@ -182,7 +182,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import GamificationNavbar from './GamificationNavbar.vue'
 import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 

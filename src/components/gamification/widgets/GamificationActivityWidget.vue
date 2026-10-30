@@ -80,6 +80,7 @@ const props = defineProps({
 const router = useRouter()
 const allLogs = ref([])
 const listenerId = ref(null)
+const activitySummary = ref({ todayActivities: 0, weekActivities: 0, activeUsers: 0 })
 
 // Logs récents limités
 const recentLogs = computed(() => {
@@ -87,33 +88,9 @@ const recentLogs = computed(() => {
 })
 
 // Statistiques calculées
-const todayActivities = computed(() => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return allLogs.value.filter(log => 
-    new Date(log.timestamp) >= today
-  ).length
-})
-
-const weekActivities = computed(() => {
-  const weekAgo = new Date()
-  weekAgo.setDate(weekAgo.getDate() - 7)
-  return allLogs.value.filter(log => 
-    new Date(log.timestamp) >= weekAgo
-  ).length
-})
-
-const activeUsers = computed(() => {
-  const weekAgo = new Date()
-  weekAgo.setDate(weekAgo.getDate() - 7)
-  const recentUserIds = new Set(
-    allLogs.value
-      .filter(log => new Date(log.timestamp) >= weekAgo)
-      .map(log => log.userId)
-      .filter(Boolean)
-  )
-  return recentUserIds.size
-})
+const todayActivities = computed(() => activitySummary.value.todayActivities)
+const weekActivities = computed(() => activitySummary.value.weekActivities)
+const activeUsers = computed(() => activitySummary.value.activeUsers)
 
 // Méthodes utilitaires
 const getActivityIcon = (action) => {
@@ -183,7 +160,7 @@ const getActivityText = (log) => {
     'house_joined': `Rejoint une maison`,
     'xp_gained': `Points d'expérience gagnés`
   }
-  return texts[log.action] || `Action: ${log.action}`
+  return log.description || texts[log.action] || `Action: ${log.sourceAction || log.action}`
 }
 
 const formatTime = (timestamp) => {
@@ -211,29 +188,14 @@ const viewAllLogs = () => {
 }
 
 // Charger les données
-const loadLogs = async () => {
-  try {
-    const stats = await gamificationService.getUnifiedStats()
-    allLogs.value = stats.recentLogs || []
-  } catch (error) {
-    console.error('[GamificationActivityWidget] Erreur lors du chargement:', error)
-    allLogs.value = []
-  }
-}
-
-// S'abonner aux mises à jour temps réel des logs d'activité
 const subscribeToUpdates = () => {
-  // Utiliser le nouvel abonnement spécialisé pour les logs d'activité
-  listenerId.value = gamificationService.subscribeToActivity((recentLogs) => {
+  listenerId.value = gamificationService.subscribeToActivity((recentLogs, summary) => {
     allLogs.value = recentLogs || []
-  }, 50) // Charger plus de logs pour le filtrage
+    activitySummary.value = summary || { todayActivities: 0, weekActivities: 0, activeUsers: 0 }
+  }, 50)
 }
 
-// Lifecycle
-onMounted(() => {
-  loadLogs()
-  subscribeToUpdates()
-})
+onMounted(subscribeToUpdates)
 
 onUnmounted(() => {
   if (listenerId.value) {

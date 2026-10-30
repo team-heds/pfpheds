@@ -92,6 +92,32 @@ async function countDistinct(client, table, column, configure = (query) => query
   return new Set(rows.map((row) => row?.[column]).filter(Boolean)).size
 }
 
+function dateInZurich(date) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Zurich',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+      .formatToParts(date)
+      .filter(({ type }) => type !== 'literal')
+      .map(({ type, value }) => [type, value])
+  )
+  return `${parts.year}-${parts.month}-${parts.day}`
+}
+
+async function countActiveChallenges(client, asOf) {
+  const today = dateInZurich(new Date(asOf))
+  const challenges = await selectAllRows(client, 'challenges', 'id,is_active,start_date,end_date', (query) =>
+    query.eq('is_active', true)
+  )
+
+  return challenges.filter(({ is_active: isActive, start_date: startDate, end_date: endDate }) =>
+    isActive === true && (!startDate || startDate <= today) && (!endDate || endDate >= today)
+  ).length
+}
+
 async function loadRecentGamificationActivity(client, limit = 20) {
   const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 50))
   const rows = await selectRows(client, 'xp_history', 'action,source_type,amount,created_at', (query) =>
@@ -283,20 +309,7 @@ function academicDefinitions(client, filters = {}) {
 function gamificationDefinitions(client, _filters = {}, asOf = new Date().toISOString()) {
   return {
     activeChallenges: snapshot(
-      () => {
-        const today = new Intl.DateTimeFormat('en-CA', {
-          timeZone: 'Europe/Zurich',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        }).format(new Date(asOf))
-        return countRows(client, 'challenges', 'id', (query) =>
-          query
-            .eq('is_active', true)
-            .or(`start_date.is.null,start_date.lte.${today}`)
-            .or(`end_date.is.null,end_date.gte.${today}`)
-        )
-      },
+      () => countActiveChallenges(client, asOf),
       'snapshot',
       'ACTIVE_CHALLENGES_ARE_A_CURRENT_SNAPSHOT'
     ),
@@ -373,6 +386,7 @@ module.exports = {
   DOMAIN_DEFINITIONS,
   SOURCES,
   applyPeriod,
+  countActiveChallenges,
   countDistinct,
   countRows,
   createAdminDashboardStatsService,

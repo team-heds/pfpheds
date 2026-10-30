@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <GamificationNavbar />
   
   <div class="min-h-screen flex relative lg:static">
     <div class="min-h-screen flex flex-column relative flex-auto profile-center-scrollable">
@@ -485,7 +485,7 @@ import Divider from 'primevue/divider'
 import ProgressBar from 'primevue/progressbar'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useAuthStore } from '@/stores/authStore'
+import { useGamificationAuth } from './useGamificationAuth'
 import { supabase } from '@/supabase.js'
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import badgesService from '@/service/badgesService'
@@ -493,7 +493,7 @@ import challengesService from '@/service/challengesService'
 import { gamificationFeatures } from '@/config/gamificationFeatures'
 import levelsConfig from '@/config/levelsConfig'
 import userQuestsService from '@/service/userQuestsService'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import GamificationNavbar from './GamificationNavbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
 import QuestCard from '@/components/gamification/QuestCard.vue'
@@ -521,12 +521,12 @@ const props = defineProps({
 // Router and auth
 const router = useRouter()
 const toast = useToast()
-const authStore = useAuthStore()
+const { user: authUser, ready: authReady } = useGamificationAuth()
 const collectionsEnabled = gamificationFeatures.userJourney && gamificationFeatures.badgesChallenges
 
 // Computed: ID de l'utilisateur à afficher (prop.id ou utilisateur connecté)
-const displayUserId = computed(() => props.id || authStore.user?.id)
-const isViewingOtherUser = computed(() => !!props.id && props.id !== authStore.user?.id)
+const displayUserId = computed(() => props.id || authUser.value?.id)
+const isViewingOtherUser = computed(() => !!props.id && props.id !== authUser.value?.id)
 
 // Reactive state
 const loading = ref(true)
@@ -643,10 +643,6 @@ const houseColor = computed(() => {
   return houseConfig[h]?.color || '#9333ea' // Violet par défaut pour Game Master
 })
 
-// Calcul automatique du niveau basé sur l'XP (nouveau système 20 niveaux)
-const calculateLevel = (totalXP) => {
-  return levelsConfig.getLevelFromXP(totalXP)
-}
 
 const calculateXPToNext = (currentLevel, currentXP) => {
   return levelsConfig.getXPToNextLevel(currentLevel, currentXP)
@@ -660,108 +656,6 @@ const getLevelInfo = (level) => {
   return levelsConfig.getLevelInfo(level)
 }
 
-const updateLevelFromXP = async (newTotalXP) => {
-  if (!userStats.value) return
-  
-  const newLevel = calculateLevel(newTotalXP)
-  const oldLevel = userStats.value.niveau
-  const levelInfo = getLevelInfo(newLevel)
-  
-  // Si niveau a changé, mettre à jour la base de données
-  if (newLevel !== oldLevel) {
-    console.log(`🎉 NIVEAU UP ! ${oldLevel} (${getLevelInfo(oldLevel).name}) → ${newLevel} (${levelInfo.name})`)
-    
-    try {
-      // Mettre à jour dans Supabase
-      const { error } = await supabase
-        .from('gamification_data')
-        .update({ 
-          current_level: newLevel,
-          total_xp: newTotalXP
-        })
-        .eq('user_id', authStore.user.id)
-      
-      if (error) {
-        console.error('Erreur mise à jour niveau:', error)
-      } else {
-        // Mettre à jour localement
-        userStats.value.niveau = newLevel
-        userStats.value.xp = newTotalXP
-        userStats.value.xpToNext = calculateXPToNext(newLevel, newTotalXP)
-        
-        // Vérifier si c'est un palier (5, 10, 15, 20)
-        const isPalierLevel = levelsConfig.isPalier(newLevel)
-        
-        // Afficher notification
-        showToast.value = true
-        toastData.value = {
-          type: 'levelup',
-          title: isPalierLevel ? `🎊 PALIER ${newLevel} ATTEINT !` : 'Niveau Supérieur !',
-          message: `Tu es maintenant ${levelInfo.name} (niveau ${newLevel}) !`,
-          xp: isPalierLevel ? levelInfo.palierBonus : 0
-        }
-        
-        // Si c'est un palier, ajouter les points à la maison
-        if (isPalierLevel && levelInfo.palierBonus && userStats.value.maison) {
-          await addHousePoints(userStats.value.maison, levelInfo.palierBonus)
-          console.log(`✨ +${levelInfo.palierBonus} points pour ${userStats.value.maison} !`)
-        }
-      }
-    } catch (err) {
-      console.error('Erreur:', err)
-    }
-  }
-}
-
-const addHousePoints = async (houseName, points) => {
-  try {
-    // Récupérer la maison
-    const { data: house, error: fetchError } = await supabase
-      .from('houses')
-      .select('*')
-      .eq('name', houseName)
-      .single()
-    
-    if (fetchError || !house) {
-      console.error('Erreur récupération maison:', fetchError)
-      return
-    }
-    
-    const newTotalXP = (house.total_xp || 0) + points
-    const oldLevel = house.level || 1
-    const newLevel = Math.max(1, Math.floor(Math.sqrt(newTotalXP / 10000)) + 1)
-    
-    // Ajouter les points XP (le trigger mettra à jour le niveau automatiquement)
-    const { error: updateError } = await supabase
-      .from('houses')
-      .update({ 
-        total_xp: newTotalXP
-      })
-      .eq('name', houseName)
-    
-    if (updateError) {
-      console.error('Erreur ajout XP maison:', updateError)
-    } else {
-      console.log(`✅ +${points} XP ajoutés à ${houseName} (Total: ${newTotalXP} XP)`)
-      
-      // Si la maison a changé de niveau
-      if (newLevel > oldLevel) {
-        console.log(`🏆 ${houseName} est passée au niveau ${newLevel} !`)
-        
-        // Notification optionnelle pour toute la maison
-        showToast.value = true
-        toastData.value = {
-          type: 'success',
-          title: `🏆 ${houseName} niveau ${newLevel} !`,
-          message: `Votre maison progresse grâce à vous !`,
-          xp: 0
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Erreur addHousePoints:', err)
-  }
-}
 
 // Map background image by normalized house
 const houseImages = {
@@ -1032,7 +926,7 @@ const getBadgeProgressHint = (badge) => {
 }
 
 const checkForNewBadges = async () => {
-  if (!authStore.user?.id) return
+  if (!authUser.value?.id) return
   
   try {
     console.log('🔍 Vérification des nouveaux badges...')
@@ -1156,9 +1050,9 @@ const showQuestDetails = (quest) => {
 
 const startQuest = async (questId) => {
   try {
-    const user = authStore.user
+    const user = authUser.value
     if (!user) return
-    const userId = authStore.isFirebaseUser ? user.uid : user.id
+    const userId = user.id
     if (!userId) return
 
     await userQuestsService.startQuest(userId, questId)
@@ -1235,7 +1129,7 @@ const loadUserStats = async () => {
       console.warn('⚠️ Aucune donnée gamification trouvée, création de données par défaut')
       userStats.value = {
         uid: userId,
-        displayName: authStore.user.email?.split('@')[0] || 'Utilisateur',
+        displayName: authUser.value?.email?.split('@')[0] || 'Utilisateur',
         niveau: 1,
         xp: 0,
         maison: null,
@@ -1315,19 +1209,6 @@ const goBack = () => {
   router.go(-1)
 }
 
-// Watcher pour recalculer le niveau automatiquement quand l'XP change
-watch(
-  () => userStats.value?.xp,
-  (newXP, oldXP) => {
-    if (newXP !== undefined && newXP !== oldXP && userStats.value) {
-      const expectedLevel = calculateLevel(newXP)
-      if (expectedLevel !== userStats.value.niveau) {
-        console.log(`🔄 XP changé: ${oldXP} → ${newXP}, recalcul du niveau...`)
-        updateLevelFromXP(newXP)
-      }
-    }
-  }
-)
 
 // NOUVEAU: Watchers pour les filtres de quêtes (depuis QuestsPage)
 watch([searchQuery, selectedDifficulty, selectedType], () => {
@@ -1335,13 +1216,18 @@ watch([searchQuery, selectedDifficulty, selectedType], () => {
 })
 
 // Initialization
-onMounted(() => {
-  loadUserStats()
+onMounted(async () => {
+  await authReady
+  await loadUserStats()
 })
 
 onBeforeUnmount(() => {
   if (unsubscribeDefis) {
-    try { unsubscribeDefis() } catch {}
+    try {
+      unsubscribeDefis()
+    } catch (err) {
+      console.warn('Erreur lors de la fermeture de l’abonnement aux défis:', err)
+    }
     unsubscribeDefis = null
   }
 })

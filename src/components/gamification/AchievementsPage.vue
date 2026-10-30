@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrapper">
-    <Navbar />
+    <GamificationNavbar />
     <div class="achievements-page" :style="{ '--house-color': houseColor }">
       
       <!-- Loading State -->
@@ -168,9 +168,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
+import { useGamificationAuth } from './useGamificationAuth'
 import badgesService from '@/service/badgesService'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import GamificationNavbar from './GamificationNavbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
 import AchievementNotification from '@/components/gamification/AchievementNotification.vue'
 import Button from 'primevue/button'
@@ -179,7 +179,7 @@ import Dropdown from 'primevue/dropdown'
 
 // Router and auth
 const router = useRouter()
-const authStore = useAuthStore()
+const { user: authUser, ready: authReady } = useGamificationAuth()
 
 // Reactive state
 const loading = ref(true)
@@ -331,7 +331,7 @@ const loadData = async () => {
     loading.value = true
     loadError.value = ''
     
-    if (!authStore.user?.id) {
+    if (!authUser.value?.id) {
       throw new Error('Utilisateur non connecté')
     }
     
@@ -339,7 +339,7 @@ const loadData = async () => {
     allBadges.value = await badgesService.getAllBadges()
     
     // Load user badges
-    userBadges.value = await badgesService.getUserBadges(authStore.user.id)
+    userBadges.value = await badgesService.getUserBadges(authUser.value.id)
     
   } catch (error) {
     console.error('Erreur lors du chargement des données:', error)
@@ -350,8 +350,9 @@ const loadData = async () => {
 }
 
 // Lifecycle
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  await authReady
+  await loadData()
 })
 </script>
 

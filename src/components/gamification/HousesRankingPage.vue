@@ -1,5 +1,5 @@
 <template>
-  <Navbar />
+  <GamificationNavbar />
   <div class="page-wrapper">
     <div class="houses-ranking-page mt-5">
 
@@ -194,7 +194,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import GamificationNavbar from './GamificationNavbar.vue'
 
 const router = useRouter()
 const toast = useToast()

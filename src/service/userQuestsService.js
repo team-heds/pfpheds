@@ -120,18 +120,20 @@ class UserQuestsService {
             icon,
             start_date,
             end_date,
-            duration
+            duration,
+            created_at
           )
         `)
         .eq('user_id', userId)
         .neq('status', 'completed')
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(10)
+        .order('updated_at', { ascending: false })
       
       if (error) throw error
       
-      return data.map(progress => ({
+      return data
+        .filter((progress) => new Date(progress.quest?.created_at || 0) >= sevenDaysAgo)
+        .slice(0, 10)
+        .map(progress => ({
         id: progress.quest.id,
         title: progress.quest.title,
         description: progress.quest.description,
@@ -146,7 +148,7 @@ class UserQuestsService {
         progress: progress.progress,
         status: progress.status,
         isNew: true,
-        createdAt: progress.created_at
+        createdAt: progress.quest.created_at
       }))
       
     } catch (error) {

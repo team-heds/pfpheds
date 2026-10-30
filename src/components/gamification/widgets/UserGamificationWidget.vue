@@ -28,7 +28,7 @@
         <i class="pi pi-home mr-2"></i>
         <span class="house-name">{{ userHouse.name }}</span>
         <div class="house-rank">
-          #{{ houseRank }} • {{ userHouse.totalXP }} XP
+          #{{ houseRank }} • {{ userHouse.totalXP || userHouse.total_xp || 0 }} XP
         </div>
       </div>
     </div>
@@ -147,7 +147,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAuth } from 'firebase/auth'
+import { supabase } from '@/supabase'
 import Button from 'primevue/button'
 import gamificationService from '@/service/gamificationService'
 
@@ -167,7 +167,6 @@ const props = defineProps({
 })
 
 const router = useRouter()
-const auth = getAuth()
 const userData = ref(null)
 const userStats = ref({})
 const userHouse = ref(null)
@@ -175,11 +174,18 @@ const recentBadges = ref([])
 const recentActivity = ref([])
 const allHouses = ref({})
 const listenerId = ref(null)
+const targetUserId = ref(props.userId)
+let authSubscription = null
 
-// Utilisateur cible (props.userId ou utilisateur connecté)
-const targetUserId = computed(() => {
-  return props.userId || auth.currentUser?.uid
-})
+const initializeCurrentUser = async () => {
+  if (props.userId) return
+  const { data, error } = await supabase.auth.getUser()
+  if (error) {
+    console.error('[UserGamificationWidget] Erreur d’authentification Supabase:', error)
+    return
+  }
+  targetUserId.value = data.user?.id || null
+}
 
 // Calculs XP et niveau
 const userXP = computed(() => {
@@ -190,13 +196,9 @@ const userLevel = computed(() => {
   return gamificationService.calculateLevel(userXP.value)
 })
 
-const xpForCurrentLevel = computed(() => {
-  return (userLevel.value - 1) * 100
-})
+const xpForCurrentLevel = computed(() => (userLevel.value - 1) ** 2 * 100)
 
-const xpForNextLevel = computed(() => {
-  return userLevel.value * 100
-})
+const xpForNextLevel = computed(() => userLevel.value ** 2 * 100)
 
 const xpProgress = computed(() => {
   const currentLevelXP = userXP.value - xpForCurrentLevel.value
@@ -213,7 +215,7 @@ const houseRank = computed(() => {
   if (!userHouse.value || !allHouses.value) return 0
   
   const sortedHouses = Object.entries(allHouses.value)
-    .sort(([,a], [,b]) => (b.totalXP || 0) - (a.totalXP || 0))
+    .sort(([,a], [,b]) => (b.totalXP || b.total_xp || 0) - (a.totalXP || a.total_xp || 0))
   
   const rank = sortedHouses.findIndex(([id]) => id === userData.value?.gamification?.maison)
   return rank >= 0 ? rank + 1 : 0
@@ -277,31 +279,8 @@ const loadUserData = async () => {
       gamificationService.getUnifiedStats()
     ])
     
-    userData.value = userGamificationData
-    userStats.value = userGamificationData?.gamification?.stats || {}
     allHouses.value = unifiedStats.houses || {}
-    
-    // Charger les données de la maison
-    if (userGamificationData?.gamification?.maison) {
-      userHouse.value = await gamificationService.getHouseData(userGamificationData.gamification.maison)
-    }
-    
-    // Simuler des badges et activités récents (à remplacer par de vraies données)
-    recentBadges.value = userGamificationData?.gamification?.badges?.slice(-4) || []
-    recentActivity.value = [
-      {
-        id: 1,
-        type: 'quest_completed',
-        description: 'Quête "Première Mission" terminée',
-        timestamp: Date.now() - 3600000
-      },
-      {
-        id: 2,
-        type: 'xp_gained',
-        description: '+50 XP gagnés',
-        timestamp: Date.now() - 7200000
-      }
-    ]
+    await applyUserData(userGamificationData)
     
   } catch (error) {
     console.error('[UserGamificationWidget] Erreur lors du chargement:', error)
@@ -309,35 +288,62 @@ const loadUserData = async () => {
 }
 
 // S'abonner aux mises à jour
+const applyUserData = async (updatedUserData) => {
+  userData.value = updatedUserData
+  userStats.value = updatedUserData?.gamification?.stats || {}
+  recentBadges.value = updatedUserData?.gamification?.badges?.slice(0, 4) || []
+  recentActivity.value = (updatedUserData?.recentActivity || []).map((activity) => ({
+    ...activity,
+    type: activity.action
+  }))
+  userHouse.value = updatedUserData?.gamification?.maison
+    ? await gamificationService.getHouseData(updatedUserData.gamification.maison)
+    : null
+}
+
 const subscribeToUpdates = () => {
   if (!targetUserId.value) return
   
-  listenerId.value = gamificationService.subscribeToUser(targetUserId.value, (updatedUserData) => {
-    userData.value = updatedUserData
-    userStats.value = updatedUserData?.gamification?.stats || {}
-  })
+  listenerId.value = gamificationService.subscribeToUser(targetUserId.value, applyUserData)
 }
 
 // Watchers
-watch(targetUserId, (newUserId) => {
+watch(targetUserId, (newUserId, previousUserId) => {
+  if (listenerId.value) {
+    gamificationService.unsubscribe(listenerId.value)
+    listenerId.value = null
+  }
+  if (previousUserId) {
+    userData.value = null
+    userStats.value = {}
+    userHouse.value = null
+    recentBadges.value = []
+    recentActivity.value = []
+  }
   if (newUserId) {
     loadUserData()
     subscribeToUpdates()
   }
 }, { immediate: true })
 
-// Lifecycle
+watch(() => props.userId, (userId) => {
+  targetUserId.value = userId || null
+  if (!userId) initializeCurrentUser()
+})
+
 onMounted(() => {
-  if (targetUserId.value) {
-    loadUserData()
-    subscribeToUpdates()
-  }
+  initializeCurrentUser()
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (!props.userId) targetUserId.value = session?.user?.id || null
+  })
+  authSubscription = data.subscription
 })
 
 onUnmounted(() => {
   if (listenerId.value) {
     gamificationService.unsubscribe(listenerId.value)
   }
+  authSubscription?.unsubscribe()
 })
 </script>
 

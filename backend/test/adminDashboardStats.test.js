@@ -60,6 +60,11 @@ function createFakeClient(options = {}) {
       { user_id: 'user-2', action: 'BADGE_UNLOCK', source_type: 'badge', amount: 10, created_at: '2026-08-24T07:00:00Z' },
       { user_id: null }
     ],
+    challenges: [
+      { id: 'challenge-1', is_active: true, start_date: null, end_date: null },
+      { id: 'challenge-2', is_active: true, start_date: '2026-08-01', end_date: '2026-09-01' },
+      { id: 'challenge-3', is_active: true, start_date: '2026-08-26', end_date: '2026-08-26' }
+    ],
     tracks: [{ id: 'physio', label: 'Physiothérapie', is_active: true }],
     roles: [{ slug: 'EtudiantPhysio', label: 'Étudiant physio' }],
     classes: [{ code: 'BA25', name: 'Bachelor 2025' }],
@@ -178,6 +183,7 @@ test('the v1 contract contains deterministic aggregates from real table sources'
   assert.equal(response.domains.academic.metrics.courses.value, 8)
   assert.equal(response.domains.academic.metrics.media.value, 9)
   assert.equal(response.domains.academic.metrics.modules.value, 6)
+  assert.equal(response.domains.gamification.metrics.activeChallenges.value, 3)
   assert.equal(response.domains.academic.metrics.teachers.semantics, 'snapshot')
   assert.equal(response.domains.academic.metrics.courses.comparison.status, 'unavailable')
   assert.equal(response.domains.gamification.metrics.completedQuests.value, 7)
@@ -206,6 +212,33 @@ test('the v1 contract contains deterministic aggregates from real table sources'
         )
     )
   )
+})
+
+test('active challenges respect is_active and inclusive start/end dates in Zurich', async () => {
+  const { client, queries } = createFakeClient({
+    rows: {
+      challenges: [
+        { id: 'current', is_active: true, start_date: '2026-08-26', end_date: '2026-08-26' },
+        { id: 'no-dates', is_active: true, start_date: null, end_date: null },
+        { id: 'expired', is_active: true, start_date: null, end_date: '2026-08-25' },
+        { id: 'upcoming', is_active: true, start_date: '2026-08-27', end_date: null },
+        { id: 'disabled', is_active: false, start_date: null, end_date: null }
+      ]
+    }
+  })
+  const service = createAdminDashboardStatsService({
+    client,
+    now: () => new Date('2026-08-26T08:00:00.000Z')
+  })
+
+  const response = await service.loadStats(['gamification'])
+  const challengeQuery = queries.find((query) => query.table === 'challenges')
+
+  assert.equal(response.domains.gamification.metrics.activeChallenges.value, 2)
+  assert.equal(challengeQuery.columns, 'id,is_active,start_date,end_date')
+  assert.ok(challengeQuery.filters.some(([operator, column, value]) =>
+    operator === 'eq' && column === 'is_active' && value === true
+  ))
 })
 
 test('academic inventory metrics are global snapshots independent of the selected period', async () => {

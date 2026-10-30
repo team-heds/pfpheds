@@ -74,7 +74,7 @@ describe('collections gamification Supabase', () => {
     expect(() => challengesService.updateChallengeProgress('user-1')).toThrow(/Supabase sécurisé/)
   })
 
-  it('ne charge plus Firebase et garde la fonctionnalité désactivée en production', () => {
+  it('ne charge plus Firebase dans les vues et utilise l’authentification Supabase', () => {
     const badgeSource = readFileSync(resolve(process.cwd(), 'src/service/badgesService.js'), 'utf8')
     const challengeSource = readFileSync(resolve(process.cwd(), 'src/service/challengesService.js'), 'utf8')
     const achievementsSource = readFileSync(resolve(process.cwd(), 'src/components/gamification/AchievementsPage.vue'), 'utf8')
@@ -82,8 +82,11 @@ describe('collections gamification Supabase', () => {
     const productionEnvironment = readFileSync(resolve(process.cwd(), '.env.production.example'), 'utf8')
 
     expect(badgeSource + challengeSource + achievementsSource + challengesSource).not.toMatch(/firebase\/auth|firebase\/database|dbRef/)
-    expect(achievementsSource).toContain('useAuthStore')
-    expect(challengesSource).toContain('useAuthStore')
+    expect(achievementsSource).toContain('useGamificationAuth')
+    expect(challengesSource).toContain('useGamificationAuth')
+    const authSource = readFileSync(resolve(process.cwd(), 'src/components/gamification/useGamificationAuth.js'), 'utf8')
+    expect(authSource).toContain('supabase.auth.getUser()')
+    expect(authSource).not.toMatch(/firebase|authStore/i)
     expect(productionEnvironment).toContain('VITE_GAMIFICATION_BADGES_CHALLENGES=false')
     const profileSource = readFileSync(resolve(process.cwd(), 'src/components/gamification/GamificationProfilePage.vue'), 'utf8')
     expect(profileSource).toContain('v-if="collectionsEnabled"')

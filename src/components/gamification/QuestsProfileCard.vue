@@ -94,15 +94,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
-import { useAuthStore } from '@/stores/authStore'
+import { useGamificationAuth } from './useGamificationAuth'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
 
 const router = useRouter()
-const authStore = useAuthStore()
+const { user: authUser } = useGamificationAuth()
 
 // Props
 const props = defineProps({
@@ -126,19 +126,6 @@ const displayedQuests = computed(() => {
   return activeQuests.value.slice(0, 3) // Afficher max 3 quêtes
 })
 
-const completedCount = computed(() => {
-  return activeQuests.value.filter(q => q.completed).length
-})
-
-const totalXP = computed(() => {
-  return activeQuests.value.reduce((sum, q) => sum + (q.xp_reward || q.points || 0), 0)
-})
-
-const averageProgress = computed(() => {
-  if (activeQuests.value.length === 0) return 0
-  const total = activeQuests.value.reduce((sum, q) => sum + (q.progress || 0), 0)
-  return Math.round(total / activeQuests.value.length)
-})
 
 // Methods
 const getDifficultyLabel = (difficulty) => {
@@ -154,7 +141,7 @@ const getDifficultyLabel = (difficulty) => {
 const loadUserQuests = async () => {
   try {
     loading.value = true
-    const userId = props.userId || authStore.user?.id
+    const userId = props.userId || authUser.value?.id
     
     if (!userId) {
       console.warn('Aucun userId fourni pour charger les quêtes')
@@ -168,11 +155,11 @@ const loadUserQuests = async () => {
       .from('user_quest_progress')
       .select(`
         *,
-        quest:quests(*)
+        quest:quests(*, steps:quest_steps(id))
       `)
       .eq('user_id', userId)
-      .eq('completed', false) // Filtrer les quêtes NON complétées
-      .order('created_at', { ascending: false })
+      .in('status', ['not_started', 'in_progress'])
+      .order('updated_at', { ascending: false })
     
     if (error) {
       console.error('Erreur chargement quêtes:', error)
@@ -189,8 +176,8 @@ const loadUserQuests = async () => {
         xp_reward: uq.quest?.xp_reward || uq.quest?.points || 0,
         points: uq.quest?.points || 0,
         progress: uq.progress || 0,
-        completed: uq.completed || false,
-        steps_completed: uq.steps_completed || 0,
+        completed: uq.status === 'completed',
+        steps_completed: uq.current_step || 0,
         total_steps: uq.quest?.steps?.length || 1
       }))
       
@@ -207,7 +194,7 @@ const loadUserQuests = async () => {
 }
 
 const subscribeToQuestUpdates = () => {
-  const userId = props.userId || authStore.user?.id
+  const userId = props.userId || authUser.value?.id
   
   if (!userId) return
   
@@ -230,7 +217,7 @@ const subscribeToQuestUpdates = () => {
     .subscribe()
 }
 
-const navigateToQuestDetails = (quest) => {
+const navigateToQuestDetails = () => {
   router.push('/quests')
 }
 
@@ -239,10 +226,14 @@ const navigateToAllQuests = () => {
 }
 
 // Lifecycle
-onMounted(() => {
+watch(() => [props.userId, authUser.value?.id], () => {
+  if (realtimeChannel) {
+    supabase.removeChannel(realtimeChannel)
+    realtimeChannel = null
+  }
   loadUserQuests()
   subscribeToQuestUpdates()
-})
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   if (realtimeChannel) {

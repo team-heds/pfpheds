@@ -1,6 +1,6 @@
 <template>
   <div class="page-wrapper">
-    <Navbar />
+    <GamificationNavbar />
     <div :style="{ '--house-color': houseColor, 'max-width': '1400px', 'margin': '0 auto', 'padding': '2rem' }">
       
       <!-- Loading State avec Skeleton -->
@@ -412,7 +412,7 @@ import TabView from 'primevue/tabview'
 import TabPanel from 'primevue/tabpanel'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import Navbar from '../common/utils/Navbar.vue'
+import GamificationNavbar from './GamificationNavbar.vue'
 import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
@@ -425,12 +425,12 @@ import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
 import QuestCard from './QuestCard.vue'
 import userQuestsService from '../../service/userQuestsService'
-import { useAuthStore } from '@/stores/authStore'
+import { useGamificationAuth } from './useGamificationAuth'
 
 // Services
 const router = useRouter()
 const toast = useToast()
-const authStore = useAuthStore()
+const { user: authUser, ready: authReady } = useGamificationAuth()
 
 // État réactif
 const loading = ref(true)
@@ -457,7 +457,7 @@ const normalizeHouse = (val) => {
 
 // Computed properties pour le design
 const houseColor = computed(() => {
-  const user = authStore.user
+  const user = authUser.value
   if (!user) return '#6B7280'
   const h = normalizeHouse(user.maison || user.user_metadata?.house)
   if (!h) return '#6B7280'
@@ -596,15 +596,13 @@ const loadQuestsData = async () => {
   try {
     loading.value = true
     
-    // Utiliser authStore qui supporte Firebase ET Supabase
-    const user = authStore.user
+    const user = authUser.value
     if (!user) {
       router.push('/home')
       return
     }
     
-    // ID utilisateur selon le provider
-    const userId = authStore.isFirebaseUser ? user.uid : user.id
+    const userId = user.id
 
     // Charger les quêtes utilisateur depuis Supabase
     const quests = await userQuestsService.getUserQuests(userId)
@@ -632,9 +630,9 @@ const loadQuestsData = async () => {
 
 const startQuest = async (questId) => {
   try {
-    const user = authStore.user
+    const user = authUser.value
     if (!user) return
-    const userId = authStore.isFirebaseUser ? user.uid : user.id
+    const userId = user.id
     if (!userId) return
 
     await userQuestsService.startQuest(userId, questId)
@@ -747,7 +745,7 @@ const formatNumber = (num) => {
 }
 
 const goBack = () => {
-  const userId = authStore.user?.id
+  const userId = authUser.value?.id
   router.push(userId ? { name: 'Profile', params: { id: userId } } : '/home')
 }
 
@@ -757,8 +755,9 @@ watch([searchQuery, selectedDifficulty, selectedType], () => {
 })
 
 // Lifecycle
-onMounted(() => {
-  loadQuestsData()
+onMounted(async () => {
+  await authReady
+  await loadQuestsData()
 })
 </script>
 

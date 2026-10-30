@@ -17,6 +17,7 @@ class NotificationService {
       soundEnabled: false
     })
     this.listeners = new Map()
+    this.processedGamificationLogIds = new Set()
   }
 
   // ==================== GESTION DES NOTIFICATIONS ====================
@@ -263,10 +264,19 @@ class NotificationService {
    * S'abonne aux événements gamification
    */
   subscribeToGamificationEvents(userId = null) {
+    let isInitialSnapshot = true
     const listenerId = gamificationService.subscribeToActivity((recentLogs) => {
-      this.processGamificationLogs(recentLogs, userId)
+      if (isInitialSnapshot) {
+        recentLogs.forEach((log) => this.processedGamificationLogIds.add(log.id))
+        isInitialSnapshot = false
+        return
+      }
+
+      const newLogs = recentLogs.filter((log) => !this.processedGamificationLogIds.has(log.id))
+      newLogs.forEach((log) => this.processedGamificationLogIds.add(log.id))
+      this.processGamificationLogs(newLogs, userId)
     })
-    
+
     this.listeners.set('gamification', listenerId)
     return listenerId
   }
@@ -288,7 +298,7 @@ class NotificationService {
       // Traiter selon le type d'action
       switch (log.action) {
         case 'xp_gained':
-          this.notifyXPGained(log.userId, log.amount, log.reason)
+          this.notifyXPGained(log.userId, log.amount, log.description || log.reason)
           break
           
         case 'level_up':
