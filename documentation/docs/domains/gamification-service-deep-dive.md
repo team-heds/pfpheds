@@ -53,7 +53,7 @@ Autres services à connaître :
 - `gamificationIntegration.js`
 - `gamificationService.js`
 - `badgesService.js`
-- `questsService.js`
+
 - `challengesService.js`
 - `hesHousesService.js`
 - `adminQuestsService.js`

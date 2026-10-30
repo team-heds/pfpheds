@@ -55,7 +55,7 @@ Donner une vue d'ensemble du dossier `src/service/` pour savoir où chercher sel
 - `gamificationIntegration.js`
 - `badgesService.js`
 - `challengesService.js`
-- `questsService.js`
+
 - `questExpirationService.js`
 - `userQuestsService.js`
 - `adminQuestsService.js`

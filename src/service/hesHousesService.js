@@ -503,72 +503,7 @@ export async function addUserXP(userId, action, customXP = null) {
       console.warn('Erreur lors de la mise à jour des défis:', challengeError)
     }
     
-    // Mettre à jour les quêtes
-    try {
-      const questsService = await import('./questsService')
-      
-      // Déterminer les types d'étapes de quête à mettre à jour
-      const questUpdates = []
-      
-      switch (action) {
-        case 'LOGIN':
-          questUpdates.push({ stepType: 'login_action', increment: 1 })
-          break
-        case 'QUIZ_COMPLETE':
-          questUpdates.push({ stepType: 'quiz_complete', increment: 1 })
-          break
-        case 'PROFILE_UPDATE':
-          questUpdates.push({ stepType: 'profile_completion', increment: 1 })
-          break
-        default:
-          // Pour les gains d'XP génériques
-          questUpdates.push({ stepType: 'xp_gain', increment: xpToAdd })
-          break
-      }
-      
-      // Ajouter les mises à jour basées sur le niveau
-      if (newData.level !== previousLevel) {
-        questUpdates.push({ stepType: 'level_reach', increment: newData.level })
-      }
-      
-      // Mettre à jour chaque type d'étape de quête
-      for (const update of questUpdates) {
-        const userQuests = await questsService.default.getUserQuests(userId)
-        
-        for (const [questId, quest] of Object.entries(userQuests)) {
-          if (quest.status === 'in_progress' || quest.status === 'available') {
-            // Trouver les étapes correspondantes
-            const matchingSteps = quest.steps.filter(step => step.type === update.stepType)
-            
-            for (const step of matchingSteps) {
-              const updatedQuest = await questsService.default.updateQuestProgress(
-                userId, 
-                questId, 
-                step.id, 
-                update.increment
-              )
-              
-              // Vérifier si la quête est complétée
-              if (updatedQuest && updatedQuest.status === 'completed') {
-                const completion = await questsService.default.completeQuest(userId, questId)
-                
-                // Débloquer de nouvelles quêtes
-                const userHouse = newData.house || 'gryffindor'
-                const completedQuestIds = Object.values(userQuests)
-                  .filter(q => q.status === 'completed')
-                  .map(q => q.id)
-                completedQuestIds.push(questId)
-                
-                await questsService.default.unlockNewQuests(userId, userHouse, completedQuestIds)
-              }
-            }
-          }
-        }
-      }
-      
-    } catch (questError) {
-      console.warn('Erreur lors de la mise à jour des quêtes:', questError)
-    }
+
     
     return newData
   } catch (error) {

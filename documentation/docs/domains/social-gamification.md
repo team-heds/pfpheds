@@ -55,7 +55,7 @@ La gamification couvre :
 - `src/service/gamificationServiceSupabase.js`
 - `src/service/gamificationIntegration.js`
 - `src/service/challengesService.js`
-- `src/service/questsService.js`
+
 - `src/service/badgesService.js`
 - `src/views/admin/gamification/`
 
