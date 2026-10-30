@@ -50,7 +50,7 @@ Toute route déjà déclarée dans `src/router/routes/*.js` (routes statiques) p
 const protectedRoutes = [
   'AdminDashboardGeneral', 'DashboardRM', 'DashboardEnseignant', 'AdminDashboardPFP',
   'AdminDashboardAcademique', 'AdminDashboardGamification', 'AlertsDashboard',
-  'AdminSettingsView', 'SupabaseDiagnosticView', 'AdminDefisView', 'RBACAdmin',
+  'AdminSettingsView', 'SupabaseDiagnosticView', 'RBACAdmin',
   'DynamicRoutesEditor', 'VotationView', 'VotationViewPFP1B', 'Ventriglisse3D'
 ];
 

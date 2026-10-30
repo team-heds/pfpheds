@@ -161,7 +161,7 @@ export async function addDynamicRoutesToRouter(router) {
     'AlertsDashboard',
     'AdminSettingsView',
     'SupabaseDiagnosticView',
-    'AdminDefisView',
+
     'RBACAdmin',
     'DynamicRoutesEditor',
     'VotationView',

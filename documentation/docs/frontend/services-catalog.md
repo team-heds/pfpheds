@@ -60,7 +60,7 @@ Donner une vue d'ensemble du dossier `src/service/` pour savoir où chercher sel
 - `userQuestsService.js`
 - `adminQuestsService.js`
 - `hesHousesService.js`
-- `defisService.js`
+
 
 ### Media et contenus
 

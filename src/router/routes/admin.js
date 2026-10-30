@@ -29,7 +29,7 @@ export default [
   { path: '/admin/alerts', component: () => import('@/views/admin/AlertsDashboard.vue'), name: 'AlertsDashboard', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
   { path: '/admin/settings', component: () => import('@/views/admin/SettingsView.vue'), name: 'AdminSettingsView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/supabase-diagnostic', component: () => import('@/views/admin/SupabaseDiagnosticView.vue'), name: 'SupabaseDiagnosticView', meta: { requiresAuth: true, need: 'admin' } },
-  { path: '/admin/defis', component: () => import('@/views/admin/institutions/gamification/AdminDefisView.vue'), name: 'AdminDefisView', meta: { requiresAuth: true, need: ['admin', 'house_coach'] } },
+
   { path: '/admin/security/rbac', component: () => import('@/views/admin/security/RBACAdminView.vue'), name: 'RBACAdmin', meta: { requiresAuth: true, need: 'admin' } },
   { path: '/admin/routes-editor', component: () => import('@/views/home/DynamicRoutesEditorView.vue'), name: 'DynamicRoutesEditor', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
 
