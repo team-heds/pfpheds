@@ -20,7 +20,13 @@ export default [
         label: 'Vue générale',
         icon: 'pi pi-chart-bar',
         items: [
-          { label: 'Dashboard Général', icon: 'pi pi-chart-bar', to: '/admin' }
+          { label: 'Dashboard Général', icon: 'pi pi-chart-bar', to: '/admin' },
+          {
+            label: 'Dashboard Gamification',
+            icon: 'pi pi-star-fill',
+            to: '/admin/dashboard-gamification',
+            requiredRole: ['admin', 'super.all']
+          }
         ]
       },
       {

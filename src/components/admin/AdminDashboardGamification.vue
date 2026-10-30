@@ -57,6 +57,7 @@
             v-for="kpi in kpisWithData"
             :key="kpi.id"
             v-bind="kpi"
+            @action="navigateToKpi(kpi.id)"
           />
         </div>
 
@@ -94,6 +95,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import KpiCard from './widgets/KpiCard.vue'
 import Button from 'primevue/button'
@@ -105,10 +107,21 @@ import { getKpisForRole } from '@/config/kpiConfigs'
 import { useRoleStore } from '@/stores/role'
 
 const roleStore = useRoleStore()
+const router = useRouter()
 const period = ref('month')
 const stats = useAdminDashboardStats({ domains: ['gamification'], period })
 const configurations = computed(() => getKpisForRole('gamification', roleStore.perms || [], roleStore.isSuper))
 const kpisWithData = stats.mapKpis('gamification', configurations)
+const kpiRoutes = {
+  challenges_active: '/admin/gamification/challenges',
+  quests_completed: '/admin/gamification/quests',
+  badges_total: '/admin/gamification/badges',
+  users_active: '/admin/gamification/users',
+}
+const navigateToKpi = (kpiId) => {
+  const route = kpiRoutes[kpiId]
+  if (route) router.push(route)
+}
 const { loading, refreshing } = stats
 const loadKpis = () => stats.load().catch(() => undefined)
 const refresh = async () => {

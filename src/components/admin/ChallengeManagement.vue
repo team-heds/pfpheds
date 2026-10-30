@@ -1,485 +1,369 @@
 <template>
-  <div>
-    
-    <div class="p-4 max-w-7xl mx-auto">
-      <!-- Header simplifié -->
-      <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border">
-        <div class="flex align-items-center gap-2">
-          <i class="pi pi-trophy text-primary text-2xl"></i>
-          <h1 class="text-2xl font-semibold m-0 text-900">Gestion des Défis</h1>
-        </div>
-        <div class="flex gap-2">
-          <Button 
-            @click="navigateToPublicCreation"
-            icon="pi pi-external-link"
-            label="Vue Publique"
-            class="p-button-outlined"
-            v-tooltip="'Voir la vue de création publique'"
-          />
-          <Button 
-            v-if="canCreateChallenges"
-            @click="showCreateDialog = true"
-            icon="pi pi-plus"
-            label="Nouveau Défi"
-            class="p-button-success"
-          />
-        </div>
+  <main class="p-4 max-w-7xl mx-auto">
+    <header class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-trophy text-primary text-2xl" aria-hidden="true"></i>
+        <h1 class="text-2xl font-semibold m-0 text-900">Gestion des défis</h1>
       </div>
+      <Button
+        v-if="canCreateChallenges"
+        label="Nouveau défi"
+        icon="pi pi-plus"
+        class="p-button-success"
+        @click="openCreateDialog"
+      />
+    </header>
 
-      <!-- Filtres et recherche -->
-      <div class="flex flex-wrap gap-3 mb-4">
-        <div class="p-inputgroup flex-1" style="min-width: 300px;">
-          <span class="p-inputgroup-addon">
-            <i class="pi pi-search"></i>
-          </span>
-          <InputText 
-            v-model="searchQuery" 
-            placeholder="Rechercher un défi..."
-            @input="filterChallenges"
-          />
-        </div>
-        
-        <Dropdown 
-          v-model="selectedStatus" 
-          :options="statusOptions" 
-          optionLabel="label" 
-          optionValue="value"
-          placeholder="Statut"
-          @change="filterChallenges"
-          style="min-width: 150px;"
-        />
-        
-        <Dropdown 
-          v-model="selectedDifficulty" 
-          :options="difficultyOptions" 
-          optionLabel="label" 
-          optionValue="value"
-          placeholder="Difficulté"
-          @change="filterChallenges"
-          style="min-width: 150px;"
-        />
+    <div class="flex flex-wrap gap-3 mb-4">
+      <div class="p-inputgroup flex-1" style="min-width: 250px">
+        <span class="p-inputgroup-addon"><i class="pi pi-search" aria-hidden="true"></i></span>
+        <InputText v-model="searchQuery" placeholder="Rechercher un défi..." aria-label="Rechercher un défi" />
       </div>
-
-      <!-- Liste des défis -->
-      <div v-if="loading" class="flex flex-column align-items-center justify-content-center p-6">
-        <ProgressSpinner />
-        <p class="mt-3 text-600">Chargement des défis...</p>
-      </div>
-      
-      <div v-else-if="filteredChallenges.length === 0" class="text-center p-6">
-        <i class="pi pi-trophy text-6xl text-300 mb-3"></i>
-        <h3 class="text-900 mb-2">Aucun défi trouvé</h3>
-        <p class="text-600 m-0">{{ searchQuery ? 'Aucun défi ne correspond à votre recherche.' : 'Commencez par créer votre premier défi.' }}</p>
-      </div>
-      
-      <div v-else class="grid">
-        <div 
-          v-for="challenge in filteredChallenges" 
-          :key="challenge.id"
-          class="col-12 md:col-6 lg:col-4"
-        >
-          <div class="surface-card p-4 border-round shadow-2 h-full">
-            <div class="flex align-items-start gap-3 mb-3">
-              <div class="flex align-items-center justify-content-center w-3rem h-3rem bg-primary-50 border-circle flex-shrink-0">
-                <i class="pi pi-trophy text-primary text-xl"></i>
-              </div>
-              <div class="flex-1">
-                <h4 class="text-900 font-semibold m-0 mb-2">{{ challenge.title }}</h4>
-                <p class="text-600 text-sm m-0 mb-3 line-height-3">{{ challenge.description }}</p>
-                <div class="flex gap-2 flex-wrap">
-                  <Tag 
-                    :value="getStatusLabel(challenge.status)" 
-                    :severity="getStatusSeverity(challenge.status)"
-                  />
-                  <Tag 
-                    :value="getDifficultyLabel(challenge.difficulty)" 
-                    :severity="getDifficultySeverity(challenge.difficulty)"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div class="flex justify-content-between align-items-center text-sm text-600 mb-3">
-              <div class="flex align-items-center gap-1">
-                <i class="pi pi-users"></i>
-                <span>{{ challenge.participantsCount || 0 }}</span>
-              </div>
-              <div class="flex align-items-center gap-1">
-                <i class="pi pi-star"></i>
-                <span>{{ challenge.points }} pts</span>
-              </div>
-              <div class="flex align-items-center gap-1">
-                <i class="pi pi-calendar"></i>
-                <span>{{ formatDate(challenge.createdAt) }}</span>
-              </div>
-            </div>
-            
-            <div class="flex gap-2">
-              <Button 
-                icon="pi pi-eye" 
-                class="p-button-outlined p-button-sm flex-1"
-                @click="viewChallengeDetails(challenge)"
-                label="Détails"
-              />
-              <Button 
-                v-if="canEditChallenges"
-                icon="pi pi-pencil" 
-                class="p-button-outlined p-button-sm"
-                @click="editChallenge(challenge)"
-                v-tooltip="'Modifier'"
-              />
-              <Button 
-                v-if="canDeleteChallenges"
-                icon="pi pi-trash" 
-                class="p-button-outlined p-button-danger p-button-sm"
-                @click="confirmDeleteChallenge(challenge)"
-                v-tooltip="'Supprimer'"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <Dropdown
+        v-model="selectedStatus"
+        :options="statusOptions"
+        option-label="label"
+        option-value="value"
+        placeholder="Tous les statuts"
+        aria-label="Filtrer par statut"
+        style="min-width: 180px"
+      />
+      <Dropdown
+        v-model="selectedAction"
+        :options="actionOptions"
+        option-label="label"
+        option-value="value"
+        placeholder="Toutes les actions"
+        aria-label="Filtrer par action"
+        style="min-width: 220px"
+      />
     </div>
 
-    <!-- Dialog de création/édition -->
-    <Dialog 
-      v-model:visible="showCreateDialog" 
-      :header="editingChallenge ? 'Modifier le Défi' : 'Nouveau Défi'"
+    <div v-if="loading" class="flex flex-column align-items-center justify-content-center p-6" role="status">
+      <ProgressSpinner />
+      <p class="mt-3 text-600">Chargement des défis...</p>
+    </div>
+
+    <div v-else-if="loadError" class="text-center p-6 surface-card border-round">
+      <i class="pi pi-exclamation-circle text-4xl text-red-500 mb-3" aria-hidden="true"></i>
+      <h2 class="text-xl text-900 mb-2">Impossible de charger les défis</h2>
+      <p class="text-600">{{ loadError }}</p>
+      <Button label="Réessayer" icon="pi pi-refresh" @click="loadChallenges" />
+    </div>
+
+    <div v-else-if="filteredChallenges.length === 0" class="text-center p-6">
+      <i class="pi pi-trophy text-6xl text-300 mb-3" aria-hidden="true"></i>
+      <h2 class="text-xl text-900 mb-2">Aucun défi trouvé</h2>
+      <p class="text-600 m-0">
+        {{ challenges.length ? 'Modifiez vos filtres pour afficher les défis.' : 'Aucun défi n’est encore enregistré dans Supabase.' }}
+      </p>
+    </div>
+
+    <div v-else class="grid">
+      <article v-for="challenge in filteredChallenges" :key="challenge.id" class="col-12 md:col-6 lg:col-4">
+        <div class="surface-card p-4 border-round shadow-2 h-full flex flex-column">
+          <div class="flex align-items-start gap-3 mb-3">
+            <div class="flex align-items-center justify-content-center w-3rem h-3rem bg-primary-50 border-circle flex-shrink-0">
+              <i class="pi pi-trophy text-primary text-xl" aria-hidden="true"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-lg text-900 font-semibold m-0 mb-2">{{ challenge.name }}</h2>
+              <p class="text-600 text-sm m-0 line-height-3">{{ challenge.description || 'Aucune description.' }}</p>
+            </div>
+          </div>
+
+          <div class="flex gap-2 flex-wrap mb-3">
+            <Tag :value="challenge.is_active ? 'Actif' : 'Inactif'" :severity="challenge.is_active ? 'success' : 'secondary'" />
+            <Tag :value="actionLabel(challenge.action_type)" severity="info" />
+          </div>
+
+          <div class="text-sm text-600 mb-3 challenge-meta">
+            <span><i class="pi pi-chart-line" aria-hidden="true"></i> Objectif : {{ challenge.target_value }}</span>
+            <span><i class="pi pi-star" aria-hidden="true"></i> {{ challenge.xp_reward || 0 }} XP</span>
+            <span v-if="challenge.start_date || challenge.end_date">
+              <i class="pi pi-calendar" aria-hidden="true"></i>
+              {{ formatDate(challenge.start_date) }} – {{ formatDate(challenge.end_date) }}
+            </span>
+            <span v-if="challenge.badge_reward"><i class="pi pi-shield" aria-hidden="true"></i> Badge associé</span>
+          </div>
+
+          <div class="flex gap-2 mt-auto">
+            <Button label="Détails" icon="pi pi-eye" class="p-button-outlined p-button-sm flex-1" @click="viewChallengeDetails(challenge)" />
+            <Button
+              v-if="canEditChallenges"
+              icon="pi pi-pencil"
+              class="p-button-outlined p-button-sm"
+              :aria-label="`Modifier ${challenge.name}`"
+              @click="editChallenge(challenge)"
+            />
+            <Button
+              v-if="canEditChallenges"
+              :icon="challenge.is_active ? 'pi pi-pause' : 'pi pi-play'"
+              :class="challenge.is_active ? 'p-button-outlined p-button-warning p-button-sm' : 'p-button-outlined p-button-success p-button-sm'"
+              :aria-label="challenge.is_active ? `Désactiver ${challenge.name}` : `Activer ${challenge.name}`"
+              :loading="updatingId === challenge.id"
+              @click="toggleChallenge(challenge)"
+            />
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <Dialog
+      v-model:visible="showFormDialog"
+      :header="editingChallenge ? 'Modifier le défi' : 'Nouveau défi'"
       :modal="true"
-      :closable="true"
-      :style="{ width: '600px' }"
+      :style="{ width: 'min(650px, 95vw)' }"
     >
-      <div class="challenge-form">
+      <form class="challenge-form" @submit.prevent="saveChallenge">
         <div class="form-group">
-          <label for="title">Titre *</label>
-          <InputText 
-            id="title"
-            v-model="challengeForm.title" 
-            placeholder="Titre du défi"
-            :class="{ 'p-invalid': errors.title }"
-          />
-          <small v-if="errors.title" class="p-error">{{ errors.title }}</small>
+          <label for="challenge-name">Nom *</label>
+          <InputText id="challenge-name" v-model="challengeForm.name" maxlength="120" autofocus />
+          <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
         </div>
-        
+
         <div class="form-group">
-          <label for="description">Description *</label>
-          <Textarea 
-            id="description"
-            v-model="challengeForm.description" 
-            placeholder="Description détaillée du défi"
-            rows="4"
-            :class="{ 'p-invalid': errors.description }"
-          />
-          <small v-if="errors.description" class="p-error">{{ errors.description }}</small>
+          <label for="challenge-description">Description</label>
+          <Textarea id="challenge-description" v-model="challengeForm.description" rows="3" auto-resize />
         </div>
-        
+
         <div class="form-row">
           <div class="form-group">
-            <label for="difficulty">Difficulté *</label>
-            <Dropdown 
-              id="difficulty"
-              v-model="challengeForm.difficulty" 
-              :options="difficultyOptions" 
-              optionLabel="label" 
-              optionValue="value"
-              placeholder="Sélectionner"
-              :class="{ 'p-invalid': errors.difficulty }"
+            <label for="challenge-action">Action suivie *</label>
+            <Dropdown
+              id="challenge-action"
+              v-model="challengeForm.action_type"
+              :options="supportedActionOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Sélectionner une action"
             />
-            <small v-if="errors.difficulty" class="p-error">{{ errors.difficulty }}</small>
+            <small v-if="errors.action_type" class="p-error">{{ errors.action_type }}</small>
           </div>
-          
           <div class="form-group">
-            <label for="points">Points *</label>
-            <InputNumber 
-              id="points"
-              v-model="challengeForm.points" 
-              :min="1"
-              :max="1000"
-              placeholder="Points"
-              :class="{ 'p-invalid': errors.points }"
-            />
-            <small v-if="errors.points" class="p-error">{{ errors.points }}</small>
+            <label for="challenge-target">Nombre d’actions requis *</label>
+            <InputNumber id="challenge-target" v-model="challengeForm.target_value" :min="1" :max="100000" :use-grouping="false" />
+            <small v-if="errors.target_value" class="p-error">{{ errors.target_value }}</small>
           </div>
         </div>
-        
+
         <div class="form-row">
           <div class="form-group">
-            <label for="category">Catégorie</label>
-            <InputText 
-              id="category"
-              v-model="challengeForm.category" 
-              placeholder="Catégorie du défi"
-            />
+            <label for="challenge-xp">Récompense XP</label>
+            <InputNumber id="challenge-xp" v-model="challengeForm.xp_reward" :min="0" :max="100000" :use-grouping="false" />
+            <small v-if="errors.xp_reward" class="p-error">{{ errors.xp_reward }}</small>
           </div>
-          
           <div class="form-group">
-            <label for="status">Statut</label>
-            <Dropdown 
-              id="status"
-              v-model="challengeForm.status" 
-              :options="statusOptions" 
-              optionLabel="label" 
-              optionValue="value"
-              placeholder="Sélectionner"
+            <label for="challenge-badge">Badge récompense</label>
+            <Dropdown
+              id="challenge-badge"
+              v-model="challengeForm.badge_reward"
+              :options="badgeOptions"
+              option-label="name"
+              option-value="id"
+              placeholder="Aucun badge"
+              show-clear
             />
           </div>
         </div>
-        
-        <div class="form-group">
-          <label for="requirements">Prérequis</label>
-          <Textarea 
-            id="requirements"
-            v-model="challengeForm.requirements" 
-            placeholder="Prérequis pour ce défi (optionnel)"
-            rows="2"
-          />
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="challenge-start">Date de début</label>
+            <input id="challenge-start" v-model="challengeForm.start_date" class="p-inputtext p-component" type="date" />
+          </div>
+          <div class="form-group">
+            <label for="challenge-end">Date de fin</label>
+            <input id="challenge-end" v-model="challengeForm.end_date" class="p-inputtext p-component" type="date" />
+          </div>
         </div>
-      </div>
-      
+        <small v-if="errors.dates" class="p-error">{{ errors.dates }}</small>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="challenge-week">Semaine (optionnel)</label>
+            <InputNumber id="challenge-week" v-model="challengeForm.week_number" :min="1" :max="53" :use-grouping="false" />
+          </div>
+          <div class="form-group">
+            <label for="challenge-year">Année (optionnel)</label>
+            <InputNumber id="challenge-year" v-model="challengeForm.year" :min="2000" :max="2200" :use-grouping="false" />
+          </div>
+        </div>
+
+        <div class="flex align-items-center gap-2 mt-3">
+          <Checkbox id="challenge-active" v-model="challengeForm.is_active" binary />
+          <label for="challenge-active">Défi actif</label>
+        </div>
+      </form>
+
       <template #footer>
-        <Button 
-          @click="showCreateDialog = false" 
-          label="Annuler" 
-          class="p-button-text"
-        />
-        <Button 
-          @click="saveChallenge" 
-          :label="editingChallenge ? 'Modifier' : 'Créer'"
-          :loading="saving"
-          class="p-button-success"
-        />
+        <Button label="Annuler" class="p-button-text" :disabled="saving" @click="showFormDialog = false" />
+        <Button :label="editingChallenge ? 'Enregistrer' : 'Créer le défi'" icon="pi pi-check" :loading="saving" @click="saveChallenge" />
       </template>
     </Dialog>
 
-    <!-- Dialog de confirmation de suppression -->
-    <Dialog 
-      v-model:visible="showDeleteDialog" 
-      header="Confirmer la suppression"
-      :modal="true"
-      :closable="true"
-      :style="{ width: '400px' }"
-    >
-      <div class="delete-confirmation">
-        <i class="pi pi-exclamation-triangle warning-icon"></i>
-        <p>Êtes-vous sûr de vouloir supprimer le défi <strong>"{{ challengeToDelete?.title }}"</strong> ?</p>
-        <p class="warning-text">Cette action est irréversible.</p>
+    <Dialog v-model:visible="showDetailsDialog" header="Détails du défi" :modal="true" :style="{ width: 'min(500px, 95vw)' }">
+      <div v-if="detailsChallenge" class="challenge-details">
+        <h2 class="text-xl text-900 mt-0">{{ detailsChallenge.name }}</h2>
+        <p class="text-600">{{ detailsChallenge.description || 'Aucune description.' }}</p>
+        <dl>
+          <dt>Action</dt><dd>{{ actionLabel(detailsChallenge.action_type) }}</dd>
+          <dt>Objectif</dt><dd>{{ detailsChallenge.target_value }}</dd>
+          <dt>Récompense XP</dt><dd>{{ detailsChallenge.xp_reward || 0 }}</dd>
+          <dt>Statut</dt><dd>{{ detailsChallenge.is_active ? 'Actif' : 'Inactif' }}</dd>
+          <dt>Période</dt><dd>{{ formatDate(detailsChallenge.start_date) }} – {{ formatDate(detailsChallenge.end_date) }}</dd>
+          <dt>Semaine / année</dt><dd>{{ detailsChallenge.week_number || '—' }} / {{ detailsChallenge.year || '—' }}</dd>
+          <dt>Créé le</dt><dd>{{ formatDate(detailsChallenge.created_at) }}</dd>
+        </dl>
       </div>
-      
-      <template #footer>
-        <Button 
-          @click="showDeleteDialog = false" 
-          label="Annuler" 
-          class="p-button-text"
-        />
-        <Button 
-          @click="deleteChallenge" 
-          label="Supprimer"
-          :loading="deleting"
-          class="p-button-danger"
-        />
-      </template>
     </Dialog>
-  </div>
+  </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import { useRouter } from 'vue-router'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
-import InputNumber from 'primevue/inputnumber'
-import Textarea from 'primevue/textarea'
-import Dropdown from 'primevue/dropdown'
+import Checkbox from 'primevue/checkbox'
 import Dialog from 'primevue/dialog'
+import Dropdown from 'primevue/dropdown'
+import InputNumber from 'primevue/inputnumber'
+import InputText from 'primevue/inputtext'
 import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
-import adminService from '../../service/adminService'
+import Textarea from 'primevue/textarea'
+import adminChallengesService from '@/service/adminChallengesService'
 
 const toast = useToast()
-const router = useRouter()
-
-// État réactif
 const challenges = ref([])
-const filteredChallenges = ref([])
+const badges = ref([])
 const loading = ref(true)
 const saving = ref(false)
-const deleting = ref(false)
-
-// Filtres
+const updatingId = ref(null)
+const loadError = ref('')
 const searchQuery = ref('')
 const selectedStatus = ref(null)
-const selectedDifficulty = ref(null)
-
-// Dialogs
-const showCreateDialog = ref(false)
-const showDeleteDialog = ref(false)
+const selectedAction = ref(null)
+const showFormDialog = ref(false)
+const showDetailsDialog = ref(false)
 const editingChallenge = ref(null)
-const challengeToDelete = ref(null)
-
-// Formulaire
-const challengeForm = reactive({
-  title: '',
-  description: '',
-  difficulty: '',
-  points: 10,
-  category: '',
-  status: 'active',
-  requirements: ''
-})
-
+const detailsChallenge = ref(null)
 const errors = ref({})
 
-// Options pour les dropdowns
+const supportedActionOptions = [
+  { label: 'Connexion quotidienne', value: 'daily_login' },
+  { label: 'Mise à jour du profil', value: 'update_profile' },
+  { label: 'Création d’une publication', value: 'create_post' }
+]
+const actionOptions = [{ label: 'Toutes les actions', value: null }, ...supportedActionOptions]
 const statusOptions = [
-  { label: 'Tous', value: null },
-  { label: 'Actif', value: 'active' },
-  { label: 'Inactif', value: 'inactive' },
-  { label: 'Brouillon', value: 'draft' }
+  { label: 'Tous les statuts', value: null },
+  { label: 'Actifs', value: true },
+  { label: 'Inactifs', value: false }
 ]
+const badgeOptions = computed(() => [
+  { id: null, name: 'Aucun badge' },
+  ...badges.value
+])
 
-const difficultyOptions = [
-  { label: 'Tous', value: null },
-  { label: 'Facile', value: 'easy' },
-  { label: 'Moyen', value: 'medium' },
-  { label: 'Difficile', value: 'hard' }
-]
+const emptyForm = () => ({
+  name: '',
+  description: '',
+  action_type: '',
+  target_value: 1,
+  xp_reward: 0,
+  badge_reward: null,
+  week_number: null,
+  year: null,
+  start_date: '',
+  end_date: '',
+  is_active: true
+})
+const challengeForm = reactive(emptyForm())
 
-// Permissions supprimées - accès libre pour le développement
 const canCreateChallenges = computed(() => true)
 const canEditChallenges = computed(() => true)
-const canDeleteChallenges = computed(() => true)
+const filteredChallenges = computed(() => {
+  const query = searchQuery.value.trim().toLocaleLowerCase('fr')
+  return challenges.value.filter((challenge) => {
+    const matchesQuery = !query || `${challenge.name} ${challenge.description || ''}`.toLocaleLowerCase('fr').includes(query)
+    const matchesStatus = selectedStatus.value === null || challenge.is_active === selectedStatus.value
+    const matchesAction = selectedAction.value === null || challenge.action_type === selectedAction.value
+    return matchesQuery && matchesStatus && matchesAction
+  })
+})
 
-// Méthodes
 const loadChallenges = async () => {
+  loading.value = true
+  loadError.value = ''
   try {
-    loading.value = true
-    const data = await adminService.getChallenges()
-    challenges.value = Object.keys(data || {}).map(key => ({
-      id: key,
-      ...data[key]
-    }))
-    filterChallenges()
+    challenges.value = await adminChallengesService.getChallenges()
+    try {
+      badges.value = await adminChallengesService.getActiveBadges()
+    } catch (error) {
+      console.error('Impossible de charger les badges disponibles:', error)
+      badges.value = []
+      toast.add({ severity: 'warn', summary: 'Badges indisponibles', detail: 'La liste des défis est chargée, mais les badges ne peuvent pas être sélectionnés.', life: 5000 })
+    }
   } catch (error) {
-    console.error('Erreur lors du chargement des défis:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de charger les défis',
-      life: 3000
-    })
+    console.error('Erreur lors du chargement des défis Supabase:', error)
+    loadError.value = error.message || 'La requête Supabase sur la table challenges a échoué.'
   } finally {
     loading.value = false
   }
 }
 
-const filterChallenges = () => {
-  let filtered = [...challenges.value]
-  
-  // Filtre par recherche
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(challenge => 
-      challenge.title.toLowerCase().includes(query) ||
-      challenge.description.toLowerCase().includes(query)
-    )
-  }
-  
-  // Filtre par statut
-  if (selectedStatus.value) {
-    filtered = filtered.filter(challenge => challenge.status === selectedStatus.value)
-  }
-  
-  // Filtre par difficulté
-  if (selectedDifficulty.value) {
-    filtered = filtered.filter(challenge => challenge.difficulty === selectedDifficulty.value)
-  }
-  
-  filteredChallenges.value = filtered
-}
-
 const resetForm = () => {
-  Object.assign(challengeForm, {
-    title: '',
-    description: '',
-    difficulty: '',
-    points: 10,
-    category: '',
-    status: 'active',
-    requirements: ''
-  })
+  Object.assign(challengeForm, emptyForm())
   errors.value = {}
   editingChallenge.value = null
 }
 
+const openCreateDialog = () => {
+  resetForm()
+  showFormDialog.value = true
+}
+
 const validateForm = () => {
-  errors.value = {}
-  
-  if (!challengeForm.title.trim()) {
-    errors.value.title = 'Le titre est requis'
+  const validationErrors = {}
+  if (!challengeForm.name.trim()) validationErrors.name = 'Le nom du défi est requis.'
+  if (!supportedActionOptions.some((action) => action.value === challengeForm.action_type)) {
+    validationErrors.action_type = 'Sélectionnez une action prise en charge par le moteur de gamification.'
   }
-  
-  if (!challengeForm.description.trim()) {
-    errors.value.description = 'La description est requise'
+  if (!Number.isInteger(Number(challengeForm.target_value)) || Number(challengeForm.target_value) < 1) {
+    validationErrors.target_value = 'L’objectif doit être un nombre entier supérieur à zéro.'
   }
-  
-  if (!challengeForm.difficulty) {
-    errors.value.difficulty = 'La difficulté est requise'
+  if (!Number.isInteger(Number(challengeForm.xp_reward)) || Number(challengeForm.xp_reward) < 0) {
+    validationErrors.xp_reward = 'La récompense XP doit être un entier positif ou nul.'
   }
-  
-  if (!challengeForm.points || challengeForm.points < 1) {
-    errors.value.points = 'Les points doivent être supérieurs à 0'
+  if (challengeForm.start_date && challengeForm.end_date && challengeForm.end_date < challengeForm.start_date) {
+    validationErrors.dates = 'La date de fin doit être égale ou postérieure à la date de début.'
   }
-  
-  return Object.keys(errors.value).length === 0
+  errors.value = validationErrors
+  return Object.keys(validationErrors).length === 0
 }
 
 const saveChallenge = async () => {
-  if (!validateForm()) return
-  
+  if (saving.value || !validateForm()) return
+  saving.value = true
   try {
-    saving.value = true
-    
-    const challengeData = {
-      title: challengeForm.title.trim(),
-      description: challengeForm.description.trim(),
-      difficulty: challengeForm.difficulty,
-      points: challengeForm.points,
-      category: challengeForm.category.trim(),
-      status: challengeForm.status,
-      requirements: challengeForm.requirements.trim()
-    }
-    
     if (editingChallenge.value) {
-      await adminService.updateChallenge(editingChallenge.value.id, challengeData)
-      toast.add({
-        severity: 'success',
-        summary: 'Succès',
-        detail: 'Défi modifié avec succès',
-        life: 3000
-      })
+      await adminChallengesService.updateChallenge(editingChallenge.value.id, challengeForm)
     } else {
-      await adminService.createChallenge(challengeData)
-      toast.add({
-        severity: 'success',
-        summary: 'Succès',
-        detail: 'Défi créé avec succès',
-        life: 3000
-      })
+      await adminChallengesService.createChallenge(challengeForm)
     }
-    
-    showCreateDialog.value = false
-    resetForm()
-    await loadChallenges()
-    
-  } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error)
     toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: error.message || 'Erreur lors de la sauvegarde',
+      severity: 'success',
+      summary: 'Succès',
+      detail: editingChallenge.value ? 'Défi modifié.' : 'Défi créé dans Supabase.',
       life: 3000
     })
+    showFormDialog.value = false
+    resetForm()
+    await loadChallenges()
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde du défi Supabase:', error)
+    toast.add({ severity: 'error', summary: 'Enregistrement impossible', detail: error.message || 'Vérifiez la connexion, les autorisations RLS et le schéma Supabase.', life: 6000 })
   } finally {
     saving.value = false
   }
@@ -488,112 +372,97 @@ const saveChallenge = async () => {
 const editChallenge = (challenge) => {
   editingChallenge.value = challenge
   Object.assign(challengeForm, {
-    title: challenge.title || '',
+    ...emptyForm(),
+    ...challenge,
+    name: challenge.name || '',
     description: challenge.description || '',
-    difficulty: challenge.difficulty || '',
-    points: challenge.points || 10,
-    category: challenge.category || '',
-    status: challenge.status || 'active',
-    requirements: challenge.requirements || ''
+    start_date: challenge.start_date || '',
+    end_date: challenge.end_date || '',
+    badge_reward: challenge.badge_reward || null,
+    is_active: Boolean(challenge.is_active)
   })
-  showCreateDialog.value = true
+  errors.value = {}
+  showFormDialog.value = true
 }
 
-const confirmDeleteChallenge = (challenge) => {
-  challengeToDelete.value = challenge
-  showDeleteDialog.value = true
-}
-
-const deleteChallenge = async () => {
-  if (!challengeToDelete.value) return
-  
+const toggleChallenge = async (challenge) => {
+  updatingId.value = challenge.id
   try {
-    deleting.value = true
-    await adminService.deleteChallenge(challengeToDelete.value.id)
-    
-    toast.add({
-      severity: 'success',
-      summary: 'Succès',
-      detail: 'Défi supprimé avec succès',
-      life: 3000
-    })
-    
-    showDeleteDialog.value = false
-    challengeToDelete.value = null
+    await adminChallengesService.updateChallenge(challenge.id, { ...challenge, is_active: !challenge.is_active })
+    toast.add({ severity: 'success', summary: 'Défi mis à jour', detail: challenge.is_active ? 'Le défi a été désactivé.' : 'Le défi a été activé.', life: 3000 })
     await loadChallenges()
-    
   } catch (error) {
-    console.error('Erreur lors de la suppression:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: error.message || 'Erreur lors de la suppression',
-      life: 3000
-    })
+    console.error('Erreur lors du changement de statut du défi:', error)
+    toast.add({ severity: 'error', summary: 'Mise à jour impossible', detail: error.message || 'Vérifiez vos permissions Supabase.', life: 5000 })
   } finally {
-    deleting.value = false
+    updatingId.value = null
   }
 }
 
 const viewChallengeDetails = (challenge) => {
-  // TODO: Implémenter la vue détaillée
-  console.log('Voir détails du défi:', challenge)
+  detailsChallenge.value = challenge
+  showDetailsDialog.value = true
 }
 
-// Utilitaires de rôles supprimés - système désactivé
-
-const getDifficultyLabel = (difficulty) => {
-  const labels = {
-    easy: 'Facile',
-    medium: 'Moyen',
-    hard: 'Difficile'
-  }
-  return labels[difficulty] || difficulty
+const actionLabel = (actionType) => supportedActionOptions.find((option) => option.value === actionType)?.label || actionType || 'Action inconnue'
+const formatDate = (value) => {
+  if (!value) return '—'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR')
 }
 
-const getStatusLabel = (status) => {
-  const labels = {
-    active: 'Actif',
-    inactive: 'Inactif',
-    draft: 'Brouillon'
-  }
-  return labels[status] || status
-}
-
-const getStatusSeverity = (status) => {
-  const severities = {
-    active: 'success',
-    inactive: 'secondary',
-    draft: 'warning'
-  }
-  return severities[status] || 'info'
-}
-
-const getDifficultySeverity = (difficulty) => {
-  const severities = {
-    easy: 'success',
-    medium: 'warning',
-    hard: 'danger'
-  }
-  return severities[difficulty] || 'info'
-}
-
-const formatDate = (timestamp) => {
-  if (!timestamp) return 'N/A'
-  return new Date(timestamp).toLocaleDateString('fr-FR')
-}
-
-// Navigation vers la vue de création publique
-const navigateToPublicCreation = () => {
-  router.push('/gamification/create-challenge')
-}
-
-// Lifecycle
-onMounted(() => {
-  loadChallenges()
-})
+onMounted(loadChallenges)
 </script>
 
 <style scoped>
-/* Styles personnalisés supprimés - utilisation exclusive de PrimeVue et classes utilitaires */
+.challenge-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.challenge-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.challenge-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.challenge-details dl {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 2fr;
+  gap: 0.75rem;
+}
+
+.challenge-details dt {
+  font-weight: 600;
+}
+
+.challenge-details dd {
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+  }
+}
 </style>

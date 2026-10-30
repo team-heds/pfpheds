@@ -211,7 +211,7 @@ function canAccessRoute(route) {
   };
 
   const need = alias(last?.meta?.need ?? resolved.meta?.need);
-  let reqRoles = last?.meta?.requiredRole ?? resolved.meta?.requiredRole;
+  let reqRoles = route.requiredRole ?? last?.meta?.requiredRole ?? resolved.meta?.requiredRole
   reqRoles = Array.isArray(reqRoles) ? reqRoles : (reqRoles ? [reqRoles] : []);
   reqRoles = reqRoles.map(alias).filter(r => r && typeof r === 'string');
 
