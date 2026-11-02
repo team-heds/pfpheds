@@ -192,7 +192,13 @@ export function installPageNavigation(router, {
   const removeBefore = router.beforeEach((to, from) => {
     remember(currentEntry, captureScroll(document))
     stopObserving()
-    const attempt = { token: ++generation, isPop: popTarget === historyKey(to) }
+    const destinationEntry = historyKey(to)
+    // A push changes its history position only after guards have succeeded.
+    // An already different position here therefore identifies a traversal,
+    // including when this service missed the browser's popstate notification.
+    const traversedHistory = currentEntry.startsWith('history:')
+      && destinationEntry.startsWith('history:') && destinationEntry !== currentEntry
+    const attempt = { token: ++generation, isPop: popTarget === destinationEntry || traversedHistory }
     popTarget = null
     attempts.set(to, attempt)
   })
