@@ -171,8 +171,8 @@
       <!-- Résumé des filtres actifs -->
       <div v-if="hasFilters" class="mt-3 flex align-items-center gap-2 flex-wrap">
         <span class="text-sm font-semibold text-600">Filtres actifs:</span>
-        <Chip v-if="selectedDifficulty" :label="`Difficulté: ${selectedDifficulty}`" removable @remove="selectedDifficulty = null" />
-        <Chip v-if="selectedType" :label="`Type: ${selectedType}`" removable @remove="selectedType = null" />
+        <Chip v-if="difficultyFilter" :label="`Difficulté : ${difficultyFilter.label}`" removable @remove="selectedDifficulty = 'all'" />
+        <Chip v-if="typeFilter" :label="`Type : ${typeFilter.label}`" removable @remove="selectedType = 'all'" />
         <Button label="Tout effacer" size="small" text @click="clearFilters" class="p-0 text-sm" :style="{ color: houseColor }" />
       </div>
     </div>
@@ -413,6 +413,9 @@ const sortOptions = [
   { label: 'Nom (Z-A)', value: 'name_desc' }
 ]
 
+const difficultyFilter = computed(() => difficultyOptions.find(option => option.value !== 'all' && option.value === selectedDifficulty.value))
+const typeFilter = computed(() => typeOptions.find(option => option.value !== 'all' && option.value === selectedType.value))
+
 // Computed properties
 const questsArray = computed(() => userQuests.value || [])
 
@@ -444,24 +447,24 @@ const tabFilteredQuests = computed(() => {
 })
 
 const filteredQuests = computed(() => {
-  let filtered = tabFilteredQuests.value
+  let filtered = [...tabFilteredQuests.value]
 
   // Recherche
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(quest => 
-      quest.title.toLowerCase().includes(query) ||
-      quest.description.toLowerCase().includes(query)
+      String(quest.title ?? '').toLowerCase().includes(query) ||
+      String(quest.description ?? '').toLowerCase().includes(query)
     )
   }
 
   // Filtres
-  if (selectedDifficulty.value !== 'all') {
-    filtered = filtered.filter(quest => quest.difficulty === selectedDifficulty.value)
+  if (difficultyFilter.value) {
+    filtered = filtered.filter(quest => quest.difficulty === difficultyFilter.value.value)
   }
 
-  if (selectedType.value !== 'all') {
-    filtered = filtered.filter(quest => quest.type === selectedType.value)
+  if (typeFilter.value) {
+    filtered = filtered.filter(quest => quest.type === typeFilter.value.value)
   }
 
   // Tri
@@ -476,9 +479,9 @@ const filteredQuests = computed(() => {
       case 'difficulty_desc':
         return getDifficultyOrder(b.difficulty) - getDifficultyOrder(a.difficulty)
       case 'name_asc':
-        return a.title.localeCompare(b.title)
+        return String(a.title ?? '').localeCompare(String(b.title ?? ''))
       case 'name_desc':
-        return b.title.localeCompare(a.title)
+        return String(b.title ?? '').localeCompare(String(a.title ?? ''))
       default:
         return 0
     }
@@ -501,9 +504,7 @@ const completionRate = computed(() => {
 })
 
 const hasFilters = computed(() => {
-  return searchQuery.value || 
-         selectedDifficulty.value !== 'all' || 
-         selectedType.value !== 'all'
+  return Boolean(searchQuery.value || difficultyFilter.value || typeFilter.value)
 })
 
 // Méthodes
@@ -600,13 +601,11 @@ const onPageChange = (event) => {
 }
 
 const getDifficultyColor = (difficulty) => {
-  const diff = QUEST_DIFFICULTIES[difficulty]
-  return diff ? diff.color : '#666'
+  return houseColor.value
 }
 
 const getDifficultyName = (difficulty) => {
-  const diff = QUEST_DIFFICULTIES[difficulty]
-  return diff ? diff.name : 'Inconnu'
+  return difficultyOptions.find(option => option.value === difficulty)?.label || 'Inconnu'
 }
 
 const getDifficultyOrder = (difficulty) => {
@@ -663,7 +662,7 @@ const goBack = () => {
 }
 
 // Watchers
-watch([searchQuery, selectedDifficulty, selectedType], () => {
+watch([searchQuery, selectedDifficulty, selectedType, sortBy], () => {
   currentPage.value = 0
 })
 
