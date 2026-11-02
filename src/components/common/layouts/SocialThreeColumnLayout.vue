@@ -6,6 +6,7 @@
 
     <div
       class="social-layout__main"
+      data-page-scroll
       :class="{ 'social-layout__main--contained': centerMaxWidth }"
       :style="centerStyle"
     >

@@ -156,13 +156,18 @@ export function installPageNavigation(router, {
       }
       if (focus && !focused && !interaction.interrupted) {
         const admin = document.getElementById('admin-content')
-        const target = heading || document.querySelector('main, #main-content')
-        // AdminLayout already focuses its title, including after route changes.
-        if (!admin && target) {
-          if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
-          try { target.focus({ preventScroll: true }) } catch { target.focus() }
+        const target = heading || (!admin && document.querySelector('main, #main-content'))
+        // Preserve focus already placed inside the admin page. If its title
+        // arrives asynchronously, complete the otherwise missing arrival focus.
+        if (admin?.contains(document.activeElement) && document.activeElement !== admin) {
           focused = true
-        } else if (admin) focused = true
+        } else if (target) {
+          if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
+          if (document.activeElement !== target) {
+            try { target.focus({ preventScroll: true }) } catch { target.focus() }
+          }
+          focused = true
+        }
       }
       const restored = interaction.interrupted || restoreScroll(document, snapshot, completed)
       if (heading && restored) stop()

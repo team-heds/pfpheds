@@ -103,6 +103,19 @@ describe('contexte de page après navigation', () => {
     expect(document.title).toBe('Suivi étudiant — HEdS')
   })
 
+  it('complète le focus admin quand son titre arrive après un chargement asynchrone', async () => {
+    const router = createRouter()
+    service = installPageNavigation(router)
+    await settle()
+    router.start(route('/votation')).finish({ html: '<main id="admin-content"><p>Chargement…</p></main>' })
+    await settle()
+    expect(document.activeElement).toBe(document.body)
+    document.getElementById('admin-content').innerHTML = '<h1>Votation PFP2</h1><button>Actualiser</button>'
+    await settle()
+    expect(document.activeElement).toBe(document.querySelector('h1'))
+    expect(document.title).toBe('Votation PFP2 — HEdS')
+  })
+
   it('restaure les défilements imbriqués au retour historique, sans les réappliquer à une nouvelle visite', async () => {
     const router = createRouter(route('/institution'))
     const list = '<div class="content"><main class="main-content"><h1>Institutions</h1></main></div>'
