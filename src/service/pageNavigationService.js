@@ -96,6 +96,13 @@ export function installPageNavigation(router, {
   observationTimeout = 2500,
 } = {}) {
   if (!document || !window) return { dispose() {}, clearHistory() {}, refresh: async () => {} }
+  const history = window.history
+  const previousScrollRestoration = history?.scrollRestoration
+  const managesScrollRestoration = history && 'scrollRestoration' in history
+  // Vue Router only disables native restoration when scrollBehavior is set.
+  // This service owns nested scrollers too: native popstate restoration must
+  // not overwrite positions applied after the route has rendered.
+  if (managesScrollRestoration) history.scrollRestoration = 'manual'
   const snapshots = new Map()
   const attempts = new WeakMap()
   let disposed = false
@@ -221,6 +228,9 @@ export function installPageNavigation(router, {
       snapshots.clear()
       removeBefore?.()
       removeAfter?.()
+      if (managesScrollRestoration && history.scrollRestoration === 'manual') {
+        history.scrollRestoration = previousScrollRestoration
+      }
       window.removeEventListener('popstate', onPopState)
       for (const event of ['pointerdown', 'keydown', 'wheel', 'touchstart']) document.removeEventListener(event, interrupt, true)
     },
