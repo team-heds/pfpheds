@@ -1,53 +1,153 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import { nextTick, reactive } from 'vue'
+import { createMemoryHistory, createRouter } from 'vue-router'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const readSource = (relativePath) =>
-  readFileSync(join(process.cwd(), relativePath), 'utf8')
+const stores = vi.hoisted(() => ({ auth: null, user: null, role: null }))
+vi.mock('@/stores/authStore', () => ({ useAuthStore: () => stores.auth }))
+vi.mock('@/stores/userStore', () => ({ useUserStore: () => stores.user }))
+vi.mock('@/stores/role', () => ({ useRoleStore: () => stores.role }))
+vi.mock('@/supabase', () => ({ supabase: {} }))
+vi.mock('@/components/common/utils/GlobalSearch.vue', () => ({ default: { template: '<button aria-label="Rechercher">Rechercher</button>' } }))
+vi.mock('@/components/ui/buttons/SwitchColor.vue', () => ({ default: { template: '<button aria-label="Activer le thème clair">Thème</button>' } }))
+vi.mock('@/components/common/utils/PwaInstallPrompt.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/components/common/utils/VersionningComponent.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/components/gamification/notifications/GamificationNotification.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/service/questExpirationService', () => ({ default: { startPeriodicCheck: vi.fn(), stopPeriodicCheck: vi.fn() } }))
+
+import Navbar from '@/components/common/utils/Navbar.vue'
+import App from '@/App.vue'
+
+const DialogStub = {
+  props: ['visible', 'header'],
+  template: '<section v-if="visible" role="dialog" :aria-label="header"><slot /></section>',
+}
+const ButtonStub = { props: ['label'], template: '<button><slot />{{ label }}</button>' }
+
+function makeRouter() {
+  const paths = ['/feed', '/institution', '/institution/:id', '/votation', '/votation_pfp1b', '/map', '/admin', '/admin/dashboard-rm', '/admin/settings', '/profile/:id', '/mobile-outils', '/mobile-search', '/communities', '/home']
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: paths.map(path => ({ path, component: { template: '<main><h1>Page de test</h1></main>' } })),
+  })
+}
 
 describe('responsive navigation contract', () => {
-  it('keeps desktop controls centered in the shared shell and adapts the tablet layout', () => {
-    const navbar = readSource('src/components/common/utils/Navbar.vue')
-    const button = readSource('src/components/ui/buttons/ButtonNavbar.vue')
-    const search = readSource('src/components/common/utils/GlobalSearch.vue')
+  let router
+  let wrapper
 
-    expect(navbar).toContain('--navbar-control-size: 44px')
-    expect(navbar).toContain('padding-inline: clamp(2rem, 8vw, 10rem)')
-    expect(navbar).toContain('transform: translateX(-50%)')
-    expect(navbar).toContain('@media (min-width: 769px) and (max-width: 900px)')
-    expect(navbar).toContain('grid-template-columns: 1fr auto')
-    expect(navbar).toContain('grid-column: 1 / -1')
-    expect(button).toContain('var(--navbar-control-size, 44px)')
-    expect(search).toContain('width: 44px')
-    expect(search).toContain('height: 44px')
+  beforeEach(async () => {
+    stores.auth = reactive({
+      user: { id: 'student-test' },
+      isSupabaseUser: true,
+      initialized: true,
+      session: { user: { id: 'student-test' } },
+      initializeAuth: vi.fn().mockResolvedValue(undefined),
+      signOut: vi.fn().mockResolvedValue(undefined),
+    })
+    stores.user = reactive({
+      initialized: true,
+      profile: { role: 'student', permissions: [], pfp_cohort: 'PFP1B' },
+      init: vi.fn(),
+      fetchProfile: vi.fn(),
+    })
+    stores.role = reactive({ perms: [], isSuper: false, can: vi.fn(() => false) })
+    router = makeRouter()
+    await router.push('/feed')
+    await router.isReady()
   })
 
-  it('provides active states and accessible names for icon-only controls', () => {
-    const navbar = readSource('src/components/common/utils/Navbar.vue')
-    const button = readSource('src/components/ui/buttons/ButtonNavbar.vue')
-    const mobile = readSource('src/components/common/utils/MobileBottomNav.vue')
-
-    expect(navbar).toContain(':active="isMenuItemActive(item)"')
-    expect(button).toContain(':aria-label="ariaLabel || title"')
-    expect(button).toContain(':aria-current="active ? \'page\' : undefined"')
-    expect(mobile).toContain(':aria-current="isActive(item) ? \'page\' : undefined"')
-    expect(mobile).toContain('min-height: 48px')
+  afterEach(() => {
+    wrapper?.unmount()
+    vi.unstubAllGlobals()
   })
 
-  it('uses the global mobile navigation once and resolves profiles from the auth store', () => {
-    const app = readSource('src/App.vue')
-    const mobile = readSource('src/components/common/utils/MobileBottomNav.vue')
-    const socialViews = [
-      'src/views/social/FeedView.vue',
-      'src/views/social/CommunityInfoView.vue',
-      'src/views/social/CommunitiesView.vue',
-    ].map(readSource)
+  const mountNavbar = async () => {
+    wrapper = mount(Navbar, { global: { plugins: [router], stubs: { Dialog: DialogStub, Button: ButtonStub } } })
+    await flushPromises()
+    return wrapper
+  }
 
-    expect(app.match(/<MobileBottomNav/g)).toHaveLength(1)
-    expect(mobile).toContain("import { useAuthStore } from '@/stores/authStore'")
-    expect(mobile).not.toContain("from 'firebase/auth'")
-    for (const view of socialViews) {
-      expect(view).not.toContain('<MobileBottomNav')
+  it('renders named primary links with the existing PFP1B destination and route active states', async () => {
+    await mountNavbar()
+    const navigation = wrapper.get('nav[aria-label="Navigation principale"]')
+    const primaryLinks = navigation.findAll('.center-menu a')
+    expect(primaryLinks.map(link => link.attributes('aria-label'))).toEqual(['Accueil', 'Institutions', 'Votation', 'Carte'])
+    expect(primaryLinks.map(link => link.attributes('href'))).toEqual(['/feed', '/institution', '/votation_pfp1b', '/map'])
+    expect(navigation.get('a[href="/feed"]').attributes('aria-current')).toBe('page')
+    expect(navigation.get('a[href="/votation_pfp1b"]').attributes('aria-current')).toBeUndefined()
+
+    await navigation.get('a[href="/institution"]').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/institution')
+    expect(navigation.get('a[href="/institution"]').attributes('aria-current')).toBe('page')
+    expect(navigation.get('a[href="/feed"]').attributes('aria-current')).toBeUndefined()
+
+    await router.push('/institution/institution-test')
+    await nextTick()
+    expect(navigation.get('a[href="/institution"]').attributes('aria-current')).toBe('page')
+
+    stores.user.profile.pfp_cohort = 'PFP1A'
+    await nextTick()
+    expect(navigation.get('a[aria-label="Votation"]').attributes('href')).toBe('/votation')
+  })
+
+  it('opens the named settings action without rendering an inoperative notification control', async () => {
+    await mountNavbar()
+    expect(wrapper.find('[aria-label="Notifications"]').exists()).toBe(false)
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    expect(wrapper.get('button[aria-label="Rechercher"]').exists()).toBe(true)
+    await wrapper.get('button[aria-label="Ouvrir les paramètres"]').trigger('click')
+    const dialog = wrapper.get('[role="dialog"][aria-label="Paramètres"]')
+    expect(dialog.text()).toContain('Profil')
+    expect(dialog.text()).toContain('Se déconnecter')
+  })
+
+  it('preserves administrative and restricted academic destinations as identity permissions change', async () => {
+    await mountNavbar()
+    expect(wrapper.find('.center-menu a[href="/admin"]').exists()).toBe(false)
+    stores.user.profile.role = 'admin'
+    await flushPromises()
+    expect(wrapper.get('.center-menu a[href="/admin"]').attributes('aria-label')).toBe('Admin')
+
+    stores.user.profile.permissions = ['academic.restricted']
+    await flushPromises()
+    expect(wrapper.findAll('.center-menu a').map(link => link.attributes('href'))).toEqual(['/admin/dashboard-rm'])
+  })
+
+  it('reuses the resolved session and profile while navigating between primary destinations', async () => {
+    await mountNavbar()
+    expect(stores.auth.initializeAuth).toHaveBeenCalledTimes(1)
+    expect(stores.user.init).not.toHaveBeenCalled()
+    expect(stores.user.fetchProfile).not.toHaveBeenCalled()
+
+    for (const href of ['/institution', '/votation_pfp1b', '/map', '/feed']) {
+      await wrapper.get(`.center-menu a[href="${href}"]`).trigger('click')
+      await flushPromises()
+      expect(router.currentRoute.value.path).toBe(href)
     }
+
+    expect(stores.auth.initializeAuth).toHaveBeenCalledTimes(1)
+    expect(stores.user.init).not.toHaveBeenCalled()
+    expect(stores.user.fetchProfile).not.toHaveBeenCalled()
+  })
+
+  it('renders one global mobile navigation and derives its profile from the current auth identity', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+    wrapper = mount(App, { global: { plugins: [router] } })
+    await flushPromises()
+    expect(wrapper.findAll('nav.mobile-bottom-nav')).toHaveLength(1)
+    expect(wrapper.findAll('nav.mobile-bottom-nav a')).toHaveLength(5)
+    expect(wrapper.get('nav.mobile-bottom-nav a[href="/profile/student-test"]').exists()).toBe(true)
+
+    stores.auth.user = { id: 'another-test-user' }
+    await nextTick()
+    expect(wrapper.find('nav.mobile-bottom-nav a[href="/profile/student-test"]').exists()).toBe(false)
+    expect(wrapper.get('nav.mobile-bottom-nav a[href="/profile/another-test-user"]').exists()).toBe(true)
+
+    await router.push('/mobile-outils')
+    await nextTick()
+    expect(wrapper.findAll('nav.mobile-bottom-nav')).toHaveLength(1)
+    expect(wrapper.get('nav.mobile-bottom-nav a[href="/mobile-outils"]').attributes('aria-current')).toBe('page')
   })
 })

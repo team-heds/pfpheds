@@ -2,7 +2,7 @@
   <!-- Insertion du composant Navbar -->
   <Navbar />
 
-  <div class="documents-container scrollable-container">
+  <div class="documents-container scrollable-container" data-page-scroll>
     <div class="documents-wrapper">
       <nav class="documents-breadcrumb" aria-label="Fil d'Ariane"><RouterLink to="/home">Accueil</RouterLink><i class="pi pi-angle-right" aria-hidden="true"></i><span aria-current="page">Documents PFP</span></nav>
       <!-- Header Section -->
@@ -198,6 +198,7 @@ import Navbar from '@/components/common/utils/Navbar.vue'
 import EditFileDocPFP from '@/components/home/EditFileDocPFP.vue'
 import AddFileDocPFP from '@/components/home/AddFileDocPFP.vue'
 import { openFilePhysioDocument } from '@/service/filePhysioMediaService'
+import { usePageListContext } from '@/composables/usePageListContext'
 
 // Stores Pinia
 const documentStore = useDocumentStore()
@@ -216,6 +217,7 @@ const editForm = ref({
 
 // Gestion de l'accordéon (dossiers ouverts/fermés)
 const openFolders = ref(new Set())
+const { restored: foldersRestored } = usePageListContext('documents-pfp', { openFolders }, { authStore })
 
 const toggleFolder = (folderId) => {
   if (openFolders.value.has(folderId)) {
@@ -333,7 +335,7 @@ onMounted(async () => {
     await documentStore.loadFoldersTree()
     
     // Ouvrir tous les dossiers par défaut pour que les documents soient visibles
-    if (documentStore.folders && documentStore.folders.length > 0) {
+    if (!foldersRestored.value && documentStore.folders && documentStore.folders.length > 0) {
       documentStore.folders.forEach(folder => {
         if (folder.id) openFolders.value.add(folder.id)
       })

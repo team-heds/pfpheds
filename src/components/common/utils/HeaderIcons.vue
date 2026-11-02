@@ -1,26 +1,22 @@
 <template>
   <div class="header-bar-mobile">
-    <img src="/assets/images/hespicto.png" alt="Logo école" class="school-logo" />
+    <router-link to="/feed" aria-label="HEdS — Accueil" class="school-logo-link">
+      <img :src="hedsIcon" alt="" class="school-logo" />
+    </router-link>
     <div class="header-icons-mobile">
-      <i class="pi pi-bell notif-icon" @click="goToNotifications"></i>
-      <i class="pi pi-send msg-icon" @click="goToChat"></i>
+      <router-link to="/chat" class="msg-icon" aria-label="Messages" title="Messages">
+        <i class="pi pi-send" aria-hidden="true"></i>
+      </router-link>
     </div>
   </div>
 </template>
 
 <script>
-import { useRouter } from 'vue-router'
+import hedsIcon from '@/assets/images/hespicto.png'
 export default {
   name: "HeaderIcons",
   setup() {
-    const router = useRouter();
-    function goToNotifications() {
-      router.push({ name: 'Notifications' });
-    }
-    function goToChat() {
-      router.push({ name: 'IndexChat' });
-    }
-    return { goToNotifications, goToChat };
+    return { hedsIcon };
   }
 }
 </script>
@@ -31,7 +27,7 @@ export default {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 3000;
+  z-index: 20;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -53,7 +49,8 @@ export default {
   gap: 1px;
   align-items: center;
 }
-.notif-icon, .msg-icon {
+.school-logo-link,
+.msg-icon {
   width: 50px;
   height: 50px;
   font-size: 24px;
@@ -61,11 +58,16 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 12px;
+  color: var(--primary-color);
+  text-decoration: none;
 }
-.notif-icon:hover, .msg-icon:hover {
-  color: #F3C300;
+.school-logo-link:focus-visible,
+.msg-icon:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
 }
-@media (min-width: 601px) {
+@media (min-width: 769px) {
   .header-bar-mobile { display: none; }
 }
 </style>

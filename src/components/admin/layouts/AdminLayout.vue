@@ -122,7 +122,7 @@ watch(mobileNavigationOpen, async isOpen => {
     ?.focus()
 })
 
-watch(() => route.fullPath, async () => {
+watch(() => route.path, async () => {
   closeMobileNavigation()
   await nextTick()
   focusPageTitle()
