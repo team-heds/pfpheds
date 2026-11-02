@@ -4,7 +4,7 @@
     <div class="quests-shell" :style="{ '--house-color': houseColor, '--house-foreground': houseTextColor }">
       
       <!-- Loading State avec Skeleton -->
-      <div v-if="loading">
+      <div v-if="loading" role="status" aria-label="Chargement des quêtes" aria-busy="true">
         <!-- Header Skeleton -->
         <div class="surface-card border-round-3xl p-5 mb-5 shadow-3">
           <div class="flex justify-content-between align-items-center">
@@ -52,7 +52,19 @@
           eyebrow="Objectifs personnels"
           icon="pi pi-flag"
           @back="goBack"
-        />
+        >
+          <template #actions>
+            <Button icon="pi pi-refresh" label="Actualiser" aria-label="Actualiser les quêtes" :disabled="loading" @click="loadQuestsData" />
+          </template>
+        </GamificationPageHeader>
+
+        <section v-if="loadError" class="quest-load-error" role="alert">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          <div><h2>Les quêtes n’ont pas pu être chargées</h2><p>{{ loadError }}</p></div>
+          <Button label="Réessayer" icon="pi pi-refresh" @click="loadQuestsData" :disabled="loading" />
+        </section>
+
+        <template v-else>
 
         <!-- Statistics Overview -->
         <div class="quest-stats mb-5">
@@ -60,7 +72,6 @@
           <GamificationStatCard icon="pi pi-star-fill" :value="formatNumber(questStats.totalXPFromQuests)" label="XP gagnés avec les quêtes" />
           <GamificationStatCard icon="pi pi-chart-line" :value="`${questStats.averageProgress}%`" label="Progression moyenne" :progress="questStats.averageProgress" />
         </div>
-    </div>
 
     <!-- Onglets Navigation -->
     <div class="mb-4">
@@ -311,13 +322,14 @@
         />
       </div>
     </Dialog>
-
+        </template>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Navbar from '../common/utils/Navbar.vue'
@@ -343,6 +355,8 @@ const authStore = useAuthStore()
 
 // État réactif
 const loading = ref(true)
+const loadError = ref('')
+let loadGeneration = 0
 const viewMode = ref('grid') // 'grid' ou 'list'
 
 // House configuration (identique à GamificationProfilePage)
@@ -509,30 +523,34 @@ const hasFilters = computed(() => {
 
 // Méthodes
 const loadQuestsData = async () => {
+  const generation = ++loadGeneration
+  const userId = authStore.user?.id
   try {
     loading.value = true
+    loadError.value = ''
     
-    const user = authStore.user
-    if (!user) {
+    if (!userId) {
       router.push('/home')
       return
     }
-    
-    const userId = user.id
 
     // Charger les quêtes utilisateur depuis Supabase
-    const quests = await userQuestsService.getUserQuests(userId)
+    const [quests, stats] = await Promise.all([
+      userQuestsService.getUserQuests(userId),
+      userQuestsService.getQuestStats(userId, { strict: true })
+    ])
+    if (generation !== loadGeneration || authStore.user?.id !== userId) return
     userQuests.value = quests
+    questStats.value = stats
     
     console.log(`✅ ${quests.length} quêtes chargées depuis Supabase`)
 
-    // Charger les statistiques
-    questStats.value = await userQuestsService.getQuestStats(userId)
-    
     console.log('📊 Stats quêtes:', questStats.value)
     
   } catch (error) {
+    if (generation !== loadGeneration || authStore.user?.id !== userId) return
     console.error('Erreur lors du chargement des quêtes:', error)
+    loadError.value = 'Vérifiez votre connexion puis réessayez. Vos filtres sont conservés.'
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -540,7 +558,7 @@ const loadQuestsData = async () => {
       life: 3000
     })
   } finally {
-    loading.value = false
+    if (generation === loadGeneration) loading.value = false
   }
 }
 
@@ -670,6 +688,7 @@ watch([searchQuery, selectedDifficulty, selectedType, sortBy], () => {
 onMounted(() => {
   loadQuestsData()
 })
+onUnmounted(() => { loadGeneration += 1 })
 </script>
 
 <style scoped>
@@ -682,6 +701,21 @@ onMounted(() => {
   margin: 0 auto;
   padding: 2rem;
 }
+
+.quest-load-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+}
+.quest-load-error > i { color: var(--primary-color); font-size: 1.5rem; }
+.quest-load-error > div { flex: 1 1 16rem; min-width: 0; }
+.quest-load-error h2 { margin: 0 0 .5rem; font-size: 1.25rem; color: var(--text-color); }
+.quest-load-error p { margin: 0; color: var(--text-color-secondary); line-height: 1.5; }
 
 .quest-stats {
   display: grid;

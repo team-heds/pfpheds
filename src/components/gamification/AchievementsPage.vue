@@ -140,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import badgesService from '@/service/badgesService'
@@ -167,6 +167,8 @@ const activeFilter = ref('all')
 const sortBy = ref('rarity')
 const showModal = ref(false)
 const selectedBadge = ref(null)
+let loadGeneration = 0
+let disposed = false
 
 // House configuration
 const houseConfig = {
@@ -304,28 +306,47 @@ const goBack = () => {
 }
 
 const loadData = async () => {
+  if (disposed) return
+  const userId = authStore.user?.id || null
+  const generation = ++loadGeneration
+  const isCurrent = () => !disposed && generation === loadGeneration && authStore.user?.id === userId
+  loading.value = Boolean(userId)
+  loadError.value = ''
+  if (!userId) {
+    loadError.value = 'Connectez-vous pour retrouver vos badges.'
+    return
+  }
   try {
-    loading.value = true
-    loadError.value = ''
-    
-    if (!authStore.user?.id) {
-      throw new Error('Utilisateur non connecté')
-    }
-    
-    allBadges.value = await badgesService.getMyBadgeProgress()
-    userBadges.value = allBadges.value.filter((badge) => badge.isUnlocked)
+    const badges = await badgesService.getMyBadgeProgress()
+    if (!isCurrent()) return
+    const unlocked = badges.filter((badge) => badge.isUnlocked)
+    allBadges.value = badges
+    userBadges.value = unlocked
     
   } catch (error) {
+    if (!isCurrent()) return
     console.error('Erreur lors du chargement des données:', error)
     loadError.value = 'Les badges ne peuvent pas être chargés pour le moment.'
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
 // Lifecycle
-onMounted(() => {
-  loadData()
+watch(() => authStore.user?.id || null, () => {
+  allBadges.value = []
+  userBadges.value = []
+  showModal.value = false
+  selectedBadge.value = null
+  searchQuery.value = ''
+  activeFilter.value = 'all'
+  sortBy.value = 'rarity'
+  void loadData()
+}, { immediate: true, flush: 'sync' })
+
+onBeforeUnmount(() => {
+  disposed = true
+  loadGeneration += 1
 })
 </script>
 

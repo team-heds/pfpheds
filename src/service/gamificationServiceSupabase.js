@@ -64,12 +64,12 @@ class GamificationServiceSupabase {
    * Récupère les données de gamification d'un utilisateur depuis Supabase
    * Compatible avec CardNameProfile.vue
    */
-  async getUserGamificationData(userId) {
+  async getUserGamificationData(userId, { strict = false, refresh = false } = {}) {
     try {
       const cacheKey = `gamification_${userId}`
       const cached = this.cache.get(cacheKey)
       
-      if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+      if (!refresh && cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
         return cached.data
       }
 
@@ -82,6 +82,7 @@ class GamificationServiceSupabase {
 
       if (error) {
         console.error('Erreur Supabase gamification:', error)
+        if (strict) throw error
         return this.getDefaultGamificationData()
       }
 
@@ -94,11 +95,13 @@ class GamificationServiceSupabase {
       let houseName = null
       
       if (gamificationData.house_id) {
-        const { data: houseData } = await this.supabase
+        const { data: houseData, error: houseError } = await this.supabase
           .from('houses')
           .select('*')
           .eq('id', gamificationData.house_id)
           .single()
+
+        if (houseError && strict) throw houseError
 
         if (houseData) {
           houseName = houseData.name.toLowerCase()
@@ -142,6 +145,7 @@ class GamificationServiceSupabase {
 
     } catch (error) {
       console.error('Erreur lors de la récupération des données de gamification:', error)
+      if (strict) throw error
       return this.getDefaultGamificationData()
     }
   }
@@ -314,8 +318,8 @@ class GamificationServiceSupabase {
         const stats = housesStats[houseName] || { members: [] }
         
         // Utiliser les données de la table houses (source de vérité)
-        const totalXP = houseDB.total_xp || 0
-        const totalMembers = houseDB.member_count || stats.totalMembers || 0
+        const totalXP = Number(houseDB.total_xp) || 0
+        const totalMembers = Number(houseDB.member_count ?? stats.totalMembers ?? 0) || 0
         
         // Recalculer le niveau dynamiquement pour être sûr qu'il correspond à l'XP
         const calculatedLevelInfo = this.calculateHouseLevel(totalXP)
@@ -326,22 +330,13 @@ class GamificationServiceSupabase {
         const averageLevel = stats.members.length > 0 ? 
           Math.round(stats.members.reduce((sum, member) => sum + member.level, 0) / stats.members.length * 10) / 10 : 1
 
-        // Calculer XP pour prochain niveau (formule: niveau N = (N-1)² × 10000)
-        const nextLevel = houseLevel + 1
-        const xpForNextLevel = Math.pow(nextLevel - 1, 2) * 10000
-        const xpToNext = xpForNextLevel > totalXP ? xpForNextLevel - totalXP : 0
-
-        // Nom du niveau
-        const levelNames = {
-          1: 'Maison Naissante',
-          2: 'Maison Active',
-          3: 'Maison Dynamique',
-          4: 'Maison Brillante',
-          5: 'Maison d\'Excellence',
-          6: 'Maison Prestigieuse',
-          7: 'Maison Légendaire',
-          8: 'Maison Mythique'
-        }
+        // Match calculate_house_level(bigint): remaining XP and the progress
+        // bar use the same thresholds as the displayed house level.
+        const xpToNext = calculatedLevelInfo.xpToNext
+        const levelSpan = totalXP + xpToNext - calculatedLevelInfo.xpRequired
+        const progressPercent = xpToNext <= 0 ? 100 : Math.min(100, Math.max(0,
+          ((totalXP - calculatedLevelInfo.xpRequired) / levelSpan) * 100
+        ))
 
         return {
           name: houseName,
@@ -349,12 +344,13 @@ class GamificationServiceSupabase {
           color: houseDB.color || this.getHouseColor(houseName),
           motto: houseDB.motto || this.getHouseMotto(houseName),
           level: houseLevel,
-          levelName: levelNames[houseLevel] || `Niveau ${houseLevel}`,
+          levelName: calculatedLevelInfo.name,
           totalXP: totalXP,
           totalMembers: totalMembers,
           averageXP: averageXP,
           averageLevel: averageLevel,
-          xpToNext: xpToNext
+          xpToNext,
+          progressPercent
         }
       })
 

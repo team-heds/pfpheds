@@ -118,6 +118,35 @@
       <p>{{ quest.description }}</p>
     </div>
 
+    <section v-if="showSteps && hasSteps" class="modal-steps" :style="{ '--house-color': houseColor }" aria-label="Étapes de la quête">
+      <div class="quest-steps-heading">
+        <h4><i class="pi pi-list" aria-hidden="true"></i> Étapes</h4>
+        <span v-if="completedStepsCount !== null" class="quest-steps-count">
+          {{ completedStepsCount }} / {{ orderedSteps.length }} validées
+        </span>
+      </div>
+      <p class="quest-steps-help">Réalisez ces actions dans l’ordre. Leur validation est automatique.</p>
+      <ol class="quest-steps-list">
+        <li v-for="(step, index) in orderedSteps" :key="step.id || index"
+            class="quest-step" :class="{ 'step-completed': isStepCompleted(index), 'step-current': isCurrentStep(index) }"
+            :aria-current="isCurrentStep(index) ? 'step' : undefined">
+          <span class="quest-step-number" aria-hidden="true">
+            <i v-if="isStepCompleted(index)" class="pi pi-check"></i>
+            <template v-else>{{ index + 1 }}</template>
+          </span>
+          <div class="quest-step-content">
+            <div class="quest-step-heading">
+              <h5>{{ step.title || `Étape ${index + 1}` }}</h5>
+              <span v-if="step.required === false" class="quest-step-label">Facultative</span>
+              <span v-else-if="isStepCompleted(index)" class="quest-step-label">Validée</span>
+              <span v-else-if="isCurrentStep(index)" class="quest-step-label">Prochaine étape</span>
+            </div>
+            <p v-if="step.description">{{ step.description }}</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
     <!-- Progress -->
     <div v-if="hasProgress" class="modal-progress">
       <h4><i class="pi pi-chart-line"></i> Progression</h4>
@@ -312,21 +341,20 @@ const hasProgress = computed(() => {
   return props.quest.status === 'in_progress' || props.quest.status === 'completed' || (props.quest.progress && props.quest.progress > 0)
 })
 
-const hasSteps = computed(() => {
-  return props.quest.steps && Array.isArray(props.quest.steps) && props.quest.steps.length > 0
-})
+const orderedSteps = computed(() => Array.isArray(props.quest.steps)
+  ? props.quest.steps.filter(step => step && typeof step === 'object').slice().sort((left, right) => {
+    const order = value => Number.isFinite(Number(value)) ? Number(value) : Number.MAX_SAFE_INTEGER
+    return order(left.step_order) - order(right.step_order) || String(left.id || '').localeCompare(String(right.id || ''))
+  }) : [])
+const hasSteps = computed(() => orderedSteps.value.length > 0)
 
+// The engine counts completed required steps, not an array index or a percent.
+// Optional steps have no individual progress in this read model: show instructions only.
 const completedStepsCount = computed(() => {
-  if (!props.quest.steps || !Array.isArray(props.quest.steps)) return 0
-  
-  // Si on a un pourcentage de progression, calculer les steps complétées
-  if (props.quest.progress !== undefined) {
-    const totalSteps = props.quest.steps.length || 1
-    return Math.floor((props.quest.progress / 100) * totalSteps)
-  }
-  
-  // Sinon, compter les steps avec completed=true
-  return props.quest.steps.filter(step => step.completed === true).length
+  const count = props.quest.current_step
+  if (!hasSteps.value || !orderedSteps.value.every(step => step.required === true)
+      || !Number.isInteger(count) || count < 0 || count > orderedSteps.value.length) return null
+  return count
 })
 
 const totalRewards = computed(() => {
@@ -416,17 +444,9 @@ const getRecurringText = () => {
   return recurringMap[props.quest.recurringType] || 'Récurrente'
 }
 
-const isStepCompleted = (step) => {
-  return step.current >= step.target
-}
-
-const isCurrentStep = (step, index) => {
-  if (isStepCompleted(step)) return false
-  
-  // C'est l'étape courante si toutes les étapes précédentes sont complétées
-  const previousSteps = props.quest.steps.slice(0, index)
-  return previousSteps.every(prevStep => isStepCompleted(prevStep))
-}
+const isStepCompleted = index => completedStepsCount.value !== null && index < completedStepsCount.value
+const isCurrentStep = index => completedStepsCount.value !== null && !isCompleted.value && !isExpired.value
+  && index === completedStepsCount.value
 
 const formatNumber = (num) => {
   return new Intl.NumberFormat('fr-FR').format(num)
@@ -440,16 +460,6 @@ const getStatusStyle = () => {
     expired: { background: '#ffebee', color: '#c62828' }
   }
   return styles[props.quest.status] || {}
-}
-
-const getStepStyle = (step, index) => {
-  if (isStepCompleted(step)) {
-    return { background: 'rgba(76, 175, 80, 0.1)' }
-  }
-  if (isCurrentStep(step, index)) {
-    return { background: 'rgba(33, 150, 243, 0.1)', border: '1px solid rgba(33, 150, 243, 0.2)' }
-  }
-  return { background: 'rgba(0, 0, 0, 0.02)' }
 }
 
 const toggleExpand = () => {
@@ -1059,6 +1069,7 @@ onUnmounted(() => {
 }
 
 .modal-description h4,
+.modal-steps h4,
 .modal-progress h4,
 .modal-infos h4 {
   font-size: 1rem;
@@ -1080,6 +1091,20 @@ onUnmounted(() => {
 .modal-description {
   margin-bottom: 20px;
 }
+
+.modal-steps { margin-bottom: 24px; }
+.quest-steps-heading, .quest-step-heading { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.quest-steps-heading { justify-content: space-between; }
+.quest-steps-count, .quest-step-label { color: var(--text-color-secondary); font-size: 0.8rem; }
+.quest-steps-help { margin: 0 0 12px; color: var(--text-color-secondary); font-size: 0.85rem; line-height: 1.5; }
+.quest-steps-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.quest-step { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border: 1px solid var(--surface-border); border-radius: 12px; background: var(--surface-section); }
+.quest-step-number { flex: 0 0 28px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--surface-border); font-size: 0.85rem; font-weight: 700; color: var(--text-color); }
+.quest-step-content { min-width: 0; flex: 1; }
+.quest-step-heading h5 { margin: 2px 0 0; color: var(--text-color); font-size: 0.95rem; overflow-wrap: anywhere; }
+.quest-step-content p { margin: 6px 0 0; color: var(--text-color-secondary); font-size: 0.85rem; line-height: 1.6; overflow-wrap: anywhere; }
+.step-current { border-color: var(--house-color); }
+.step-completed .quest-step-number { color: var(--house-color); border-color: var(--house-color); }
 
 .progress-section-modal {
   margin-top: 12px;

@@ -12,6 +12,10 @@ const dialog = {
   props: ['visible'],
   template: '<section v-if="visible" role="dialog"><slot name="header"/><slot/><slot name="footer"/></section>',
 }
+const steps = () => [
+  { id: 'step-post', step_order: 7, title: 'Publier un message', description: 'Publier ensuite sur le fil de test.', required: true },
+  { id: 'step-profile', step_order: 2, title: 'Actualiser mon profil', description: 'Enregistrer son propre profil.', required: true },
+]
 
 describe('états affichés des quêtes', () => {
   const wrappers = []
@@ -121,5 +125,72 @@ describe('états affichés des quêtes', () => {
     await wrapper.setProps({ quest: quest({ icon: '🧭' }) })
     expect(wrapper.get('.quest-icon-small .icon-emoji').text()).toBe('🧭')
     expect(wrapper.get('.modal-icon .icon-emoji-large').text()).toBe('🧭')
+  })
+
+  it('affiche les instructions ordonnées sans modifier les étapes reçues, puis leur validation serveur', async () => {
+    const sourceSteps = steps()
+    const wrapper = render({ steps: sourceSteps, current_step: 1, progress: 0 })
+    await wrapper.get('.quest-card-compact').trigger('click')
+    const section = wrapper.get('[aria-label="Étapes de la quête"]')
+    const displayed = section.findAll('.quest-step')
+    expect(displayed.map(step => step.get('h5').text())).toEqual(['Actualiser mon profil', 'Publier un message'])
+    expect(sourceSteps.map(step => step.id)).toEqual(['step-post', 'step-profile'])
+    expect(section.text()).toContain('Enregistrer son propre profil.')
+    expect(section.text()).toContain('Publier ensuite sur le fil de test.')
+    expect(section.get('.quest-steps-count').text()).toBe('1 / 2 validées')
+    expect(displayed[0].text()).toContain('Validée')
+    expect(displayed[0].classes()).toContain('step-completed')
+    expect(displayed[1].attributes('aria-current')).toBe('step')
+    expect(displayed[1].text()).toContain('Prochaine étape')
+    expect(wrapper.emitted('start-quest')).toBeUndefined()
+  })
+
+  it('ne déduit aucune étape terminée du pourcentage, même à 100 %', async () => {
+    const wrapper = render({ steps: steps(), current_step: 0, progress: 100 })
+    await wrapper.get('.quest-card-compact').trigger('click')
+    expect(wrapper.findAll('.step-completed')).toHaveLength(0)
+    expect(wrapper.get('.quest-steps-count').text()).toBe('0 / 2 validées')
+    expect(wrapper.get('[aria-current="step"]').text()).toContain('Actualiser mon profil')
+  })
+
+  it.each([undefined, null, '1', -1, 3, 0.5, Number.NaN])(
+    'présente uniquement les instructions si le compte serveur est inconnu ou incohérent (%s)', async current_step => {
+      const wrapper = render({ steps: steps(), current_step, progress: 100 })
+      await wrapper.get('.quest-card-compact').trigger('click')
+      expect(wrapper.findAll('.quest-step')).toHaveLength(2)
+      expect(wrapper.findAll('.step-completed')).toHaveLength(0)
+      expect(wrapper.find('[aria-current="step"]').exists()).toBe(false)
+      expect(wrapper.find('.quest-steps-count').exists()).toBe(false)
+    },
+  )
+
+  it('garde les étapes facultatives explicites sans inventer leur progression privée', async () => {
+    const mixed = steps()
+    mixed[0].required = false
+    const wrapper = render({ steps: mixed, current_step: 1, progress: 100 })
+    await wrapper.get('.quest-card-compact').trigger('click')
+    expect(wrapper.get('.modal-steps').text()).toContain('Facultative')
+    expect(wrapper.findAll('.step-completed')).toHaveLength(0)
+    expect(wrapper.find('[aria-current="step"]').exists()).toBe(false)
+    expect(wrapper.find('.quest-steps-count').exists()).toBe(false)
+  })
+
+  it('conserve les validations après réussite et ne propose plus de prochaine étape', async () => {
+    const wrapper = render({ steps: steps(), current_step: 2, status: 'completed', progress: 100, end_date: '2026-10-30T12:00:00Z' })
+    await wrapper.get('.quest-card-compact').trigger('click')
+    expect(wrapper.findAll('.step-completed')).toHaveLength(2)
+    expect(wrapper.get('.quest-steps-count').text()).toBe('2 / 2 validées')
+    expect(wrapper.find('[aria-current="step"]').exists()).toBe(false)
+    expect(wrapper.get('.modal-deadline.completed').text()).toBe('Quête terminée')
+  })
+
+  it('respecte showSteps et ne crée aucune liste vide', async () => {
+    const wrapper = render({ steps: steps(), current_step: 0 })
+    await wrapper.get('.quest-card-compact').trigger('click')
+    expect(wrapper.find('.modal-steps').exists()).toBe(true)
+    await wrapper.setProps({ showSteps: false })
+    expect(wrapper.find('.modal-steps').exists()).toBe(false)
+    await wrapper.setProps({ showSteps: true, quest: quest({ steps: [null] }) })
+    expect(wrapper.find('.modal-steps').exists()).toBe(false)
   })
 })

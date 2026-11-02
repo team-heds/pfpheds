@@ -17,7 +17,7 @@
           <div class="notification-content">
             <!-- Badge Icon -->
             <div class="badge-icon-large" :style="{ color: notification.badge.color }" aria-hidden="true">
-              <i v-if="notification.badge.iconClass" :class="notification.badge.iconClass"></i>
+              <i v-if="badgeIconClass(notification.badge)" :class="badgeIconClass(notification.badge)"></i>
               <span v-else>{{ notification.badge.icon }}</span>
               
               <!-- Sparkle Effects -->
@@ -35,14 +35,14 @@
               <p class="badge-description">{{ notification.badge.description }}</p>
               
               <!-- XP Bonus -->
-              <div class="xp-bonus">
+              <div v-if="Number(notification.badge.xpBonus) > 0" class="xp-bonus">
                 <i class="pi pi-star-fill"></i>
                 <span>+{{ notification.badge.xpBonus }} XP</span>
               </div>
               
               <!-- Rarity Badge -->
-              <div class="rarity-badge" :style="{ backgroundColor: rarityColors[notification.badge.rarity] }">
-                {{ rarityNames[notification.badge.rarity] }}
+              <div class="rarity-badge" :style="{ backgroundColor: rarityColor(notification.badge.rarity), color: getReadableTextColor(rarityColor(notification.badge.rarity)) }">
+                {{ rarityNames[notification.badge.rarity] || rarityNames.common }}
               </div>
             </div>
             
@@ -69,16 +69,30 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onUnmounted, watch } from 'vue'
+import { getReadableTextColor } from '@/utils/colorContrast'
+
+const props = defineProps({
+  userId: { type: String, default: null },
+  soundEnabled: { type: Boolean, default: false },
+})
 
 const notifications = ref([])
 let notificationId = 0
+let disposed = false
+const scheduledTimers = new Set()
+const notificationTimers = new Map()
+const audioContexts = new Set()
+const seenBadges = new Set()
+const MAX_SEEN_BADGES = 100
+const MAX_VISIBLE = 3
 
 // Rarity configuration
 const rarityColors = {
   common: '#9E9E9E',
   uncommon: '#4CAF50',
   rare: '#FF9800',
+  epic: '#7C3AED',
   legendary: '#9C27B0'
 }
 
@@ -86,7 +100,25 @@ const rarityNames = {
   common: 'Commun',
   uncommon: 'Peu Commun',
   rare: 'Rare',
+  epic: 'Épique',
   legendary: 'Légendaire'
+}
+const rarityColor = rarity => rarityColors[rarity] || rarityColors.common
+const badgeIconClass = badge => {
+  const value = String(badge.iconClass || badge.icon || '').trim()
+  return /^pi\s+pi-[\w-]+$/.test(value) ? value : null
+}
+
+const schedule = (callback, delay) => {
+  const timer = window.setTimeout(() => { scheduledTimers.delete(timer); callback() }, delay)
+  scheduledTimers.add(timer)
+  return timer
+}
+
+const clearTimer = timer => {
+  if (timer === undefined) return
+  window.clearTimeout(timer)
+  scheduledTimers.delete(timer)
 }
 
 /**
@@ -95,22 +127,31 @@ const rarityNames = {
  * @param {number} duration - Durée d'affichage en ms (défaut: 5000)
  */
 const showAchievementNotification = (badge, duration = 5000) => {
+  if (disposed || !badge?.name) return null
+  const badgeKey = String(badge.id || `${badge.name}:${badge.rarity || 'common'}`)
+  if (seenBadges.has(badgeKey)) return null
+  seenBadges.add(badgeKey)
+  while (seenBadges.size > MAX_SEEN_BADGES) seenBadges.delete(seenBadges.values().next().value)
+  const visibleDuration = Number.isFinite(duration) ? Math.min(120000, Math.max(1000, duration)) : 5000
   const notification = {
     id: ++notificationId,
-    badge,
-    duration,
+    badge: { ...badge },
+    duration: visibleDuration,
     timestamp: Date.now()
   }
   
   notifications.value.push(notification)
+  while (notifications.value.length > MAX_VISIBLE) dismissNotification(notifications.value[0].id)
   
   // Auto-dismiss après la durée spécifiée
-  setTimeout(() => {
+  notificationTimers.set(notification.id, schedule(() => {
+    notificationTimers.delete(notification.id)
     dismissNotification(notification.id)
-  }, duration)
+  }, visibleDuration))
   
   // Jouer un son (optionnel)
-  playNotificationSound(badge.rarity)
+  if (props.soundEnabled && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) playNotificationSound(badge.rarity)
+  return notification.id
 }
 
 /**
@@ -118,6 +159,8 @@ const showAchievementNotification = (badge, duration = 5000) => {
  * @param {number} id - ID de la notification
  */
 const dismissNotification = (id) => {
+  clearTimer(notificationTimers.get(id))
+  notificationTimers.delete(id)
   const index = notifications.value.findIndex(n => n.id === id)
   if (index > -1) {
     notifications.value.splice(index, 1)
@@ -132,6 +175,7 @@ const playNotificationSound = (rarity) => {
   try {
     // Créer un contexte audio simple
     const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+    audioContexts.add(audioContext)
     
     // Fréquences différentes selon la rareté
     const frequencies = {
@@ -144,7 +188,7 @@ const playNotificationSound = (rarity) => {
     const notes = frequencies[rarity] || frequencies.common
     
     notes.forEach((freq, index) => {
-      setTimeout(() => {
+      schedule(() => {
         const oscillator = audioContext.createOscillator()
         const gainNode = audioContext.createGain()
         
@@ -162,6 +206,10 @@ const playNotificationSound = (rarity) => {
         oscillator.stop(audioContext.currentTime + 0.3)
       }, index * 100)
     })
+    schedule(() => {
+      audioContexts.delete(audioContext)
+      audioContext.close()?.catch?.(() => {})
+    }, notes.length * 100 + 400)
   } catch (error) {
     console.log('Audio non disponible:', error)
   }
@@ -171,8 +219,18 @@ const playNotificationSound = (rarity) => {
  * Ferme toutes les notifications
  */
 const dismissAllNotifications = () => {
+  scheduledTimers.forEach(timer => window.clearTimeout(timer))
+  scheduledTimers.clear()
+  notificationTimers.clear()
+  audioContexts.forEach(context => context.close()?.catch?.(() => {}))
+  audioContexts.clear()
   notifications.value = []
 }
+
+watch(() => props.userId, () => {
+  dismissAllNotifications()
+  seenBadges.clear()
+}, { flush: 'sync' })
 
 // Exposer les méthodes pour utilisation externe
 defineExpose({
@@ -183,7 +241,9 @@ defineExpose({
 
 // Nettoyage au démontage
 onUnmounted(() => {
-  notifications.value = []
+  disposed = true
+  dismissAllNotifications()
+  seenBadges.clear()
 })
 </script>
 
@@ -301,6 +361,7 @@ onUnmounted(() => {
 /* Text Content */
 .notification-text {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -321,6 +382,7 @@ onUnmounted(() => {
   font-size: 1.2rem;
   font-weight: bold;
   margin: 0;
+  overflow-wrap: anywhere;
   animation: slide-in-right 0.5s ease-out;
 }
 
@@ -329,6 +391,7 @@ onUnmounted(() => {
   margin: 0;
   color: var(--text-color-secondary);
   line-height: 1.3;
+  overflow-wrap: anywhere;
   animation: slide-in-right 0.6s ease-out;
 }
 
@@ -370,8 +433,8 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.1);
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -498,7 +561,7 @@ onUnmounted(() => {
 
 /* Special Effects for Legendary Badges */
 .rarity-legendary {
-  animation: legendary-glow 2s ease-in-out infinite;
+  animation: legendary-glow 2s ease-in-out;
 }
 
 @keyframes legendary-glow {
@@ -507,6 +570,20 @@ onUnmounted(() => {
   }
   50% {
     box-shadow: 0 8px 32px rgba(156, 39, 176, 0.4), 0 0 20px rgba(156, 39, 176, 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .achievement-notification,
+  .achievement-notification:hover,
+  .notification-enter-active,
+  .notification-leave-active,
+  .notification-enter-from,
+  .notification-leave-to,
+  .notification-move {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }
 </style>

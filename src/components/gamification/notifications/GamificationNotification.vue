@@ -115,6 +115,8 @@ const listenerId = ref(null)
 const centerVisible = ref(props.showCenter)
 const scheduledTimers = new Set()
 const MAX_NOTIFICATION_HISTORY = 50
+let subscriptionGeneration = 0
+let disposed = false
 
 // Notifications visibles (limitées)
 const visibleNotifications = computed(() => {
@@ -170,6 +172,8 @@ const clearScheduledTimers = () => {
 
 // Afficher une notification
 const showNotification = (data) => {
+  if (disposed || !props.userId || !data || typeof data !== 'object') return null
+  if (Object.hasOwn(data, 'userId') && data.userId !== props.userId) return null
   const duplicate = data?.dedupeKey
     ? allNotifications.value.find((item) => item.dedupeKey === data.dedupeKey)
     : null
@@ -179,6 +183,9 @@ const showNotification = (data) => {
   
   // Ajouter à la liste des notifications visibles
   notifications.value.unshift(notification)
+  if (notifications.value.length > MAX_NOTIFICATION_HISTORY) {
+    notifications.value.splice(MAX_NOTIFICATION_HISTORY)
+  }
   
   // Ajouter à toutes les notifications
   allNotifications.value.unshift(notification)
@@ -284,9 +291,10 @@ const processActivityLog = (log) => {
 
 // S'abonner aux mises à jour d'activité
 const subscribeToActivity = () => {
-  if (!props.userId || !props.realtimeEnabled) return
-
   unsubscribeFromActivity()
+  if (disposed || !props.userId || !props.realtimeEnabled) return
+  const subscribedUserId = props.userId
+  const generation = subscriptionGeneration
   listenerId.value = supabase
     .channel(`gamification-notifications-${props.userId}`)
     .on(
@@ -297,12 +305,16 @@ const subscribeToActivity = () => {
         table: 'xp_history',
         filter: `user_id=eq.${props.userId}`
       },
-      ({ new: activity }) => processActivityLog(activity)
+      ({ new: activity }) => {
+        if (disposed || generation !== subscriptionGeneration || subscribedUserId !== props.userId) return
+        processActivityLog(activity)
+      }
     )
     .subscribe()
 }
 
 const unsubscribeFromActivity = () => {
+  subscriptionGeneration += 1
   if (!listenerId.value) return
   supabase.removeChannel(listenerId.value)
   listenerId.value = null
@@ -315,7 +327,8 @@ const notify = (data) => {
 
 const handleImmediateNotification = (event) => {
   const detail = event?.detail
-  if (!detail || typeof detail !== 'object') return
+  if (!detail || typeof detail !== 'object' || !props.userId) return
+  if (Object.hasOwn(detail, 'userId') && detail.userId !== props.userId) return
   showNotification(detail)
 }
 
@@ -336,13 +349,15 @@ onMounted(() => {
 
 watch(() => props.userId, (userId, previousUserId) => {
   if (userId === previousUserId) return
-  unsubscribeFromActivity()
-  if (userId && props.realtimeEnabled) subscribeToActivity()
-})
+  clearScheduledTimers()
+  notifications.value = []
+  allNotifications.value = []
+  centerVisible.value = props.showCenter
+  subscribeToActivity()
+}, { flush: 'sync' })
 
 watch(() => props.realtimeEnabled, (enabled) => {
-  unsubscribeFromActivity()
-  if (enabled && props.userId) subscribeToActivity()
+  subscribeToActivity()
 })
 
 watch(() => props.showCenter, (showCenter) => {
@@ -350,9 +365,12 @@ watch(() => props.showCenter, (showCenter) => {
 })
 
 onUnmounted(() => {
+  disposed = true
   window.removeEventListener('gamification:notification', handleImmediateNotification)
   unsubscribeFromActivity()
   clearScheduledTimers()
+  notifications.value = []
+  allNotifications.value = []
 })
 </script>
 
@@ -394,9 +412,7 @@ onUnmounted(() => {
 }
 
 .notification-xp {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
-  border-radius: 12px;
+  --notification-accent: var(--primary-color);
 }
 
 .notification-level {
@@ -426,34 +442,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--primary-color);
   font-size: 1.1rem;
   flex-shrink: 0;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-text) 100%);
-}
-
-.notification-xp .notification-icon {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
-
-.notification-level .notification-icon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.notification-badge .notification-icon {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
-
-.notification-quest .notification-icon {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.notification-challenge .notification-icon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.notification-house .notification-icon {
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  background: color-mix(in srgb, var(--primary-color) 12%, var(--surface-card));
 }
 
 .notification-content {
@@ -491,8 +483,8 @@ onUnmounted(() => {
 
 .notification-close {
   color: var(--text-color-secondary);
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 44px;
+  height: 44px;
 }
 
 .notification-center {
@@ -562,7 +554,7 @@ onUnmounted(() => {
     left: 1rem;
     right: 1rem;
     top: auto;
-    bottom: 1rem;
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
   }
   
   .notification-toast {
@@ -578,6 +570,12 @@ onUnmounted(() => {
   .notification-toast,
   .notification-item {
     transition: none;
+  }
+  .notification-toast {
+    transform: none;
+  }
+  .notification-toast:not(.notification-leaving) {
+    opacity: 1;
   }
 }
 </style>

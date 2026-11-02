@@ -20,6 +20,7 @@ const studyDestinations = [
 ]
 
 const toolDestinations = [
+  { key: 'progression', to: '/gamification-profile', label: 'Ma progression', description: 'Retrouver votre maison, vos quêtes et vos réussites.', icon: 'pi pi-compass', feature: 'userJourney' },
   { key: 'notes', to: '/notes', label: 'Mes notes', description: 'Ouvrir vos carnets et vos pages.', icon: 'pi pi-book' },
   { key: 'tools', to: '/outils', label: 'Tous les outils', description: 'Retrouver les outils disponibles sur la plateforme.', icon: 'pi pi-th-large' },
   { key: 'games', to: '/game', label: 'Jeux', description: 'Accéder aux jeux et aux activités.', icon: 'pi pi-star', feature: 'gamesHub' },

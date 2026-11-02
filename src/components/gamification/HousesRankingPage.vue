@@ -22,7 +22,12 @@
       </template>
     </GamificationPageHeader>
 
-    <div class="ranking-container" v-if="housesRanking">
+    <div class="ranking-container" v-if="housesRanking?.ranking.length">
+      <section v-if="errorState.hasError" class="ranking-refresh-error" role="alert">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <div><h2>Le classement n’a pas pu être actualisé</h2><p>Le dernier classement disponible reste affiché. Sa date de mise à jour est conservée.</p></div>
+        <Button label="Réessayer" icon="pi pi-refresh" :disabled="loading" @click="refreshRanking" />
+      </section>
       <!-- Statistiques globales -->
       <div class="global-stats">
         <div class="stat-item">
@@ -171,13 +176,14 @@
     </div>
 
     <!-- État d'erreur -->
-    <div v-else-if="errorState.hasError" class="error-state">
+    <div v-else-if="errorState.hasError" class="error-state" role="alert">
       <div class="error-content">
         <i class="pi pi-exclamation-circle"></i>
-        <h3>{{ errorState.message }}</h3>
+        <h2>{{ errorState.message }}</h2>
         <Button 
           v-if="errorState.canRetry" 
-          @click="loadRanking" 
+          @click="refreshRanking"
+          :disabled="loading"
           label="Réessayer" 
           icon="pi pi-refresh"
           class="p-button-outlined"
@@ -186,7 +192,7 @@
     </div>
 
     <!-- Skeleton loader pendant le chargement initial -->
-    <div v-else-if="loading" class="skeleton-container">
+    <div v-else-if="loading" class="skeleton-container" role="status" aria-label="Chargement du classement" aria-busy="true">
       <div class="skeleton-stats">
         <Skeleton height="50px" class="mb-3" />
       </div>
@@ -196,10 +202,11 @@
       <Skeleton height="400px" />
     </div>
 
-    <!-- État de chargement legacy (fallback) -->
-    <div v-else class="loading">
-      <i class="pi pi-spin pi-spinner"></i>
-      <p>Chargement du classement...</p>
+    <div v-else class="ranking-empty" role="status">
+      <i class="pi pi-users" aria-hidden="true"></i>
+      <h2>Aucun classement disponible</h2>
+      <p>Les maisons apparaîtront ici dès qu’un classement sera disponible.</p>
+      <Button label="Actualiser" icon="pi pi-refresh" @click="refreshRanking" />
     </div>
 
     
@@ -208,7 +215,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
@@ -222,6 +229,7 @@ const housesRanking = ref(null)
 const loading = ref(false)
 const errorState = ref({ hasError: false, message: '', canRetry: true })
 const justRefreshed = ref(false)
+let loadGeneration = 0
 
 // Formatage des nombres
 const formatNumber = (num) => {
@@ -236,6 +244,7 @@ const formatNumber = (num) => {
 // Formatage de la date
 const formatDate = (dateString) => {
   const date = new Date(dateString)
+  if (!Number.isFinite(date.getTime())) return 'à une date indisponible'
   const now = new Date()
   const diffMinutes = Math.floor((now - date) / (1000 * 60))
   
@@ -245,22 +254,11 @@ const formatDate = (dateString) => {
   return `il y a ${Math.floor(diffMinutes / 1440)} jour(s)`
 }
 
-// Calcul du pourcentage de progression (simplifié)
+// Returned by the service from the canonical house-level thresholds.
 const calculateProgress = (house) => {
   if (house.level >= 20) return 100
   if (house.xpToNext <= 0) return 100
-  
-  // Utiliser directement le progressPercent si disponible
-  if (house.progressPercent !== undefined) {
-    return house.progressPercent
-  }
-  
-  // Sinon calculer simplement basé sur xpToNext
-  // Estimation: niveau actuel nécessite environ 50 * 1.5^(level-1) XP
-  const estimatedLevelXP = Math.floor(50 * Math.pow(1.5, house.level - 1))
-  const progress = ((estimatedLevelXP - house.xpToNext) / estimatedLevelXP) * 100
-  
-  return Math.min(100, Math.max(0, progress))
+  return Math.min(100, Math.max(0, Number(house.progressPercent) || 0))
 }
 
 // Navigation vers les détails d'une maison
@@ -277,10 +275,12 @@ const loadFromCache = () => {
     const cached = localStorage.getItem(CACHE_KEY)
     if (!cached) return null
     
-    const { data, timestamp } = JSON.parse(cached)
+    const { data, timestamp, version } = JSON.parse(cached)
     const now = Date.now()
+    if (version !== 2 || !Array.isArray(data?.ranking) || !Number.isFinite(timestamp)
+      || !data.ranking.every(house => house && typeof house.name === 'string' && Number.isFinite(house.progressPercent))) return null
     
-    if (now - timestamp < CACHE_DURATION) {
+    if (now >= timestamp && now - timestamp < CACHE_DURATION) {
       console.log('📦 Chargement du classement depuis le cache')
       return data
     } else {
@@ -297,6 +297,7 @@ const loadFromCache = () => {
 const saveToCache = (data) => {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({
+      version: 2,
       data,
       timestamp: Date.now()
     }))
@@ -308,13 +309,16 @@ const saveToCache = (data) => {
 
 // Actualisation du classement
 const refreshRanking = async () => {
+  if (loading.value) return
   justRefreshed.value = true
-  localStorage.removeItem(CACHE_KEY) // Forcer le rechargement
+  try { localStorage.removeItem(CACHE_KEY) } catch { /* The network refresh still works without browser storage. */ }
   await loadRanking()
 }
 
 // Chargement des données depuis Supabase
 const loadRanking = async () => {
+  const generation = ++loadGeneration
+  const manualRefresh = justRefreshed.value
   try {
     loading.value = true
     errorState.value = { hasError: false, message: '', canRetry: true }
@@ -331,6 +335,8 @@ const loadRanking = async () => {
     
     console.log('🔄 Chargement du classement des maisons depuis Supabase...')
     const ranking = await gamificationServiceSupabase.getHousesRanking()
+    if (generation !== loadGeneration) return
+    if (!Array.isArray(ranking?.ranking)) throw new Error('Invalid house ranking response')
     housesRanking.value = ranking
     
     // Sauvegarder dans le cache
@@ -339,7 +345,7 @@ const loadRanking = async () => {
     console.log('✅ Classement chargé:', ranking)
     
     // Afficher un toast de succès si c'est un refresh
-    if (justRefreshed.value) {
+    if (manualRefresh) {
       toast.add({
         severity: 'success',
         summary: 'Mis à jour !',
@@ -349,6 +355,7 @@ const loadRanking = async () => {
       justRefreshed.value = false
     }
   } catch (error) {
+    if (generation !== loadGeneration) return
     console.error('❌ Erreur lors du chargement du classement:', error)
     
     errorState.value = {
@@ -365,20 +372,19 @@ const loadRanking = async () => {
       life: 5000
     })
     
-    // Données par défaut en cas d'erreur
-    housesRanking.value = {
-      ranking: [],
-      lastUpdated: new Date().toISOString(),
-      totalUsers: 0
-    }
+    // Keep genuine previous data and its timestamp; a failure is never a zero ranking.
   } finally {
-    loading.value = false
+    if (generation === loadGeneration) {
+      loading.value = false
+      justRefreshed.value = false
+    }
   }
 }
 
 onMounted(() => {
   loadRanking()
 })
+onUnmounted(() => { loadGeneration += 1 })
 </script>
 
 <style scoped>
@@ -758,10 +764,30 @@ onMounted(() => {
   margin-bottom: 1rem;
 }
 
-.error-content h3 {
-  color: white;
+.error-content h2 {
+  color: var(--text-color);
   margin-bottom: 2rem;
 }
+
+.ranking-refresh-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+}
+.ranking-refresh-error > i { color: var(--primary-color); font-size: 1.5rem; }
+.ranking-refresh-error > div { flex: 1 1 16rem; min-width: 0; }
+.ranking-refresh-error h2 { margin: 0 0 .4rem; color: var(--text-color); font-size: 1.15rem; }
+.ranking-refresh-error p { margin: 0; line-height: 1.5; color: var(--text-color-secondary); }
+.ranking-empty { padding: 3rem 1.5rem; text-align: center; color: var(--text-color); }
+.ranking-empty > i { font-size: 2rem; color: var(--primary-color); }
+.ranking-empty h2 { margin: 1rem 0 .75rem; font-size: 1.5rem; }
+.ranking-empty p { margin: 0 auto 1.5rem; max-width: 36rem; color: var(--text-color-secondary); line-height: 1.5; }
 
 /* Skeleton loaders */
 .skeleton-container {

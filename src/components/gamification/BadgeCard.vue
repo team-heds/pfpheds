@@ -6,7 +6,7 @@
     :aria-label="`${isUnlocked ? 'Badge obtenu' : 'Badge verrouillé'} : ${badge.name}`"
     :class="[
       `rarity-${badge.rarity}`,
-      { 'unlocked': isUnlocked, 'locked': !isUnlocked, 'glow': shouldGlow }
+      { 'unlocked': isUnlocked, 'locked': !isUnlocked, 'glow': shouldGlow, 'celebrating': celebrateUnlock }
     ]"
     @click="$emit('click', badge)"
     @keydown.enter="$emit('click', badge)"
@@ -16,7 +16,8 @@
     <!-- Badge Icon -->
     <div class="badge-icon-container">
       <div class="badge-icon" :style="{ color: isUnlocked ? badge.color : '#666' }">
-        {{ badge.icon }}
+        <i v-if="badgeIconClass" :class="badgeIconClass" aria-hidden="true"></i>
+        <span v-else>{{ badge.icon }}</span>
       </div>
       
       <!-- Rarity Glow Effect -->
@@ -66,7 +67,7 @@
           <div 
             class="progress-fill" 
             :style="{ 
-              width: progressPercentage + '%',
+              transform: `scaleX(${progressPercentage / 100})`,
               backgroundColor: rarityColor 
             }"
           ></div>
@@ -81,7 +82,7 @@
     </div>
     
     <!-- New Badge Animation -->
-    <div v-if="isNewlyUnlocked" class="new-badge-indicator">
+    <div v-if="celebrateUnlock" class="new-badge-indicator">
       <i class="pi pi-sparkles"></i>
       NOUVEAU !
     </div>
@@ -132,6 +133,13 @@ const rarityColor = computed(() => rarityConfig.value.color)
 const rarityTextColor = computed(() => getReadableTextColor(rarityColor.value))
 const rarityName = computed(() => rarityConfig.value.name)
 const shouldGlow = computed(() => rarityConfig.value.glow && props.isUnlocked)
+const badgeIconClass = computed(() => {
+  const value = String(props.badge.iconClass || props.badge.icon || '').trim()
+  return /^pi\s+pi-[\w-]+$/.test(value) ? value : null
+})
+// Loading an acquired badge is consultation, not a new reward. Only an
+// explicit new-gain signal may add the celebratory presentation.
+const celebrateUnlock = computed(() => props.isUnlocked && props.isNewlyUnlocked)
 
 // Progress calculations
 const progressPercentage = computed(() => {
@@ -164,24 +172,23 @@ const formatUnlockDate = (dateString) => {
 
 <style scoped>
 .badge-card {
-  --badge-surface: #ffffff;
-  --badge-surface-muted: #e8edf4;
-  --badge-text: #172033;
-  --badge-text-secondary: #4b5568;
+  --badge-surface: var(--surface-card);
+  --badge-surface-muted: var(--surface-section);
+  --badge-text: var(--text-color);
+  --badge-text-secondary: var(--text-color-secondary);
   position: relative;
   background: var(--badge-surface);
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, opacity 0.3s ease;
-  border: 2px solid transparent;
+  border: 1px solid var(--surface-border);
   overflow: hidden;
   min-height: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  backdrop-filter: blur(10px);
 }
 
 .badge-card:hover {
@@ -229,7 +236,7 @@ const formatUnlockDate = (dateString) => {
 }
 
 .locked:hover {
-  background: #f0f3f8;
+  background: var(--surface-hover);
 }
 
 /* Badge Icon Container */
@@ -260,8 +267,11 @@ const formatUnlockDate = (dateString) => {
   height: 80px;
   border-radius: 50%;
   opacity: 0.3;
-  animation: pulse-glow 2s ease-in-out infinite;
   z-index: 1;
+}
+
+.celebrating .glow-effect {
+  animation: pulse-glow 2s ease-in-out;
 }
 
 @keyframes pulse-glow {
@@ -306,6 +316,7 @@ const formatUnlockDate = (dateString) => {
   font-weight: bold;
   margin: 0;
   color: var(--badge-text);
+  overflow-wrap: anywhere;
 }
 
 .badge-description {
@@ -313,6 +324,7 @@ const formatUnlockDate = (dateString) => {
   margin: 0;
   color: var(--badge-text-secondary);
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .locked-text {
@@ -325,13 +337,14 @@ const formatUnlockDate = (dateString) => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  color: #8a5c00;
+  color: var(--badge-text);
   font-weight: bold;
   font-size: 0.9rem;
 }
 
 .badge-xp i {
   font-size: 0.8rem;
+  color: var(--primary-color);
 }
 
 /* Unlock Date */
@@ -348,9 +361,9 @@ const formatUnlockDate = (dateString) => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  color: #17603d;
+  color: var(--badge-text-secondary);
   font-size: 0.8rem;
-  font-style: italic;
+  overflow-wrap: anywhere;
 }
 
 /* Rarity Indicator */
@@ -371,26 +384,26 @@ const formatUnlockDate = (dateString) => {
   position: absolute;
   top: -5px;
   left: -5px;
-  background: linear-gradient(45deg, #FF6B6B, #FF8E53);
-  color: white;
+  background: var(--primary-color);
+  color: var(--primary-color-text, #0B213F);
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.7rem;
   font-weight: bold;
-  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: badge-arrival 200ms ease-out;
   display: flex;
   align-items: center;
   gap: 0.25rem;
   z-index: 4;
 }
 
-@keyframes bounce-in {
+@keyframes badge-arrival {
   0% {
-    transform: scale(0) rotate(-180deg);
+    transform: scale(.96);
     opacity: 0;
   }
   100% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
     opacity: 1;
   }
 }
@@ -500,9 +513,11 @@ const formatUnlockDate = (dateString) => {
 }
 
 .progress-fill {
+  width: 100%;
   height: 100%;
   border-radius: 4px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left;
+  transition: transform 300ms ease-out;
   position: relative;
   overflow: hidden;
 }
@@ -571,26 +586,23 @@ const formatUnlockDate = (dateString) => {
 }
 
 /* Enhanced unlock animation */
-.badge-card.unlocked {
-  animation: unlock-celebration 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+.badge-card.celebrating {
+  animation: unlock-celebration 300ms ease-out;
 }
 
 @keyframes unlock-celebration {
   0% {
-    transform: scale(0.8) rotate(-5deg);
+    transform: scale(.98);
     opacity: 0;
   }
-  50% {
-    transform: scale(1.1) rotate(2deg);
-  }
   100% {
-    transform: scale(1) rotate(0deg);
+    transform: scale(1);
     opacity: 1;
   }
 }
 
 /* Particle effect for legendary badges */
-.rarity-legendary.unlocked::before {
+.rarity-legendary.celebrating::before {
   content: '';
   position: absolute;
   top: -50%;
@@ -602,7 +614,7 @@ const formatUnlockDate = (dateString) => {
     rgba(156, 39, 176, 0.1) 0%,
     transparent 70%
   );
-  animation: legendary-aura 3s ease-in-out infinite;
+  animation: legendary-aura 3s ease-in-out;
   pointer-events: none;
 }
 
@@ -614,6 +626,20 @@ const formatUnlockDate = (dateString) => {
   50% {
     transform: rotate(180deg) scale(1.2);
     opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-card,
+  .badge-card::before,
+  .badge-card:hover,
+  .badge-card:active,
+  .badge-card:hover .badge-icon,
+  .glow:hover .badge-icon,
+  .progress-bar {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }
 </style>

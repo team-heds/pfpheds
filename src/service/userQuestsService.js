@@ -240,7 +240,7 @@ class UserQuestsService {
    * @param {string} userId - ID utilisateur
    * @returns {Promise<Object>} Statistiques
    */
-  async getQuestStats(userId) {
+  async getQuestStats(userId, { strict = false } = {}) {
     try {
       const { data, error } = await supabase
         .from('user_quest_progress')
@@ -281,6 +281,7 @@ class UserQuestsService {
       
     } catch (error) {
       console.error('❌ Erreur statistiques quêtes:', error)
+      if (strict) throw error
       return emptyQuestStats()
     }
   }

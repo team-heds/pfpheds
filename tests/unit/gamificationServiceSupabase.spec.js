@@ -427,6 +427,36 @@ describe('gamificationServiceSupabase', () => {
   })
 
   // ==================== addUserXP ====================
+  describe('strict profile reads', () => {
+    it('surfaces a failed read instead of displaying a fictitious zero profile', async () => {
+      const failure = new Error('gamification offline')
+      mockFromChain = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: failure }) }
+      await expect(gamificationServiceSupabase.getUserGamificationData('user1', { strict: true })).rejects.toBe(failure)
+      expect(gamificationServiceSupabase.cache.has('gamification_user1')).toBe(false)
+    })
+
+    it('still supports a genuinely new account without a gamification row', async () => {
+      mockFromChain = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }
+      await expect(gamificationServiceSupabase.getUserGamificationData('new-user', { strict: true })).resolves.toMatchObject({ xp: 0, niveau: 1, maison: null })
+    })
+
+    it('allows an explicit refresh to replace a cached score with the server value', async () => {
+      gamificationServiceSupabase.cache.set('gamification_user1', { data: { xp: 100 }, timestamp: Date.now() })
+      mockFromChain = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { total_xp: 400, house_id: null }, error: null }) }
+      const result = await gamificationServiceSupabase.getUserGamificationData('user1', { strict: true, refresh: true })
+      expect(result).toMatchObject({ xp: 400, totalXP: 400, niveau: 3 })
+      expect(mockFromChain.eq).toHaveBeenCalledWith('user_id', 'user1')
+    })
+
+    it('does not hide an unavailable assigned house in strict mode', async () => {
+      const failure = new Error('houses offline')
+      const profile = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: { total_xp: 400, house_id: 'house-1' }, error: null }) }
+      const house = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: null, error: failure }) }
+      supabaseMock.from.mockImplementation(table => table === 'houses' ? house : profile)
+      await expect(gamificationServiceSupabase.getUserGamificationData('user1', { strict: true })).rejects.toBe(failure)
+    })
+  })
+
   describe('addUserXP', () => {
     it('uses the identity-aware Supabase RPC and never sends user id or XP amount', async () => {
       // Pre-cache

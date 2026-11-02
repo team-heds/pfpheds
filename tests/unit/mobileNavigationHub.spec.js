@@ -60,6 +60,13 @@ describe('Mobile navigation hub destinations', () => {
     expect(getNavigationDestinations({ ...values, isAuthenticated: false, userId: null })).toEqual([])
   })
 
+  it('offers the personal progression hub only while its rollout is enabled', () => {
+    const values = context(makeRouter())
+    expect(getNavigationDestinations(values).some(item => item.key === 'progression')).toBe(false)
+    const enabled = getNavigationDestinations({ ...values, features: { userJourney: true } })
+    expect(enabled.find(item => item.key === 'progression')).toMatchObject({ to: '/gamification-profile', label: 'Ma progression' })
+  })
+
   it('shows only the permitted administration for a minimal nursing teacher', () => {
     const destinations = getNavigationDestinations(context(makeRouter(), ['EnseignantSoins']))
     expect(destinations.filter(item => item.section === 'administration').map(item => item.key)).toEqual(['teacher'])

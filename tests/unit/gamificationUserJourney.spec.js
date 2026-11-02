@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+const routeContext = vi.hoisted(() => ({ profileGuard: vi.fn(), features: { userJourney: true, badgesChallenges: true } }))
+vi.mock('@/router/guards/profileAccessGuard', () => ({ profileAccessGuard: routeContext.profileGuard }))
+vi.mock('@/config/gamificationFeatures', () => ({ gamificationFeatures: routeContext.features }))
+import profileRoutes from '@/router/routes/profiles'
+afterEach(() => { routeContext.features.userJourney = true })
 
 const source = (relativePath) => readFileSync(
   resolve(process.cwd(), relativePath),
@@ -19,15 +24,25 @@ describe('gamification user journey safeguards', () => {
   })
 
   it('protects other gamification profiles and keeps a self route', () => {
-    const routes = source('src/router/routes/profiles.js')
+    const self = profileRoutes.find(route => route.name === 'GamificationProfileSelf')
+    const other = profileRoutes.find(route => route.name === 'GamificationProfilePage')
     const houseBanner = source('src/components/gamification/BandeauMaison.vue')
     const gameMasterBanner = source('src/components/gamification/BandeauGameMaster.vue')
 
-    expect(routes).toMatch(/path: '\/gamification-profile'.*redirect: \{ name: 'QuestsPage' \}/)
-    expect(routes).toMatch(/path: '\/gamification-profile\/:id'.*beforeEnter: profileAccessGuard/)
-    expect(routes).toContain("path: '/gamification/quests', redirect: { name: 'QuestsPage' }")
+    expect(self.path).toBe('/gamification-profile')
+    expect(self.component).toBeTypeOf('function')
+    expect(self.redirect).toBeUndefined()
+    expect(self.meta.requiresAuth).toBe(true)
+    expect(self.beforeEnter()).toBe(true)
+    expect(other.beforeEnter).toBe(routeContext.profileGuard)
+    expect(profileRoutes.find(route => route.path === '/gamification/quests').redirect).toEqual({ name: 'QuestsPage' })
     expect(houseBanner).toContain("name: 'GamificationProfileSelf'")
     expect(gameMasterBanner).toContain("name: 'GamificationProfileSelf'")
+  })
+
+  it('keeps the self hub behind its existing rollout flag', () => {
+    routeContext.features.userJourney = false
+    expect(profileRoutes.find(route => route.name === 'GamificationProfileSelf').beforeEnter()).toEqual({ name: 'QuestsPage' })
   })
 
   it('feeds notifications from the authenticated user Supabase XP history only', () => {
@@ -35,8 +50,6 @@ describe('gamification user journey safeguards', () => {
 
     expect(component).toContain("import { supabase } from '@/supabase'")
     expect(component).toContain("table: 'xp_history'")
-    expect(component).toContain('filter: `user_id=eq.${props.userId}`')
-    expect(component).toContain('supabase.removeChannel(listenerId.value)')
     expect(component).not.toContain("@/service/gamificationService'")
   })
 

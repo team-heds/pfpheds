@@ -169,7 +169,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import challengesService from '@/service/challengesService'
@@ -195,6 +195,8 @@ const showModal = ref(false)
 const selectedChallenge = ref(null)
 const showAllHistory = ref(false)
 const currentWeek = ref(0)
+let loadGeneration = 0
+let disposed = false
 
 // House configuration (identique aux autres pages)
 const houseConfig = {
@@ -319,33 +321,34 @@ const goBack = () => {
 }
 
 const loadData = async () => {
+  if (disposed) return
+  const userId = authStore.user?.id || null
+  const generation = ++loadGeneration
+  const isCurrent = () => !disposed && generation === loadGeneration && authStore.user?.id === userId
+  loading.value = Boolean(userId)
+  loadError.value = ''
+  if (!userId) {
+    loadError.value = 'Connectez-vous pour retrouver vos défis.'
+    return
+  }
   try {
-    loading.value = true
-    loadError.value = ''
-    
-    if (!authStore.user?.id) {
-      throw new Error('Utilisateur non connecté')
-    }
-    
-    const userId = authStore.user.id
-    
-    // Load active challenges
-    activeChallenges.value = await challengesService.getUserActiveChallenges(userId)
-    
-    // Load challenge history
-    challengeHistory.value = await challengesService.getUserChallengeHistory(userId, 20)
-    
-    // Load challenge stats
-    challengeStats.value = await challengesService.getUserChallengeStats(userId)
-    
-    // Set current week
+    const [active, history, stats] = await Promise.all([
+      challengesService.getUserActiveChallenges(userId),
+      challengesService.getUserChallengeHistory(userId, 20),
+      challengesService.getUserChallengeStats(userId),
+    ])
+    if (!isCurrent()) return
+    activeChallenges.value = active
+    challengeHistory.value = history
+    challengeStats.value = stats
     currentWeek.value = getCurrentWeekNumber()
     
   } catch (error) {
+    if (!isCurrent()) return
     console.error('Erreur lors du chargement des données:', error)
     loadError.value = 'Les défis ne peuvent pas être chargés pour le moment.'
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
@@ -358,8 +361,20 @@ const getCurrentWeekNumber = () => {
 }
 
 // Lifecycle
-onMounted(() => {
-  loadData()
+watch(() => authStore.user?.id || null, () => {
+  activeChallenges.value = []
+  challengeHistory.value = []
+  challengeStats.value = { totalCompleted: 0, totalXPFromChallenges: 0, streakWeeks: 0 }
+  currentWeek.value = 0
+  showModal.value = false
+  selectedChallenge.value = null
+  showAllHistory.value = false
+  void loadData()
+}, { immediate: true, flush: 'sync' })
+
+onBeforeUnmount(() => {
+  disposed = true
+  loadGeneration += 1
 })
 </script>
 
