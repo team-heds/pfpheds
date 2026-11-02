@@ -792,7 +792,7 @@ const loadData = async () => {
     }
 
     // 2. Students
-    const studentsData = await getAllStudents()
+    const studentsData = await getAllStudents(filterYear.value)
     allStudents.value = studentsData
 
     const assignedSnapshot = await loadAssignedSnapshot(filterPFP.value, filterYear.value)

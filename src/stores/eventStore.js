@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { supabase } from '@/supabase';
+import { runtimeFeatures } from '@/config/runtimeFeatures';
 
 export const useEventStore = defineStore('event', () => {
   const debug = (...args) => {
@@ -67,6 +68,8 @@ export const useEventStore = defineStore('event', () => {
   function listenEvents() {
     // Charger les événements initiaux
     fetchEvents();
+
+    if (!runtimeFeatures.supabaseRealtime) return () => {};
 
     let refreshTimer = null;
 

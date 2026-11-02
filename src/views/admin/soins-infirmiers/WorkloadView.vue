@@ -2,20 +2,22 @@
   <AdminLayout>
     <template #header>
       <PageHeader 
+        class="si-page-header"
         title="Feuille de charges — Enseignants SI" 
-        subtitle="Calcul automatique des périodes pondérées selon les coefficients Pilier 1.1 (1 période = 45 min)" 
-        icon="pi pi-chart-bar" 
+        subtitle="Calcul automatique des périodes pondérées selon les coefficients Pilier 1.1 (1 période = 45 min)"
+        icon="pi pi-chart-bar"
       />
     </template>
 
-    <div class="workload-page">
+    <div class="workload-page si-admin-screen">
       <!-- Toolbar -->
       <div class="toolbar-card">
         <div class="toolbar-row">
           <div class="flex gap-3 align-items-center flex-wrap">
             <div class="field-inline">
-              <label>Semestre</label>
+              <label for="si-workload-semester">Semestre</label>
               <Dropdown 
+                inputId="si-workload-semester"
                 v-model="selectedSemester" 
                 :options="semesterOptions" 
                 optionLabel="label" 
@@ -25,8 +27,9 @@
               />
             </div>
             <div class="field-inline">
-              <label>Enseignant</label>
+              <label for="si-workload-teacher">Enseignant</label>
               <Dropdown 
+                inputId="si-workload-teacher"
                 v-model="selectedTeacher" 
                 :options="teacherFilterOptions" 
                 optionLabel="label" 
@@ -38,8 +41,9 @@
               />
             </div>
             <div class="field-inline">
-              <label>Classe</label>
+              <label for="si-workload-class">Classe</label>
               <Dropdown 
+                inputId="si-workload-class"
                 v-model="selectedClass" 
                 :options="classFilterOptions" 
                 optionLabel="label" 
@@ -51,8 +55,9 @@
               />
             </div>
             <div class="field-inline">
-              <label>Module</label>
+              <label for="si-workload-module">Module</label>
               <Dropdown 
+                inputId="si-workload-module"
                 v-model="selectedModule" 
                 :options="moduleFilterOptions" 
                 optionLabel="label" 
@@ -64,8 +69,9 @@
               />
             </div>
             <div class="field-inline">
-              <label>Type</label>
+              <label for="si-workload-type">Type</label>
               <Dropdown 
+                inputId="si-workload-type"
                 v-model="selectedType" 
                 :options="typeOptions" 
                 optionLabel="label" 
@@ -77,6 +83,7 @@
             </div>
           </div>
           <div class="flex gap-2 align-items-center">
+            <Tag :value="activeYearName || 'Aucune année active'" :severity="activeYearName ? 'success' : 'danger'" />
             <Button v-if="hasActiveFilters" label="Effacer filtres" icon="pi pi-filter-slash" severity="secondary" size="small" text @click="clearFilters" />
             <Button label="Export Diagnostic" icon="pi pi-table" severity="secondary" outlined size="small" @click="exportDiagnostics" />
             <Button label="Exporter Excel" icon="pi pi-file-excel" severity="success" size="small" @click="exportWorkload" />
@@ -85,7 +92,12 @@
       </div>
 
       <!-- Référence coefficients -->
-      <Panel :toggleable="true" :collapsed="true" class="coeff-panel">
+      <Panel
+        :toggleable="true"
+        :collapsed="true"
+        :pt="{ toggler: { 'aria-label': 'Afficher ou masquer la référence des coefficients' } }"
+        class="coeff-panel"
+      >
         <template #header>
           <div class="flex align-items-center gap-2">
             <i class="pi pi-info-circle text-blue-500"></i>
@@ -153,7 +165,13 @@
       </div>
 
       <!-- Diagnostic qualité données -->
-      <Panel v-if="!loading && diagnostics" :toggleable="true" :collapsed="true" class="coeff-panel">
+      <Panel
+        v-if="!loading && diagnostics"
+        :toggleable="true"
+        :collapsed="true"
+        :pt="{ toggler: { 'aria-label': 'Afficher ou masquer le diagnostic de calcul' } }"
+        class="coeff-panel"
+      >
         <template #header>
           <div class="flex align-items-center gap-2">
             <i class="pi pi-shield text-orange-500"></i>
@@ -166,8 +184,26 @@
           <Tag :value="`Aucun enseignant valide: ${diagnostics.slotsWithNoValidTeacher || 0}`" severity="warning" />
           <Tag :value="`Horaires invalides: ${diagnostics.slotsWithInvalidTime || 0}`" severity="danger" />
           <Tag :value="`Entrées exclues: ${diagnostics.slotsWithExcludedTeacherEntries || 0}`" severity="secondary" />
+          <Tag :value="`Identités résolues: ${diagnostics.resolvedTeacherEntries || 0}`" severity="success" />
+          <Tag :value="`Identités non résolues: ${diagnostics.unresolvedTeacherEntries || 0}`" :severity="diagnostics.unresolvedTeacherEntries ? 'warning' : 'success'" />
+          <Tag :value="`Identités ambiguës: ${diagnostics.ambiguousTeacherEntries || 0}`" :severity="diagnostics.ambiguousTeacherEntries ? 'danger' : 'success'" />
           <Tag :value="`Ateliers via type: ${diagnostics.atelierDetectedByActivityType || 0}`" severity="success" />
           <Tag :value="`Ateliers via fallback: ${diagnostics.atelierDetectedByFallback || 0}`" severity="warning" />
+        </div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <Tag :value="`Par identifiant: ${diagnostics.resolvedById || 0}`" severity="info" />
+          <Tag :value="`Par email: ${diagnostics.resolvedByEmail || 0}`" severity="info" />
+          <Tag :value="`Par nom historique: ${diagnostics.resolvedByName || 0}`" severity="secondary" />
+        </div>
+        <div v-if="diagnostics.unresolvedTeachers?.length || diagnostics.ambiguousTeachers?.length" class="identity-diagnostics mt-3">
+          <div v-if="diagnostics.ambiguousTeachers?.length">
+            <strong>À vérifier (ambiguës)</strong>
+            <span>{{ diagnostics.ambiguousTeachers.join(' · ') }}</span>
+          </div>
+          <div v-if="diagnostics.unresolvedTeachers?.length">
+            <strong>Intervenants sans profil SI reconnu</strong>
+            <span>{{ diagnostics.unresolvedTeachers.join(' · ') }}</span>
+          </div>
         </div>
         <div class="flex flex-wrap gap-2 mt-3">
           <Tag :value="`Coeff ×4.0: ${diagnostics.coefficientDistribution?.['4.0'] || 0}`" severity="success" />
@@ -200,13 +236,13 @@
           <Column :expander="true" style="width: 3rem" />
           <Column field="teacher.name" header="Enseignant" sortable>
             <template #body="{ data }">
-              <div class="teacher-name-cell" @click="selectedTeacher = data.teacher.name" style="cursor: pointer">
-                <i class="pi pi-user text-primary"></i>
+              <button type="button" class="teacher-name-cell teacher-name-button" :aria-label="`Voir le détail de ${data.teacher.name}`" @click="selectedTeacher = data.teacher.name">
+                <i class="pi pi-user text-primary" aria-hidden="true"></i>
                 <div>
                   <strong>{{ data.teacher.name }}</strong>
                   <div v-if="data.teacher.email" class="text-xs text-500">{{ data.teacher.email }}</div>
                 </div>
-              </div>
+              </button>
             </template>
           </Column>
           <Column field="slots.length" header="Créneaux" sortable style="width: 100px">
@@ -278,7 +314,7 @@
           <template #content>
             <div class="flex align-items-center justify-content-between flex-wrap gap-3">
               <div class="flex align-items-center gap-3">
-                <Button icon="pi pi-arrow-left" severity="secondary" text rounded @click="selectedTeacher = null" v-tooltip="'Retour à la liste'" />
+                <Button icon="pi pi-arrow-left" aria-label="Retour à la liste des enseignants" severity="secondary" text rounded @click="selectedTeacher = null" v-tooltip="'Retour à la liste'" />
                 <i class="pi pi-user text-3xl text-primary"></i>
                 <div>
                   <h3 class="m-0">{{ selectedTeacherData.teacher.name }}</h3>
@@ -445,12 +481,16 @@ import TabView from 'primevue/tabview'
 import Tag from 'primevue/tag'
 import Toast from 'primevue/toast'
 import workloadService, { PILIER_1_1_COEFFICIENTS } from '@/service/workloadService'
-import { useAcademicYear } from '@/composables/useAcademicYear'
+import { useActiveAcademicYearContext } from '@/composables/useActiveAcademicYearContext'
 
 const roundHalf = (val) => Math.round(val * 2) / 2
 
 const toast = useToast()
-const { activeAcademicYear, loadActiveAcademicYear } = useAcademicYear()
+const {
+  activeYearId,
+  activeYearName,
+  loadActiveAcademicYearContext
+} = useActiveAcademicYearContext()
 
 // State
 const loading = ref(false)
@@ -544,12 +584,6 @@ const selectedTeacherData = computed(() => {
   return workloadData.value.teachers.find(w => w.teacher.name === selectedTeacher.value) || null
 })
 
-// Stats visuelles
-const maxWeightedPeriods = computed(() => {
-  if (!workloadData.value) return 1
-  return Math.max(...workloadData.value.teachers.map(w => w.totalWeightedPeriods), 1)
-})
-
 function clearFilters() {
   selectedTeacher.value = null
   selectedClass.value = null
@@ -567,8 +601,7 @@ const diagnostics = computed(() => workloadData.value?.diagnostics || null)
 async function loadWorkload() {
   loading.value = true
   try {
-    const academicYearId = activeAcademicYear.value?.id || null
-    workloadData.value = await workloadService.computeWorkload(selectedSemester.value, academicYearId)
+    workloadData.value = await workloadService.computeWorkload(selectedSemester.value, activeYearId.value)
   } catch (error) {
     console.error('[Workload] Erreur:', error)
     toast.add({
@@ -611,6 +644,7 @@ async function exportDiagnostics() {
       { header: 'coefficient', key: 'coefficient', width: 12 },
       { header: 'coefficient_label', key: 'coeffLabel', width: 22 },
       { header: 'weighted_periods', key: 'weightedPeriods', width: 16 },
+      { header: 'identity_issues', key: 'identityIssues', width: 42 },
       { header: 'issue', key: 'issue', width: 24 }
     ]
 
@@ -868,7 +902,7 @@ async function exportWorkload() {
 }
 
 onMounted(async () => {
-  await loadActiveAcademicYear()
+  await loadActiveAcademicYearContext()
   await loadWorkload()
 })
 </script>
@@ -955,6 +989,26 @@ onMounted(async () => {
   max-width: 500px;
 }
 
+.identity-diagnostics {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  background: var(--surface-ground);
+}
+
+.identity-diagnostics > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.identity-diagnostics span {
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
 .atelier-coeff-card {
   background: var(--orange-50, #fff3e0);
   border: 1px solid var(--orange-200, #ffcc80);
@@ -987,6 +1041,23 @@ onMounted(async () => {
   text-decoration: underline;
 }
 
+.teacher-name-button {
+  width: 100%;
+  padding: .25rem;
+  border: 0;
+  border-radius: .5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.teacher-name-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 
 .teacher-header-card {
   border-left: 4px solid var(--primary-color);
@@ -994,5 +1065,71 @@ onMounted(async () => {
 
 :deep(.workload-table .p-datatable-thead > tr > th) {
   background: var(--surface-ground);
+}
+
+@media (max-width: 1024px) {
+  .toolbar-row {
+    align-items: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .workload-page {
+    gap: .75rem;
+  }
+
+  .toolbar-card {
+    padding: 1rem;
+  }
+
+  .toolbar-row,
+  .toolbar-row > .flex,
+  .field-inline {
+    width: 100%;
+  }
+
+  .toolbar-row > .flex {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .field-inline {
+    align-items: stretch;
+    flex-direction: column;
+    gap: .35rem;
+  }
+
+  .field-inline :deep(.p-dropdown),
+  .toolbar-row :deep(.p-button) {
+    width: 100% !important;
+    min-height: 44px;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-card {
+    min-width: 0;
+  }
+
+  .teacher-header-card :deep(.p-card-content) > .flex,
+  .teacher-header-card :deep(.p-card-content) > .flex > .flex:last-child {
+    align-items: flex-start !important;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  :deep(.workload-table),
+  :deep(.coeff-table) {
+    font-size: .875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

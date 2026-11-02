@@ -3,12 +3,12 @@
     <InputText v-model="search" placeholder="Rechercher une feuille..." class="p-mb-2 w-12 mb-5" />
     <ul class="page-list-ul mb-3" v-if="filteredPages && filteredPages.length > 0">
       <li v-for="page in filteredPages" :key="page.id" :class="{active: selectedPageId === page.id}" class="mb-4">
-        <span @click="$emit('select', page)">
+        <button type="button" class="page-name" :aria-current="selectedPageId === page.id ? 'page' : undefined" @click="$emit('select', page)">
           {{ page.title }}
           <small class="page-date">({{ formatDate(page.updatedAt || page.createdAt) }})</small>
-        </span>
-        <Button icon="pi pi-pencil" class="p-button-text p-button-sm" @click.stop="$emit('edit-page', page)" />
-        <Button icon="pi pi-trash" class="p-button-text p-button-sm" severity="danger" @click.stop="$emit('delete-page', page)" />
+        </button>
+        <Button icon="pi pi-pencil" class="p-button-text p-button-sm" :aria-label="`Modifier la feuille ${page.title}`" @click.stop="$emit('edit-page', page)" />
+        <Button icon="pi pi-trash" class="p-button-text p-button-sm" severity="danger" :aria-label="`Supprimer la feuille ${page.title}`" @click.stop="$emit('delete-page', page)" />
       </li>
     </ul>
     <div v-else class="empty-state">
@@ -29,9 +29,12 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  selectedPageId: {
+    type: [String, Number],
+    default: null
+  },
 })
 const emit = defineEmits(['select', 'create-page', 'edit-page', 'delete-page'])
-const selectedPageId = null // sélection gérée dans la vue principale
 
 const search = ref('')
 
@@ -81,24 +84,39 @@ function formatDate(date) {
   gap: 0.5rem;
   cursor: pointer;
 }
-.page-list-ul li.active > span {
-  font-weight: bold;
-  color: var(--primary-color, #2196f3);
-}
-.page-list-ul li span {
+.page-name {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 2.5rem;
+  padding: .5rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.page-name:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 .page-date {
-  color: #888;
+  color: var(--text-color-secondary);
   font-size: 0.8em;
   margin-left: 0.5em;
 }
 .page-list-ul li.active {
   background: var(--primary-color);
-  color: white;
+  color: #071426;
   border-radius: 4px;
+}
+.page-list-ul li.active .page-name {
+  font-weight: 700;
+}
+.page-list-ul li.active .page-date,
+.page-list-ul li.active :deep(.p-button) {
+  color: #071426;
 }
 
 .empty-state {

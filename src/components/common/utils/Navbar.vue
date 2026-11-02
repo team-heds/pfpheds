@@ -11,7 +11,7 @@
         <!-- Logo (gauche) -->
         <div class="navbar-brand">
           <router-link class="navbar-brand__link" to="/feed" aria-label="HEdS — Accueil">
-            <img src="/pictoHEdS.png" alt="" class="navbar-brand__image" />
+            <img :src="hedsIcon" alt="" class="navbar-brand__image" />
           </router-link>
         </div>
 
@@ -100,14 +100,13 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ref as dbRef, get } from "firebase/database";
-import { db } from '../../../../firebase.js';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import SwitchColor from '@/components/ui/buttons/SwitchColor.vue';
 import ButtonNavbar from '@/components/ui/buttons/ButtonNavbar.vue';
 import Dialog from 'primevue/dialog';
 import GlobalSearch from '@/components/common/utils/GlobalSearch.vue';
+import hedsIcon from '@/assets/images/hespicto.png';
 
 const router = useRouter();
 const route = useRoute();
@@ -189,12 +188,7 @@ const isMenuItemActive = (item) => {
 const navigateToProfile = () => {
   const currentUser = authStore.user;
   if (currentUser) {
-    // Pour Firebase, on utilise uid
-    if (authStore.isFirebaseUser) {
-      navigateTo(`/profile/${currentUser.uid}`);
-    }
-    // Pour Supabase, on utilise id
-    else if (authStore.isSupabaseUser) {
+    if (authStore.isSupabaseUser) {
       navigateTo(`/profile/${currentUser.id}`);
     }
   }
@@ -216,24 +210,9 @@ const updateUserState = async () => {
   user.value = currentUser;
   
   if (currentUser) {
-    // Pour les utilisateurs Firebase, charger les rôles depuis Firebase
-    if (authStore.isFirebaseUser) {
-      const userId = currentUser.uid;
-      try {
-        const userRef = dbRef(db, `Users/${userId}`);
-        const snapshot = await get(userRef);
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
-          userRoles.value = userData.Roles || {};
-          hasAdminAccess.value = userData.Roles?.admin || userData.Roles?.editor;
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des données utilisateur:', error);
-      }
-    }
     // Le profil Supabase est initialisé une seule fois au bootstrap puis maintenu
     // à jour par le store. Ne pas le recharger à chaque navigation.
-    else if (authStore.isSupabaseUser) {
+    if (authStore.isSupabaseUser) {
       if (!userStore.initialized) {
         await userStore.init({
           session: authStore.session,
@@ -265,7 +244,7 @@ const updateUserState = async () => {
 // Mettre à jour les droits seulement quand l'identité ou le rôle change.
 // Un changement de route ne doit déclencher aucun appel Supabase.
 watch(
-  () => [authStore.user?.id || authStore.user?.uid, userStore.profile?.role, userStore.profile?.permissions],
+  () => [authStore.user?.id, userStore.profile?.role, userStore.profile?.permissions],
   () => { void updateUserState(); },
 );
 

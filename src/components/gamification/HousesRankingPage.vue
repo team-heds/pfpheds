@@ -1,22 +1,26 @@
 <template>
   <Navbar />
   <div class="page-wrapper">
-    <div class="houses-ranking-page mt-5">
-
-    <div class="page-header">
-      <div class="header-content">
-        <Button class="back-btn" @click="$router.go(-1)">
-          <i class="pi pi-arrow-left"></i>
+    <div class="houses-ranking-page mt-5" style="--house-color: #f4c300; --house-foreground: #172033;">
+    <GamificationPageHeader
+      title="Classement des maisons"
+      description="Comparez la progression collective et découvrez la dynamique de chaque maison."
+      eyebrow="Progression collective"
+      icon="pi pi-crown"
+      @back="$router.go(-1)"
+    >
+      <template #actions>
+        <Button
+          class="refresh-btn"
+          aria-label="Actualiser le classement"
+          title="Actualiser"
+          @click="refreshRanking"
+          :disabled="loading"
+        >
+          <i class="pi pi-refresh" :class="{ 'pi-spin': loading }" aria-hidden="true"></i>
         </Button>
-        <div class="title-section">
-          <h1>🏆 Classement des Maisons</h1>
-
-        </div>
-        <Button class="refresh-btn" @click="refreshRanking" :disabled="loading">
-          <i class="pi pi-refresh" :class="{ 'pi-spin': loading }"></i>
-        </Button>
-      </div>
-    </div>
+      </template>
+    </GamificationPageHeader>
 
     <div class="ranking-container" v-if="housesRanking">
       <!-- Statistiques globales -->
@@ -32,13 +36,14 @@
       </div>
 
       <!-- Podium des 3 premières maisons -->
+      <h2 class="sr-only">Podium des maisons</h2>
       <div class="podium">
         <div 
           v-for="(house, index) in housesRanking.ranking.slice(0, 3)" 
           :key="house.name"
           class="podium-item"
           :class="`position-${house.position}`"
-          :style="{ '--house-color': house.color }"
+          :style="{ '--house-color': house.color, '--house-foreground': getReadableTextColor(house.color) }"
         >
           <div class="podium-rank">
             <i v-if="house.position === 1" class="pi pi-crown gold"></i>
@@ -47,7 +52,15 @@
             <span class="rank-number">#{{ house.position }}</span>
           </div>
           
-          <div class="house-card" @click="viewHouseDetails(house.name)">
+          <div
+            class="house-card"
+            role="button"
+            tabindex="0"
+            :aria-label="`Voir le détail de la maison ${house.displayName}`"
+            @click="viewHouseDetails(house.name)"
+            @keydown.enter="viewHouseDetails(house.name)"
+            @keydown.space.prevent="viewHouseDetails(house.name)"
+          >
             <div class="house-header" :style="{ backgroundColor: house.color }">
               <h3>{{ house.displayName }}</h3>
               <p class="house-motto">{{ house.motto }}</p>
@@ -95,7 +108,7 @@
                 </span>
               </div>
               <div v-else class="max-level">
-                🎉 Niveau Maximum Atteint !
+                <i class="pi pi-verified" aria-hidden="true"></i> Niveau maximum atteint
               </div>
             </div>
           </div>
@@ -111,7 +124,12 @@
             :key="house.name"
             class="ranking-item"
             :class="{ 'top-three': house.position <= 3 }"
+            role="button"
+            tabindex="0"
+            :aria-label="`Voir le détail de la maison ${house.displayName}`"
             @click="viewHouseDetails(house.name)"
+            @keydown.enter="viewHouseDetails(house.name)"
+            @keydown.space.prevent="viewHouseDetails(house.name)"
           >
             <div class="rank-section">
               <span class="rank-number">#{{ house.position }}</span>
@@ -195,6 +213,8 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
+import { getReadableTextColor } from '@/utils/colorContrast'
 
 const router = useRouter()
 const toast = useToast()
@@ -380,6 +400,7 @@ onMounted(() => {
 
 .houses-ranking-page {
   min-height: 100vh;
+  padding-top: 2rem;
   padding-bottom: 2rem;
 }
 
@@ -401,6 +422,9 @@ onMounted(() => {
   border: none;
   color: white;
   padding: 0.75rem;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -408,6 +432,14 @@ onMounted(() => {
 
 .back-btn:hover, .refresh-btn:hover {
   background: var(--surface-hover);
+}
+
+.back-btn:focus-visible,
+.refresh-btn:focus-visible,
+.house-card:focus-visible,
+.ranking-item:focus-visible {
+  outline: 3px solid #f1c40f;
+  outline-offset: 3px;
 }
 
 .refresh-btn:disabled {
@@ -438,6 +470,22 @@ onMounted(() => {
   justify-content: center;
   gap: 2rem;
   margin-bottom: 2rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1rem;
+}
+
+.refresh-btn {
+  display: grid;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  place-items: center;
+  color: #172033;
+  background: #f4c300;
+  border: 0;
+  border-radius: 0.75rem;
 }
 
 .stat-item {
@@ -504,7 +552,7 @@ onMounted(() => {
 
 .house-header {
   padding: 1.5rem;
-  color: white;
+  color: var(--house-foreground);
   text-align: center;
 }
 
@@ -531,7 +579,7 @@ onMounted(() => {
 }
 
 .level-badge {
-  color: white;
+  color: var(--house-foreground);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.8rem;
@@ -581,7 +629,6 @@ onMounted(() => {
 .progress-fill {
   height: 100%;
   border-radius: 3px;
-  transition: width 0.8s ease;
 }
 
 .progress-text {

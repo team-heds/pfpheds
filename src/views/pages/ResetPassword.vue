@@ -387,6 +387,10 @@ function mapRecoveryError(error) {
     return 'Le lien ou le code a expiré. Demandez un nouvel email de réinitialisation.'
   }
 
+  if (normalized.includes('user not found')) {
+    return 'L’adresse email ou le code ne correspond pas. Vérifiez l’adresse complète du compte et utilisez uniquement le dernier email reçu.'
+  }
+
   if (normalized.includes('invalid') || normalized.includes('token')) {
     return 'Le lien ou le code est invalide. Vérifiez que vous utilisez le dernier email reçu.'
   }

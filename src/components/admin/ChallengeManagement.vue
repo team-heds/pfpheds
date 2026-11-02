@@ -1,14 +1,14 @@
 <template>
   <div>
     
-    <div class="p-4 max-w-7xl mx-auto">
+    <div class="p-4 max-w-7xl mx-auto gamification-manager">
       <!-- Header simplifié -->
-      <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border">
+      <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border manager-toolbar">
         <div class="flex align-items-center gap-2">
           <i class="pi pi-trophy text-primary text-2xl"></i>
-          <h1 class="text-2xl font-semibold m-0 text-900">Gestion des Défis</h1>
+          <h2 class="text-2xl font-semibold m-0 text-900">Défis</h2>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 manager-actions">
           <Button 
             @click="navigateToPublicCreation"
             icon="pi pi-external-link"
@@ -27,13 +27,14 @@
       </div>
 
       <!-- Filtres et recherche -->
-      <div class="flex flex-wrap gap-3 mb-4">
-        <div class="p-inputgroup flex-1" style="min-width: 300px;">
+      <div class="flex flex-wrap gap-3 mb-4 manager-filters">
+        <div class="p-inputgroup flex-1 manager-search" style="min-width: 300px;">
           <span class="p-inputgroup-addon">
             <i class="pi pi-search"></i>
           </span>
           <InputText 
             v-model="searchQuery" 
+            aria-label="Rechercher un défi"
             placeholder="Rechercher un défi..."
             @input="filterChallenges"
           />
@@ -41,6 +42,7 @@
         
         <Dropdown 
           v-model="selectedStatus" 
+          aria-label="Filtrer les défis par statut"
           :options="statusOptions" 
           optionLabel="label" 
           optionValue="value"
@@ -49,15 +51,6 @@
           style="min-width: 150px;"
         />
         
-        <Dropdown 
-          v-model="selectedDifficulty" 
-          :options="difficultyOptions" 
-          optionLabel="label" 
-          optionValue="value"
-          placeholder="Difficulté"
-          @change="filterChallenges"
-          style="min-width: 150px;"
-        />
       </div>
 
       <!-- Liste des défis -->
@@ -91,18 +84,14 @@
                     :value="getStatusLabel(challenge.status)" 
                     :severity="getStatusSeverity(challenge.status)"
                   />
-                  <Tag 
-                    :value="getDifficultyLabel(challenge.difficulty)" 
-                    :severity="getDifficultySeverity(challenge.difficulty)"
-                  />
                 </div>
               </div>
             </div>
             
             <div class="flex justify-content-between align-items-center text-sm text-600 mb-3">
               <div class="flex align-items-center gap-1">
-                <i class="pi pi-users"></i>
-                <span>{{ challenge.participantsCount || 0 }}</span>
+                <i class="pi pi-bolt"></i>
+                <span>{{ getActionLabel(challenge.actionType) }}</span>
               </div>
               <div class="flex align-items-center gap-1">
                 <i class="pi pi-star"></i>
@@ -126,6 +115,7 @@
                 icon="pi pi-pencil" 
                 class="p-button-outlined p-button-sm"
                 @click="editChallenge(challenge)"
+                :aria-label="`Modifier le défi ${challenge.title}`"
                 v-tooltip="'Modifier'"
               />
               <Button 
@@ -133,7 +123,8 @@
                 icon="pi pi-trash" 
                 class="p-button-outlined p-button-danger p-button-sm"
                 @click="confirmDeleteChallenge(challenge)"
-                v-tooltip="'Supprimer'"
+                :aria-label="`Archiver le défi ${challenge.title}`"
+                v-tooltip="'Archiver'"
               />
             </div>
           </div>
@@ -147,13 +138,15 @@
       :header="editingChallenge ? 'Modifier le Défi' : 'Nouveau Défi'"
       :modal="true"
       :closable="true"
-      :style="{ width: '600px' }"
+      :style="{ width: 'min(720px, calc(100vw - 2rem))', maxHeight: 'calc(100vh - 2rem)' }"
+      :contentStyle="{ overflowY: 'auto' }"
+      class="gamification-form-dialog"
     >
       <div class="challenge-form">
         <div class="form-group">
-          <label for="title">Titre *</label>
+          <label for="challenge-title">Titre *</label>
           <InputText 
-            id="title"
+            id="challenge-title"
             v-model="challengeForm.title" 
             placeholder="Titre du défi"
             :class="{ 'p-invalid': errors.title }"
@@ -162,9 +155,9 @@
         </div>
         
         <div class="form-group">
-          <label for="description">Description *</label>
+          <label for="challenge-description">Description *</label>
           <Textarea 
-            id="description"
+            id="challenge-description"
             v-model="challengeForm.description" 
             placeholder="Description détaillée du défi"
             rows="4"
@@ -175,23 +168,25 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label for="difficulty">Difficulté *</label>
+            <label for="challenge-action-type">Action vérifiée *</label>
             <Dropdown 
-              id="difficulty"
-              v-model="challengeForm.difficulty" 
-              :options="difficultyOptions" 
+              inputId="challenge-action-type"
+              aria-label="Action vérifiée par le défi"
+              v-model="challengeForm.actionType"
+              :options="actionOptions"
               optionLabel="label" 
               optionValue="value"
               placeholder="Sélectionner"
-              :class="{ 'p-invalid': errors.difficulty }"
+              :class="{ 'p-invalid': errors.actionType }"
             />
-            <small v-if="errors.difficulty" class="p-error">{{ errors.difficulty }}</small>
+            <small v-if="errors.actionType" class="p-error">{{ errors.actionType }}</small>
           </div>
           
           <div class="form-group">
-            <label for="points">Points *</label>
+            <label for="challenge-points">Points *</label>
             <InputNumber 
-              id="points"
+              inputId="challenge-points"
+              aria-label="Points attribués par le défi"
               v-model="challengeForm.points" 
               :min="1"
               :max="1000"
@@ -204,18 +199,23 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label for="category">Catégorie</label>
-            <InputText 
-              id="category"
-              v-model="challengeForm.category" 
-              placeholder="Catégorie du défi"
+            <label for="challenge-target">Nombre requis *</label>
+            <InputNumber
+              inputId="challenge-target"
+              aria-label="Nombre d’actions requis"
+              v-model="challengeForm.target"
+              :min="1"
+              :max="1000"
+              :class="{ 'p-invalid': errors.target }"
             />
+            <small v-if="errors.target" class="p-error">{{ errors.target }}</small>
           </div>
           
           <div class="form-group">
-            <label for="status">Statut</label>
+            <label for="challenge-status">Statut</label>
             <Dropdown 
-              id="status"
+              inputId="challenge-status"
+              aria-label="Statut du défi"
               v-model="challengeForm.status" 
               :options="statusOptions" 
               optionLabel="label" 
@@ -225,15 +225,17 @@
           </div>
         </div>
         
-        <div class="form-group">
-          <label for="requirements">Prérequis</label>
-          <Textarea 
-            id="requirements"
-            v-model="challengeForm.requirements" 
-            placeholder="Prérequis pour ce défi (optionnel)"
-            rows="2"
-          />
+        <div class="form-row">
+          <div class="form-group">
+            <label for="challenge-start-date">Début *</label>
+            <Calendar inputId="challenge-start-date" aria-label="Date de début du défi" v-model="challengeForm.startDate" dateFormat="dd/mm/yy" showIcon />
+          </div>
+          <div class="form-group">
+            <label for="challenge-end-date">Fin *</label>
+            <Calendar inputId="challenge-end-date" aria-label="Date de fin du défi" v-model="challengeForm.endDate" dateFormat="dd/mm/yy" showIcon />
+          </div>
         </div>
+        <small v-if="errors.dates" class="p-error">{{ errors.dates }}</small>
       </div>
       
       <template #footer>
@@ -251,18 +253,18 @@
       </template>
     </Dialog>
 
-    <!-- Dialog de confirmation de suppression -->
+    <!-- Dialog de confirmation d’archivage -->
     <Dialog 
       v-model:visible="showDeleteDialog" 
-      header="Confirmer la suppression"
+      header="Confirmer l’archivage"
       :modal="true"
       :closable="true"
       :style="{ width: '400px' }"
     >
       <div class="delete-confirmation">
         <i class="pi pi-exclamation-triangle warning-icon"></i>
-        <p>Êtes-vous sûr de vouloir supprimer le défi <strong>"{{ challengeToDelete?.title }}"</strong> ?</p>
-        <p class="warning-text">Cette action est irréversible.</p>
+        <p>Archiver le défi <strong>"{{ challengeToDelete?.title }}"</strong> ?</p>
+        <p class="warning-text">Les progressions et l’historique seront conservés.</p>
       </div>
       
       <template #footer>
@@ -273,7 +275,7 @@
         />
         <Button 
           @click="deleteChallenge" 
-          label="Supprimer"
+          label="Archiver"
           :loading="deleting"
           class="p-button-danger"
         />
@@ -292,9 +294,10 @@ import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
+import Calendar from 'primevue/calendar'
 import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
-import adminService from '../../service/adminService'
+import adminChallengesService from '../../service/adminChallengesService'
 
 const toast = useToast()
 const router = useRouter()
@@ -309,7 +312,6 @@ const deleting = ref(false)
 // Filtres
 const searchQuery = ref('')
 const selectedStatus = ref(null)
-const selectedDifficulty = ref(null)
 
 // Dialogs
 const showCreateDialog = ref(false)
@@ -321,28 +323,29 @@ const challengeToDelete = ref(null)
 const challengeForm = reactive({
   title: '',
   description: '',
-  difficulty: '',
   points: 10,
-  category: '',
-  status: 'active',
-  requirements: ''
+  target: 1,
+  actionType: null,
+  status: 'draft',
+  startDate: null,
+  endDate: null
 })
 
 const errors = ref({})
 
 // Options pour les dropdowns
 const statusOptions = [
-  { label: 'Tous', value: null },
+  { label: 'Brouillon', value: 'draft' },
+  { label: 'Planifié', value: 'scheduled' },
   { label: 'Actif', value: 'active' },
-  { label: 'Inactif', value: 'inactive' },
-  { label: 'Brouillon', value: 'draft' }
+  { label: 'Terminé', value: 'completed' },
+  { label: 'Archivé', value: 'archived' }
 ]
 
-const difficultyOptions = [
-  { label: 'Tous', value: null },
-  { label: 'Facile', value: 'easy' },
-  { label: 'Moyen', value: 'medium' },
-  { label: 'Difficile', value: 'hard' }
+const actionOptions = [
+  { label: 'Connexion quotidienne', value: 'daily_login' },
+  { label: 'Publication', value: 'create_post' },
+  { label: 'Mise à jour du profil', value: 'update_profile' }
 ]
 
 // Permissions supprimées - accès libre pour le développement
@@ -354,11 +357,7 @@ const canDeleteChallenges = computed(() => true)
 const loadChallenges = async () => {
   try {
     loading.value = true
-    const data = await adminService.getChallenges()
-    challenges.value = Object.keys(data || {}).map(key => ({
-      id: key,
-      ...data[key]
-    }))
+    challenges.value = await adminChallengesService.getChallenges()
     filterChallenges()
   } catch (error) {
     console.error('Erreur lors du chargement des défis:', error)
@@ -380,19 +379,14 @@ const filterChallenges = () => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(challenge => 
-      challenge.title.toLowerCase().includes(query) ||
-      challenge.description.toLowerCase().includes(query)
+      (challenge.title || '').toLowerCase().includes(query) ||
+      (challenge.description || '').toLowerCase().includes(query)
     )
   }
   
   // Filtre par statut
   if (selectedStatus.value) {
     filtered = filtered.filter(challenge => challenge.status === selectedStatus.value)
-  }
-  
-  // Filtre par difficulté
-  if (selectedDifficulty.value) {
-    filtered = filtered.filter(challenge => challenge.difficulty === selectedDifficulty.value)
   }
   
   filteredChallenges.value = filtered
@@ -402,11 +396,12 @@ const resetForm = () => {
   Object.assign(challengeForm, {
     title: '',
     description: '',
-    difficulty: '',
     points: 10,
-    category: '',
-    status: 'active',
-    requirements: ''
+    target: 1,
+    actionType: null,
+    status: 'draft',
+    startDate: null,
+    endDate: null
   })
   errors.value = {}
   editingChallenge.value = null
@@ -423,19 +418,32 @@ const validateForm = () => {
     errors.value.description = 'La description est requise'
   }
   
-  if (!challengeForm.difficulty) {
-    errors.value.difficulty = 'La difficulté est requise'
+  if (!challengeForm.actionType) {
+    errors.value.actionType = 'L’action vérifiée est requise'
   }
   
   if (!challengeForm.points || challengeForm.points < 1) {
     errors.value.points = 'Les points doivent être supérieurs à 0'
+  }
+
+  if (!challengeForm.target || challengeForm.target < 1) {
+    errors.value.target = 'Le nombre requis doit être supérieur à 0'
+  }
+
+  if (challengeForm.status !== 'draft') {
+    if (!challengeForm.startDate || !challengeForm.endDate || challengeForm.endDate < challengeForm.startDate) {
+      errors.value.dates = 'Une période valide est obligatoire avant publication'
+    }
   }
   
   return Object.keys(errors.value).length === 0
 }
 
 const saveChallenge = async () => {
-  if (!validateForm()) return
+  if (!validateForm()) {
+    toast.add({ severity: 'warn', summary: 'Défi incomplet', detail: Object.values(errors.value).join(' · '), life: 5000 })
+    return
+  }
   
   try {
     saving.value = true
@@ -443,15 +451,16 @@ const saveChallenge = async () => {
     const challengeData = {
       title: challengeForm.title.trim(),
       description: challengeForm.description.trim(),
-      difficulty: challengeForm.difficulty,
       points: challengeForm.points,
-      category: challengeForm.category.trim(),
+      target: challengeForm.target,
+      actionType: challengeForm.actionType,
       status: challengeForm.status,
-      requirements: challengeForm.requirements.trim()
+      startDate: formatDateForDatabase(challengeForm.startDate),
+      endDate: formatDateForDatabase(challengeForm.endDate)
     }
     
     if (editingChallenge.value) {
-      await adminService.updateChallenge(editingChallenge.value.id, challengeData)
+      await adminChallengesService.updateChallenge(editingChallenge.value.id, challengeData)
       toast.add({
         severity: 'success',
         summary: 'Succès',
@@ -459,7 +468,7 @@ const saveChallenge = async () => {
         life: 3000
       })
     } else {
-      await adminService.createChallenge(challengeData)
+      await adminChallengesService.createChallenge(challengeData)
       toast.add({
         severity: 'success',
         summary: 'Succès',
@@ -490,11 +499,12 @@ const editChallenge = (challenge) => {
   Object.assign(challengeForm, {
     title: challenge.title || '',
     description: challenge.description || '',
-    difficulty: challenge.difficulty || '',
     points: challenge.points || 10,
-    category: challenge.category || '',
-    status: challenge.status || 'active',
-    requirements: challenge.requirements || ''
+    target: challenge.target || 1,
+    actionType: challenge.actionType || null,
+    status: challenge.status || 'draft',
+    startDate: challenge.startDate ? new Date(`${challenge.startDate}T12:00:00`) : null,
+    endDate: challenge.endDate ? new Date(`${challenge.endDate}T12:00:00`) : null
   })
   showCreateDialog.value = true
 }
@@ -509,12 +519,12 @@ const deleteChallenge = async () => {
   
   try {
     deleting.value = true
-    await adminService.deleteChallenge(challengeToDelete.value.id)
+    await adminChallengesService.archiveChallenge(challengeToDelete.value.id)
     
     toast.add({
       severity: 'success',
       summary: 'Succès',
-      detail: 'Défi supprimé avec succès',
+      detail: 'Défi archivé avec succès',
       life: 3000
     })
     
@@ -523,11 +533,11 @@ const deleteChallenge = async () => {
     await loadChallenges()
     
   } catch (error) {
-    console.error('Erreur lors de la suppression:', error)
+    console.error('Erreur lors de l’archivage:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
-      detail: error.message || 'Erreur lors de la suppression',
+      detail: error.message || 'Erreur lors de l’archivage',
       life: 3000
     })
   } finally {
@@ -535,26 +545,31 @@ const deleteChallenge = async () => {
   }
 }
 
-const viewChallengeDetails = (challenge) => {
-  // TODO: Implémenter la vue détaillée
-  console.log('Voir détails du défi:', challenge)
+const viewChallengeDetails = async (challenge) => {
+  try {
+    const preview = await adminChallengesService.previewChallengeLifecycle(challenge.id)
+    const validation = preview.validation || {}
+    toast.add({
+      severity: validation.valid ? 'info' : 'warn',
+      summary: validation.valid ? 'Défi prêt' : 'Défi à compléter',
+      detail: validation.valid
+        ? `État calculé : ${getStatusLabel(preview.effective_status)}`
+        : (validation.errors || []).join(' · '),
+      life: 6000
+    })
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 4000 })
+  }
 }
 
 // Utilitaires de rôles supprimés - système désactivé
 
-const getDifficultyLabel = (difficulty) => {
-  const labels = {
-    easy: 'Facile',
-    medium: 'Moyen',
-    hard: 'Difficile'
-  }
-  return labels[difficulty] || difficulty
-}
-
 const getStatusLabel = (status) => {
   const labels = {
     active: 'Actif',
-    inactive: 'Inactif',
+    scheduled: 'Planifié',
+    completed: 'Terminé',
+    archived: 'Archivé',
     draft: 'Brouillon'
   }
   return labels[status] || status
@@ -563,19 +578,22 @@ const getStatusLabel = (status) => {
 const getStatusSeverity = (status) => {
   const severities = {
     active: 'success',
-    inactive: 'secondary',
+    scheduled: 'info',
+    completed: 'secondary',
+    archived: 'contrast',
     draft: 'warning'
   }
   return severities[status] || 'info'
 }
 
-const getDifficultySeverity = (difficulty) => {
-  const severities = {
-    easy: 'success',
-    medium: 'warning',
-    hard: 'danger'
-  }
-  return severities[difficulty] || 'info'
+const getActionLabel = action => actionOptions.find(option => option.value === action)?.label || action || 'N/A'
+
+const formatDateForDatabase = date => {
+  if (!date) return null
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 const formatDate = (timestamp) => {
@@ -585,7 +603,7 @@ const formatDate = (timestamp) => {
 
 // Navigation vers la vue de création publique
 const navigateToPublicCreation = () => {
-  router.push('/gamification/create-challenge')
+  router.push('/create-challenge')
 }
 
 // Lifecycle
@@ -595,5 +613,53 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Styles personnalisés supprimés - utilisation exclusive de PrimeVue et classes utilitaires */
+.challenge-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.challenge-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.challenge-form .form-group {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.challenge-form label {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.challenge-form :deep(.p-inputtext),
+.challenge-form :deep(.p-inputnumber),
+.challenge-form :deep(.p-dropdown),
+.challenge-form :deep(.p-calendar) {
+  width: 100%;
+}
+
+:deep(.gamification-form-dialog .p-dialog-content) {
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  .gamification-manager { padding: 1rem 0 !important; }
+  .manager-toolbar { align-items: stretch !important; flex-direction: column; gap: 1rem; }
+  .manager-actions { width: 100%; flex-direction: column; }
+  .manager-actions :deep(.p-button) { width: 100%; justify-content: center; }
+  .manager-filters { flex-direction: column; }
+  .manager-search { width: 100%; min-width: 0 !important; }
+  .manager-filters :deep(.p-dropdown) { width: 100%; min-width: 0 !important; }
+  .challenge-form .form-row { grid-template-columns: 1fr; }
+  :deep(.gamification-form-dialog .p-dialog-header),
+  :deep(.gamification-form-dialog .p-dialog-content),
+  :deep(.gamification-form-dialog .p-dialog-footer) { padding-left: 1rem; padding-right: 1rem; }
+  :deep(.gamification-form-dialog .p-dialog-footer) { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+  :deep(.gamification-form-dialog .p-dialog-footer .p-button) { width: 100%; justify-content: center; margin: 0; }
+}
 </style>

@@ -2,13 +2,14 @@
   <AdminLayout>
     <template #header>
       <PageHeader 
+        class="si-page-header"
         :title="pageTitle" 
-        :subtitle="pageSubtitle" 
-        icon="pi pi-graduation-cap" 
+        :subtitle="pageSubtitle"
+        icon="pi pi-graduation-cap"
       />
     </template>
 
-    <div class="dashboard-enseignant">
+    <div class="dashboard-enseignant si-admin-screen">
       <!-- Loading spinner -->
       <div v-if="loading" class="loading-container">
         <ProgressSpinner />
@@ -111,6 +112,7 @@
                   label="Semaine" 
                   :severity="calendarView === 'week' ? 'primary' : 'secondary'" 
                   size="small"
+                  :aria-pressed="calendarView === 'week'"
                   @click="calendarView = 'week'" 
                 />
                 <Button 
@@ -118,6 +120,7 @@
                   label="Liste" 
                   :severity="calendarView === 'list' ? 'primary' : 'secondary'" 
                   size="small"
+                  :aria-pressed="calendarView === 'list'"
                   @click="calendarView = 'list'" 
                 />
                 </div>
@@ -284,10 +287,13 @@
               <div class="courses-toolbar">
                 <span class="p-input-icon-left">
                   <i class="pi pi-search" />
-                  <InputText v-model="courseSearch" placeholder="Rechercher un cours..." class="p-inputtext-sm" style="width: 220px" />
+                  <label class="sr-only" for="si-course-search">Rechercher dans mes cours</label>
+                  <InputText id="si-course-search" v-model="courseSearch" placeholder="Rechercher un cours..." class="p-inputtext-sm" style="width: 220px" />
                 </span>
-                <Dropdown v-model="courseModuleFilter" :options="courseModuleOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 180px" />
-                <Dropdown v-model="courseSort" :options="courseSortOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 170px" />
+                <label class="sr-only" for="si-course-module-filter">Filtrer mes cours par module</label>
+                <Dropdown inputId="si-course-module-filter" v-model="courseModuleFilter" :options="courseModuleOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 180px" />
+                <label class="sr-only" for="si-course-sort">Trier mes cours</label>
+                <Dropdown inputId="si-course-sort" v-model="courseSort" :options="courseSortOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 170px" />
                 <Button
                   icon="pi pi-thumbs-up"
                   label="Cours en postulation"
@@ -675,8 +681,8 @@ const totalCoursesHours = computed(() => {
   return Math.round(total * 10) / 10
 })
 
-async function loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning) {
-  const data = await workloadService.computeWorkload('all', activeAcademicYear.value?.id || null);
+async function loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning, planningSlots = null) {
+  const data = await workloadService.computeWorkload('all', activeAcademicYear.value?.id || null, { planningSlots });
   const allTeachers = data?.teachers || [];
 
   const currentTeacherId = String(targetUserId || '').trim();
@@ -791,7 +797,7 @@ async function loadTeacherData() {
     weekSchedule.value = data.weekPlanning;
     upcomingSessions.value = data.upcomingSessions || [];
     allMySlots.value = data.allSlots || [];
-    await loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning);
+    await loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning, data.planningSlots || []);
     
     console.log('✅ Données enseignant chargées:', {
       courses: myCourses.value.length,
@@ -1821,6 +1827,13 @@ async function exportMyCoursesExcel() {
   .section-header-row {
     flex-direction: column;
     gap: 0.65rem;
+    align-items: stretch;
+  }
+
+  .courses-header,
+  .preview-context-head {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
@@ -1835,7 +1848,7 @@ async function exportMyCoursesExcel() {
   }
 
   .dashboard-enseignant {
-    padding: 1rem;
+    padding: .25rem 0 1rem;
   }
 
   .week-schedule {
@@ -1844,6 +1857,39 @@ async function exportMyCoursesExcel() {
 
   .hours-grid {
     grid-template-columns: 1fr;
+  }
+
+  .section-card {
+    padding: 1rem;
+  }
+
+  .hero-card__actions,
+  .quick-actions,
+  .courses-toolbar,
+  .section-header-controls,
+  .view-toggle {
+    width: 100%;
+  }
+
+  .hero-card__actions :deep(.p-button),
+  .quick-actions :deep(.p-button),
+  .courses-toolbar :deep(.p-button),
+  .courses-toolbar :deep(.p-dropdown),
+  .courses-toolbar :deep(.p-inputtext),
+  .section-header-controls :deep(.p-button),
+  .view-toggle :deep(.p-button) {
+    width: 100% !important;
+    min-height: 44px;
+  }
+
+  .view-toggle,
+  .hero-card__actions {
+    flex-direction: column;
+  }
+
+  .upcoming-item,
+  .module-item {
+    align-items: flex-start;
   }
 }
 

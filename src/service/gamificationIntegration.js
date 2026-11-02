@@ -40,6 +40,24 @@ class GamificationIntegration {
       // Badges et défis sont évalués dans la même transaction Supabase.
       const unlockedBadges = xpGained.badgesUnlocked || []
 
+      // La réponse atomique du RPC alimente immédiatement le centre global.
+      // Le centre utilise la même clé que le journal Realtime afin d'ignorer
+      // une éventuelle seconde notification du même badge.
+      if (typeof window !== 'undefined') {
+        unlockedBadges.forEach((badge) => {
+          window.dispatchEvent(new CustomEvent('gamification:notification', {
+            detail: {
+              type: 'badge',
+              title: 'Nouveau badge obtenu !',
+              message: badge?.name || 'Badge débloqué',
+              xpGain: Number(badge?.xp_bonus ?? badge?.xpBonus ?? 0) || null,
+              badgeId: badge?.id || null,
+              dedupeKey: badge?.id ? `badge:${badge.id}` : null
+            }
+          }))
+        })
+      }
+
       return {
         success: true,
         xpGained: xpGained.amount,

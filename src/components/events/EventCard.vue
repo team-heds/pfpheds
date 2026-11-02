@@ -4,7 +4,7 @@
       <template #header>
         <div class="event-card-header">
           <div class="event-image-wrapper">
-            <img v-if="event.image" :src="event.image" alt="event image" class="event-image" />
+            <img v-if="event.image" :src="event.image" :alt="`Illustration de l’événement ${event.title}`" class="event-image" />
             <div v-else class="event-image-placeholder">
               <i class="pi pi-calendar"></i>
             </div>
@@ -41,6 +41,7 @@
             @click="$emit('register', event)" />
           <Button icon="pi pi-info-circle"
             class=" details-btn"
+            :aria-label="`Voir le détail de ${event.title}`"
             @click="$emit('show-details', event)"
             v-tooltip.top="'Voir le détail'"
           />

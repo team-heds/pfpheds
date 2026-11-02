@@ -2,29 +2,54 @@
   <AdminLayout>
     <template #header>
       <PageHeader
+        class="si-page-header"
         title="Cours en postulation (SI)"
-        subtitle="Cours/créneaux avec enseignant non attribué (postulation)"
+        subtitle="Cours et créneaux avec enseignant non attribué"
         icon="pi pi-exclamation-triangle"
       />
     </template>
 
-    <div class="postulation-page">
+    <div class="postulation-page si-admin-screen">
       <div class="toolbar-card">
         <div class="left-tools">
-          <span class="p-input-icon-left">
+          <span class="p-input-icon-left search-field">
             <i class="pi pi-search" />
-            <InputText v-model="search" placeholder="Rechercher module, classe, enseignant..." style="width: 320px" />
+            <label class="sr-only" for="si-postulation-search">Rechercher un cours, un module ou une classe</label>
+            <InputText id="si-postulation-search" v-model="search" placeholder="Rechercher un cours, un module ou une classe" />
           </span>
-          <Button icon="pi pi-times" severity="secondary" text @click="search = ''" />
+          <Button
+            v-if="search"
+            icon="pi pi-times"
+            aria-label="Effacer la recherche"
+            severity="secondary"
+            text
+            @click="search = ''"
+          />
         </div>
         <div class="right-tools">
+          <Tag :value="activeYearName || 'Aucune année active'" :severity="activeYearName ? 'success' : 'danger'" />
+          <Tag v-if="isRmOnly" value="Périmètre : mes modules" severity="info" icon="pi pi-lock" />
           <Tag :value="`${filteredRows.length} créneaux postulation`" severity="warning" />
+          <Tag v-if="inferredLinkCount" :value="`${inferredLinkCount} lien déduit`" severity="info" />
+          <Tag v-if="missingLinkCount" :value="`${missingLinkCount} lien à vérifier`" severity="danger" />
           <Button label="Rafraîchir" icon="pi pi-refresh" severity="secondary" outlined @click="loadData" :loading="loading" />
         </div>
       </div>
 
       <div class="table-card">
-        <DataTable :value="filteredRows" :loading="loading" stripedRows paginator :rows="20" responsiveLayout="scroll">
+        <div class="results-heading">
+          <div>
+            <h2>Créneaux disponibles</h2>
+            <p class="results-description">
+              {{ canVote ? 'Choisissez les cours sur lesquels vous souhaitez intervenir.' : 'Consultez les créneaux et les postulations enregistrées.' }}
+            </p>
+          </div>
+          <span class="results-count" aria-live="polite">
+            {{ filteredRows.length }} {{ filteredRows.length === 1 ? 'résultat' : 'résultats' }}
+          </span>
+        </div>
+
+        <DataTable class="desktop-results" :value="filteredRows" :loading="loading" stripedRows paginator :rows="20" responsiveLayout="scroll">
           <template #empty>
             <div class="empty-state">
               <i class="pi pi-check-circle"></i>
@@ -32,19 +57,53 @@
             </div>
           </template>
 
-          <Column field="moduleNumber" header="Module" sortable />
-          <Column field="moduleTitle" header="Titre" sortable />
-          <Column field="classCode" header="Classe" sortable />
-          <Column field="dayLabel" header="Jour" sortable />
-          <Column field="timeRange" header="Horaire" />
-          <Column field="teacherLabel" header="Libellé enseignant" />
-          <Column field="weekNumber" header="Semaine" sortable />
-          <Column header="Votes">
+          <Column field="moduleNumber" header="Module" sortable>
             <template #body="{ data }">
-              <Tag :value="`${data.voteCount || 0}`" severity="info" />
+              <strong>{{ data.moduleNumber }}</strong>
+              <div class="cell-secondary">{{ data.moduleTitle }}</div>
             </template>
           </Column>
-          <Column header="Action" style="width: 280px">
+          <Column field="courseTitle" header="Cours" sortable>
+            <template #body="{ data }">
+              <strong>{{ data.courseTitle }}</strong>
+              <div v-if="data.activity" class="cell-secondary">{{ data.activity }}</div>
+            </template>
+          </Column>
+          <Column field="classCode" header="Classe / semaine" sortable>
+            <template #body="{ data }">
+              <strong>{{ data.classCode || '—' }}</strong>
+              <div class="cell-secondary">Semaine {{ data.weekNumber || '—' }}</div>
+            </template>
+          </Column>
+          <Column field="dayLabel" header="Créneau" sortable>
+            <template #body="{ data }">
+              <strong>{{ data.dayLabel || '—' }}</strong>
+              <div class="cell-secondary">{{ data.timeRange || 'Horaire à préciser' }}</div>
+            </template>
+          </Column>
+          <Column header="Donnée">
+            <template #body="{ data }">
+              <Tag
+                :value="courseLinkLabel(data.courseLinkSource)"
+                :severity="courseLinkSeverity(data.courseLinkSource)"
+              />
+            </template>
+          </Column>
+          <Column header="Votes">
+            <template #body="{ data }">
+              <Tag
+                v-if="canManageVotes"
+                :value="`${data.voteCount || 0}`"
+                severity="info"
+              />
+              <Tag
+                v-else
+                :value="data.hasMyVote ? 'Votre vote est enregistré' : 'Pas encore voté'"
+                :severity="data.hasMyVote ? 'success' : 'secondary'"
+              />
+            </template>
+          </Column>
+          <Column header="Action" style="width: 230px">
             <template #body="{ data }">
               <div class="action-buttons">
                 <Button
@@ -71,6 +130,81 @@
             </template>
           </Column>
         </DataTable>
+
+        <div class="compact-results" aria-live="polite" :aria-busy="loading">
+          <div v-if="loading" class="compact-loading" role="status">
+            <i class="pi pi-spin pi-spinner" aria-hidden="true" />
+            <span>Chargement des créneaux…</span>
+          </div>
+
+          <div v-else-if="!filteredRows.length" class="empty-state">
+            <i class="pi pi-check-circle" aria-hidden="true"></i>
+            <p>Aucun cours en postulation détecté</p>
+          </div>
+
+          <template v-else>
+          <article v-for="row in filteredRows" :key="row.id" class="slot-card">
+            <header class="slot-card__header">
+              <div class="slot-card__identity">
+                <span class="slot-card__module">{{ row.moduleNumber }}</span>
+                <h3>{{ row.courseTitle }}</h3>
+                <p v-if="row.moduleTitle || row.activity">
+                  {{ row.activity || row.moduleTitle }}
+                </p>
+              </div>
+              <Tag
+                :value="courseLinkLabel(row.courseLinkSource)"
+                :severity="courseLinkSeverity(row.courseLinkSource)"
+              />
+            </header>
+
+            <dl class="slot-card__details">
+              <div>
+                <dt><i class="pi pi-users" aria-hidden="true" /> Classe</dt>
+                <dd>{{ row.classCode || '—' }}</dd>
+              </div>
+              <div>
+                <dt><i class="pi pi-calendar" aria-hidden="true" /> Créneau</dt>
+                <dd>{{ row.dayLabel || '—' }}, {{ row.timeRange || 'horaire à préciser' }}</dd>
+              </div>
+              <div>
+                <dt><i class="pi pi-calendar-clock" aria-hidden="true" /> Semaine</dt>
+                <dd>{{ row.weekNumber || '—' }}</dd>
+              </div>
+              <div>
+                <dt><i class="pi pi-user" aria-hidden="true" /> Enseignant</dt>
+                <dd>{{ row.teacherLabel || 'Non attribué' }}</dd>
+              </div>
+            </dl>
+
+            <div class="slot-card__vote-status">
+              <i :class="canManageVotes ? 'pi pi-users' : (row.hasMyVote ? 'pi pi-check-circle' : 'pi pi-info-circle')" aria-hidden="true" />
+              <span v-if="canManageVotes"><strong>{{ row.voteCount || 0 }}</strong> {{ Number(row.voteCount || 0) === 1 ? 'postulation' : 'postulations' }}</span>
+              <span v-else>{{ row.hasMyVote ? 'Votre vote est enregistré' : 'Vous n’avez pas encore voté' }}</span>
+            </div>
+
+            <footer class="slot-card__actions">
+              <Button
+                label="Voir dans le planning"
+                icon="pi pi-calendar"
+                severity="secondary"
+                outlined
+                @click="viewInPlanning(row)"
+              />
+              <Button
+                v-if="canVote"
+                :label="row.hasMyVote ? 'Retirer mon vote' : 'Voter pour ce cours'"
+                :icon="row.hasMyVote ? 'pi pi-times' : 'pi pi-thumbs-up'"
+                :severity="row.hasMyVote ? 'danger' : 'warning'"
+                :outlined="row.hasMyVote"
+                :disabled="votingRowId === row.id"
+                :loading="votingRowId === row.id"
+                @click="row.hasMyVote ? removeVote(row) : submitVote(row)"
+              />
+            </footer>
+          </article>
+          </template>
+        </div>
       </div>
     </div>
 
@@ -84,14 +218,27 @@ import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
 import { useAuthStore } from '@/stores/authStore'
+import { useRoleStore } from '@/stores/role'
 import { supabase } from '@/supabase'
 import modulesService from '@/service/modulesService'
+import { useActiveAcademicYearContext } from '@/composables/useActiveAcademicYearContext'
+import {
+  buildPostulationRows,
+  fetchPlanningSlotsPaginated
+} from '@/service/siPostulationService'
+import { filterPostulationRowsForRole } from '@/domain/si/moduleOwnership'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const roleStore = useRoleStore()
 const toast = useToast()
+const {
+  activeYearName,
+  activeClassCodes,
+  loadActiveAcademicYearContext
+} = useActiveAcademicYearContext()
 const loading = ref(false)
 const search = ref('')
 const allModules = ref([])
@@ -101,36 +248,25 @@ const canUseSlotVotesTable = ref(true)
 const hasShownSlotVoteTableUnavailableToast = ref(false)
 
 const currentUserId = computed(() => authStore.user?.id || authStore.user?.uid || null)
-const canVote = computed(() => Boolean(currentUserId.value))
-const SLOT_COURSE_MAP_STORAGE_KEY = 'si_postulation_slot_course_map_v1'
+const currentUserEmail = computed(() => authStore.user?.email || null)
+const canManageVotes = computed(() =>
+  roleStore.can('admin') || roleStore.can('AdminSoins') || roleStore.can('RMSoins')
+)
+// Certains comptes de recette cumulent plusieurs permissions. La capacité de
+// gestion prime toujours sur le rôle enseignant afin qu'un administrateur ou
+// un RM ne puisse jamais déposer un vote métier par mégarde.
+const canVote = computed(() =>
+  Boolean(currentUserId.value) &&
+  roleStore.perms.includes('EnseignantSoins') &&
+  !canManageVotes.value
+)
+const isRmOnly = computed(() =>
+  roleStore.can('RMSoins') &&
+  !roleStore.can('admin') &&
+  !roleStore.can('AdminSoins') &&
+  !roleStore.isSuper
+)
 const SLOT_VOTES_TABLE = 'planning_slot_votes'
-
-const DAY_MAP = {
-  monday: 'Lundi',
-  tuesday: 'Mardi',
-  wednesday: 'Mercredi',
-  thursday: 'Jeudi',
-  friday: 'Vendredi'
-}
-
-function isPostulationLabel(value) {
-  const text = String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-
-  return (
-    text.includes('postulation') ||
-    text.includes('postulat') ||
-    text.includes('repourvoir') ||
-    text.includes('repourv') ||
-    text.includes('reattribuer') ||
-    text.includes('reattrib') ||
-    text.includes('reattribuer') ||
-    text.includes('reattrib')
-  )
-}
 
 function notifySlotVoteTableUnavailable() {
   if (hasShownSlotVoteTableUnavailableToast.value) return
@@ -141,49 +277,6 @@ function notifySlotVoteTableUnavailable() {
     detail: 'La table planning_slot_votes n\'est pas accessible. Contactez un administrateur.',
     life: 4500
   })
-}
-
-function extractTeacherLabels(slot) {
-  const rawTeachers = slot?.teachers ?? slot?.teachers_list ?? slot?.teacher ?? slot?.teacher_name ?? null
-
-  if (Array.isArray(rawTeachers)) {
-    return rawTeachers
-      .map(t => (typeof t === 'object' ? t?.name || t?.display_name || t?.email : t))
-      .map(v => String(v || '').trim())
-      .filter(Boolean)
-  }
-
-  if (typeof rawTeachers === 'object' && rawTeachers !== null) {
-    const label = rawTeachers?.name || rawTeachers?.display_name || rawTeachers?.email
-    return label ? [String(label).trim()] : []
-  }
-
-  if (typeof rawTeachers === 'string') {
-    const trimmed = rawTeachers.trim()
-    if (!trimmed) return []
-
-    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-      try {
-        const parsed = JSON.parse(trimmed)
-        if (Array.isArray(parsed)) {
-          return parsed
-            .map(t => (typeof t === 'object' ? t?.name || t?.display_name || t?.email : t))
-            .map(v => String(v || '').trim())
-            .filter(Boolean)
-        }
-      } catch (error) {
-        console.warn('⚠️ [SIPostulationCoursesView] teachers JSON parse KO:', error)
-      }
-    }
-
-    return [trimmed]
-  }
-
-  return []
-}
-
-function formatDay(day) {
-  return DAY_MAP[String(day || '').toLowerCase()] || day || '—'
 }
 
 function formatClassCodeForPlanning(classCode) {
@@ -214,33 +307,16 @@ function viewInPlanning(row) {
   router.push({ path: '/admin/planning/weekly', query })
 }
 
-function getFirstCourseIdByModule(moduleId, courses) {
-  if (!moduleId) return null
-  const found = (courses || []).find(c => String(c.module_id) === String(moduleId))
-  return found?.id || null
+function courseLinkLabel(source) {
+  if (source === 'direct') return 'Lié'
+  if (source === 'module_unique') return 'Lien unique déduit'
+  return 'À vérifier'
 }
 
-function buildSlotCourseMapKey(data) {
-  return [
-    String(data?.slotId || data?.id || '').trim(),
-    String(data?.moduleCode || data?.module_code || '').trim().toLowerCase(),
-    String(data?.classCode || data?.class_code || '').trim().toLowerCase(),
-    String(data?.weekNumber || data?.week_number || '').trim(),
-    String(data?.dayKey || data?.day_of_week || '').trim().toLowerCase(),
-    String(data?.startTime || data?.start_time || '').trim(),
-    String(data?.endTime || data?.end_time || '').trim()
-  ].join('|')
-}
-
-function readStoredSlotCourseMap() {
-  try {
-    const raw = window?.localStorage?.getItem(SLOT_COURSE_MAP_STORAGE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
-    return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch {
-    return {}
-  }
+function courseLinkSeverity(source) {
+  if (source === 'direct') return 'success'
+  if (source === 'module_unique') return 'info'
+  return 'danger'
 }
 
 function getErrorText(error) {
@@ -270,30 +346,17 @@ function isMissingTableError(error, tableName) {
 
 async function resolveTeacherIdForVote() {
   const authId = currentUserId.value
+  if (!authId || !canVote.value) return null
 
-  if (authId) {
-    const byId = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', authId)
-      .maybeSingle()
+  // Le propriétaire d'un vote doit toujours être l'identité Supabase courante.
+  // La politique RLS refuse ainsi toute tentative de voter pour un autre profil.
+  const byId = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', authId)
+    .maybeSingle()
 
-    if (!byId.error && byId.data?.id) return byId.data.id
-  }
-
-  if (authId) {
-    const fromUserProfiles = await supabase
-      .from('user_profiles')
-      .select('profile_id')
-      .eq('user_id', authId)
-      .maybeSingle()
-
-    if (!fromUserProfiles.error && fromUserProfiles.data?.profile_id) {
-      return fromUserProfiles.data.profile_id
-    }
-  }
-
-  return null
+  return !byId.error && byId.data?.id === authId ? authId : null
 }
 
 async function submitVote(row) {
@@ -486,133 +549,46 @@ const filteredRows = computed(() => {
   return rows.value.filter(r =>
     String(r.moduleNumber || '').toLowerCase().includes(term) ||
     String(r.moduleTitle || '').toLowerCase().includes(term) ||
+    String(r.moduleCode || '').toLowerCase().includes(term) ||
+    String(r.courseTitle || '').toLowerCase().includes(term) ||
+    String(r.courseCatalogName || '').toLowerCase().includes(term) ||
+    String(r.activity || '').toLowerCase().includes(term) ||
     String(r.classCode || '').toLowerCase().includes(term) ||
     String(r.teacherLabel || '').toLowerCase().includes(term) ||
     String(r.dayLabel || '').toLowerCase().includes(term)
   )
 })
+const inferredLinkCount = computed(() => rows.value.filter(row => row.courseLinkSource === 'module_unique').length)
+const missingLinkCount = computed(() => rows.value.filter(row => row.courseLinkSource === 'missing').length)
 
 async function loadData() {
   loading.value = true
   try {
-    const [modsResult, slotsResponse] = await Promise.all([
+    await loadActiveAcademicYearContext()
+
+    const [modsResult, coursesResponse, slots] = await Promise.all([
       modulesService.getAllModules(),
       supabase
-        .from('planning_time_slots')
-        .select('*')
+        .from('courses')
+        .select('id,name,module_id'),
+      fetchPlanningSlotsPaginated({ classCodes: activeClassCodes.value })
     ])
 
     allModules.value = modsResult || []
+    if (coursesResponse.error) throw coursesResponse.error
 
-    if (slotsResponse.error) throw slotsResponse.error
-
-    const slots = slotsResponse.data || []
-    const storedSlotCourseMap = readStoredSlotCourseMap()
-    let moduleCourses = []
-    const knownCourseByModuleCode = new Map()
-    const knownCourseByModuleNumber = new Map()
-
-    const coursesByModule = await supabase
-      .from('courses')
-      .select('id,module_id')
-
-    if (!coursesByModule.error && Array.isArray(coursesByModule.data)) {
-      moduleCourses = coursesByModule.data
-    }
-
-    for (const slot of slots) {
-      if (!slot?.course_id) continue
-      const module = allModules.value.find(m => String(m.code || '').toLowerCase() === String(slot.module_code || '').toLowerCase())
-      const codeKey = String(slot?.module_code || module?.code || '').trim().toLowerCase()
-      const numberKey = String(module?.number || '').trim().toLowerCase()
-
-      if (codeKey && !knownCourseByModuleCode.has(codeKey)) {
-        knownCourseByModuleCode.set(codeKey, slot.course_id)
-      }
-      if (numberKey && !knownCourseByModuleNumber.has(numberKey)) {
-        knownCourseByModuleNumber.set(numberKey, slot.course_id)
-      }
-    }
-
-    const mapped = []
-    const seenPostulationSlotKeys = new Set()
-
-    slots.forEach(slot => {
-      const teachers = extractTeacherLabels(slot)
-      const fallbackTeacherLabel = [slot?.teacher, slot?.teacher_name, slot?.teacher_label]
-        .map(v => String(v || '').trim())
-        .find(Boolean)
-      const slotTexts = [
-        ...teachers,
-        slot?.teacher,
-        slot?.teacher_name,
-        slot?.teacher_label,
-        slot?.notes,
-        slot?.comment,
-        slot?.commentaire,
-        slot?.status,
-        slot?.assignment_status,
-        slot?.teacher_status,
-        slot?.slot_type,
-        slot?.type
-      ]
-        .map(v => String(v || '').trim())
-        .filter(Boolean)
-
-      const matchedText = slotTexts.find(isPostulationLabel)
-      if (!matchedText) return
-
-      const module = allModules.value.find(m => String(m.code || '').toLowerCase() === String(slot.module_code || '').toLowerCase())
-      const moduleCodeKey = String(slot?.module_code || module?.code || '').trim().toLowerCase()
-      const moduleNumberKey = String(module?.number || '').trim().toLowerCase()
-      const slotMapKey = buildSlotCourseMapKey(slot)
-      const courseId = slot?.course_id ||
-        getFirstCourseIdByModule(module?.id, moduleCourses) ||
-        knownCourseByModuleCode.get(moduleCodeKey) ||
-        knownCourseByModuleNumber.get(moduleNumberKey) ||
-        storedSlotCourseMap[slotMapKey] ||
-        null
-      const dedupeKey = [
-        courseId || '',
-        slot?.module_code || module?.code || '',
-        slot?.class_code || '',
-        slot?.week_number || '',
-        slot?.day_of_week || '',
-        slot?.start_time || '',
-        slot?.end_time || ''
-      ].join('|')
-
-      if (seenPostulationSlotKeys.has(dedupeKey)) return
-      seenPostulationSlotKeys.add(dedupeKey)
-
-      const teacherLabel =
-        teachers.find(isPostulationLabel) ||
-        fallbackTeacherLabel ||
-        matchedText ||
-        teachers[0] ||
-        'postulation'
-
-      mapped.push({
-        id: `${slot.id}_${teacherLabel}`,
-        slotId: slot.id,
-        courseId,
-        moduleId: module?.id || null,
-        moduleCode: slot.module_code || module?.code || null,
-        moduleNumber: module?.number || slot.module_code || '—',
-        moduleTitle: module?.title || 'Module non trouvé',
-        classCode: slot.class_code || '—',
-        weekNumber: slot.week_number || '—',
-        dayKey: slot.day_of_week || null,
-        dayLabel: formatDay(slot.day_of_week),
-        startTime: slot.start_time || null,
-        timeRange: `${slot.start_time || '--:--'} - ${slot.end_time || '--:--'}`,
-        teacherLabel,
-        voteCount: 0,
-        hasMyVote: false
-      })
+    const mapped = filterPostulationRowsForRole({
+      rows: buildPostulationRows({
+        slots,
+        modules: allModules.value,
+        courses: coursesResponse.data || []
+      }),
+      modules: allModules.value,
+      userEmail: currentUserEmail.value,
+      isRmOnly: isRmOnly.value
     })
 
-    const teacherProfileId = await resolveTeacherIdForVote()
+    const teacherProfileId = canVote.value ? await resolveTeacherIdForVote() : null
     const uniqueSlotIds = [...new Set(mapped.map(r => r.slotId).filter(Boolean).map(String))]
 
     if (uniqueSlotIds.length && canUseSlotVotesTable.value) {
@@ -638,7 +614,7 @@ async function loadData() {
         for (const row of mapped) {
           const sid = String(row.slotId || '')
           if (!sid) continue
-          row.voteCount = Number(countsBySlotId[sid] || 0)
+          row.voteCount = canManageVotes.value ? Number(countsBySlotId[sid] || 0) : 0
           row.hasMyVote = myVotedSlotIds.has(sid)
         }
       } else if (slotVotesQuery.error && (slotVotesQuery.status === 404 || isMissingTableError(slotVotesQuery.error, SLOT_VOTES_TABLE))) {
@@ -652,11 +628,7 @@ async function loadData() {
       notifySlotVoteTableUnavailable()
     }
 
-    rows.value = mapped.sort((a, b) => {
-      const byModule = String(a.moduleNumber).localeCompare(String(b.moduleNumber))
-      if (byModule !== 0) return byModule
-      return Number(a.weekNumber || 0) - Number(b.weekNumber || 0)
-    })
+    rows.value = mapped
   } catch (error) {
     console.error('Erreur chargement cours postulation:', error)
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les cours en postulation', life: 3500 })
@@ -696,6 +668,22 @@ onMounted(loadData)
   gap: 0.5rem;
 }
 
+.left-tools {
+  flex: 1 1 22rem;
+}
+
+.right-tools {
+  justify-content: flex-end;
+}
+
+.search-field {
+  width: min(100%, 32rem);
+}
+
+.search-field :deep(.p-inputtext) {
+  width: 100%;
+}
+
 .action-buttons {
   display: flex;
   align-items: center;
@@ -705,6 +693,48 @@ onMounted(loadData)
 
 .table-card {
   padding: 1rem;
+  min-width: 0;
+}
+
+.results-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0.25rem 1rem;
+}
+
+.results-heading h2 {
+  margin: 0;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  letter-spacing: -0.02em;
+}
+
+.results-description {
+  max-width: 48rem;
+  margin: 0.35rem 0 0;
+  color: var(--text-color-secondary);
+  line-height: 1.45;
+}
+
+.results-count {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  color: var(--text-color-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.desktop-results :deep(.p-datatable-thead > tr > th) {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.compact-results {
+  display: none;
 }
 
 .empty-state {
@@ -716,5 +746,196 @@ onMounted(loadData)
 .empty-state i {
   font-size: 2.4rem;
   margin-bottom: 0.6rem;
+}
+
+.cell-secondary {
+  margin-top: 0.2rem;
+  color: var(--text-color-secondary);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+@media (max-width: 1100px) {
+  .desktop-results {
+    display: none;
+  }
+
+  .compact-results {
+    display: grid;
+    gap: 0;
+    border: 1px solid var(--surface-border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .compact-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    min-height: 9rem;
+    color: var(--text-color-secondary);
+  }
+
+  .slot-card {
+    min-width: 0;
+    padding: 1rem;
+    background: var(--surface-card);
+  }
+
+  .slot-card + .slot-card {
+    border-top: 1px solid var(--surface-border);
+  }
+
+  .slot-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .slot-card__identity {
+    min-width: 0;
+  }
+
+  .slot-card__module {
+    color: #ffcc00;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+  }
+
+  .slot-card h3 {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  .slot-card__identity p {
+    margin: 0.25rem 0 0;
+    color: var(--text-color-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+
+  .slot-card__details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem 1rem;
+    margin: 1rem 0;
+    padding: 1rem 0;
+    border-block: 1px solid var(--surface-border);
+  }
+
+  .slot-card__details div {
+    min-width: 0;
+  }
+
+  .slot-card__details dt {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-color-secondary);
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+  }
+
+  .slot-card__details dt i {
+    color: #ffcc00;
+  }
+
+  .slot-card__details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .slot-card__vote-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color-secondary);
+    font-size: 0.85rem;
+  }
+
+  .slot-card__vote-status i {
+    color: #ffcc00;
+  }
+
+  .slot-card__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    margin-top: 1rem;
+  }
+
+  .slot-card__actions :deep(.p-button) {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 768px) {
+  .postulation-page {
+    padding: .25rem 0 1rem;
+  }
+
+  .toolbar-card,
+  .table-card {
+    padding: 1rem;
+  }
+
+  .left-tools,
+  .right-tools,
+  .left-tools > .p-input-icon-left {
+    width: 100%;
+  }
+
+  .left-tools :deep(.p-inputtext),
+  .right-tools :deep(.p-button) {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .table-card {
+    overflow: hidden;
+  }
+
+  .action-buttons {
+    min-width: 12rem;
+  }
+
+  .action-buttons :deep(.p-button) {
+    min-height: 44px;
+  }
+
+  .results-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .slot-card__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .slot-card__actions :deep(.p-button) {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .slot-card__header {
+    flex-direction: column;
+  }
+
+  .slot-card__details {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

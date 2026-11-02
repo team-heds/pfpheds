@@ -18,6 +18,7 @@ import { bootstrapApplication } from '@/service/appBootstrap';
 import '@/assets/styles/styles.scss';
 import 'primeflex/primeflex.css';
 import '@/assets/styles/platform-foundations.scss';
+import '@/assets/styles/si-admin-system.scss';
 
 const app = createApp(App);
 const pinia = createPinia();

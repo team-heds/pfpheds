@@ -1,10 +1,11 @@
 <template>
-  <div class="chart-wrapper" :style="{ height: height + 'px' }">
+  <div class="chart-wrapper" :style="{ height: height + 'px' }" :role="chartData ? 'img' : 'status'" :aria-label="accessibleLabel || title || 'Graphique en anneau'">
     <Doughnut v-if="chartData" :data="chartData" :options="chartOptions" />
-    <div v-if="showCenterText" class="center-text">
+    <div v-if="chartData && showCenterText" class="center-text">
       <div class="center-value">{{ centerValue }}</div>
       <div class="center-label">{{ centerLabel }}</div>
     </div>
+    <p v-if="!chartData" class="chart-empty">Aucune donnée disponible</p>
   </div>
 </template>
 
@@ -44,7 +45,8 @@ const props = defineProps({
     type: String,
     default: '70%'
   },
-  textColor: String
+  textColor: String,
+  accessibleLabel: String
 })
 
 // Détection réactive du thème
@@ -151,6 +153,7 @@ function generateColor() {
   position: relative;
   width: 100%;
 }
+.chart-empty { display:grid;place-items:center;height:100%;margin:0;color:var(--text-color-secondary); }
 
 .center-text {
   position: absolute;

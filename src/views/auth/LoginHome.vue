@@ -46,7 +46,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '@/stores/authStore'
 import { useRoleStore } from '@/stores/role'
@@ -55,6 +55,8 @@ import { validateEmail, validatePassword } from '@/composables/useInputValidatio
 import { getPostLoginRedirect } from '@/config/adminRedirects'
 import Toast from 'primevue/toast'
 import AuthForm from '@/components/common/forms/AuthForm.vue'
+import gamificationIntegration from '@/service/gamificationIntegration'
+import { gamificationFeatures } from '@/config/gamificationFeatures'
 
 // Variables réactives
 const email = ref('')
@@ -65,6 +67,7 @@ const passwordError = ref(false)
 const loading = ref(false)
 const resetLoading = ref(false)
 const router = useRouter()
+const route = useRoute()
 const toast = useToast()
 const authStore = useAuthStore()
 const roleStore = useRoleStore()
@@ -108,6 +111,13 @@ const submitFormSupabase = async () => {
       password: password.value 
     })
     loginLimiter.reset()
+
+    if (gamificationFeatures.userJourney && authStore.user?.id) {
+      await gamificationIntegration.onLogin(authStore.user.id, {
+        loginMethod: 'supabase',
+        deviceType: window.matchMedia('(max-width: 768px)').matches ? 'mobile' : 'desktop'
+      })
+    }
     
     toast.add({ 
       severity: 'success', 
@@ -117,8 +127,13 @@ const submitFormSupabase = async () => {
     })
     
     const permissions = await roleStore.loadPermissions(authStore.session)
-    const redirectPath = getPostLoginRedirect(permissions)
-    setTimeout(() => router.push(redirectPath), 1500)
+    const requestedRedirect = typeof route.query.redirect === 'string'
+      && route.query.redirect.startsWith('/')
+      && !route.query.redirect.startsWith('//')
+      ? route.query.redirect
+      : null
+    const redirectPath = requestedRedirect || getPostLoginRedirect(permissions)
+    setTimeout(() => router.replace(redirectPath), 1500)
   } catch (error) {
     console.error('Supabase login error:', error)
     toast.add({ 

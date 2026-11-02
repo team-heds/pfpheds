@@ -1,698 +1,789 @@
 <template>
-  <Navbar />
-  <div class="ventriglisse3d-container">
-    <form class="participants-form" @submit.prevent="applyParticipants">
-      <div v-for="(p, idx) in editableParticipants" :key="idx" class="participant-row">
-        <input v-model="p.name" placeholder="Nom du participant" required />
-        <select v-model="p.gender" @change="setAvatarByGender(idx)">
-          <option value="male">Homme</option>
-          <option value="female">Femme</option>
-        </select>
-        <!-- Suppression du champ URL avatar, avatar choisi automatiquement selon le genre -->
-        <button type="button" @click="removeParticipant(idx)" v-if="editableParticipants.length > 2">🗑️</button>
+  <div class="ventriglisse-page">
+    <Navbar />
+
+    <main class="ventriglisse-shell">
+      <header class="game-heading">
+        <div class="heading-icon" aria-hidden="true"><i class="pi pi-send"></i></div>
+        <div>
+          <h1>Ventriglisse 3D</h1>
+          <p>Préparez les couloirs, lancez la manche et suivez la course en direct.</p>
+        </div>
+        <div class="friendly-mode"><i class="pi pi-info-circle" aria-hidden="true"></i> Partie amicale · aucun XP</div>
+      </header>
+
+      <div class="game-layout">
+        <form class="race-setup" @submit.prevent="applyParticipants">
+          <div class="setup-heading">
+            <div>
+              <h2>Participants</h2>
+              <p>De 2 à 6 personnes</p>
+            </div>
+            <span class="participant-count">{{ editableParticipants.length }}/6</span>
+          </div>
+
+          <div class="participant-list">
+            <div v-for="(participant, index) in editableParticipants" :key="participant.id" class="participant-row">
+              <span class="lane-dot" :style="{ backgroundColor: racerColors[index] }" aria-hidden="true"></span>
+              <div class="participant-field">
+                <label :for="`participant-${participant.id}`">Couloir {{ index + 1 }}</label>
+                <input
+                  :id="`participant-${participant.id}`"
+                  v-model="participant.name"
+                  maxlength="32"
+                  autocomplete="off"
+                  :disabled="raceLocked"
+                  @keydown.enter.prevent="applyParticipants"
+                />
+              </div>
+              <div class="participant-field avatar-field">
+                <label :for="`avatar-${participant.id}`">Personnage</label>
+                <select
+                  :id="`avatar-${participant.id}`"
+                  v-model="participant.avatarStyle"
+                  :disabled="raceLocked"
+                >
+                  <option value="fille">Fille</option>
+                  <option value="garcon">Garçon</option>
+                </select>
+              </div>
+              <button
+                v-if="editableParticipants.length > 2"
+                class="icon-button danger-button"
+                type="button"
+                :disabled="raceLocked"
+                :aria-label="`Retirer ${participant.name || `le participant ${index + 1}`}`"
+                @click="removeParticipant(index)"
+              >
+                <i class="pi pi-trash" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+
+          <p v-if="formError" class="form-error" role="alert"><i class="pi pi-exclamation-circle" aria-hidden="true"></i>{{ formError }}</p>
+
+          <div class="setup-actions">
+            <button class="secondary-button" type="button" :disabled="editableParticipants.length >= 6 || raceLocked" @click="addParticipant">
+              <i class="pi pi-user-plus" aria-hidden="true"></i> Ajouter
+            </button>
+            <button class="secondary-button" type="submit" :disabled="raceLocked">
+              <i class="pi pi-check" aria-hidden="true"></i> Appliquer
+            </button>
+          </div>
+
+          <div class="sound-control">
+            <i :class="soundEnabled ? 'pi pi-volume-up' : 'pi pi-volume-off'" aria-hidden="true"></i>
+            <span>Effets sonores</span>
+            <button
+              class="sound-toggle"
+              type="button"
+              role="switch"
+              :aria-checked="soundEnabled"
+              :aria-label="soundEnabled ? 'Désactiver les effets sonores' : 'Activer les effets sonores'"
+              @click="soundEnabled = !soundEnabled"
+            ><span></span></button>
+          </div>
+
+          <div class="scoreboard" aria-labelledby="scoreboard-title">
+            <div class="scoreboard-heading">
+              <h3 id="scoreboard-title">Scores</h3>
+              <span>{{ raceRound }} manche{{ raceRound > 1 ? 's' : '' }}</span>
+            </div>
+            <ol>
+              <li v-for="(participant, index) in scoreRanking" :key="participant.id">
+                <span>{{ index + 1 }}</span>
+                <strong>{{ participant.name }}</strong>
+                <b>{{ participant.score }} pt{{ participant.score > 1 ? 's' : '' }}</b>
+              </li>
+            </ol>
+          </div>
+        </form>
+
+        <section class="race-area" aria-labelledby="race-title">
+          <div class="race-toolbar">
+            <div>
+              <h2 id="race-title">Manche {{ raceRound || 1 }}</h2>
+              <p aria-live="polite">{{ raceStatusText }}</p>
+            </div>
+            <button
+              class="primary-button"
+              type="button"
+              :disabled="raceLocked"
+              @click="startRace"
+            >
+              <i class="pi pi-play" aria-hidden="true"></i>
+              {{ avatarLoading ? 'Chargement des personnages…' : raceState === 'finished' ? 'Nouvelle manche' : 'Lancer la course' }}
+            </button>
+          </div>
+
+          <div ref="stage" class="race-stage" :class="{ 'is-racing': raceState === 'racing' }">
+            <canvas ref="canvas3d" class="ventriglisse-canvas" aria-label="Animation 3D de la course de Ventriglisse"></canvas>
+
+            <div v-if="avatarLoading && !sceneError" class="avatar-loading" role="status">Chargement des personnages 3D…</div>
+
+            <div v-if="sceneError" class="scene-error" role="alert">
+              <div class="fallback-message">
+                <i class="pi pi-desktop" aria-hidden="true"></i>
+                <strong>Mode de course simplifié</strong>
+                <span>La vue 3D n’est pas disponible, mais la manche reste entièrement jouable.</span>
+              </div>
+              <div class="fallback-race" aria-label="Animation simplifiée de la course">
+                <div v-for="participant in participants" :key="participant.id" class="fallback-lane">
+                  <span>{{ participant.name }}</span>
+                  <div><i class="fallback-avatar" :class="`is-${participant.avatarStyle}`" :style="{ left: `${Math.min(94, participant.distance / trackLength * 94)}%`, '--avatar-color': participant.color }" aria-hidden="true"><span></span></i></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="labels-3d" aria-hidden="true">
+              <span
+                v-for="(participant, index) in participants"
+                :id="`racer-label-${participant.id}`"
+                :key="participant.id"
+                class="avatar-label"
+                :style="{ '--racer-color': participant.color || racerColors[index] }"
+              >{{ participant.name }}</span>
+            </div>
+
+            <Transition name="countdown-fade">
+              <div v-if="countdownValue !== null" class="countdown-overlay" aria-live="assertive">
+                <span class="countdown-number">{{ countdownValue }}</span>
+              </div>
+            </Transition>
+          </div>
+
+          <p v-if="avatarWarning && !sceneError" class="model-warning" role="status">Un personnage 3D n’a pas pu être chargé. La course reste jouable avec son avatar de secours.</p>
+
+          <div class="race-progress" aria-label="Progression des participants">
+            <div v-for="(participant, index) in liveRanking" :key="participant.id" class="progress-row">
+              <div class="progress-person">
+                <span class="position">{{ index + 1 }}</span>
+                <span class="progress-name">{{ participant.name }}</span>
+                <span>{{ participant.distance.toFixed(1) }} m</span>
+              </div>
+              <div class="progress-track" role="progressbar" :aria-label="`Progression de ${participant.name}`" aria-valuemin="0" :aria-valuenow="Math.round(participant.distance)" :aria-valuemax="trackLength">
+                <span :style="{ transform: `scaleX(${Math.min(1, participant.distance / trackLength)})`, backgroundColor: participant.color }"></span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
-      <button type="button" @click="addParticipant">+ Ajouter un participant</button>
-      <button type="submit">Valider la liste</button>
-    </form>
-    <transition name="countdown-fade">
-      <div v-if="countdownValue !== null" class="countdown-overlay">
-        <span class="countdown-number">{{ countdownValue }}</span>
-      </div>
-    </transition>
-    <canvas ref="canvas3d" class="ventriglisse-canvas" width="1600" height="700"></canvas>
-    <div class="labels-3d">
-      <div v-for="(p, idx) in participants" :key="p.name" class="avatar-label" :id="'label-' + idx">{{ p.name }}</div>
-    </div>
-    <Dialog v-model:visible="showResults" modal :closable="false" class="results-dialog" :style="{width: '420px'}">
-      <template #header>
-        <h2 class="classement-title">Classement</h2>
-      </template>
-      <ol class="classement-list">
-        <li v-for="(p, idx) in sortedParticipants" :key="p.name" :class="['rank', idx === 0 ? 'first' : idx === 1 ? 'second' : idx === 2 ? 'third' : idx === 3 ? 'fourth' : 'rest']">
-          <span class="rank-num">{{ idx+1 }}</span>
-          <span class="rank-name">{{ p.name }}</span>
-          <span class="rank-dist">{{ p.distance.toFixed(1) }} m</span>
-        </li>
-      </ol>
-      <div class="dialog-footer">
-        <span class="winner-label">🏆 Gagnant : <b>{{ winner.name }}</b></span>
-        <button @click="replay" class="replay-btn">Rejouer</button>
-      </div>
-    </Dialog>
-    <div v-if="!showResults" class="launch-panel">
-      <button @click="startRace">Lancer le ventriglisse</button>
-    </div>
-    <audio ref="audioBip" src="./assets/bip.wav"></audio>
-    <audio ref="audioGo" src="./assets/go.wav"></audio>
-    <audio ref="audioSlide" src="./assets/slide.mp3"></audio>
-    <audio ref="audioFinish" src="./assets/finish.mp3"></audio>
+
+      <section v-if="showResults" class="results-panel" aria-labelledby="results-title" aria-live="polite">
+        <div class="winner-summary">
+          <span class="winner-icon" aria-hidden="true"><i class="pi pi-trophy"></i></span>
+          <div><p>Victoire</p><h2 id="results-title">{{ winner.name }}</h2></div>
+          <strong>{{ winner.distance.toFixed(1) }} m</strong>
+        </div>
+        <ol class="ranking-list">
+          <li v-for="(participant, index) in sortedParticipants" :key="participant.id">
+            <span class="rank-number">{{ index + 1 }}</span>
+            <span class="rank-color" :style="{ backgroundColor: participant.color }" aria-hidden="true"></span>
+            <strong>{{ participant.name }}</strong>
+            <span class="round-points">+{{ pointsForRank(index) }} pts</span>
+            <span>{{ participant.distance.toFixed(1) }} m</span>
+          </li>
+        </ol>
+        <button class="primary-button" type="button" @click="startRace"><i class="pi pi-refresh" aria-hidden="true"></i> Rejouer</button>
+      </section>
+    </main>
+
+    <audio ref="audioBip" src="./assets/bip.wav" preload="auto"></audio>
+    <audio ref="audioGo" src="./assets/go.wav" preload="auto"></audio>
+    <audio ref="audioSlide" src="./assets/slide.mp3" preload="auto" loop></audio>
+    <audio ref="audioFinish" src="./assets/finish.mp3" preload="auto"></audio>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, reactive } from 'vue';
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { AnimationMixer } from 'three';
-import floorTextureImg from './assets/floor.png';
-import wallTextureImg from './assets/wall.png';
-import wallLeftImg from './assets/cafte1.png';
-import wallRightImg from './assets/cafte2.png';
-import cafeteriaImg from './assets/cafte3.png';
-import Dialog from 'primevue/dialog';
-import Navbar from '@/components/common/utils/Navbar.vue';
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { clone as cloneSkinnedModel } from 'three/examples/jsm/utils/SkeletonUtils.js'
+import Navbar from '@/components/common/utils/Navbar.vue'
+import floorTextureImg from './assets/floor.png'
+import wallTextureImg from './assets/wall.png'
+import wallLeftImg from './assets/cafte1.png'
+import wallRightImg from './assets/cafte2.png'
+import cafeteriaImg from './assets/cafte3.png'
+import femaleAvatarUrl from './assets/avatars/fille.glb?url'
+import maleAvatarUrl from './assets/avatars/garcon.glb?url'
+import {
+  createVentriglisseRace,
+  normalizeVentriglisseParticipants,
+  rankVentriglisseRace,
+  scoreVentriglisseRound,
+} from '@/domain/games/ventriglisseRace'
 
-// Liste modifiable par l'utilisateur
-const defaultParticipants = [
-  { name: 'Joueur 1', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842a0f9105ed34bf86c5850.glb' },
-  { name: 'Joueur 2', gender: 'female', avatarUrl: 'https://models.readyplayer.me/6842a1c3e02ade94ce20e85e.glb' },
-  { name: 'Joueur 3', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842d8990b840e8455020dce.glb' },
-  { name: 'Joueur 4', gender: 'female', avatarUrl: 'https://models.readyplayer.me/6842d8d1cca2917b669a9e4e.glb' }
-];
-const editableParticipants = ref(JSON.parse(JSON.stringify(defaultParticipants)));
+const trackLength = 120
+const racerColors = ['#ffc400', '#3fc380', '#f25f5c', '#5b8def', '#35c2d5', '#a66cff']
+const avatarStyles = ['garcon', 'fille']
+const avatarUrls = { fille: femaleAvatarUrl, garcon: maleAvatarUrl }
+const avatarLoader = new GLTFLoader()
+const avatarTemplates = new Map()
+let participantSequence = 0
+const makeParticipant = (index) => ({
+  id: `racer-${++participantSequence}`,
+  name: `Joueur ${index + 1}`,
+  avatarStyle: avatarStyles[index % avatarStyles.length],
+  score: 0,
+})
 
-const canvas3d = ref(null);
-const showResults = ref(false);
-const participants = reactive([]);
-const sortedParticipants = ref([]);
-const winner = ref({ name: '', distance: 0 });
-let scene, camera, renderer, animationId;
-const friction = 0.012;
-const countdownValue = ref(null);
-let countdownTimer = null;
-const audioBip = ref(null);
-const audioGo = ref(null);
-const audioSlide = ref(null);
-const audioFinish = ref(null);
-let idleStartTime = null;
-let isIdle = ref(true);
+const canvas3d = ref(null)
+const stage = ref(null)
+const editableParticipants = ref(Array.from({ length: 4 }, (_, index) => makeParticipant(index)))
+const participants = reactive([])
+const sortedParticipants = ref([])
+const winner = ref({ name: '', distance: 0 })
+const raceState = ref('idle')
+const raceRound = ref(0)
+const countdownValue = ref(null)
+const showResults = ref(false)
+const soundEnabled = ref(true)
+const formError = ref('')
+const sceneError = ref(false)
+const avatarLoading = ref(false)
+const avatarWarning = ref(false)
+const audioBip = ref(null)
+const audioGo = ref(null)
+const audioSlide = ref(null)
+const audioFinish = ref(null)
 
-const jumpAnim = ref(null);
+let scene
+let camera
+let renderer
+let clock
+let animationId
+let countdownTimer
+let launchTimer
+let resizeObserver
+let sceneGeneration = 0
 
-function loadAnimations() {
-  const loader = new GLTFLoader();
-  loader.load('./assets/jump.glb', gltf => { jumpAnim.value = gltf.animations[0]; });
-}
+const raceLocked = computed(() => avatarLoading.value || ['countdown', 'racing'].includes(raceState.value))
+const liveRanking = computed(() => rankVentriglisseRace(participants))
+const scoreRanking = computed(() => [...participants].sort((left, right) => (
+  right.score - left.score || left.lane - right.lane
+)))
+const raceStatusText = computed(() => ({
+  idle: 'La piste est prête.',
+  countdown: 'Départ imminent…',
+  racing: 'Course en cours…',
+  finished: `${winner.value.name} remporte la manche.`,
+}[raceState.value]))
 
-function getTrackLength() {
-  // Largeur de base : 26, +4 par participant au-delà de 4 (encore plus large)
-  const minWidth = 26;
-  const extra = Math.max(0, participants.length - 4) * 4;
-  return minWidth + extra;
-}
-
-function addParticipant() {
-  editableParticipants.value.push({ name: 'joueur', gender: 'male', avatarUrl: 'https://models.readyplayer.me/6842d8990b840e8455020dce.glb' });
-}
-function removeParticipant(idx) {
-  if (editableParticipants.value.length > 2) {
-    editableParticipants.value.splice(idx, 1);
+const safePlay = async (audio) => {
+  if (!soundEnabled.value || !audio) return
+  try {
+    audio.currentTime = 0
+    await audio.play()
+  } catch {
+    soundEnabled.value = false
   }
 }
-function applyParticipants() {
-  // Vérifie que tous les noms et genres sont remplis
-  if (editableParticipants.value.some(p => !p.name.trim() || !p.gender.trim())) {
-    alert('Merci de remplir tous les noms et genres !');
-    return;
-  }
-  showResults.value = false;
-  // Copie profonde pour éviter les effets de bord
-  participants.splice(0, participants.length, ...editableParticipants.value.map(p => ({ ...p, distance: 0, velocity: 0, mesh: null, mixer: null, currentAction: null, isSliding: false })));
-  // Recharge la scène avec les nouveaux participants
-  resetScene();
+
+const stopAudio = (audio) => {
+  if (!audio) return
+  audio.pause()
+  audio.currentTime = 0
 }
 
-function resetScene() {
-  if (renderer) renderer.dispose();
-  if (scene) {
-    // Supprime tous les objets de la scène
-    while(scene.children.length > 0){ scene.remove(scene.children[0]); }
-  }
-  setupScene();
-  if (renderer && scene && camera) renderer.render(scene, camera);
+const addParticipant = () => {
+  if (editableParticipants.value.length >= 6) return
+  editableParticipants.value.push(makeParticipant(editableParticipants.value.length))
 }
 
-function setupScene() {
-  scene = new THREE.Scene();
-  // Utilise la couleur CSS var(--surface-card) comme fond Three.js
-  const cssBg = getComputedStyle(document.documentElement).getPropertyValue('--surface-card').trim() || '#e0f7fa';
-  scene.background = new THREE.Color(cssBg);
-  camera = new THREE.PerspectiveCamera(60, canvas3d.value.width / canvas3d.value.height, 0.1, 1000);
-  camera.position.set(0, 8, 20);
-  camera.lookAt(0, 0, -120 / 2);
-
-  // Lumière
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-  scene.add(ambientLight);
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  dirLight.position.set(0, 20, 20);
-  scene.add(dirLight);
-
-  // Textures
-  const textureLoader = new THREE.TextureLoader();
-  const floorTexture = textureLoader.load(floorTextureImg);
-  floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-  floorTexture.repeat.set(10, 40);
-  const wallTexture = textureLoader.load(wallTextureImg);
-  wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping;
-  wallTexture.repeat.set(10, 4);
-  const wallLeftTexture = textureLoader.load(wallLeftImg);
-  wallLeftTexture.wrapS = wallLeftTexture.wrapT = THREE.ClampToEdgeWrapping;
-  wallLeftTexture.repeat.set(1, 1);
-  const wallRightTexture = textureLoader.load(wallRightImg);
-  wallRightTexture.wrapS = wallRightTexture.wrapT = THREE.ClampToEdgeWrapping;
-  wallRightTexture.repeat.set(1, 1);
-  const cafeteriaTexture = textureLoader.load(cafeteriaImg);
-
-  // Sol
-  const floorGeometry = new THREE.PlaneGeometry(getTrackLength(), 120 + 40);
-  const floorMaterial = new THREE.MeshPhongMaterial({ map: floorTexture });
-  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, -1.1, -120 / 2);
-  scene.add(floor);
-
-  // --- Encore plus de bulles de savon sur le sol ---
-  for (let i = 0; i < 40; i++) { // Augmente à 40 bulles
-    const bubbleRadius = Math.random() * 0.8 + 0.2;
-    const bubbleGeo = new THREE.SphereGeometry(bubbleRadius, 16, 16);
-    const bubbleMat = new THREE.MeshPhysicalMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.38,
-      roughness: 0.12,
-      metalness: 0.8,
-      transmission: 0.8,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.08
-    });
-    const bubble = new THREE.Mesh(bubbleGeo, bubbleMat);
-    bubble.position.x = (Math.random() - 0.5) * getTrackLength();
-    bubble.position.z = -Math.random() * 120;
-    bubble.position.y = -0.7 + Math.random() * 0.2;
-    scene.add(bubble);
-  }
-  // --- Fin bulles de savon ---
-
-  // --- Beaucoup plus de flaques d'eau brillantes ---
-  const waterCount = 10;
-  for (let i = 0; i < waterCount; i++) {
-    const waterGeometry = new THREE.CircleGeometry(getTrackLength() * (0.18 + Math.random() * 0.22), 48);
-    const waterMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x7fd8ff,
-      transparent: true,
-      opacity: 0.35,
-      roughness: 0.05,
-      metalness: 0.5,
-      transmission: 0.7,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.04
-    });
-    const water = new THREE.Mesh(waterGeometry, waterMaterial);
-    water.rotation.x = -Math.PI / 2;
-    // Positionne les flaques à différentes profondeurs et légèrement décalées
-    water.position.set(
-      (Math.random() - 0.5) * getTrackLength() * 0.7,
-      -1.08,
-      -120 / 2 + 6 + i * 11 + Math.random() * 12
-    );
-    scene.add(water);
-  }
-  // --- Fin multiples flaques d'eau ---
-
-  // Murs (gauche, droite, fond, devant)
-  const wallGeometry = new THREE.PlaneGeometry(120 + 40, 16); // Hauteur doublée
-  // Mur gauche
-  const wallLeft = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallLeftTexture }));
-  wallLeft.position.set(-(getTrackLength()/2), 8, -120 / 2); // milieu hauteur
-  wallLeft.rotation.y = Math.PI / 2;
-  scene.add(wallLeft);
-  // Mur droit
-  const wallRight = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial({ map: wallRightTexture }));
-  wallRight.position.set(getTrackLength()/2, 8, -120 / 2);
-  wallRight.rotation.y = -Math.PI / 2;
-  scene.add(wallRight);
-  // Mur fond : utilise la photo cafeteria, plus grand et plus haut
-  const wallBack = new THREE.Mesh(
-    new THREE.PlaneGeometry(getTrackLength() * 1.5, 16), // Largeur et hauteur augmentées
-    new THREE.MeshPhongMaterial({ map: cafeteriaTexture })
-  );
-  wallBack.position.set(0, 8, -120 - 20); // centre hauteur
-  scene.add(wallBack);
-  // Mur devant (optionnel, plus haut aussi)
-  const wallFront = new THREE.Mesh(
-    new THREE.PlaneGeometry(getTrackLength(), 16),
-    new THREE.MeshPhongMaterial({ map: wallTexture, opacity: 0.3, transparent: true })
-  );
-  wallFront.position.set(0, 8, 20);
-  wallFront.rotation.y = Math.PI;
-  scene.add(wallFront);
-
-  // Avatars ReadyPlayerMe
-  const loader = new GLTFLoader();
-  let loadedCount = 0;
-  participants.forEach((p, idx) => {
-    loader.load(
-      p.avatarUrl,
-      gltf => {
-        const avatar = gltf.scene;
-        const spacing = getTrackLength() / Math.max(1, participants.length);
-        avatar.position.set((idx - (participants.length - 1) / 2) * spacing, 0, 0);
-        avatar.scale.set(3.2, 3.2, 3.2);
-        avatar.rotation.x = 0; // debout au départ
-        avatar.rotation.y = Math.PI;
-        scene.add(avatar);
-        p.mesh = avatar;
-        p.distance = 0;
-        p.velocity = 0;
-        p.mixer = null;
-        if (jumpAnim.value) {
-          p.mixer = new AnimationMixer(avatar);
-          p.currentAction = null;
-        }
-        loadedCount++;
-        if (loadedCount === participants.length) {
-          renderer.render(scene, camera);
-        }
-      },
-      undefined,
-      error => {
-        // Si erreur, fallback capsule
-        const capsuleGeometry = new THREE.CapsuleGeometry(0.5, 1.2, 8, 16);
-        const color = new THREE.Color().setHSL(idx / participants.length, 0.7, 0.5);
-        const mat = new THREE.MeshPhongMaterial({ color });
-        const mesh = new THREE.Mesh(capsuleGeometry, mat);
-        const spacing = getTrackLength() / Math.max(1, participants.length);
-        mesh.position.set((idx - (participants.length - 1) / 2) * spacing, 0, 0);
-        mesh.rotation.x = 0; // debout au départ
-        scene.add(mesh);
-        p.mesh = mesh;
-        p.distance = 0;
-        p.velocity = 0;
-        loadedCount++;
-        if (loadedCount === participants.length) {
-          renderer.render(scene, camera);
-        }
-      }
-    );
-  });
-
-  renderer = new THREE.WebGLRenderer({ canvas: canvas3d.value, antialias: true, alpha: true });
-  renderer.setSize(canvas3d.value.clientWidth, canvas3d.value.clientHeight, false);
+const removeParticipant = (index) => {
+  if (editableParticipants.value.length <= 2) return
+  editableParticipants.value.splice(index, 1)
 }
 
-function animate() {
-  let allStopped = true;
-  let maxDistance = 0;
-  const trackLength = 120;
-  const wallBackZ = -(trackLength + 20); // position du mur du fond
-  const avatarDepth = 3.2; // profondeur approximative de l'avatar Ready Player Me (scale)
-  const maxDist = Math.abs(wallBackZ) - avatarDepth / 2; // limite stricte
-  const clock = new THREE.Clock();
-  const delta = clock.getDelta();
-  participants.forEach((p) => {
-    if (p.mixer && p.currentAction) {
-      p.mixer.update(delta);
+const pointsForRank = (index) => sortedParticipants.value[index]?.roundPoints ?? Math.max(1, participants.length - index)
+
+const disposeScene = () => {
+  scene?.traverse((object) => {
+    if (object.userData.sharedAvatarAsset) return
+    object.geometry?.dispose?.()
+    const disposeMaterial = (material) => {
+      material.map?.dispose?.()
+      material.dispose?.()
     }
-    if (p.velocity > 0.01) {
-      let nextDist = p.distance + p.velocity;
-      if (nextDist >= maxDist) {
-        p.distance = maxDist;
-        p.velocity = 0;
-        if (p.mesh) p.mesh.position.z = -maxDist;
-      } else {
-        p.distance = nextDist;
-        p.velocity -= friction;
-        if (p.velocity < 0) p.velocity = 0;
-        if (p.mesh) p.mesh.position.z = -p.distance;
-        allStopped = false;
-      }
-    }
-    if (p.distance > maxDistance) maxDistance = p.distance;
-  });
-  camera.position.z = 20 - maxDistance;
-  camera.lookAt(0, 0, -120 / 2 - maxDistance / 2);
-  renderer.render(scene, camera);
-  // Mise à jour des labels au-dessus des avatars
-  participants.forEach((p, idx) => {
-    if (!p.mesh) return;
-    // Position du sommet de l'avatar (ajuste y selon la taille)
-    const pos = p.mesh.position.clone();
-    pos.y += 3.5; // hauteur au-dessus de la tête (adapter si besoin)
-    const vector = pos.project(camera);
-    const x = (vector.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
-    const y = (-vector.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
-    const label = document.getElementById('label-' + idx);
-    if (label) {
-      label.style.left = x + 'px';
-      label.style.top = y + 'px';
-      label.style.display = (vector.z < 1 && vector.z > -1) ? 'block' : 'none';
-    }
-  });
-  if (!allStopped) {
-    animationId = requestAnimationFrame(animate);
+    if (Array.isArray(object.material)) object.material.forEach(disposeMaterial)
+    else if (object.material) disposeMaterial(object.material)
+  })
+  renderer?.dispose()
+  scene = null
+  camera = null
+  renderer = null
+  participants.forEach((participant) => { participant.mesh = null; participant.racerModel = null })
+}
+
+const loadAvatarTemplate = (style) => {
+  const gender = style === 'fille' ? 'fille' : 'garcon'
+  if (!avatarTemplates.has(gender)) {
+    const pending = avatarLoader.loadAsync(avatarUrls[gender]).catch((error) => {
+      avatarTemplates.delete(gender)
+      throw error
+    })
+    avatarTemplates.set(gender, pending)
+  }
+  return avatarTemplates.get(gender)
+}
+
+const createRacer = (participant, index, template) => {
+  const group = new THREE.Group()
+  let model
+  if (template) {
+    model = cloneSkinnedModel(template.scene)
+    model.traverse((object) => { object.userData.sharedAvatarAsset = true })
+    model.scale.setScalar(2)
   } else {
-    showRaceResults();
+    const fallbackMaterial = new THREE.MeshStandardMaterial({ color: participant.color, roughness: 0.5 })
+    model = new THREE.Group()
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1.25, 6, 12), fallbackMaterial)
+    body.position.y = 1.35
+    model.add(body)
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 12), fallbackMaterial)
+    head.position.y = 2.55
+    model.add(head)
+  }
+  group.add(model)
+  group.position.set((index - (participants.length - 1) / 2) * 3.6, -0.72, 2)
+  scene.add(group)
+  participant.mesh = markRaw(group)
+  participant.racerModel = markRaw(model)
+}
+
+const resizeRenderer = () => {
+  if (!renderer || !camera || !stage.value) return
+  const width = Math.max(1, stage.value.clientWidth)
+  const height = Math.max(1, stage.value.clientHeight)
+  renderer.setSize(width, height, false)
+  camera.aspect = width / height
+  camera.updateProjectionMatrix()
+  renderer.render(scene, camera)
+}
+
+const supportsWebGL = () => {
+  try {
+    const probe = document.createElement('canvas')
+    const context = probe.getContext('webgl2') || probe.getContext('webgl') || probe.getContext('experimental-webgl')
+    context?.getExtension('WEBGL_lose_context')?.loseContext()
+    return Boolean(context)
+  } catch {
+    return false
   }
 }
 
-function startRace() {
-  showResults.value = false;
-  isIdle.value = true;
-  participants.forEach(p => {
-    p.distance = 0;
-    p.velocity = 0;
-    if (p.mesh) {
-      p.mesh.position.z = 0;
-      p.mesh.rotation.x = 0;
-    }
-    if (p.mixer && p.currentAction) {
-      p.currentAction.stop();
-      p.currentAction = null;
-    }
-  });
-  launchCountdown();
-}
-
-function launchCountdown() {
-  const sequence = [3, 2, 1, 'GO!'];
-  let idx = 0;
-  countdownValue.value = sequence[idx];
-  countdownTimer = setInterval(() => {
-    idx++;
-    if (idx < sequence.length) {
-      countdownValue.value = sequence[idx];
-      if (typeof sequence[idx] === 'number' && audioBip.value) {
-        audioBip.value.currentTime = 0;
-        audioBip.value.play();
-      }
-    } else {
-      clearInterval(countdownTimer);
-      countdownValue.value = null;
-      if (audioGo.value) {
-        audioGo.value.currentTime = 0;
-        audioGo.value.play();
-      }
-      isIdle.value = false;
-      participants.forEach(p => {
-        if (p.mixer && p.currentAction) {
-          p.currentAction.stop();
-        }
-        // Joue Jump
-        // if (p.mixer && jumpAnim.value) {
-        //   const jumpAction = p.mixer.clipAction(jumpAnim.value);
-        //   jumpAction.reset();
-        //   jumpAction.setLoop(THREE.LoopOnce, 1);
-        //   jumpAction.clampWhenFinished = true;
-        //   jumpAction.play();
-        //   p.currentAction = jumpAction;
-        // }
-      });
-      // Attend la fin du jump avant de plonger et glisser
-      setTimeout(() => {
-        participants.forEach(p => {
-          if (p.mesh) p.mesh.rotation.x = -Math.PI / 2;
-          p.velocity = Math.random() * 0.9 + 0.7;
-        });
-        animate();
-      }, 900); // 0.9s ≈ durée du jump Mixamo
-    }
-  }, 800);
-}
-
-function showRaceResults() {
-  if (audioFinish.value) {
-    audioFinish.value.currentTime = 0;
-    audioFinish.value.play();
+const buildScene = async () => {
+  if (!canvas3d.value || !stage.value) return
+  const generation = ++sceneGeneration
+  disposeScene()
+  sceneError.value = false
+  avatarWarning.value = false
+  avatarLoading.value = true
+  clock = new THREE.Clock()
+  if (!supportsWebGL()) {
+    sceneError.value = true
+    avatarLoading.value = false
+    return
   }
-  sortedParticipants.value = [...participants].sort((a, b) => b.distance - a.distance);
-  winner.value = sortedParticipants.value[0];
-  showResults.value = true;
-}
+  try {
+    scene = new THREE.Scene()
+    scene.background = new THREE.Color('#102c4d')
+    camera = new THREE.PerspectiveCamera(54, 1, 0.1, 500)
+    camera.position.set(0, 11, 24)
+    camera.lookAt(0, 0, -45)
 
-function replay() {
-  showResults.value = false;
-  isIdle.value = true;
-  participants.forEach(p => {
-    p.distance = 0;
-    p.velocity = 0;
-    if (p.mesh) {
-      p.mesh.position.z = 0;
-      p.mesh.rotation.x = 0;
-    }
-    if (p.mixer && p.currentAction) {
-      p.currentAction.stop();
-      p.currentAction = null;
-    }
-  });
-  resetScene();
-}
+    scene.add(new THREE.HemisphereLight(0xeaf8ff, 0x09203b, 2.1))
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.4)
+    keyLight.position.set(-8, 18, 15)
+    scene.add(keyLight)
 
-function setAvatarByGender(idx) {
-  const gender = editableParticipants.value[idx].gender;
-  if (gender === 'male') {
-    editableParticipants.value[idx].avatarUrl = 'https://models.readyplayer.me/6842a0f9105ed34bf86c5850.glb';
-  } else if (gender === 'female') {
-    editableParticipants.value[idx].avatarUrl = 'https://models.readyplayer.me/6842a1c3e02ade94ce20e85e.glb';
+    const trackWidth = Math.max(26, participants.length * 4.2)
+    const textureLoader = new THREE.TextureLoader()
+    const [floorTexture, wallTexture, leftTexture, rightTexture, backTexture] = await Promise.all([
+      textureLoader.loadAsync(floorTextureImg),
+      textureLoader.loadAsync(wallTextureImg),
+      textureLoader.loadAsync(wallLeftImg),
+      textureLoader.loadAsync(wallRightImg),
+      textureLoader.loadAsync(cafeteriaImg),
+    ])
+    if (generation !== sceneGeneration) return
+    floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping
+    floorTexture.repeat.set(8, 34)
+    floorTexture.colorSpace = THREE.SRGBColorSpace
+    wallTexture.wrapS = wallTexture.wrapT = THREE.RepeatWrapping
+    wallTexture.repeat.set(8, 3)
+    wallTexture.colorSpace = THREE.SRGBColorSpace
+    ;[leftTexture, rightTexture, backTexture].forEach((texture) => { texture.colorSpace = THREE.SRGBColorSpace })
+
+    const track = new THREE.Mesh(
+      new THREE.PlaneGeometry(trackWidth, trackLength + 20),
+      new THREE.MeshStandardMaterial({ map: floorTexture, color: 0x8de3ff, roughness: 0.22, metalness: 0.08 })
+    )
+    track.rotation.x = -Math.PI / 2
+    track.position.set(0, -0.8, -trackLength / 2 + 4)
+    scene.add(track)
+
+    const sideGeometry = new THREE.PlaneGeometry(trackLength + 20, 15)
+    const leftWall = new THREE.Mesh(sideGeometry, new THREE.MeshStandardMaterial({ map: leftTexture }))
+    leftWall.position.set(-trackWidth / 2, 6.7, -trackLength / 2 + 4)
+    leftWall.rotation.y = Math.PI / 2
+    scene.add(leftWall)
+    const rightWall = new THREE.Mesh(sideGeometry, new THREE.MeshStandardMaterial({ map: rightTexture }))
+    rightWall.position.set(trackWidth / 2, 6.7, -trackLength / 2 + 4)
+    rightWall.rotation.y = -Math.PI / 2
+    scene.add(rightWall)
+    const backWall = new THREE.Mesh(
+      new THREE.PlaneGeometry(trackWidth, 15),
+      new THREE.MeshStandardMaterial({ map: backTexture })
+    )
+    backWall.position.set(0, 6.7, -trackLength + 3)
+    scene.add(backWall)
+
+    const frontWall = new THREE.Mesh(
+      new THREE.PlaneGeometry(trackWidth, 9),
+      new THREE.MeshStandardMaterial({ map: wallTexture, transparent: true, opacity: 0.42 })
+    )
+    frontWall.position.set(0, 3.7, 9)
+    frontWall.rotation.y = Math.PI
+    scene.add(frontWall)
+
+    const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xdff7ff, transparent: true, opacity: 0.55 })
+    for (let index = 1; index < participants.length; index += 1) {
+      const line = new THREE.Mesh(new THREE.PlaneGeometry(0.06, trackLength), lineMaterial)
+      line.rotation.x = -Math.PI / 2
+      line.position.set((index - participants.length / 2) * 3.6, -0.76, -trackLength / 2 + 4)
+      scene.add(line)
+    }
+
+    const finish = new THREE.Mesh(
+      new THREE.PlaneGeometry(Math.max(18, participants.length * 3.8), 1.2),
+      new THREE.MeshBasicMaterial({ color: 0xffc400 })
+    )
+    finish.rotation.x = -Math.PI / 2
+    finish.position.set(0, -0.74, -trackLength + 2)
+    scene.add(finish)
+
+    const bubbleMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xe5f9ff,
+      transparent: true,
+      opacity: 0.48,
+      roughness: 0.08,
+      transmission: 0.72,
+      clearcoat: 1,
+    })
+    for (let index = 0; index < 26; index += 1) {
+      const size = 0.18 + (index % 6) * 0.09
+      const bubble = new THREE.Mesh(new THREE.SphereGeometry(size, 10, 8), bubbleMaterial)
+      bubble.position.set(
+        ((index * 7.3) % trackWidth) - trackWidth / 2,
+        -0.48 + (index % 3) * 0.13,
+        -((index * 13.7) % trackLength)
+      )
+      scene.add(bubble)
+    }
+
+    const waterMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x4bc3f1,
+      transparent: true,
+      opacity: 0.34,
+      roughness: 0.04,
+      metalness: 0.18,
+      clearcoat: 1,
+    })
+    for (let index = 0; index < 7; index += 1) {
+      const puddle = new THREE.Mesh(new THREE.CircleGeometry(trackWidth * (0.12 + (index % 3) * 0.035), 30), waterMaterial)
+      puddle.rotation.x = -Math.PI / 2
+      puddle.scale.y = 0.44 + (index % 2) * 0.18
+      puddle.position.set((index % 2 ? 1 : -1) * trackWidth * 0.14, -0.73, -11 - index * 16)
+      scene.add(puddle)
+    }
+
+    renderer = new THREE.WebGLRenderer({ canvas: canvas3d.value, antialias: true, powerPreference: 'high-performance' })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75))
+    resizeRenderer()
+    renderer.render(scene, camera)
+
+    const loadedAvatars = await Promise.allSettled(
+      participants.map((participant) => loadAvatarTemplate(participant.avatarStyle))
+    )
+    if (generation !== sceneGeneration) return
+    loadedAvatars.forEach((result, index) => {
+      if (result.status === 'rejected') avatarWarning.value = true
+      createRacer(participants[index], index, result.status === 'fulfilled' ? result.value : null)
+    })
+    renderer.render(scene, camera)
+    updateLabels()
+  } catch (error) {
+    console.warn('Vue 3D du Ventriglisse indisponible, activation du suivi simplifié.', error)
+    sceneError.value = true
+  } finally {
+    if (generation === sceneGeneration) avatarLoading.value = false
   }
 }
 
-onMounted(() => {
-  loadAnimations();
-  // Initialise la liste des participants (copie profonde)
-  participants.splice(0, participants.length, ...editableParticipants.value.map(p => ({ ...p, distance: 0, velocity: 0, mesh: null, mixer: null, currentAction: null, isSliding: false })));
-  setTimeout(() => {
-    setupScene();
-    renderer.render(scene, camera);
-  }, 50);
-});
+const updateLabels = () => {
+  if (!renderer || !camera) return
+  participants.forEach((participant) => {
+    if (!participant.mesh) return
+    const projected = participant.mesh.position.clone()
+    projected.y += 2.8
+    projected.project(camera)
+    const label = document.getElementById(`racer-label-${participant.id}`)
+    if (!label) return
+    label.style.left = `${(projected.x * 0.5 + 0.5) * renderer.domElement.clientWidth}px`
+    label.style.top = `${(-projected.y * 0.5 + 0.5) * renderer.domElement.clientHeight}px`
+    label.hidden = projected.z < -1 || projected.z > 1
+  })
+}
+
+const resetRacePositions = () => {
+  participants.forEach((participant, index) => {
+    participant.distance = 0
+    participant.velocity = 0
+    participant.drag = 0
+    participant.mesh?.position.set((index - (participants.length - 1) / 2) * 3.6, -0.72, 2)
+    if (participant.racerModel) participant.racerModel.rotation.x = 0
+  })
+  camera?.position.set(0, 11, 24)
+  camera?.lookAt(0, 0, -45)
+  renderer?.render(scene, camera)
+  updateLabels()
+}
+
+const applyParticipants = async () => {
+  if (raceLocked.value) return false
+  const names = editableParticipants.value.map(({ name }) => String(name || '').trim())
+  if (names.some((name) => !name)) {
+    formError.value = 'Chaque couloir doit avoir un nom.'
+    return false
+  }
+  formError.value = ''
+  const existingScores = new Map(participants.map((participant) => [participant.id, participant.score || 0]))
+  const normalized = normalizeVentriglisseParticipants(editableParticipants.value)
+  editableParticipants.value = normalized.map((participant) => ({ ...participant }))
+  participants.splice(0, participants.length, ...normalized.map((participant, index) => ({
+    ...participant,
+    lane: index + 1,
+    color: racerColors[index],
+    distance: 0,
+    velocity: 0,
+    drag: 0,
+    score: existingScores.get(participant.id) ?? participant.score ?? 0,
+    mesh: null,
+  })))
+  showResults.value = false
+  raceState.value = 'idle'
+  await nextTick()
+  await buildScene()
+  return true
+}
+
+const finishRace = () => {
+  cancelAnimationFrame(animationId)
+  animationId = null
+  stopAudio(audioSlide.value)
+  sortedParticipants.value = scoreVentriglisseRound(participants)
+  sortedParticipants.value.forEach((scoredParticipant) => {
+    const participant = participants.find(({ id }) => id === scoredParticipant.id)
+    if (participant) Object.assign(participant, scoredParticipant)
+    const editable = editableParticipants.value.find(({ id }) => id === scoredParticipant.id)
+    if (editable) editable.score = scoredParticipant.score
+  })
+  winner.value = sortedParticipants.value[0]
+  raceState.value = 'finished'
+  showResults.value = true
+  safePlay(audioFinish.value)
+}
+
+const animateRace = () => {
+  const delta = Math.min(clock.getDelta(), 0.25)
+  let moving = false
+  let leadDistance = 0
+  participants.forEach((participant) => {
+    if (participant.velocity > 0.1 && participant.distance < trackLength) {
+      participant.distance = Math.min(trackLength, participant.distance + participant.velocity * delta)
+      participant.velocity = Math.max(0, participant.velocity - participant.drag * delta)
+      moving = participant.velocity > 0.1 && participant.distance < trackLength || moving
+    }
+    participant.mesh?.position.setZ(2 - participant.distance)
+    leadDistance = Math.max(leadDistance, participant.distance)
+  })
+  if (camera && renderer && scene) {
+    camera.position.z = Math.max(-88, 24 - leadDistance * 0.78)
+    camera.lookAt(0, 0, Math.max(-112, -38 - leadDistance * 0.72))
+    renderer.render(scene, camera)
+  }
+  updateLabels()
+  if (moving) animationId = requestAnimationFrame(animateRace)
+  else finishRace()
+}
+
+const beginMotion = () => {
+  const race = createVentriglisseRace(participants, raceRound.value)
+  race.forEach((result, index) => {
+    Object.assign(participants[index], { velocity: result.velocity, drag: result.drag })
+    if (participants[index].racerModel) participants[index].racerModel.rotation.x = -Math.PI / 2
+  })
+  raceState.value = 'racing'
+  clock.start()
+  safePlay(audioGo.value)
+  safePlay(audioSlide.value)
+  animationId = requestAnimationFrame(animateRace)
+}
+
+const startRace = async () => {
+  if (raceLocked.value) return
+  const valid = await applyParticipants()
+  if (!valid) return
+  raceRound.value += 1
+  showResults.value = false
+  resetRacePositions()
+  raceState.value = 'countdown'
+  const sequence = [3, 2, 1, 'GO !']
+  let index = 0
+  countdownValue.value = sequence[index]
+  safePlay(audioBip.value)
+  clearInterval(countdownTimer)
+  countdownTimer = window.setInterval(() => {
+    index += 1
+    if (index < sequence.length) {
+      countdownValue.value = sequence[index]
+      if (typeof sequence[index] === 'number') safePlay(audioBip.value)
+      return
+    }
+    clearInterval(countdownTimer)
+    countdownTimer = null
+    countdownValue.value = null
+    launchTimer = window.setTimeout(beginMotion, 250)
+  }, 700)
+}
+
+onMounted(async () => {
+  await applyParticipants()
+  resizeObserver = new ResizeObserver(resizeRenderer)
+  if (stage.value) resizeObserver.observe(stage.value)
+})
+
 onBeforeUnmount(() => {
-  if (countdownTimer) clearInterval(countdownTimer);
-  if (animationId) cancelAnimationFrame(animationId);
-  if (renderer) renderer.dispose();
-});
+  sceneGeneration += 1
+  clearInterval(countdownTimer)
+  clearTimeout(launchTimer)
+  cancelAnimationFrame(animationId)
+  resizeObserver?.disconnect()
+  stopAudio(audioSlide.value)
+  disposeScene()
+})
 </script>
 
 <style scoped>
-.ventriglisse3d-container {
-  width: 100%;
-  max-width: 2000px;
-  margin: 0 auto;
-  position: relative;
-  background: var(--surface-card);
-  border-radius: 12px;
-  padding: 24px 0 12px 0;
+.ventriglisse-page { min-height: 100vh; overflow-y: auto; background: #0b213f; color: #f7f9fc; }
+.ventriglisse-shell { width: min(1500px, calc(100% - 2rem)); margin: 0 auto; padding: 2rem 0 5rem; }
+.game-heading { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+.heading-icon, .winner-icon { display: grid; width: 3.5rem; height: 3.5rem; place-items: center; border-radius: 14px; background: #ffc400; color: #071426; font-size: 1.45rem; }
+.game-heading h1, .game-heading p, .setup-heading h2, .setup-heading p, .race-toolbar h2, .race-toolbar p, .winner-summary p, .winner-summary h2 { margin: 0; }
+.game-heading h1 { font-size: clamp(1.8rem, 3vw, 2.6rem); }
+.game-heading p, .setup-heading p, .race-toolbar p { color: #b8c7d9; }
+.friendly-mode { display: flex; gap: .5rem; align-items: center; padding: .65rem .85rem; border: 1px solid #3b526f; border-radius: 12px; color: #d7e1ed; font-size: .85rem; }
+.game-layout { display: grid; grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.race-setup, .race-area, .results-panel { border: 1px solid #294360; border-radius: 16px; background: #07182d; }
+.race-setup { padding: 1.1rem; }
+.setup-heading, .race-toolbar, .winner-summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.participant-count, .position, .rank-number { display: grid; min-width: 2rem; height: 2rem; place-items: center; border-radius: 10px; background: #132b47; color: #ffc400; font-weight: 700; }
+.participant-list { display: grid; gap: .7rem; margin: 1rem 0; }
+.participant-row { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(7.5rem, .75fr) auto; gap: .65rem; align-items: end; }
+.lane-dot, .rank-color { width: .8rem; height: .8rem; border-radius: 50%; margin-bottom: 1rem; }
+.participant-field { display: grid; gap: .3rem; }
+.participant-field label { color: #b8c7d9; font-size: .75rem; }
+.participant-field input, .participant-field select { width: 100%; min-height: 44px; padding: .65rem .75rem; box-sizing: border-box; border: 1px solid #3b526f; border-radius: 10px; background: #0d223b; color: #fff; }
+.participant-field input:focus-visible, .participant-field select:focus-visible, button:focus-visible { outline: 3px solid #ffc400; outline-offset: 2px; }
+button { min-height: 44px; border: 0; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+.icon-button { width: 44px; padding: 0; background: #172d47; color: #f7f9fc; }
+.danger-button:hover:not(:disabled) { background: #6b2530; }
+.setup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+.secondary-button { padding: .65rem .8rem; background: #172d47; color: #f7f9fc; }
+.primary-button { padding: .72rem 1rem; background: #ffc400; color: #071426; }
+.secondary-button:hover:not(:disabled), .icon-button:hover:not(:disabled) { background: #23415f; }
+.primary-button:hover:not(:disabled) { background: #ffd84d; }
+.form-error { display: flex; gap: .5rem; color: #ffb8be; font-size: .82rem; }
+.sound-control { display: grid; grid-template-columns: auto 1fr auto; gap: .7rem; align-items: center; margin-top: 1rem; color: #c6d3e1; }
+.sound-toggle { position: relative; width: 54px; min-height: 44px; background: #314760; border-radius: 999px; }
+.sound-toggle span { position: absolute; top: 11px; left: 5px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .2s ease; }
+.sound-toggle[aria-checked="true"] { background: #ffc400; }
+.sound-toggle[aria-checked="true"] span { transform: translateX(22px); background: #071426; }
+.scoreboard { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #294360; }
+.scoreboard-heading { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; margin-bottom: .55rem; }
+.scoreboard-heading h3 { margin: 0; font-size: 1rem; }
+.scoreboard-heading span { color: #8fa8c0; font-size: .75rem; }
+.scoreboard ol { display: grid; gap: .3rem; margin: 0; padding: 0; list-style: none; }
+.scoreboard li { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr) auto; gap: .5rem; align-items: center; min-height: 2rem; color: #d7e1ed; font-size: .78rem; }
+.scoreboard li > span { display: grid; width: 1.35rem; height: 1.35rem; place-items: center; border-radius: 6px; background: #132b47; color: #ffc400; font-weight: 800; }
+.scoreboard li strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scoreboard li b { color: #ffc400; }
+.race-area { overflow: hidden; }
+.race-toolbar { padding: 1rem 1.15rem; }
+.race-stage { position: relative; height: clamp(28rem, 58vw, 42rem); min-height: 420px; background: #102c4d url('./assets/cafte3.png') center / cover no-repeat; overflow: hidden; }
+.race-stage::after { position: absolute; inset: 0; content: ''; pointer-events: none; background: linear-gradient(180deg, transparent 58%, rgba(5, 20, 38, .36)); }
+.ventriglisse-canvas { width: 100%; height: 100%; display: block; }
+.labels-3d { position: absolute; z-index: 2; inset: 0; pointer-events: none; }
+.avatar-label { --racer-color: #ffc400; position: absolute; transform: translate(-50%, -110%); padding: .28rem .5rem; border-radius: 8px; background: #071426; color: #fff; font-size: .75rem; font-weight: 700; box-shadow: 0 4px 12px rgba(0, 0, 0, .3); border: 1px solid var(--racer-color); }
+.countdown-overlay, .scene-error { position: absolute; z-index: 3; inset: 0; display: grid; place-content: center; text-align: center; }
+.countdown-overlay { background: rgba(7, 20, 38, .62); }
+.countdown-number { color: #ffc400; font-size: clamp(4rem, 14vw, 8rem); font-weight: 800; animation: countdown-pop .55s ease-out; }
+.scene-error { grid-template-rows: auto auto; gap: 1.5rem; width: 100%; padding: 1.25rem; box-sizing: border-box; background: linear-gradient(rgba(9, 34, 61, .78), rgba(9, 34, 61, .9)); color: #f7f9fc; }
+.fallback-message { display: grid; gap: .35rem; justify-items: center; }
+.fallback-message i { color: #ffc400; font-size: 2rem; }
+.fallback-race { display: grid; width: min(46rem, 86vw); gap: .65rem; text-align: start; }
+.fallback-lane { display: grid; grid-template-columns: minmax(5rem, 9rem) minmax(0, 1fr); gap: .75rem; align-items: center; font-size: .75rem; }
+.fallback-lane > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fallback-lane > div { position: relative; height: 2px; background: #3c6a8f; }
+.fallback-avatar { position: absolute; top: 50%; width: 1.55rem; height: .82rem; border-radius: 999px 999px .4rem .4rem; background: var(--avatar-color); transform: translate(-50%, -50%); transition: left .08s linear; box-shadow: 0 4px 10px rgba(0, 0, 0, .28); }
+.fallback-avatar::before { position: absolute; top: -.46rem; left: .46rem; width: .62rem; height: .62rem; border-radius: 50%; background: #e6ad86; content: ''; }
+.fallback-avatar::after { position: absolute; top: -.55rem; left: .43rem; width: .68rem; height: .3rem; border-radius: .45rem .45rem .18rem .18rem; background: #18283b; content: ''; }
+.fallback-avatar.is-fille::after { left: .35rem; top: -.62rem; width: .82rem; height: .43rem; border-radius: .5rem .5rem .25rem .25rem; }
+.avatar-loading { position: absolute; z-index: 4; inset: 0; display: grid; place-items: center; background: rgba(7, 24, 45, .75); color: #f7f9fc; font-weight: 700; }
+.model-warning { margin: 0; padding: .75rem 1.15rem; color: #ffdb78; font-size: .84rem; }
+.race-progress { display: grid; gap: .65rem; padding: 1rem 1.15rem 1.2rem; }
+.progress-person { display: grid; grid-template-columns: auto 1fr auto; gap: .6rem; align-items: center; font-size: .82rem; }
+.progress-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.progress-track { height: 6px; overflow: hidden; border-radius: 6px; background: #1d3856; }
+.progress-track span { display: block; width: 100%; height: 100%; transform: scaleX(0); transform-origin: left; }
+.results-panel { margin-top: 1.25rem; padding: 1.2rem; }
+.winner-summary { padding-bottom: 1rem; border-bottom: 1px solid #294360; }
+.winner-summary > strong { color: #ffc400; font-size: 1.2rem; }
+.winner-summary p { color: #b8c7d9; font-size: .8rem; }
+.ranking-list { display: grid; gap: .5rem; margin: 1rem 0; padding: 0; list-style: none; }
+.ranking-list li { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; gap: .7rem; align-items: center; padding: .65rem; border-radius: 10px; background: #10253f; }
+.ranking-list .rank-color { margin: 0; }
+.ranking-list li:first-child { background: #203653; box-shadow: inset 0 0 0 1px rgba(255, 196, 0, .55); }
+.round-points { color: #ffc400; font-weight: 800; }
+.results-panel > .primary-button { width: 100%; }
+.countdown-fade-enter-active, .countdown-fade-leave-active { transition: opacity .2s ease; }
+.countdown-fade-enter-from, .countdown-fade-leave-to { opacity: 0; }
+@keyframes countdown-pop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+@media (max-width: 900px) {
+  .game-heading { grid-template-columns: auto 1fr; }
+  .friendly-mode { grid-column: 1 / -1; justify-self: start; }
+  .game-layout { grid-template-columns: 1fr; }
+  .race-stage { height: 32rem; }
 }
-.participants-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 16px;
-  justify-content: center;
+@media (max-width: 560px) {
+  .ventriglisse-shell { width: min(100% - 1rem, 1500px); padding-top: 1rem; }
+  .game-heading { align-items: start; }
+  .heading-icon { width: 3rem; height: 3rem; }
+  .game-heading p { font-size: .9rem; }
+  .race-toolbar { align-items: stretch; flex-direction: column; }
+  .race-toolbar .primary-button { width: 100%; }
+  .race-stage { height: 27rem; min-height: 360px; }
+  .participant-row { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .participant-row .avatar-field { grid-column: 2 / 3; }
+  .ranking-list li { grid-template-columns: auto auto minmax(0, 1fr) auto; }
+  .ranking-list li > :last-child { grid-column: 3 / -1; justify-self: end; color: #b8c7d9; font-size: .75rem; }
 }
-.participant-row {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-.participant-row input {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 1em;
-  min-width: 180px;
-}
-.participant-row select {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 1em;
-  min-width: 100px;
-}
-.participant-row button {
-  background: #ff6666;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 8px;
-  cursor: pointer;
-}
-.participants-form > button[type="button"] {
-  background: #f3c300;
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 18px;
-  margin-left: 8px;
-  cursor: pointer;
-}
-.participants-form > button[type="submit"] {
-  background: #00bcd4;
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 18px;
-  margin-left: 8px;
-  cursor: pointer;
-}
-.ventriglisse-canvas {
-  width: 100%;
-  height: 700px;
-  max-width: 2000px;
-  display: block;
-  border-radius: 10px;
-  background: #aeefff;
-}
-.labels-3d {
-  position: absolute;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  pointer-events: none;
-  z-index: 10;
-}
-.avatar-label {
-  position: absolute;
-  color: #fff;
-  font-weight: bold;
-  text-shadow: 1px 1px 4px #000, 0 0 6px #000;
-  font-size: 1.1em;
-  white-space: nowrap;
-  transform: translate(-50%, -100%);
-  pointer-events: none;
-}
-.launch-panel {
-  text-align: center;
-  margin-top: 18px;
-}
-button {
-  background: #f3c300;
-  color: #fff;
-  border: none;
-  padding: 10px 22px;
-  border-radius: 20px;
-  font-size: 1.1em;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-button:hover {
-  background: var(--surface-hover);
-}
-.countdown-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.28);
-  z-index: 10;
-}
-.countdown-number {
-  font-size: 7rem;
-  font-weight: bold;
-  color: #f3c300;
-  text-shadow: 2px 2px 16px #000, 0 0 48px #fff;
-  letter-spacing: 0.1em;
-  animation: countdown-pop 0.7s;
-}
-@keyframes countdown-pop {
-  0% { transform: scale(0.3); opacity: 0; }
-  60% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-.countdown-fade-enter-active, .countdown-fade-leave-active {
-  transition: opacity 0.3s;
-}
-.countdown-fade-enter-from, .countdown-fade-leave-to {
-  opacity: 0;
-}
-.results-dialog .classement-title {
-  text-align: center;
-  font-size: 2.1em;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.6em;
-  color: #f3c300;
-  text-shadow: 2px 2px 12px #000, 0 0 32px #fff;
-}
-.classement-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1.2em 0;
-}
-.classement-list .rank {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 1.3em;
-  background: #fffbe6;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  padding: 10px 18px;
-  box-shadow: 0 2px 8px #0002;
-  font-weight: 500;
-}
-.classement-list .first {
-  background: linear-gradient(90deg, #ffe066 60%, #fffbe6 100%);
-  color: #c89100;
-  font-size: 1.5em;
-  font-weight: bold;
-}
-.classement-list .second {
-  background: linear-gradient(90deg, #e0e0e0 60%, #fffbe6 100%);
-  color: #888;
-}
-.classement-list .third {
-  background: linear-gradient(90deg, #f7b267 60%, #fffbe6 100%);
-  color: #a85c00;
-}
-.classement-list .fourth, .classement-list .rest {
-  background: #cfd8dc;
-  color: #333;
-  border-left: 6px solid #607d8b;
-}
-.classement-list li:not(.first):not(.second):not(.third):not(.fourth) {
-  background: #cfd8dc;
-  color: #333;
-  border-left: 6px solid #607d8b;
-}
-.rank-num {
-  font-size: 1.1em;
-  margin-right: 8px;
-  font-weight: bold;
-}
-.rank-name {
-  flex: 1;
-  text-align: left;
-}
-.rank-dist {
-  margin-left: 12px;
-  font-size: 0.95em;
-}
-.dialog-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 1.2em;
-}
-.winner-label {
-  font-size: 1.1em;
-  color: #f3c300;
-  font-weight: bold;
-}
-.replay-btn {
-  background: #00bcd4;
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 18px;
-  font-size: 1.1em;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.replay-btn:hover {
-  background: #0097a7;
+@media (prefers-reduced-motion: reduce) {
+  .countdown-number { animation: none; }
+  .countdown-fade-enter-active, .countdown-fade-leave-active, .sound-toggle span, .fallback-avatar { transition: none; }
 }
 </style>

@@ -23,7 +23,7 @@
       <div class="notification-content">
         <div class="notification-title">{{ notification.title }}</div>
         <div class="notification-message">{{ notification.message }}</div>
-        <div v-if="notification.xpGain" class="notification-xp">
+        <div v-if="notification.xpGain" class="notification-xp-gain">
           +{{ notification.xpGain }} XP
         </div>
       </div>
@@ -32,7 +32,7 @@
         <Button 
           icon="pi pi-times" 
           class="p-button-text p-button-sm notification-close"
-          aria-label="Fermer la notification"
+          :aria-label="`Fermer la notification : ${notification.title}`"
           @click.stop="dismissNotification(notification.id)"
         />
       </div>
@@ -101,6 +101,10 @@ const props = defineProps({
   hideDelay: {
     type: Number,
     default: 5000
+  },
+  realtimeEnabled: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -109,6 +113,8 @@ const notifications = ref([])
 const allNotifications = ref([])
 const listenerId = ref(null)
 const centerVisible = ref(props.showCenter)
+const scheduledTimers = new Set()
+const MAX_NOTIFICATION_HISTORY = 50
 
 // Notifications visibles (limitées)
 const visibleNotifications = computed(() => {
@@ -148,8 +154,27 @@ const createNotification = (data) => {
   return notification
 }
 
+const schedule = (callback, delay) => {
+  const timerId = window.setTimeout(() => {
+    scheduledTimers.delete(timerId)
+    callback()
+  }, delay)
+  scheduledTimers.add(timerId)
+  return timerId
+}
+
+const clearScheduledTimers = () => {
+  scheduledTimers.forEach((timerId) => window.clearTimeout(timerId))
+  scheduledTimers.clear()
+}
+
 // Afficher une notification
 const showNotification = (data) => {
+  const duplicate = data?.dedupeKey
+    ? allNotifications.value.find((item) => item.dedupeKey === data.dedupeKey)
+    : null
+  if (duplicate) return duplicate.id
+
   const notification = createNotification(data)
   
   // Ajouter à la liste des notifications visibles
@@ -157,9 +182,12 @@ const showNotification = (data) => {
   
   // Ajouter à toutes les notifications
   allNotifications.value.unshift(notification)
+  if (allNotifications.value.length > MAX_NOTIFICATION_HISTORY) {
+    allNotifications.value.splice(MAX_NOTIFICATION_HISTORY)
+  }
   
   // Animation d'entrée
-  setTimeout(() => {
+  schedule(() => {
     const notif = notifications.value.find(n => n.id === notification.id)
     if (notif) {
       notif.entering = false
@@ -168,7 +196,7 @@ const showNotification = (data) => {
   
   // Auto-hide si activé
   if (props.autoHide) {
-    setTimeout(() => {
+    schedule(() => {
       dismissNotification(notification.id)
     }, props.hideDelay)
   }
@@ -182,7 +210,7 @@ const dismissNotification = (notificationId) => {
   if (notification) {
     notification.leaving = true
     
-    setTimeout(() => {
+    schedule(() => {
       const index = notifications.value.findIndex(n => n.id === notificationId)
       if (index > -1) {
         notifications.value.splice(index, 1)
@@ -228,6 +256,7 @@ const processActivityLog = (log) => {
       notificationData.title = 'Nouveau badge obtenu!'
       notificationData.message = log.description || 'Badge débloqué'
       notificationData.type = 'badge'
+      notificationData.dedupeKey = log.source_id ? `badge:${log.source_id}` : null
       break
 
     case 'QUEST_COMPLETE':
@@ -255,7 +284,7 @@ const processActivityLog = (log) => {
 
 // S'abonner aux mises à jour d'activité
 const subscribeToActivity = () => {
-  if (!props.userId) return
+  if (!props.userId || !props.realtimeEnabled) return
 
   unsubscribeFromActivity()
   listenerId.value = supabase
@@ -284,6 +313,12 @@ const notify = (data) => {
   return showNotification(data)
 }
 
+const handleImmediateNotification = (event) => {
+  const detail = event?.detail
+  if (!detail || typeof detail !== 'object') return
+  showNotification(detail)
+}
+
 // Exposer les méthodes publiques
 defineExpose({
   notify,
@@ -293,7 +328,8 @@ defineExpose({
 
 // Lifecycle
 onMounted(() => {
-  if (props.userId) {
+  window.addEventListener('gamification:notification', handleImmediateNotification)
+  if (props.userId && props.realtimeEnabled) {
     subscribeToActivity()
   }
 })
@@ -301,7 +337,12 @@ onMounted(() => {
 watch(() => props.userId, (userId, previousUserId) => {
   if (userId === previousUserId) return
   unsubscribeFromActivity()
-  if (userId) subscribeToActivity()
+  if (userId && props.realtimeEnabled) subscribeToActivity()
+})
+
+watch(() => props.realtimeEnabled, (enabled) => {
+  unsubscribeFromActivity()
+  if (enabled && props.userId) subscribeToActivity()
 })
 
 watch(() => props.showCenter, (showCenter) => {
@@ -309,7 +350,9 @@ watch(() => props.showCenter, (showCenter) => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('gamification:notification', handleImmediateNotification)
   unsubscribeFromActivity()
+  clearScheduledTimers()
 })
 </script>
 
@@ -323,6 +366,7 @@ onUnmounted(() => {
 }
 
 .notification-toast {
+  --notification-accent: var(--primary-color);
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -331,9 +375,8 @@ onUnmounted(() => {
   padding: 1rem;
   margin-bottom: 0.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border-left: 4px solid var(--primary-color);
-  min-width: 320px;
-  max-width: 400px;
+  border: 1px solid color-mix(in srgb, var(--notification-accent) 50%, var(--surface-border));
+  width: min(25rem, calc(100vw - 2rem));
   pointer-events: auto;
   transition: opacity 0.3s ease, transform 0.3s ease;
   transform: translateX(100%);
@@ -357,23 +400,23 @@ onUnmounted(() => {
 }
 
 .notification-level {
-  border-left-color: #f093fb;
+  --notification-accent: #f093fb;
 }
 
 .notification-badge {
-  border-left-color: #43e97b;
+  --notification-accent: #43e97b;
 }
 
 .notification-quest {
-  border-left-color: #4facfe;
+  --notification-accent: #4facfe;
 }
 
 .notification-challenge {
-  border-left-color: #f093fb;
+  --notification-accent: #f093fb;
 }
 
 .notification-house {
-  border-left-color: #fcb69f;
+  --notification-accent: #fcb69f;
 }
 
 .notification-icon {
@@ -429,9 +472,10 @@ onUnmounted(() => {
   color: var(--text-color-secondary);
   font-size: 0.8rem;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
-.notification-xp {
+.notification-xp-gain {
   display: inline-block;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
@@ -499,8 +543,7 @@ onUnmounted(() => {
 }
 
 .notification-unread {
-  background: var(--primary-color-text);
-  border-left: 3px solid var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 10%, var(--surface-card));
 }
 
 .notification-time {
@@ -523,12 +566,18 @@ onUnmounted(() => {
   }
   
   .notification-toast {
-    min-width: auto;
-    max-width: none;
+    width: 100%;
   }
   
   .notification-center {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-toast,
+  .notification-item {
+    transition: none;
   }
 }
 </style>

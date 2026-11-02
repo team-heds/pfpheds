@@ -1,5 +1,5 @@
 <template>
-  <div class="app-skeleton" role="status" aria-live="polite" :style="{ '--cols': cols }">
+  <div class="app-skeleton" role="status" aria-live="polite" :aria-label="label" :style="{ '--cols': cols }">
     <template v-if="variant === 'table'">
       <div class="table-skeleton">
         <div class="thead">
@@ -31,7 +31,8 @@ import Skeleton from 'primevue/skeleton'
 const props = defineProps({
   variant: { type: String, default: 'table' },
   rows: { type: Number, default: 8 },
-  cols: { type: Number, default: 6 }
+  cols: { type: Number, default: 6 },
+  label: { type: String, default: 'Chargement du contenu' }
 })
 </script>
 

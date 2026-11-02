@@ -7,12 +7,10 @@
     
     <div class="house-content">
       <div class="house-info">
-        <h3 class="house-name">🎮 Maître du Jeu 🎮</h3>
+        <h3 class="house-name"><i class="pi pi-crown" aria-hidden="true"></i> Maître du Jeu</h3>
         <p class="house-motto">"{{ motto }}"</p>
         
         <div class="level-section">
-          <br>
-          <br>
           <span class="level-text">Niveau {{ niveau }}</span>
         </div>
         
@@ -27,14 +25,14 @@
       </div>
       
       <div class="house-actions">
-        <Button class="action-btn" @click="navigateToProfile" title="Voir le profil">
-          <i class="pi pi-user"></i>
+        <Button class="action-btn" @click="navigateToProfile" aria-label="Voir le profil">
+          <i class="pi pi-user" aria-hidden="true"></i>
         </Button>
-        <Button class="action-btn" @click="navigateToDashboard" title="Dashboard Admin">
-          <i class="pi pi-cog"></i>
+        <Button class="action-btn" @click="navigateToDashboard" aria-label="Ouvrir le tableau de bord d’administration">
+          <i class="pi pi-cog" aria-hidden="true"></i>
         </Button>
-        <Button class="action-btn" @click="navigateToRanking" title="Voir le classement global des maisons">
-          <i class="pi pi-chart-bar"></i>
+        <Button class="action-btn" @click="navigateToRanking" aria-label="Voir le classement global des maisons">
+          <i class="pi pi-chart-bar" aria-hidden="true"></i>
         </Button>
       </div>
     </div>
@@ -100,10 +98,10 @@ const streakText = computed(() => {
 })
 
 const getParticleStyle = (index) => {
-  const delay = Math.random() * 4
-  const duration = 3 + Math.random() * 2
-  const size = 2 + Math.random() * 4
-  const left = Math.random() * 100
+  const delay = ((index * 7) % 20) / 5
+  const duration = 3 + ((index * 11) % 10) / 5
+  const size = 2 + ((index * 13) % 20) / 5
+  const left = (index * 37) % 100
   
   return {
     left: `${left}%`,
@@ -348,6 +346,10 @@ const getParticleStyle = (index) => {
   background: rgba(255,255,255,0.3);
   transform: scale(1.1);
 }
+.action-btn:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
+}
 
 .shine-effect {
   position: absolute;
@@ -367,9 +369,11 @@ const getParticleStyle = (index) => {
 @media (max-width: 768px) {
   .bandeau-maison {
     padding: 1.5rem;
+    min-height: 22rem;
   }
   
   .house-content {
+    flex-direction: column;
     gap: 1rem;
   }
   
@@ -378,6 +382,7 @@ const getParticleStyle = (index) => {
   }
   
   .house-actions {
+    position: static;
     flex-direction: row;
     justify-content: center;
   }
@@ -385,5 +390,13 @@ const getParticleStyle = (index) => {
   .level-section {
     justify-content: center;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .particle,
+  .shine-effect,
+  .streak-flame .pi-bolt,
+  .action-btn,
+  .level-text { animation:none; transition:none; }
 }
 </style>

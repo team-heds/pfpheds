@@ -3,9 +3,10 @@
     class="search-btn"
     @click="$emit('click')"
     :title="title"
+    :aria-label="title"
     type="button"
   >
-    <i class="pi pi-search" style="font-size: 1.3rem; color: var(--primary-color);"></i>
+    <i class="pi pi-search" aria-hidden="true"></i>
   </button>
 </template>
 
@@ -33,5 +34,19 @@ const props = defineProps({
 }
 .search-btn:hover {
   background: var(--surface-hover);
+}
+.search-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+.search-btn:active {
+  transform: scale(.96);
+}
+.search-btn i {
+  color: var(--primary-color);
+  font-size: 1.3rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .search-btn { transition: none; }
 }
 </style>

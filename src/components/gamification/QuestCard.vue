@@ -706,8 +706,7 @@ onUnmounted(() => {
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   cursor: pointer;
   position: relative;
-  min-height: 80px;
-  max-height: 90px;
+  min-height: 92px;
 }
 
 .quest-card-compact:hover {

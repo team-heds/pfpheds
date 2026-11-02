@@ -72,6 +72,8 @@
                       <input type="checkbox" :aria-label="`Sélectionner ${file.name}`" :checked="selectedDocumentIds.has(file.id)" @change="toggleDocumentSelection(file.id)" />
                       <a
                         :href="file.url"
+                        @click.prevent="openDocument(file)"
+                        @auxclick.middle.prevent="openDocument(file)"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="file-link-wrapper"
@@ -122,6 +124,8 @@
                   <input type="checkbox" :aria-label="`Sélectionner ${file.name}`" :checked="selectedDocumentIds.has(file.id)" @change="toggleDocumentSelection(file.id)" />
                   <a
                     :href="file.url"
+                    @click.prevent="openDocument(file)"
+                    @auxclick.middle.prevent="openDocument(file)"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="file-link-wrapper"
@@ -193,6 +197,7 @@ import { useDocumentStore } from '@/stores/documentStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import EditFileDocPFP from '@/components/home/EditFileDocPFP.vue'
 import AddFileDocPFP from '@/components/home/AddFileDocPFP.vue'
+import { openFilePhysioDocument } from '@/service/filePhysioMediaService'
 
 // Stores Pinia
 const documentStore = useDocumentStore()
@@ -241,8 +246,15 @@ const toggleDocumentSelection = (id) => {
   selectedDocumentIds.value = next
 }
 const clearDocumentSelection = () => { selectedDocumentIds.value = new Set() }
+const openDocument = async file => {
+  try {
+    await openFilePhysioDocument(file)
+  } catch (error) {
+    alert(error.message || 'Le document n’a pas pu être ouvert.')
+  }
+}
 const openSelectedDocuments = () => {
-  allDocumentFiles.value.filter(file => selectedDocumentIds.value.has(file.id)).forEach(file => window.open(file.url, '_blank', 'noopener,noreferrer'))
+  allDocumentFiles.value.filter(file => selectedDocumentIds.value.has(file.id)).forEach(openDocument)
 }
 
 // Vérification des droits admin depuis Supabase

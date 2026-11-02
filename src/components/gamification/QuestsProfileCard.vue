@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="card-header">
       <div class="header-with-badge">
-        <h4>🗺️ Mes Quêtes Actives</h4>
+        <h4><i class="pi pi-map" aria-hidden="true"></i> Mes quêtes actives</h4>
         <span v-if="activeQuests.length > 0" class="count-badge" :style="{ backgroundColor: houseColor }">
           {{ activeQuests.length }}
         </span>
@@ -11,6 +11,7 @@
       <Button 
         icon="pi pi-arrow-right" 
         class="p-button-text p-button-sm"
+        aria-label="Voir toutes les quêtes"
         @click="navigateToAllQuests"
         v-tooltip.top="'Voir toutes les quêtes'"
       />
@@ -24,10 +25,12 @@
 
     <!-- Liste des quêtes -->
     <div v-else-if="activeQuests.length > 0" class="quests-list">
-      <div 
+      <button
         v-for="quest in displayedQuests"
         :key="quest.id"
+        type="button"
         class="quest-item"
+        :aria-label="`Voir la quête ${quest.title}`"
         @click="navigateToQuestDetails(quest)"
       >
         <!-- Icône -->
@@ -63,7 +66,7 @@
           </div>
           <i class="pi pi-chevron-right quest-arrow"></i>
         </div>
-      </div>
+      </button>
 
       <!-- Bouton Voir Plus -->
       <Button 
@@ -80,7 +83,7 @@
 
     <!-- État vide -->
     <div v-else class="empty-state">
-      <div class="empty-icon">🗺️</div>
+      <div class="empty-icon"><i class="pi pi-map" aria-hidden="true"></i></div>
       <p class="text-600 text-sm">Aucune quête active pour le moment</p>
       <Button 
         @click="navigateToAllQuests"
@@ -97,6 +100,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
+import { runtimeFeatures } from '@/config/runtimeFeatures'
 import { useAuthStore } from '@/stores/authStore'
 import Button from 'primevue/button'
 import ProgressSpinner from 'primevue/progressspinner'
@@ -113,12 +117,20 @@ const props = defineProps({
   houseColor: {
     type: String,
     default: '#2E8B57' // Harmonis par défaut
+  },
+  previewQuests: {
+    type: Array,
+    default: null
+  },
+  previewLoading: {
+    type: Boolean,
+    default: false
   }
 })
 
 // State
 const activeQuests = ref([])
-const loading = ref(false)
+const loading = ref(props.previewLoading)
 let realtimeChannel = null
 
 // Computed
@@ -207,6 +219,7 @@ const loadUserQuests = async () => {
 }
 
 const subscribeToQuestUpdates = () => {
+  if (!runtimeFeatures.supabaseRealtime) return
   const userId = props.userId || authStore.user?.id
   
   if (!userId) return
@@ -240,6 +253,11 @@ const navigateToAllQuests = () => {
 
 // Lifecycle
 onMounted(() => {
+  if (Array.isArray(props.previewQuests)) {
+    activeQuests.value = props.previewQuests
+    loading.value = props.previewLoading
+    return
+  }
   loadUserQuests()
   subscribeToQuestUpdates()
 })
@@ -316,7 +334,12 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: all 0.3s ease;
   background: var(--surface-ground);
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
+.quest-item:focus-visible { outline:3px solid var(--primary-color);outline-offset:2px; }
 
 .quest-item:hover {
   background: var(--surface-hover);

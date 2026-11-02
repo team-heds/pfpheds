@@ -6,67 +6,104 @@
         <i class="pi pi-angle-right text-400 mx-2"></i>
         <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary">Secrétariat</router-link>
         <i class="pi pi-angle-right text-400 mx-2"></i>
-        <span class="text-900 font-medium">Suivi Cas Particuliers</span>
+        <span class="text-900 font-medium">Suivi des cas particuliers</span>
       </div>
 
       <!-- Header -->
-      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4">
-        <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+      <div class="surface-card fp-dark p-4 border-round shadow-2 mb-4 case-header">
+        <div class="flex align-items-center justify-content-between flex-wrap gap-3 case-header__intro">
           <div class="flex align-items-center gap-3">
             <i class="pi pi-exclamation-triangle text-primary text-3xl"></i>
             <div>
-              <h1 class="text-2xl font-bold text-900 m-0">Suivi Cas Particuliers</h1>
-              <p class="text-600 m-0 mt-1">Cliquez sur chaque cellule PFP pour ajouter commentaire et couleur</p>
+              <h1 class="text-2xl font-bold text-900 m-0">Suivi des cas particuliers</h1>
+              <p class="text-600 m-0 mt-1">Regroupez les étudiants SAE, lésés et en échec de stage, puis consultez leur suivi PFP.</p>
             </div>
           </div>
-          <div class="flex align-items-center gap-3 flex-wrap">
-            <div class="flex flex-column gap-1">
-              <label class="font-semibold text-sm">Recherche :</label>
+          <div class="flex gap-2">
+            <Button
+              v-if="activeTab === 0"
+              icon="pi pi-download"
+              label="Exporter"
+              outlined
+              class="p-button-sm"
+              @click="exportCSV"
+            />
+            <Button
+              icon="pi pi-refresh"
+              label="Actualiser"
+              outlined
+              class="p-button-sm"
+              @click="refreshActiveTab"
+              :loading="activeTabLoading"
+            />
+          </div>
+        </div>
+
+        <div class="filter-toolbar" role="search" aria-label="Filtrer les étudiants">
+          <div class="filter-field filter-field--search">
+              <label for="case-search" class="font-semibold text-sm">Rechercher un étudiant</label>
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="searchTerm" placeholder="Nom ou prénom..." class="w-full md:w-14rem" />
+                <InputText
+                  id="case-search"
+                  v-model="searchTerm"
+                  placeholder="Nom ou prénom"
+                  class="w-full"
+                  autocomplete="off"
+                />
               </span>
-            </div>
-            <div class="flex flex-column gap-1">
-              <label class="font-semibold text-sm">Classe :</label>
+          </div>
+          <div class="filter-field">
+              <label for="case-class" class="font-semibold text-sm">Classe</label>
               <Dropdown
+                inputId="case-class"
                 v-model="filterClasse"
                 :options="classesList"
-                placeholder="Toutes"
-                class="w-full md:w-8rem"
+                placeholder="Toutes les classes"
+                class="w-full"
                 showClear
               />
-            </div>
-            <div class="flex flex-column gap-1">
-              <label class="font-semibold text-sm">Couleur :</label>
+          </div>
+          <div v-if="activeTab === 0" class="filter-field">
+              <label for="case-color" class="font-semibold text-sm">Couleur</label>
               <Dropdown
+                inputId="case-color"
                 v-model="filterColor"
                 :options="colorFilterOptions"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Toutes"
-                class="w-full md:w-8rem"
+                placeholder="Toutes les couleurs"
+                class="w-full"
                 showClear
               />
-            </div>
-            <div class="flex flex-column gap-1">
-              <label class="font-semibold text-sm">Affichage :</label>
+          </div>
+          <div v-if="activeTab === 0" class="filter-field">
+              <label for="case-display" class="font-semibold text-sm">État du suivi</label>
               <Dropdown
+                inputId="case-display"
                 v-model="filterDisplay"
                 :options="displayOptions"
                 optionLabel="label"
                 optionValue="value"
-                class="w-full md:w-12rem"
+                class="w-full"
               />
-            </div>
-            <div class="flex flex-column gap-1">
-              <label class="font-semibold text-sm">&nbsp;</label>
-              <div class="flex gap-2">
-                <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportCSV" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchCases" v-tooltip="'Rafraîchir'" :loading="loading" />
-              </div>
-            </div>
           </div>
+
+          <Button
+            icon="pi pi-filter-slash"
+            label="Réinitialiser"
+            text
+            class="filter-reset"
+            :disabled="activeFilterCount === 0"
+            @click="resetFilters"
+          />
+        </div>
+
+        <div class="filter-summary" aria-live="polite">
+          <span><strong>{{ currentResultCount }}</strong> {{ currentResultLabel }}</span>
+          <span v-if="activeFilterCount" class="filter-summary__active">
+            {{ activeFilterCount }} {{ activeFilterCount > 1 ? 'filtres actifs' : 'filtre actif' }}
+          </span>
         </div>
       </div>
 
@@ -80,7 +117,7 @@
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.total }}</h3>
-                <p class="text-600 m-0">Étudiants</p>
+                <p class="text-600 m-0">Étudiants suivis</p>
               </div>
             </div>
           </div>
@@ -93,7 +130,7 @@
               </div>
               <div>
                 <h3 class="text-2xl font-bold text-900 m-0">{{ stats.withComments }}</h3>
-                <p class="text-600 m-0">Avec suivi</p>
+                <p class="text-600 m-0">Avec commentaire</p>
               </div>
             </div>
           </div>
@@ -127,8 +164,8 @@
       </div>
 
       <TabView v-model:activeIndex="activeTab">
-        <!-- Onglet 1 : suivi par étudiant (existant) -->
-        <TabPanel header="Suivi par étudiant">
+        <!-- Onglet 1 : tous les étudiants relevant d'au moins un cas particulier -->
+        <TabPanel header="Tous les cas particuliers">
           <!-- Légende couleurs -->
           <div class="flex gap-2 align-items-center mb-3 px-1">
             <span class="text-sm text-600 font-semibold">Légende :</span>
@@ -158,13 +195,13 @@
             >
               <template #header>
                 <div class="flex justify-content-between align-items-center">
-                  <span class="text-xl text-900 font-bold">Cas Particuliers ({{ filteredCases.length }})</span>
+                  <span class="text-xl text-900 font-bold">Tous les cas particuliers ({{ filteredCases.length }})</span>
                 </div>
               </template>
               <template #empty>
                 <div class="text-center p-4">
                   <i class="pi pi-inbox text-4xl text-400 mb-3"></i>
-                  <p class="text-600">Aucun cas trouvé</p>
+                  <p class="text-600">Aucun cas particulier ne correspond aux filtres.</p>
                 </div>
               </template>
 
@@ -178,17 +215,16 @@
                   <Tag :value="data.classe" severity="info" class="text-xs" />
                 </template>
               </Column>
-              <Column header="Info" style="min-width: 130px">
+              <Column header="Type de cas" style="min-width: 210px">
                 <template #body="{ data }">
-                  <div
-                    @click="openInfoDialog(data)"
-                    :class="['cell-box', 'cell-info', { 'cell-has-content': data.info_etudiant?.commentaire }]"
-                    :title="data.info_etudiant?.commentaire || 'Cliquez pour éditer'"
-                  >
-                    <div v-if="data.info_etudiant?.commentaire" class="cell-text">
-                      {{ truncate(data.info_etudiant.commentaire, 14) }}
-                    </div>
-                    <i v-else class="pi pi-plus text-400 text-xs"></i>
+                  <div class="case-type-list">
+                    <Tag
+                      v-for="category in getCaseTypes(data)"
+                      :key="category.value"
+                      :value="category.label"
+                      :severity="category.severity"
+                      class="text-xs"
+                    />
                   </div>
                 </template>
               </Column>
@@ -245,6 +281,21 @@
                   </template>
                 </Column>
               </template>
+              <Column header="Info étudiant" style="min-width: 130px">
+                <template #body="{ data }">
+                  <button type="button"
+                    @click="openInfoDialog(data)"
+                    :class="['cell-box', 'cell-info', { 'cell-has-content': data.info_etudiant?.commentaire }]"
+                    :title="data.info_etudiant?.commentaire || 'Cliquez pour éditer'"
+                    :aria-label="`Modifier les informations de ${data.etudiant}`"
+                  >
+                    <span v-if="data.info_etudiant?.commentaire" class="cell-text">
+                      {{ truncate(data.info_etudiant.commentaire, 14) }}
+                    </span>
+                    <i v-else class="pi pi-plus text-400 text-xs"></i>
+                  </button>
+                </template>
+              </Column>
             </DataTable>
           </div>
         </TabPanel>
@@ -297,6 +348,11 @@
               </Column>
               <Column field="assigned_institution_name" header="Institution" style="min-width: 180px">
                 <template #body="{ data }">{{ data.assigned_institution_name || '—' }}</template>
+              </Column>
+              <Column header="Cas particuliers" style="min-width: 270px">
+                <template #body="{ data }">
+                  <SharedStudentFollowUp :student="casesById.get(data.user_id)" @edit="editSharedFollowUp(data.user_id, $event)" />
+                </template>
               </Column>
               <Column header="Actions" style="min-width: 100px">
                 <template #body="{ data }">
@@ -353,7 +409,12 @@
               <Column field="commentaire_arret" header="Motif d'arrêt" style="min-width: 200px">
                 <template #body="{ data }">{{ data.commentaire_arret || '—' }}</template>
               </Column>
-              <Column header="Suivi" style="min-width: 100px">
+              <Column header="Cas particuliers" style="min-width: 270px">
+                <template #body="{ data }">
+                  <SharedStudentFollowUp :student="casesById.get(data.user_id)" @edit="editSharedFollowUp(data.user_id, $event)" />
+                </template>
+              </Column>
+              <Column header="Motif d’arrêt" style="min-width: 100px">
                 <template #body="{ data }">
                   <Button icon="pi pi-folder-open" label="Éditer" size="small" outlined @click="openEchecFollowUp(data)" />
                 </template>
@@ -367,7 +428,7 @@
         <TabPanel>
           <template #header>
             <span>Étudiants SAE</span>
-            <Tag v-if="saeStudentsList.length" :value="saeStudentsList.length" severity="warning" class="ml-2 text-xs" />
+            <Tag v-if="saeStudentsTotal" :value="saeStudentsTotal" severity="warning" class="ml-2 text-xs" />
           </template>
 
           <div class="surface-card p-3 border-round shadow-2 mb-3">
@@ -393,34 +454,59 @@
             </div>
           </div>
 
-          <div class="surface-card p-4 border-round shadow-2">
-            <DataTable :value="saeStudentsList" class="p-datatable-sm" responsiveLayout="scroll" :paginator="true" :rows="50">
-              <template #header>
-                <span class="text-xl text-900 font-bold">Étudiants SAE ({{ saeStudentsList.length }})</span>
-              </template>
-              <template #empty>
-                <div class="text-center p-4">
-                  <i class="pi pi-star text-4xl text-400 mb-3"></i>
-                  <p class="text-600">Aucun étudiant marqué SAE pour l'instant.</p>
-                </div>
-              </template>
-              <Column field="etudiant" header="Étudiant" sortable style="min-width: 180px" />
-              <Column field="classe" header="Classe" sortable style="min-width: 80px">
-                <template #body="{ data }"><Tag :value="data.classe" severity="info" class="text-xs" /></template>
-              </Column>
-              <Column header="Commentaire" style="min-width: 220px">
-                <template #body="{ data }">{{ data.sae?.commentaire || '—' }}</template>
-              </Column>
-              <Column header="Actions" style="min-width: 180px">
-                <template #body="{ data }">
-                  <div class="flex gap-2">
-                    <Button icon="pi pi-folder-open" label="Éditer" size="small" outlined @click="openSAEFeaturesDialog(data, 'sae')" />
-                    <Button icon="pi pi-times" label="Retirer" size="small" severity="danger" outlined @click="unmarkStudentSae(data)" />
+          <section class="sae-roster" aria-labelledby="sae-roster-title">
+            <header class="sae-roster__header">
+              <div>
+                <h2 id="sae-roster-title">Étudiants SAE</h2>
+                <p>
+                  {{ saeStudentsList.length }} étudiant{{ saeStudentsList.length !== 1 ? 's' : '' }} affiché{{ saeStudentsList.length !== 1 ? 's' : '' }}
+                  <template v-if="saeStudentsList.length !== saeStudentsTotal"> sur {{ saeStudentsTotal }}</template>
+                </p>
+              </div>
+              <span class="sae-roster__hint"><i class="pi pi-info-circle" aria-hidden="true"></i>Ouvrez les autres suivis uniquement si nécessaire.</span>
+            </header>
+
+            <div v-if="saeStudentsList.length" class="sae-list">
+              <article v-for="student in saeStudentsList" :key="student.user_id" class="sae-student-card">
+                <header class="sae-student-card__header">
+                  <div class="sae-student-card__identity">
+                    <span class="sae-student-card__avatar" aria-hidden="true">{{ studentInitials(student.etudiant) }}</span>
+                    <div>
+                      <h3>{{ student.etudiant }}</h3>
+                      <div class="sae-student-card__meta">
+                        <Tag :value="student.classe" severity="info" class="text-xs" />
+                        <span><i class="pi pi-star-fill" aria-hidden="true"></i>Suivi SAE actif</span>
+                      </div>
+                    </div>
                   </div>
-                </template>
-              </Column>
-            </DataTable>
-          </div>
+                  <div class="sae-student-card__actions" aria-label="Actions de suivi">
+                    <Button icon="pi pi-pencil" label="Modifier le suivi SAE" size="small" @click="openSAEFeaturesDialog(student, 'sae')" />
+                    <Button icon="pi pi-times" label="Retirer du suivi" size="small" severity="danger" text @click="unmarkStudentSae(student)" />
+                  </div>
+                </header>
+
+                <div class="sae-student-card__content">
+                  <section class="sae-current-note" aria-label="Situation SAE actuelle">
+                    <h4>Situation SAE actuelle</h4>
+                    <p v-if="student.sae?.commentaire">{{ student.sae.commentaire }}</p>
+                    <p v-else class="sae-current-note__empty">Aucune remarque SAE renseignée.</p>
+                  </section>
+                  <SharedStudentFollowUp
+                    :student="student"
+                    title="Autres cas particuliers"
+                    :excluded-fields="['sae']"
+                    @edit="editSharedFollowUp(student.user_id, $event)"
+                  />
+                </div>
+              </article>
+            </div>
+
+            <div v-else class="sae-empty-state">
+              <i class="pi pi-star" aria-hidden="true"></i>
+              <h3>Aucun étudiant à afficher</h3>
+              <p>{{ activeFilterCount ? 'Aucun étudiant SAE ne correspond aux filtres.' : "Aucun étudiant marqué SAE pour l'instant." }}</p>
+            </div>
+          </section>
         </TabPanel>
       </TabView>
     </div>
@@ -872,8 +958,16 @@
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
 import { FAILED_PFP_GRADE_FIELDS, isFailedPfpGrade } from '@/service/pfpFailureService'
+import {
+  filterStudents,
+  getStudentCaseCategories,
+  hasCaseFollowUp,
+  isActiveSaeFollowUp,
+  matchesStudentFilters
+} from '@/domain/pfp/caseFollowUpFilters'
 import { useAuthStore } from '@/stores/authStore'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
+import SharedStudentFollowUp from '@/components/admin/SharedStudentFollowUp.vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
@@ -895,8 +989,16 @@ const authStore = useAuthStore()
 
 const toast = useToast()
 const loading = ref(false)
+const activeTab = ref(0)
 const cases = ref([])
-const filterDisplay = ref('with_comments')
+const casesById = computed(() => new Map(cases.value.map(student => [student.user_id, student])))
+const editSharedFollowUp = (userId, field) => {
+  const student = casesById.value.get(userId)
+  if (!student) return
+  if (field === 'info_etudiant') openInfoDialog(student)
+  else openCellDialog(student, field)
+}
+const filterDisplay = ref('all')
 const filterClasse = ref(null)
 const filterColor = ref(null)
 const searchTerm = ref('')
@@ -950,9 +1052,9 @@ const hasEchec = (userId, echecTypes) => {
 }
 
 const displayOptions = [
-  { label: 'Tous les étudiants', value: 'all' },
-  { label: 'Avec suivi', value: 'with_comments' },
-  { label: 'Sans suivi', value: 'no_comments' }
+  { label: 'Tous les cas particuliers', value: 'all' },
+  { label: 'Avec commentaire', value: 'with_comments' },
+  { label: 'Sans commentaire', value: 'no_comments' }
 ]
 
 const colorFilterOptions = [
@@ -1087,7 +1189,6 @@ const toIsoDate = (d) => {
 // --- Onglet "Étudiants lésés" : par année et par PFP ---
 // Deux signaux combinés : StudentsPhysio.lese (marqué manuellement) et assigned_rank = 99
 // (fallback algorithmique = 0 critère manquant couvert, voir domains/votation-algorithm.md)
-const activeTab = ref(0)
 const lesedList = ref([])
 const loadingLesed = ref(false)
 const lesedFilterYear = ref(null)
@@ -1108,10 +1209,15 @@ const pfpTypeToField = (pfpType) => {
   return group ? group.base : null
 }
 
-const groupedLesed = computed(() => {
-  let list = [...lesedList.value]
-  if (lesedFilterYear.value) list = list.filter(l => l.year === lesedFilterYear.value)
+const filteredLesedRows = computed(() => {
+  let list = filterStudents(lesedList.value, { query: searchTerm.value, classe: filterClasse.value })
+  if (lesedFilterYear.value) list = list.filter(l => String(l.year) === String(lesedFilterYear.value))
   if (lesedFilterPfp.value) list = list.filter(l => l.pfp_type === lesedFilterPfp.value)
+  return list
+})
+
+const groupedLesed = computed(() => {
+  const list = filteredLesedRows.value
 
   const groups = new Map()
   list.forEach(l => {
@@ -1238,10 +1344,15 @@ const echecPfpTypes = computed(() => {
   return [...types].sort()
 })
 
-const groupedEchecs = computed(() => {
-  let list = [...echecsList.value]
-  if (echecFilterYear.value) list = list.filter(l => l.year === echecFilterYear.value)
+const filteredEchecRows = computed(() => {
+  let list = filterStudents(echecsList.value, { query: searchTerm.value, classe: filterClasse.value })
+  if (echecFilterYear.value) list = list.filter(l => String(l.year) === String(echecFilterYear.value))
   if (echecFilterPfp.value) list = list.filter(l => l.pfp_type === echecFilterPfp.value)
+  return list
+})
+
+const groupedEchecs = computed(() => {
+  const list = filteredEchecRows.value
 
   const groups = new Map()
   list.forEach(l => {
@@ -1331,16 +1442,21 @@ const fetchEchecsStudents = async () => {
 const saeSearchSelection = ref(null)
 const saeSearchSuggestions = ref([])
 
+const isActiveSae = (student) => isActiveSaeFollowUp(student)
+
 const saeStudentsList = computed(() => {
-  return cases.value
-    .filter(c => c.sae?.couleur && c.sae.couleur !== 'blanc')
+  return filterStudents(cases.value, { query: searchTerm.value, classe: filterClasse.value })
+    .filter(isActiveSae)
     .sort((a, b) => a.etudiant.localeCompare(b.etudiant))
 })
 
+const saeStudentsTotal = computed(() => cases.value.filter(isActiveSae).length)
+
 const searchSaeStudent = (event) => {
-  const q = event.query.toLowerCase().trim()
+  const q = event.query.trim()
   saeSearchSuggestions.value = cases.value
-    .filter(c => c.etudiant.toLowerCase().includes(q))
+    .filter(c => !isActiveSae(c))
+    .filter(c => matchesStudentFilters(c, { query: q }))
     .slice(0, 15)
 }
 
@@ -1406,9 +1522,11 @@ const openLesedFollowUp = (lesedRow) => {
     visible: true
   }
 
-  student[field] = {
-    couleur: lesedRow.couleur || student[field]?.couleur || 'blanc',
-    commentaire: lesedRow.commentaire || student[field]?.commentaire || ''
+  if (!student[field]) {
+    student[field] = {
+      couleur: lesedRow.couleur || 'blanc',
+      commentaire: lesedRow.commentaire || ''
+    }
   }
 
   openLesedFeaturesDialog(student, field)
@@ -1429,11 +1547,6 @@ const openEchecFollowUp = (lesedRow) => {
     visible: true
   }
 
-  student[field] = {
-    couleur: student[field]?.couleur || 'blanc',
-    commentaire: lesedRow.commentaire_arret || ''
-  }
-
   openEchecFeaturesDialog(student, field, lesedRow)
 }
 
@@ -1442,35 +1555,58 @@ const truncate = (text, max) => {
   return text.length > max ? text.substring(0, max) + '…' : text
 }
 
+const studentInitials = (name) => String(name || '')
+  .trim()
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map(part => part[0]?.toUpperCase())
+  .join('') || '—'
+
 const stats = computed(() => {
-  const all = cases.value
+  const all = allCaseStudents.value
   const total = all.length
-  const withComments = all.filter(c => hasComments(c)).length
+  const withComments = all.filter(c => hasFollowUp(c)).length
   const redCount = all.filter(c => pfpFields.some(f => c[f]?.couleur === 'rouge')).length
   const greenCount = all.filter(c => pfpFields.some(f => c[f]?.couleur === 'vert')).length
   return { total, withComments, redCount, greenCount }
 })
 
+const lesedStudentIds = computed(() => new Set(lesedList.value.map(row => row.user_id)))
+const failedStudentIds = computed(() => new Set([
+  ...echecsList.value.map(row => row.user_id),
+  ...echecMap.value.keys()
+]))
+
+const caseCategoryContext = computed(() => ({
+  lesedStudentIds: lesedStudentIds.value,
+  failedStudentIds: failedStudentIds.value
+}))
+
+const allCaseStudents = computed(() => cases.value.filter(student => (
+  getStudentCaseCategories(student, caseCategoryContext.value).length > 0
+)))
+
+const caseTypeDefinitions = {
+  sae: { value: 'sae', label: 'SAE', severity: 'warning' },
+  lese: { value: 'lese', label: 'Lésé', severity: 'danger' },
+  echec: { value: 'echec', label: 'Échec de stage', severity: 'secondary' }
+}
+
+const getCaseTypes = (student) => getStudentCaseCategories(student, caseCategoryContext.value)
+  .map(category => caseTypeDefinitions[category])
+
 const filteredCases = computed(() => {
-  let list = [...cases.value]
-
-  if (searchTerm.value && searchTerm.value.trim()) {
-    const q = searchTerm.value.toLowerCase().trim()
-    list = list.filter(c => c.etudiant.toLowerCase().includes(q))
-  }
-
-  if (filterClasse.value) {
-    list = list.filter(c => c.classe === filterClasse.value)
-  }
+  let list = filterStudents(allCaseStudents.value, { query: searchTerm.value, classe: filterClasse.value })
 
   if (filterColor.value) {
     list = list.filter(c => pfpFields.some(f => c[f]?.couleur === filterColor.value))
   }
 
   if (filterDisplay.value === 'with_comments') {
-    list = list.filter(c => hasComments(c))
+    list = list.filter(c => hasFollowUp(c))
   } else if (filterDisplay.value === 'no_comments') {
-    list = list.filter(c => !hasComments(c))
+    list = list.filter(c => !hasFollowUp(c))
   }
 
   const collator = new Intl.Collator('fr', { sensitivity: 'base' })
@@ -1479,8 +1615,59 @@ const filteredCases = computed(() => {
   return list
 })
 
-const hasComments = (student) => {
-  return pfpFields.some(field => student[field]?.commentaire)
+const hasFollowUp = (student) => hasCaseFollowUp(student, pfpFields)
+
+const activeFilterCount = computed(() => {
+  let count = Number(Boolean(searchTerm.value.trim())) + Number(Boolean(filterClasse.value))
+
+  if (activeTab.value === 0) {
+    count += Number(Boolean(filterColor.value))
+    count += Number(filterDisplay.value !== 'all')
+  } else if (activeTab.value === 1) {
+    count += Number(Boolean(lesedFilterYear.value)) + Number(Boolean(lesedFilterPfp.value))
+  } else if (activeTab.value === 2) {
+    count += Number(Boolean(echecFilterYear.value)) + Number(Boolean(echecFilterPfp.value))
+  }
+
+  return count
+})
+
+const currentResultCount = computed(() => {
+  if (activeTab.value === 1) return filteredLesedRows.value.length
+  if (activeTab.value === 2) return filteredEchecRows.value.length
+  if (activeTab.value === 3) return saeStudentsList.value.length
+  return filteredCases.value.length
+})
+
+const currentResultLabel = computed(() => {
+  const singular = currentResultCount.value === 1
+  if (activeTab.value === 1) return singular ? 'étudiant lésé' : 'étudiants lésés'
+  if (activeTab.value === 2) return singular ? 'échec de stage' : 'échecs de stage'
+  if (activeTab.value === 3) return singular ? 'étudiant SAE' : 'étudiants SAE'
+  return singular ? 'cas particulier' : 'cas particuliers'
+})
+
+const activeTabLoading = computed(() => {
+  if (activeTab.value === 1) return loadingLesed.value
+  if (activeTab.value === 2) return loadingEchecs.value
+  return loading.value
+})
+
+const resetFilters = () => {
+  searchTerm.value = ''
+  filterClasse.value = null
+  filterColor.value = null
+  filterDisplay.value = 'all'
+  lesedFilterYear.value = null
+  lesedFilterPfp.value = null
+  echecFilterYear.value = null
+  echecFilterPfp.value = null
+}
+
+const refreshActiveTab = async () => {
+  if (activeTab.value === 1) return fetchLesedStudents()
+  if (activeTab.value === 2) return fetchEchecsStudents()
+  return fetchCases()
 }
 
 const getCellStyle = (cellData) => {
@@ -1769,15 +1956,6 @@ const saveInfoData = async () => {
   closeInfoDialog()
 }
 
-const getInfoStyle = (infoData) => {
-  if (!infoData || !infoData.commentaire) return {}
-  return {
-    backgroundColor: '#e3f2fd',
-    border: '1px solid #90caf9',
-    color: '#1565c0'
-  }
-}
-
 const saveCellData = async () => {
   if (!editingStudent.value || !editingField.value || !editingCell.value) {
     closeCellDialog()
@@ -1806,6 +1984,11 @@ const saveCellData = async () => {
     if (result.error) throw result.error
 
     editingStudent.value[editingField.value] = { ...cellData }
+    lesedList.value = lesedList.value.map(row => (
+      row.user_id === editingStudent.value.user_id && row.pfp_field === editingField.value
+        ? { ...row, ...cellData }
+        : row
+    ))
     toast.add({ severity: 'success', summary: 'Sauvegardé', detail: 'Cellule mise à jour', life: 2000 })
   } catch (e) {
     console.error('Erreur saveCellData:', e)
@@ -1911,6 +2094,309 @@ onMounted(() => {
   min-height: 100%;
 }
 
+.case-header__intro {
+  padding-bottom: 1rem;
+}
+
+.filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1.6fr) repeat(3, minmax(10rem, 1fr)) auto;
+  gap: 0.875rem;
+  align-items: end;
+  padding-block: 1rem;
+  border-block: 1px solid var(--surface-border);
+}
+
+.filter-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.filter-field label {
+  color: var(--text-color-secondary);
+}
+
+.filter-reset {
+  min-height: 2.75rem;
+  white-space: nowrap;
+}
+
+.filter-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 2.5rem;
+  padding-top: 0.75rem;
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+}
+
+.filter-summary strong {
+  color: var(--text-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-summary__active {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.sae-roster {
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  background: var(--surface-card);
+}
+
+.sae-roster__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.sae-roster__header h2,
+.sae-roster__header p,
+.sae-student-card h3,
+.sae-current-note h4,
+.sae-current-note p,
+.sae-empty-state h3,
+.sae-empty-state p {
+  margin: 0;
+}
+
+.sae-roster__header h2 {
+  color: var(--text-color);
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.sae-roster__header p {
+  margin-top: 0.3rem;
+  color: var(--text-color-secondary);
+  font-size: 0.875rem;
+}
+
+.sae-roster__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 28rem;
+  color: var(--text-color-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.sae-list {
+  display: grid;
+}
+
+.sae-student-card {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.sae-student-card + .sae-student-card {
+  border-top: 1px solid var(--surface-border);
+}
+
+.sae-student-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.sae-student-card__identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.sae-student-card__avatar {
+  display: inline-grid;
+  flex: 0 0 2.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--primary-color-text);
+  background: var(--primary-color);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sae-student-card h3 {
+  color: var(--text-color);
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.sae-student-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+
+.sae-student-card__meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-color-secondary);
+  font-size: 0.8125rem;
+}
+
+.sae-student-card__meta i {
+  color: var(--primary-color);
+  font-size: 0.6875rem;
+}
+
+.sae-student-card__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sae-student-card__content {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.9fr) minmax(24rem, 1.35fr);
+  gap: 1rem;
+  align-items: start;
+  margin-top: 1rem;
+}
+
+.sae-current-note {
+  min-height: 4.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  background: var(--surface-ground);
+}
+
+.sae-current-note h4 {
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.sae-current-note p {
+  max-width: 72ch;
+  margin-top: 0.5rem;
+  color: var(--text-color);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sae-current-note .sae-current-note__empty {
+  color: var(--text-color-secondary);
+  font-style: italic;
+}
+
+.sae-student-card__content :deep(.shared-follow-up) {
+  max-width: none;
+}
+
+.sae-empty-state {
+  display: grid;
+  min-height: 14rem;
+  place-items: center;
+  align-content: center;
+  gap: 0.65rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.sae-empty-state > i {
+  color: var(--text-color-secondary);
+  font-size: 2rem;
+}
+
+.sae-empty-state h3 {
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+.sae-empty-state p {
+  max-width: 34rem;
+  color: var(--text-color-secondary);
+}
+
+@media (max-width: 1180px) {
+  .filter-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-reset {
+    justify-self: start;
+  }
+
+  .sae-student-card__content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .cas-page {
+    padding: 0.75rem !important;
+  }
+
+  .filter-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filter-reset {
+    width: 100%;
+  }
+
+  .filter-summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .sae-roster__header,
+  .sae-student-card__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .sae-roster__header,
+  .sae-student-card {
+    padding: 1rem;
+  }
+
+  .sae-roster__hint {
+    max-width: none;
+  }
+
+  .sae-student-card__actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sae-student-card__actions :deep(.p-button) {
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .sae-student-card__content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .cas-table :deep(.p-datatable-thead > tr > th) {
   background: var(--surface-100);
   padding: 0.75rem 0.5rem;
@@ -1931,6 +2417,13 @@ onMounted(() => {
 
 .cas-table :deep(.p-datatable-tbody > tr:hover) {
   background: var(--surface-50);
+}
+
+.case-type-list {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .cell-box {

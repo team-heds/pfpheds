@@ -282,6 +282,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
 import { useAutoRefresh } from '@/composables/useAutoRefresh'
+import { respondentLabelIncludes } from '@/domain/pfp/respondentNames'
 
 const router = useRouter()
 const confirm = useConfirm()
@@ -462,7 +463,7 @@ const filteredList = computed(() => {
     if (filterType.value && row.pfp_type !== filterType.value) return false
     if (filterClasse.value && row.student_class !== filterClasse.value) return false
     if (filterValidation.value !== null && row.is_validated !== filterValidation.value) return false
-    if (filterRepondantHES.value && row.repondant_hes !== filterRepondantHES.value) return false
+    if (filterRepondantHES.value && !respondentLabelIncludes(row.repondant_hes, filterRepondantHES.value)) return false
     if (filterSignataireHES.value && row.signataire_hes !== filterSignataireHES.value) return false
     if (!q) return true
     return (

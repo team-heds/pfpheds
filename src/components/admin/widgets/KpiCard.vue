@@ -84,13 +84,10 @@
       <!-- Footer avec comparaison -->
       <div v-if="comparison || clickable" class="kpi-footer">
         <span v-if="comparison" class="kpi-compare">{{ comparison }}</span>
-        <Button 
-          v-if="clickable && actionLabel" 
-          :label="actionLabel" 
-          text 
-          size="small"
-          @click.stop="$emit('action')"
-        />
+        <span v-if="clickable && actionLabel" class="kpi-action" aria-hidden="true">
+          {{ actionLabel }}
+          <i class="pi pi-arrow-right"></i>
+        </span>
       </div>
     </template>
   </div>
@@ -99,7 +96,6 @@
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import Skeleton from 'primevue/skeleton'
-import Button from 'primevue/button'
 import MiniChart from './MiniChart.vue'
 import ChartSelector from './ChartSelector.vue'
 import PieChart from './charts/PieChart.vue'
@@ -420,6 +416,15 @@ const effectiveChartHeight = computed(() => {
 .kpi-compare {
   font-size: 0.75rem;
   color: var(--text-color-secondary);
+}
+
+.kpi-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--kpi-color);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 /* Variants */

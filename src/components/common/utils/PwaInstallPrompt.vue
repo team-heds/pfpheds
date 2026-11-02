@@ -1,30 +1,50 @@
 <template>
   <transition name="slide-up">
-    <div v-if="showPrompt" class="pwa-install-prompt">
+    <aside v-if="showPrompt" class="pwa-install-prompt" aria-label="Installer l’application HEdS">
       <div class="pwa-install-content">
-        <img src="/assets/images/hespicto.png" alt="HEdS" class="pwa-logo" />
-        <span class="pwa-text">Ajoutez <b>HEdS</b> à votre écran d'accueil pour une expérience optimale !</span>
-        <button class="pwa-add-btn" @click="installPwa">Ajouter</button>
-        <button class="pwa-close-btn" @click="showPrompt = false" title="Fermer">×</button>
+        <img :src="hedsIcon" alt="HEdS" class="pwa-logo" />
+        <span class="pwa-text">{{ message }}</span>
+        <button type="button" class="pwa-add-btn" @click="installPwa">Installer</button>
+        <button type="button" class="pwa-close-btn" aria-label="Fermer l’invitation" @click="dismissPrompt">
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
       </div>
-    </div>
+    </aside>
   </transition>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-const showPrompt = ref(false);
+import { ref, onBeforeUnmount, onMounted, watch } from 'vue';
+import hedsIcon from '@/assets/images/hespicto.png'
+
+const props = defineProps({
+  forceVisible: { type: Boolean, default: false },
+  message: { type: String, default: 'Installez HEdS sur votre écran d’accueil pour un accès plus rapide.' },
+})
+const emit = defineEmits(['install', 'dismiss'])
+const showPrompt = ref(props.forceVisible);
 let deferredPrompt = null;
 
+function handleInstallPrompt(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  showPrompt.value = true;
+}
+
 onMounted(() => {
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    showPrompt.value = true;
-  });
+  window.addEventListener('beforeinstallprompt', handleInstallPrompt);
 });
 
+onBeforeUnmount(() => window.removeEventListener('beforeinstallprompt', handleInstallPrompt))
+watch(() => props.forceVisible, (visible) => { showPrompt.value = visible })
+
+function dismissPrompt() {
+  showPrompt.value = false
+  emit('dismiss')
+}
+
 function installPwa() {
+  emit('install')
   if (deferredPrompt) {
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(() => {
@@ -47,16 +67,16 @@ function installPwa() {
   pointer-events: none;
 }
 .pwa-install-content {
-  background: #111827;
-  color: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.20);
-  padding: 1rem 2rem 1rem 1.2rem;
+  background: var(--surface-card);
+  color: var(--text-color);
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
+  box-shadow: 0 16px 40px rgba(2, 12, 27, .28);
+  padding: .85rem 1rem;
   display: flex;
   align-items: center;
   gap: 1.2rem;
-  min-width: 320px;
-  max-width: 90vw;
+  width: min(42rem, calc(100vw - 2rem));
   pointer-events: auto;
   font-size: 1.07rem;
 }
@@ -74,31 +94,30 @@ function installPwa() {
   line-height: 1.3;
 }
 .pwa-add-btn {
-  background: linear-gradient(90deg, #fbbf24 0%, #6366f1 100%);
-  color: #fff;
+  min-height: 2.75rem;
+  background: var(--primary-color);
+  color: var(--primary-color-text, #071426);
   border: none;
   border-radius: 8px;
   padding: 0.5rem 1.2rem;
   font-weight: bold;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.10);
-  transition: background .2s, box-shadow .2s;
+  transition: filter .2s ease, transform .2s ease;
 }
 .pwa-add-btn:hover {
-  background: linear-gradient(90deg, #f59e42 0%, #4f46e5 100%);
-  box-shadow: 0 4px 16px rgba(99,102,241,0.14);
+  filter: brightness(1.05);
+  transform: translateY(-1px);
 }
 .pwa-close-btn {
   background: transparent;
-  color: #fff;
+  color: var(--text-color-secondary);
   border: none;
   font-size: 1.6rem;
   line-height: 1;
   margin-left: 0.4rem;
   cursor: pointer;
-  opacity: 0.6;
-  transition: opacity .15s;
+  transition: color .15s, background .15s;
   border-radius: 50%;
   width: 2rem;
   height: 2rem;
@@ -107,9 +126,11 @@ function installPwa() {
   justify-content: center;
 }
 .pwa-close-btn:hover {
-  opacity: 1;
-  background: #222b3a;
+  color: var(--text-color);
+  background: var(--surface-hover);
 }
+.pwa-add-btn:focus-visible,
+.pwa-close-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary-color) 35%, transparent); outline-offset: 2px; }
 .slide-up-enter-active, .slide-up-leave-active {
   transition: transform 0.35s cubic-bezier(.38,1.15,.7,1), opacity 0.25s;
 }
@@ -119,13 +140,17 @@ function installPwa() {
 }
 @media (max-width: 600px) {
   .pwa-install-content {
-    min-width: 0;
-    padding: 0.8rem 0.7rem 0.8rem 0.7rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    padding: .8rem;
     font-size: 0.97rem;
+    gap: .75rem;
   }
   .pwa-logo {
     width: 32px;
     height: 32px;
   }
+  .pwa-add-btn { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+  .pwa-close-btn { grid-column: 3; grid-row: 1; }
 }
 </style>

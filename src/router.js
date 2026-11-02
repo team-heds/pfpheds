@@ -1,11 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import '@/firebase';
 import { useAuthStore } from '@/stores/authStore';
-import rolesService from '@/service/rolesService';
 import { useRoleStore } from '@/stores/role';
 import { addDynamicRoutesToRouter } from '@/composables/useDynamicRoutes';
 import { withTimeout } from '@/service/appBootstrap';
 import routes from '@/router/routes/index';
+import { evaluateRouteAccess } from '@/router/accessControl';
 import {
   finishNavigationMeasurement,
   startNavigationMeasurement,
@@ -122,103 +121,30 @@ if (!roleStore.initialized) {
     return next('/home');
   }
 
-  // Vérification des permissions basées sur le roleStore
-const need = to.meta.need;
+  const access = evaluateRouteAccess({
+    ...to.meta,
+    requiresAuth: to.matched.some(record => record.meta.requiresAuth)
+  }, {
+    isAuthenticated: Boolean(user),
+    isSuper: roleStore.isSuper,
+    can: requirement => roleStore.can(requirement)
+  });
 
-// Autoriser immédiatement si 'public' ou 'anonymous'
-const allowAnon = Array.isArray(need)
-  ? (need.includes('public') || need.includes('anonymous'))
-  : (need === 'public' || need === 'anonymous');
-if (allowAnon) {
-  return next();
-}
+  if (!access.allowed) {
+    if (access.reason === 'authentication') {
+      console.warn('❌ Accès refusé: authentification requise pour cette page');
+      return next('/');
+    }
 
-// Si une permission est requise et qu'aucun utilisateur, rediriger vers login
-if (need && !user) {
-  console.warn('❌ Accès refusé: authentification requise pour cette page');
-  return next('/');
-}
-
-// Autoriser tous les utilisateurs connectés pour le besoin par défaut 'authenticated'
-const allowAuth = Array.isArray(need)
-  ? need.includes('authenticated')
-  : need === 'authenticated';
-if (allowAuth) {
-  return next();
-}
-
-if (need) {
-  const canAccess = Array.isArray(need)
-    ? (roleStore.isSuper || need.some(n => roleStore.can(n)))
-    : (roleStore.isSuper || roleStore.can(need));
-
-  if (!canAccess) {
-    console.warn(`❌ Accès refusé: permission requise "${Array.isArray(need) ? need.join(',') : need}" manquante`);
+    console.warn('❌ Accès refusé: permissions de route insuffisantes', {
+      reason: access.reason,
+      missing: access.missing,
+      path: to.path
+    });
     return next({ path: '/access' });
   }
-}
 
-  // Vérification des rôles (schéma historique) via meta.requiredRole
-  const requiredRoles = to.meta.requiredRole;
-  if (requiredRoles && user) {
-    const rolesArray = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
-    const hasRequired = roleStore.isSuper || rolesArray.some(r => roleStore.can(r));
-    if (!hasRequired) {
-      console.warn(`❌ Accès refusé: rôle requis manquant parmi [${rolesArray.join(', ')}]`);
-      return next({ path: '/access' });
-    }
-  }
-
-  // Gestion des routes nécessitant une authentification
-  if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (user) {
-      // Si pas de rôle requis, autoriser directement l'accès
-      if (!to.meta.requiredRole) {
-        return next();
-      }
-      
-      // Sinon, vérifier les rôles
-      const userId = authStore.isFirebaseUser ? user.uid : user.id;
-      const provider = authStore.authProvider;
-      
-      
-      // Récupération des rôles via le service unifié
-      const roles = await rolesService.getUserRoles(userId, provider);
-
-      if (roles && Object.keys(roles).length > 0) {
-        const userRoles = Object.keys(roles).filter(role => roles[role]); // Récupération des rôles actifs de l'utilisateur
-
-        const requiredRoles = Array.isArray(to.meta.requiredRole)
-          ? to.meta.requiredRole
-          : [to.meta.requiredRole];
-
-        // Vérifiez si l'utilisateur a au moins un des rôles requis
-        if (requiredRoles.some(role => userRoles.includes(role))) {
-          return next();
-        } else {
-          console.warn(`❌ Accès refusé: rôles requis ${requiredRoles.join(', ')}, rôles utilisateur: ${userRoles.join(', ')}`);
-          alert('Accès refusé: Vous n\'avez pas les permissions requises.');
-          return next('/');
-        }
-      } else {
-        // Pas de rôles trouvés mais rôle requis
-        console.warn('⚠️ Aucun rôle trouvé pour cet utilisateur');
-        import('primevue/usetoast').then(({ useToast }) => {
-          const toast = useToast();
-          toast.add({ severity: 'error', summary: 'Accès refusé', detail: 'Aucun rôle trouvé.', life: 4000 });
-        });
-        return next('/home');
-      }
-    } else {
-      import('primevue/usetoast').then(({ useToast }) => {
-        const toast = useToast();
-        toast.add({ severity: 'warn', summary: 'Connexion requise', detail: 'Vous devez être connecté pour accéder à cette page.', life: 4000 });
-      });
-      return next('/'); // Redirigez vers la page de connexion
-    }
-  } else {
-    return next(); // Aucune authentification requise, autorisez l'accès
-  }
+  return next();
 });
 
 router.afterEach((_to, _from, failure) => {

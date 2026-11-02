@@ -114,6 +114,45 @@ export const presentationCatalog = [
       'Workflow applicable à différents agents et éditeurs.',
     ],
   },
+  {
+    id: 'soins-infirmiers-workflow',
+    slug: 'soins-infirmiers',
+    order: 30,
+    title: 'Soins infirmiers · Workflow complet',
+    eyebrow: 'Présentation métier',
+    description:
+      'Vue pédagogique du système SI, du cadre académique au planning, aux postulations enseignantes et à la feuille de charges.',
+    path: '/presentation/soins-infirmiers/',
+    pdfPath: '/presentation/soins-infirmiers/soins-infirmiers.pdf',
+    status: 'published',
+    statusLabel: 'Publié',
+    category: 'metier',
+    categoryLabel: 'Métier',
+    duration: '30–45 min',
+    level: 'Tous publics',
+    audience: ['Secrétariat SI', 'Responsables de module', 'Enseignants', 'Direction'],
+    tags: ['Soins infirmiers', 'Planning', 'Postulation', 'Charge enseignante'],
+    accent: '#2f6fed',
+    icon: 'pi pi-heart-fill',
+    updatedAt: '2026-09-29',
+    official: true,
+    objectives: [
+      'Comprendre comment les référentiels alimentent le planning SI.',
+      'Expliquer l’affectation directe et le parcours de postulation.',
+      'Relier les créneaux à la charge et aux tableaux de bord.',
+    ],
+    prerequisites: ['Aucune connaissance technique requise'],
+    resources: [
+      { label: 'Présentation Reveal.js', type: 'slides' },
+      { label: 'Export PDF', type: 'pdf' },
+    ],
+    qualityChecklist: [
+      'Workflow présenté avec un vocabulaire métier.',
+      'Droits de postulation expliqués par rôle.',
+      'Calcul de charge illustré sans données personnelles.',
+      'Aucun secret ni donnée de production dans le support.',
+    ],
+  },
 ]
 
 export const sortedPresentationCatalog = [...presentationCatalog].sort(

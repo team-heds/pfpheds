@@ -8,6 +8,28 @@
       </div>
 
       <div class="grid">
+        <div v-if="gamificationFeatures.ventriglisse" class="col-12">
+          <section class="ventriglisse-card" aria-labelledby="ventriglisse-title">
+            <div class="ventriglisse-preview" aria-hidden="true">
+              <span v-for="index in 4" :key="index" :style="{ '--lane': index }"></span>
+              <i class="pi pi-send"></i>
+            </div>
+            <div class="ventriglisse-copy">
+              <h3 id="ventriglisse-title">Ventriglisse 3D</h3>
+              <p>Composez les couloirs et lancez une course amicale en 3D, de 2 à 6 personnes.</p>
+              <div class="game-tags" aria-label="Caractéristiques du jeu">
+                <span>Course locale</span><span>2–6 joueurs</span><span>Aucun XP</span>
+              </div>
+            </div>
+            <Button
+              label="Jouer"
+              icon="pi pi-play"
+              class="play-button"
+              @click="router.push('/ventriglisse3d')"
+            />
+          </section>
+        </div>
+
         <!-- Daily Wheel Widget -->
         <div v-if="gamificationFeatures.dailyWheel" class="col-12 md:col-6 lg:col-6">
           <DailyWheelWidget />
@@ -96,5 +118,55 @@ const router = useRouter();
 }
 .game-card:hover {
   transform: translateY(-5px);
+}
+
+.ventriglisse-card {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: center;
+  padding: 1.25rem;
+  border: 1px solid #294360;
+  border-radius: 16px;
+  background: #07182d;
+  color: #f7f9fc;
+}
+
+.ventriglisse-preview {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: end;
+  height: 7rem;
+  padding: .7rem;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #50bde8;
+}
+
+.ventriglisse-preview span {
+  height: calc(25% + var(--lane) * 12%);
+  border-inline-end: 1px solid rgba(255, 255, 255, .65);
+}
+
+.ventriglisse-preview i {
+  position: absolute;
+  top: 1rem;
+  left: 1.15rem;
+  color: #071426;
+  font-size: 1.5rem;
+  transform: rotate(90deg);
+}
+
+.ventriglisse-copy h3 { margin: 0 0 .35rem; font-size: 1.45rem; }
+.ventriglisse-copy p { max-width: 60ch; margin: 0; color: #b8c7d9; }
+.game-tags { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .85rem; }
+.game-tags span { padding: .3rem .55rem; border-radius: 8px; background: #132b47; color: #d7e1ed; font-size: .75rem; }
+.play-button { min-width: 8rem; min-height: 44px; background: #ffc400; border-color: #ffc400; color: #071426; }
+
+@media (max-width: 700px) {
+  .ventriglisse-card { grid-template-columns: 1fr; }
+  .ventriglisse-preview { height: 6rem; }
+  .play-button { width: 100%; }
 }
 </style>

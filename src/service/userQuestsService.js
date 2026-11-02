@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import { runtimeFeatures } from '@/config/runtimeFeatures'
 
 const emptyQuestStats = () => ({
   totalQuests: 0,
@@ -291,6 +292,7 @@ class UserQuestsService {
    * @returns {RealtimeChannel} Canal Supabase
    */
   subscribeToQuestUpdates(userId, callback) {
+    if (!runtimeFeatures.supabaseRealtime) return null
     try {
       const channel = supabase
         .channel(`user-quests-${userId}`)

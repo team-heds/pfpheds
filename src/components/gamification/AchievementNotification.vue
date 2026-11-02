@@ -7,7 +7,8 @@
           :key="notification.id"
           class="achievement-notification"
           :class="`rarity-${notification.badge.rarity}`"
-          @click="dismissNotification(notification.id)"
+          role="status"
+          aria-live="polite"
         >
           <!-- Background Pattern -->
           <div class="notification-bg"></div>
@@ -15,18 +16,19 @@
           <!-- Content -->
           <div class="notification-content">
             <!-- Badge Icon -->
-            <div class="badge-icon-large" :style="{ color: notification.badge.color }">
-              {{ notification.badge.icon }}
+            <div class="badge-icon-large" :style="{ color: notification.badge.color }" aria-hidden="true">
+              <i v-if="notification.badge.iconClass" :class="notification.badge.iconClass"></i>
+              <span v-else>{{ notification.badge.icon }}</span>
               
               <!-- Sparkle Effects -->
               <div class="sparkles">
-                <div class="sparkle" v-for="i in 6" :key="i" :style="{ animationDelay: `${i * 0.1}s` }">✨</div>
+                <i class="pi pi-star-fill sparkle" v-for="i in 6" :key="i" :style="{ animationDelay: `${i * 0.1}s` }"></i>
               </div>
             </div>
             
             <!-- Text Content -->
             <div class="notification-text">
-              <h3 class="achievement-title">🏆 Badge Débloqué !</h3>
+              <h3 class="achievement-title"><i class="pi pi-trophy" aria-hidden="true"></i> Badge débloqué !</h3>
               <h4 class="badge-name" :style="{ color: notification.badge.color }">
                 {{ notification.badge.name }}
               </h4>
@@ -45,8 +47,8 @@
             </div>
             
             <!-- Close Button -->
-            <button class="close-btn" @click.stop="dismissNotification(notification.id)">
-              <i class="pi pi-times"></i>
+            <button class="close-btn" type="button" :aria-label="`Fermer la notification ${notification.badge.name}`" @click.stop="dismissNotification(notification.id)">
+              <i class="pi pi-times" aria-hidden="true"></i>
             </button>
           </div>
           
@@ -241,8 +243,13 @@ onUnmounted(() => {
 /* Badge Icon */
 .badge-icon-large {
   position: relative;
-  font-size: 3rem;
-  filter: drop-shadow(0 0 12px currentColor);
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  flex: 0 0 3.5rem;
+  font-size: 2rem;
+  filter: drop-shadow(0 4px 10px currentColor);
   animation: bounce-icon 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
@@ -263,11 +270,7 @@ onUnmounted(() => {
 
 /* Sparkles */
 .sparkles {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
+  display: none;
 }
 
 .sparkle {
@@ -304,6 +307,9 @@ onUnmounted(() => {
 }
 
 .achievement-title {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
   font-size: 1rem;
   font-weight: bold;
   margin: 0;
@@ -372,11 +378,16 @@ onUnmounted(() => {
   color: var(--text-color-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
+  flex: 0 0 auto;
 }
 
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   color: var(--text-color);
+}
+.close-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 /* Progress Bar */
@@ -403,6 +414,19 @@ onUnmounted(() => {
   }
   100% {
     transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-icon-large,
+  .sparkle,
+  .achievement-title,
+  .badge-name,
+  .badge-description,
+  .xp-bonus,
+  .rarity-badge,
+  .progress-fill {
+    animation: none;
   }
 }
 

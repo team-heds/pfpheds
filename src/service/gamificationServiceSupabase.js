@@ -78,9 +78,9 @@ class GamificationServiceSupabase {
         .from('gamification_data')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Erreur Supabase gamification:', error)
         return this.getDefaultGamificationData()
       }
@@ -471,6 +471,20 @@ class GamificationServiceSupabase {
    */
   async addUserXP(userId, action, actionData = {}) {
     try {
+      const { data: authData, error: authError } = await this.supabase.auth.getUser()
+      if (authError || !authData?.user?.id) {
+        const error = new Error('Authenticated Supabase user required for gamification')
+        error.code = 'GAMIFICATION_AUTH_REQUIRED'
+        throw error
+      }
+
+      const authenticatedUserId = authData.user.id
+      if (userId && userId !== authenticatedUserId) {
+        const error = new Error('Gamification target must match the authenticated user')
+        error.code = 'GAMIFICATION_IDENTITY_MISMATCH'
+        throw error
+      }
+
       const sourceId = actionData.sourceId || actionData.targetId || null
       const metadata = {
         ...actionData,
@@ -488,8 +502,8 @@ class GamificationServiceSupabase {
 
       if (error) throw error
 
-      this.invalidateCache(userId)
-      const freshData = await this.getUserGamificationData(userId)
+      this.invalidateCache(authenticatedUserId)
+      const freshData = await this.getUserGamificationData(authenticatedUserId)
 
       return {
         ...freshData,

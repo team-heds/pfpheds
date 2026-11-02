@@ -8,8 +8,8 @@
   >
     <!-- Topbar: bouton collapse + recherche -->
     <div class="sidebar-topbar">
-      <button class="collapse-toggle" type="button" @click="toggleCollapse" :aria-pressed="isCollapsed" :title="isCollapsed ? 'Agrandir' : 'Réduire'">
-        <i class="pi" :class="isCollapsed ? 'pi-angle-double-right' : 'pi-angle-double-left'"></i>
+      <button class="collapse-toggle" type="button" @click="toggleCollapse" :aria-pressed="isCollapsed" :aria-label="isCollapsed ? 'Agrandir le menu administration' : 'Réduire le menu administration'" :title="isCollapsed ? 'Agrandir' : 'Réduire'">
+        <i class="pi" :class="isCollapsed ? 'pi-angle-double-right' : 'pi-angle-double-left'" aria-hidden="true"></i>
       </button>
       <div v-if="isExpandedContent" class="sidebar-search">
         <input
@@ -40,8 +40,8 @@
       <nav class="sidebar-nav">
         <ul class="sidebar-menu">
           <li class="sidebar-section">
-            <button type="button" class="sidebar-section-label" @click="isExpandedContent && toggleSection(section.label)" :aria-expanded="isExpandedContent ? isSectionOpen(section.label) : undefined" :title="!isExpandedContent ? section.label : ''">
-              <i :class="section.icon" />
+            <button type="button" class="sidebar-section-label" @click="activateSection(section.label)" :aria-expanded="isExpandedContent ? isSectionOpen(section.label) : false" :aria-label="!isExpandedContent ? `Ouvrir ${section.label}` : undefined" :title="!isExpandedContent ? section.label : ''">
+              <i :class="section.icon" aria-hidden="true" />
               <span v-if="isExpandedContent" v-html="highlightText(section.label)"></span>
               <i v-if="isExpandedContent" class="pi" :class="isSectionOpen(section.label) ? 'pi-chevron-down' : 'pi-chevron-right'" style="margin-left: auto; font-size: 0.875rem;"></i>
             </button>
@@ -73,6 +73,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/supabase';
 import { countStudents } from '@/service/studentDirectoryService';
 import adminMenu from '@/config/adminMenu.js';
+import { evaluateRouteAccess } from '@/router/accessControl';
 
 const router = useRouter();
 const route = useRoute();
@@ -115,6 +116,19 @@ function toggleCollapse() {
   } catch (e) {
     console.warn('Erreur sauvegarde état collapse:', e);
   }
+}
+
+async function activateSection(label) {
+  if (isCollapsed.value) {
+    isCollapsed.value = false
+    try {
+      localStorage.setItem('adminSidebarCollapsed', 'false')
+    } catch (e) {
+      console.warn('Erreur sauvegarde état collapse:', e)
+    }
+    await nextTick()
+  }
+  toggleSection(label)
 }
 
 // État des sections ouvertes/fermées (persisté dans localStorage)
@@ -196,47 +210,23 @@ function canAccessRoute(route) {
   if (!route || !route.to) return true;
 
   const resolved = router.resolve(route.to);
-
-  // Ne regarder que la dernière record (la vraie page), pas les ancêtres
   const last = resolved.matched.at(-1);
-  // Aliases pour supporter anciens et nouveaux noms
-  const alias = (p) => {
-    if (!p) return p;
-    // S'assurer que p est une string
-    const pStr = String(p);
-    if (pStr === 'page1') return 'page1.access';
-    if (pStr === 'page2') return 'page2.access';
-    if (pStr.endsWith('.access')) return pStr.slice(0, -7); // AdminPhysio.access -> AdminPhysio
-    return pStr;
-  };
+  const meta = last?.meta ?? resolved.meta ?? {};
+  const access = evaluateRouteAccess(meta, {
+    isAuthenticated: Boolean(authStore.user),
+    isSuper: roleStore.isSuper,
+    can: requirement => roleStore.can(requirement)
+  });
 
-  const need = alias(last?.meta?.need ?? resolved.meta?.need);
-  let reqRoles = last?.meta?.requiredRole ?? resolved.meta?.requiredRole;
-  reqRoles = Array.isArray(reqRoles) ? reqRoles : (reqRoles ? [reqRoles] : []);
-  reqRoles = reqRoles.map(alias).filter(r => r && typeof r === 'string');
-
-  // S'il n'y a aucune contrainte explicite, laisser visible
-  if (!need && reqRoles.length === 0) return true;
-
-  // Vérifier need
-  if (need && !roleStore.isSuper && !roleStore.can(need)) {
-    const needAccess = need.endsWith('.access') ? need : `${need}.access`;
-    if (!roleStore.can(needAccess)) {
-      console.debug('⬇️ Menu masqué (need non satisfait):', { to: route.to, need });
-      return false;
-    }
+  if (!access.allowed) {
+    console.debug('⬇️ Menu masqué (même règle que le routeur):', {
+      to: route.to,
+      reason: access.reason,
+      missing: access.missing
+    });
   }
 
-  // Vérifier requiredRole
-  if (reqRoles.length > 0) {
-    const okRole = roleStore.isSuper || reqRoles.some(r => roleStore.can(r));
-    if (!okRole) {
-      console.debug('⬇️ Menu masqué (requiredRole non satisfait):', { to: route.to, reqRoles });
-      return false;
-    }
-  }
-
-  return true;
+  return access.allowed;
 }
 
 // Fonction récursive pour filtrer les items du menu

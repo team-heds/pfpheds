@@ -2088,7 +2088,7 @@ const loadData = async () => {
   if (!config) { loading.value = false; return }
 
   try {
-    const allStudentsData = await getAllStudents()
+    const allStudentsData = await getAllStudents(filterYear.value)
     allStudents.value = allStudentsData.filter(student => {
       const classe = student.Classe || student.classe || student.class || student.Class || ''
       return classe === targetClass

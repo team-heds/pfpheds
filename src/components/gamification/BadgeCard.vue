@@ -30,18 +30,18 @@
     
     <!-- Badge Info -->
     <div class="badge-info">
-      <h4 class="badge-name" :class="{ 'locked-text': !isUnlocked }">
+      <h3 class="badge-name" :class="{ 'locked-text': !isUnlocked }">
         {{ badge.name }}
-      </h4>
+      </h3>
       
       <p class="badge-description" :class="{ 'locked-text': !isUnlocked }">
-        {{ isUnlocked ? badge.description : '???' }}
+        {{ badge.description }}
       </p>
       
       <!-- XP Bonus -->
-      <div class="badge-xp" v-if="isUnlocked">
+      <div class="badge-xp" v-if="badge.xpBonus > 0">
         <i class="pi pi-star-fill"></i>
-        <span>+{{ badge.xpBonus }} XP</span>
+        <span>{{ isUnlocked ? 'Obtenu' : 'Récompense' }} : +{{ badge.xpBonus }} XP</span>
       </div>
       
       <!-- Unlock Date -->
@@ -57,7 +57,7 @@
       </div>
       
       <!-- Progress Bar for Badges in Progress -->
-      <div class="progress-container" v-if="!isUnlocked && showProgress && progressValue > 0">
+      <div class="progress-container" v-if="!isUnlocked && showProgress && progressMax > 0">
         <div class="progress-label">
           <span>{{ Math.round(progressPercentage) }}% complété</span>
           <span class="progress-numbers">{{ progressValue }}/{{ progressMax }}</span>
@@ -76,7 +76,7 @@
     </div>
     
     <!-- Rarity Indicator -->
-    <div class="rarity-indicator" :style="{ backgroundColor: rarityColor }">
+    <div class="rarity-indicator" :style="{ backgroundColor: rarityColor, color: rarityTextColor }">
       {{ rarityName }}
     </div>
     
@@ -91,6 +91,7 @@
 <script setup>
 import { computed } from 'vue'
 import { BADGE_RARITY } from '@/service/badgesService'
+import { getReadableTextColor } from '@/utils/colorContrast'
 
 const props = defineProps({
   badge: {
@@ -128,6 +129,7 @@ defineEmits(['click'])
 // Computed properties pour la rareté
 const rarityConfig = computed(() => BADGE_RARITY[props.badge.rarity] || BADGE_RARITY.common)
 const rarityColor = computed(() => rarityConfig.value.color)
+const rarityTextColor = computed(() => getReadableTextColor(rarityColor.value))
 const rarityName = computed(() => rarityConfig.value.name)
 const shouldGlow = computed(() => rarityConfig.value.glow && props.isUnlocked)
 
@@ -162,8 +164,12 @@ const formatUnlockDate = (dateString) => {
 
 <style scoped>
 .badge-card {
+  --badge-surface: #ffffff;
+  --badge-surface-muted: #e8edf4;
+  --badge-text: #172033;
+  --badge-text-secondary: #4b5568;
   position: relative;
-  background: var(--surface-card);
+  background: var(--badge-surface);
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
@@ -212,18 +218,18 @@ const formatUnlockDate = (dateString) => {
 
 /* Unlocked vs Locked States */
 .unlocked {
-  background: var(--surface-card);
-  color: var(--text-color);
+  background: var(--badge-surface);
+  color: var(--badge-text);
 }
 
 .locked {
-  background: var(--surface-ground);
-  color: var(--text-color-secondary);
-  opacity: 0.7;
+  background: var(--badge-surface-muted);
+  color: var(--badge-text-secondary);
+  opacity: 1;
 }
 
 .locked:hover {
-  opacity: 0.9;
+  background: #f0f3f8;
 }
 
 /* Badge Icon Container */
@@ -299,19 +305,19 @@ const formatUnlockDate = (dateString) => {
   font-size: 1.1rem;
   font-weight: bold;
   margin: 0;
-  color: var(--text-color);
+  color: var(--badge-text);
 }
 
 .badge-description {
   font-size: 0.9rem;
   margin: 0;
-  color: var(--text-color-secondary);
+  color: var(--badge-text-secondary);
   line-height: 1.4;
 }
 
 .locked-text {
-  color: var(--text-color-secondary) !important;
-  opacity: 0.6;
+  color: var(--badge-text-secondary) !important;
+  opacity: 1;
 }
 
 /* XP Bonus */
@@ -319,7 +325,7 @@ const formatUnlockDate = (dateString) => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  color: #FFD700;
+  color: #8a5c00;
   font-weight: bold;
   font-size: 0.9rem;
 }
@@ -333,7 +339,7 @@ const formatUnlockDate = (dateString) => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  color: var(--text-color-secondary);
+  color: var(--badge-text-secondary);
   font-size: 0.8rem;
 }
 
@@ -342,7 +348,7 @@ const formatUnlockDate = (dateString) => {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  color: var(--primary-color);
+  color: #17603d;
   font-size: 0.8rem;
   font-style: italic;
 }
@@ -355,7 +361,6 @@ const formatUnlockDate = (dateString) => {
   padding: 0.25rem 0.75rem;
   font-size: 0.7rem;
   font-weight: bold;
-  color: white;
   border-radius: 0 16px 0 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -424,6 +429,19 @@ const formatUnlockDate = (dateString) => {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .badge-card,
+  .badge-icon,
+  .new-badge-indicator,
+  .glow-effect,
+  .progress-fill,
+  .progress-fill::after,
+  .progress-glow {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 /* Hover Effects */
 .unlocked:hover .badge-icon {
   transform: scale(1.1);
@@ -464,12 +482,12 @@ const formatUnlockDate = (dateString) => {
   align-items: center;
   margin-bottom: 0.5rem;
   font-size: 0.75rem;
-  color: var(--text-color-secondary);
+  color: var(--badge-text-secondary);
 }
 
 .progress-numbers {
   font-weight: 600;
-  color: var(--text-color);
+  color: var(--badge-text);
 }
 
 .progress-bar {

@@ -1,3 +1,5 @@
+import { gamificationFeatures } from '@/config/gamificationFeatures'
+
 /**
  * Menu Admin Restructuré par Filière
  *
@@ -119,20 +121,19 @@ export default [
         ]
       },
 
-      // Gamification masquée temporairement pour la présentation (ne pas supprimer)
-      // {
-      //   label: 'Gamification',
-      //   icon: 'pi pi-star-fill',
-      //   items: [
-      //     { label: 'Dashboard Gamification', icon: 'pi pi-chart-bar', to: '/admin/dashboard-gamification' },
-      //     { label: 'Gestion Défis', icon: 'pi pi-flag-fill', to: '/admin/gamification/challenges' },
-      //     { label: 'Gestion Quêtes', icon: 'pi pi-compass', to: '/admin/gamification/quests' },
-      //     { label: 'Gestion Badges', icon: 'pi pi-shield', to: '/admin/gamification/badges' },
-      //     { label: 'Gestion Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
-      //     { label: 'Gestion Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
-      //     { label: 'Analytics & Statistiques', icon: 'pi pi-chart-line', to: '/admin/gamification/analytics' }
-      //   ]
-      // }
+      ...(gamificationFeatures.userJourney ? [{
+        label: 'Gamification',
+        icon: 'pi pi-star-fill',
+        items: [
+          { label: 'Dashboard Gamification', icon: 'pi pi-chart-bar', to: '/admin/dashboard-gamification' },
+          { label: 'Gestion Défis', icon: 'pi pi-flag-fill', to: '/admin/gamification/challenges' },
+          { label: 'Gestion Quêtes', icon: 'pi pi-compass', to: '/admin/gamification/quests' },
+          { label: 'Gestion Badges', icon: 'pi pi-shield', to: '/admin/gamification/badges' },
+          { label: 'Gestion Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
+          { label: 'Gestion Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
+          { label: 'Analytics & Statistiques', icon: 'pi pi-chart-line', to: '/admin/gamification/analytics' }
+        ]
+      }] : [])
     ]
   },
 
@@ -143,9 +144,10 @@ export default [
     label: 'Soins Infirmiers',
     icon: 'pi pi-heart-fill',
     items: [
-      { label: 'Dashboard Secrétariat', icon: 'pi pi-th-large', to: '/admin/soins-infirmiers/dashboard' },
-      { label: 'Dashboard RM', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
-      { label: 'Dashboard Enseignant SI', icon: 'pi pi-graduation-cap', to: '/admin/soins-infirmiers/dashboard-enseignant' },
+      { label: 'Secrétariat SI', icon: 'pi pi-th-large', to: '/admin/soins-infirmiers/dashboard' },
+      { label: 'Espace RM Soins', icon: 'pi pi-chart-line', to: '/admin/dashboard-rm' },
+      { label: 'Espace enseignant Soins', icon: 'pi pi-graduation-cap', to: '/admin/soins-infirmiers/dashboard-enseignant' },
+      { label: 'Cours en postulation', icon: 'pi pi-thumbs-up', to: '/admin/soins-infirmiers/cours-postulation' },
       {
         label: 'Planning',
         icon: 'pi pi-calendar',
