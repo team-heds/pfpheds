@@ -232,6 +232,7 @@ import Avatar from 'primevue/avatar'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import { PROFILE_CRITERIA_KEYS, parseBooleanFlag, normalizePfpType, getYearSortValue, parsePfpEntries, resolvePlaceId } from '@/utils/profileStages'
+import { respondentLabelIncludes } from '@/domain/pfp/respondentNames'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -290,7 +291,6 @@ const shouldReplacePhysioRow = (currentRow, candidateRow) => {
   return candidateUpdatedAt > currentUpdatedAt
 }
 
-const normalizeRepondantName = (value) => String(value || '').trim().toLowerCase()
 const normalizePfp = (value) => normalizePfpType(value)
 const normalizePlaceName = (value) => String(value || '').trim().toLowerCase()
 const normalizeInstitutionName = (value) => String(value || '').trim().toLowerCase()
@@ -340,9 +340,7 @@ const respondentClassStats = computed(() => {
 
 const filteredAssignedStudents = computed(() => {
   if (!effectiveRepondantName.value) return []
-  const effectiveName = normalizeRepondantName(effectiveRepondantName.value)
-  
-  let list = allStudents.value.filter((s) => normalizeRepondantName(s.repondant_hes) === effectiveName)
+  let list = allStudents.value.filter((s) => respondentLabelIncludes(s.repondant_hes, effectiveRepondantName.value))
   
   // Filtre par classe
   if (selectedClassFilter.value) {

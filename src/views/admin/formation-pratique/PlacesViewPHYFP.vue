@@ -361,7 +361,7 @@
           <Column header="Fiche">
             <template #body="{ data }">
               <div class="flex align-items-center gap-2">
-                <a v-if="data.fileurl || data.fileURL" :href="data.fileurl || data.fileURL" target="_blank" class="text-primary">
+                <a v-if="data.fileurl || data.fileURL" :href="data.fileurl || data.fileURL" target="_blank" rel="noopener noreferrer" class="text-primary" @click.prevent="openPlacePdf(data)" @auxclick.middle.prevent="openPlacePdf(data)">
                   <i class="pi pi-file-pdf"></i> PDF
                 </a>
                 <span v-else class="text-500">Aucun fichier</span>
@@ -573,8 +573,7 @@ import Dialog from 'primevue/dialog'
 import OverlayPanel from 'primevue/overlaypanel'
 import Checkbox from 'primevue/checkbox'
 import ProgressBar from 'primevue/progressbar'
-import { storage } from '@/firebase'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { uploadPfpDocument, openPfpDocument } from '@/service/pfpDocumentMediaService'
 import { buildPlacesExportRows, createPlacesWorkbook, getAcademicYearLabel } from '@/utils/placesExcelExport'
 
 const store = usePlacesStore()
@@ -818,7 +817,7 @@ const baseRows = computed(() => {
   // Filtre PDF
   if (withPdfOnly.value) {
     list = list.filter(p => {
-      const fileUrl = p.fileURL || p.FileURL || p.pdfUrl || p.PdfUrl || p.fileUrl
+      const fileUrl = p.fileurl || p.fileURL || p.FileURL || p.pdfUrl || p.PdfUrl || p.fileUrl
       return !!fileUrl
     })
   }
@@ -1296,40 +1295,19 @@ function formatFileSize(bytes) {
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
 }
 
+async function openPlacePdf(place) {
+  try { await openPfpDocument(place.fileurl || place.fileURL) }
+  catch (error) { toast.add({ severity: 'error', summary: 'Document indisponible', detail: error.message, life: 4000 }) }
+}
+
 async function uploadFile() {
   if (!selectedFile.value || !currentPlace.value?.PlaceId) return
 
   uploading.value = true
 
   try {
-    console.log('📤 Upload du fichier:', selectedFile.value.name, 'pour la place:', currentPlace.value.PlaceId)
-
-    // Créer un nom de fichier unique avec timestamp
-    const timestamp = Date.now()
-    const fileName = `${timestamp}_${selectedFile.value.name}`
-    const filePath = `places/${currentPlace.value.PlaceId}/${fileName}`
-
-    console.log('📁 Upload vers Firebase Storage:', filePath)
-
-    // Créer la référence Firebase Storage
-    const fileRef = storageRef(storage, filePath)
-
-    // Upload le fichier vers Firebase Storage
-    const snapshot = await uploadBytes(fileRef, selectedFile.value, {
-      contentType: 'application/pdf',
-      customMetadata: {
-        placeId: String(currentPlace.value.PlaceId),
-        placeName: currentPlace.value.NomPlace || 'unknown',
-        uploadedAt: new Date().toISOString()
-      }
-    })
-
-    console.log('✅ Fichier uploadé:', snapshot.metadata.fullPath)
-
-    // Obtenir l'URL de téléchargement avec token
-    const downloadURL = await getDownloadURL(fileRef)
-
-    console.log('🔗 URL du fichier:', downloadURL)
+    const uploaded = await uploadPfpDocument('places', currentPlace.value.PlaceId, selectedFile.value)
+    const downloadURL = uploaded.url
 
     // Mettre à jour la place avec l'URL du fichier
     console.log('🔄 Tentative de mise à jour Supabase:', {

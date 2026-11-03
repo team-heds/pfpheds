@@ -6,7 +6,7 @@
         Comparaison de périodes
       </h3>
       <p class="text-600 m-0">
-        {{ periodLabel }} comparée à la période précédente, selon les données historiques disponibles.
+        Données pour {{ periodLabel.toLowerCase() }}, comparées à la période précédente selon l’historique disponible.
       </p>
     </div>
 

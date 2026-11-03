@@ -2,13 +2,14 @@
   <AdminLayout>
     <template #header>
       <PageHeader 
+        class="si-page-header"
         title="Dashboard RM Soins Infirmiers" 
-        subtitle="Vue d'ensemble de vos modules et enseignements SI" 
-        icon="pi pi-chart-line" 
+        subtitle="Vue d'ensemble de vos modules et enseignements SI"
+        icon="pi pi-chart-line"
       />
     </template>
 
-    <div class="dashboard-rm">
+    <div class="dashboard-rm si-admin-screen">
       <!-- Loading spinner -->
       <div v-if="loading" class="loading-container">
         <ProgressSpinner />
@@ -82,8 +83,8 @@
                 </div>
               </div>
               <div class="module-card__actions">
-                <Button icon="pi pi-cog" severity="primary" rounded @click="manageModule(module)" v-tooltip.top="'Gérer'" />
-                <Button icon="pi pi-calendar" severity="info" rounded outlined @click="viewPlanning(module)" v-tooltip.top="'Planning'" />
+                <Button icon="pi pi-cog" :aria-label="`Gérer le module ${module.number}`" severity="primary" rounded @click="manageModule(module)" v-tooltip.top="'Gérer'" />
+                <Button icon="pi pi-calendar" :aria-label="`Voir le planning du module ${module.number}`" severity="info" rounded outlined @click="viewPlanning(module)" v-tooltip.top="'Planning'" />
               </div>
             </div>
             <div v-if="myModules.length === 0" class="empty-state">
@@ -104,9 +105,10 @@
             <div class="card-section__toolbar">
               <Button
                 icon="pi pi-refresh"
+                aria-label="Rafraîchir les votes de postulation"
                 text
                 rounded
-                @click="loadRmPostulationVotes"
+                @click="refreshRmPostulationVotes"
                 :loading="loadingPostulations"
                 v-tooltip.top="'Rafraîchir les votes'"
               />
@@ -139,6 +141,7 @@
                   <td>
                     <strong>{{ row.moduleNumber }}</strong>
                     <div class="text-500">{{ row.moduleTitle }}</div>
+                    <div class="rm-course-title">{{ row.courseTitle }}</div>
                   </td>
                   <td>
                     <div>S{{ row.weekNumber }} • {{ row.dayLabel }}</div>
@@ -166,6 +169,7 @@
                       placeholder="Choisir enseignant(s)"
                       :disabled="!row.voterOptions.length"
                       class="rm-postulation-select"
+                      :aria-label="`Choisir les enseignants pour ${row.courseTitle}`"
                     />
                   </td>
                   <td>
@@ -183,6 +187,39 @@
               </tbody>
             </table>
           </div>
+
+          <div v-if="recentPostulationAssignments.length" class="rm-assignment-history">
+            <div class="rm-assignment-history__heading">
+              <div>
+                <strong>Dernières affectations</strong>
+                <p>Une affectation erronée peut être annulée : les votes précédents sont alors restaurés.</p>
+              </div>
+              <Tag :value="`${recentPostulationAssignments.length} opérations`" severity="secondary" />
+            </div>
+            <div class="rm-assignment-history__list">
+              <article v-for="assignment in recentPostulationAssignments" :key="assignment.id" class="rm-assignment-history__item">
+                <div>
+                  <strong>{{ assignment.module_code }}</strong>
+                  <span>{{ assignment.assigned_teacher_labels?.join(', ') || 'Enseignant non renseigné' }}</span>
+                  <small>{{ formatAssignmentDate(assignment.created_at) }}</small>
+                </div>
+                <Tag
+                  :value="assignment.status === 'undone' ? 'Annulée' : 'Affectée'"
+                  :severity="assignment.status === 'undone' ? 'secondary' : 'success'"
+                />
+                <Button
+                  v-if="assignment.status === 'assigned'"
+                  label="Annuler"
+                  icon="pi pi-undo"
+                  size="small"
+                  severity="danger"
+                  outlined
+                  :loading="undoingAssignmentIds.includes(assignment.id)"
+                  @click="undoAssignment(assignment)"
+                />
+              </article>
+            </div>
+          </div>
         </section>
 
         <!-- ═══ MES COURS ═══ -->
@@ -199,10 +236,13 @@
                 :icon="mySlotsViewAll ? 'pi pi-calendar' : 'pi pi-list'" 
                 :severity="mySlotsViewAll ? 'secondary' : 'primary'" 
                 size="small" rounded
+                :aria-pressed="mySlotsViewAll"
                 @click="toggleMySlotsView"
               />
+              <label v-if="!mySlotsViewAll" class="sr-only" for="si-rm-week">Semaine de mes cours</label>
               <Dropdown
                 v-if="!mySlotsViewAll"
+                inputId="si-rm-week"
                 v-model="mySlotsWeek"
                 :options="mySlotsWeekOptions"
                 optionLabel="label"
@@ -211,7 +251,7 @@
                 @change="loadMySlots"
                 style="width: 220px"
               />
-              <Button icon="pi pi-refresh" text rounded @click="mySlotsViewAll ? loadAllMySlots() : loadMySlots()" :loading="loadingMySlots" v-tooltip.top="'Rafraîchir'" />
+              <Button icon="pi pi-refresh" aria-label="Rafraîchir mes cours" text rounded @click="mySlotsViewAll ? loadAllMySlots() : loadMySlots()" :loading="loadingMySlots" v-tooltip.top="'Rafraîchir'" />
               <Button label="Export .ics" icon="pi pi-download" severity="info" size="small" rounded @click="exportMyCoursesICS" :disabled="allMySlots.length === 0" v-tooltip.top="'Télécharger pour Outlook'" />
             </div>
           </div>
@@ -293,9 +333,10 @@
               <h3>Qualité des données planning</h3>
             </div>
             <div class="card-section__toolbar">
+              <Tag v-if="dataQualitySummary" :value="dataQualitySummary.qualityScore == null ? 'Qualité: —' : `Qualité: ${dataQualitySummary.qualityScore}%`" :severity="dataQualitySummary.qualityScore == null ? 'secondary' : dataQualitySummary.qualityScore === 100 ? 'success' : dataQualitySummary.qualityScore >= 90 ? 'warning' : 'danger'" />
               <Tag v-if="dataQuality?.fetchedSlots != null" :value="`Créneaux scannés: ${dataQuality?.fetchedSlots}`" severity="info" />
               <small v-if="dataQualitySummary" class="dq-timestamp">Maj {{ formattedDataQualityTimestamp }}</small>
-              <Button icon="pi pi-refresh" text rounded size="small" @click="loadDataQuality" :loading="dataQualityLoading" v-tooltip.top="'Relancer l\'analyse'" />
+              <Button icon="pi pi-refresh" aria-label="Relancer l'analyse de qualité" text rounded size="small" @click="loadDataQuality" :loading="dataQualityLoading" v-tooltip.top="'Relancer l\'analyse'" />
             </div>
           </div>
 
@@ -323,6 +364,11 @@
               </div>
             </div>
 
+            <div v-else-if="dataQualitySummary?.totalSlots === 0" class="empty-state-small">
+              <i class="pi pi-info-circle"></i>
+              <p>Aucun créneau de vos modules à analyser pour l’année académique active.</p>
+            </div>
+
             <div v-else class="empty-state-small">
               <i class="pi pi-check-circle"></i>
               <p>Les créneaux de vos modules sont complets. Aucun blocage détecté.</p>
@@ -344,22 +390,22 @@
             </div>
           </div>
           <div class="quick-grid">
-            <div class="quick-tile" @click="$router.push('/admin/teachers-assignment')">
+            <RouterLink class="quick-tile" to="/admin/teachers-assignment">
               <div class="quick-tile__icon" style="background: #3b82f6;"><i class="pi pi-users"></i></div>
               <span class="quick-tile__label">Attribution Enseignants</span>
-            </div>
-            <div class="quick-tile" @click="$router.push('/admin/planning/weekly')">
+            </RouterLink>
+            <RouterLink class="quick-tile" to="/admin/planning/weekly">
               <div class="quick-tile__icon" style="background: #8b5cf6;"><i class="pi pi-calendar"></i></div>
               <span class="quick-tile__label">Planning Hebdomadaire</span>
-            </div>
-            <div class="quick-tile" @click="$router.push('/admin/modules')">
+            </RouterLink>
+            <RouterLink class="quick-tile" to="/admin/modules">
               <div class="quick-tile__icon" style="background: #10b981;"><i class="pi pi-book"></i></div>
               <span class="quick-tile__label">Gestion Modules</span>
-            </div>
-            <div class="quick-tile" @click="$router.push('/admin/planning')">
+            </RouterLink>
+            <RouterLink class="quick-tile" to="/admin/planning">
               <div class="quick-tile__icon" style="background: #f59e0b;"><i class="pi pi-th-large"></i></div>
               <span class="quick-tile__label">Structure Minibrique</span>
-            </div>
+            </RouterLink>
           </div>
         </section>
 
@@ -398,7 +444,7 @@
                 <i class="pi pi-calendar"></i>
                 <h3>Vue globale du Planning</h3>
               </div>
-              <Button icon="pi pi-refresh" text rounded @click="loadPlanningOverview" :loading="loadingPlanning" />
+              <Button icon="pi pi-refresh" aria-label="Rafraîchir l'aperçu du planning" text rounded @click="loadPlanningOverview" :loading="loadingPlanning" />
             </div>
             <div class="planning-circles">
               <div class="plan-circle">
@@ -427,7 +473,7 @@
                 <Tag :value="issue.type" :severity="issue.severity" />
                 <span>{{ issue.moduleName }}</span>
                 <span class="issue-row__detail">{{ issue.details }}</span>
-                <Button icon="pi pi-arrow-right" text size="small" @click="goToModule(issue.moduleId)" />
+                <Button icon="pi pi-arrow-right" :aria-label="`Ouvrir le module ${issue.moduleName}`" text size="small" @click="goToModule(issue.moduleId)" />
               </div>
             </div>
             <div v-else class="text-center py-3" style="color: var(--text-color-secondary);">
@@ -452,7 +498,7 @@
                     <strong>{{ alert.title }}</strong>
                     <span>{{ alert.message }}</span>
                   </div>
-                  <Button icon="pi pi-times" text rounded size="small" @click="dismissAlert(alert)" />
+                  <Button icon="pi pi-times" :aria-label="`Fermer l'alerte ${alert.title}`" text rounded size="small" @click="dismissAlert(alert)" />
                 </div>
               </div>
               <div v-else class="no-alerts-banner">
@@ -472,7 +518,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
 import Toast from 'primevue/toast';
 import { useAuthStore } from '@/stores/authStore';
@@ -487,7 +533,14 @@ import MultiSelect from 'primevue/multiselect';
 import planningService from '@/service/planningService';
 import academicYearService from '@/service/academicYearService';
 import { getMyModules, getModulesTeachers, calculateStats } from '@/service/rmDashboardService';
-import { scanPlanningDataQuality, buildDataQualityAlerts } from '@/service/dataQualityService';
+import { analyzePlanningDataQuality, buildDataQualityAlerts } from '@/service/dataQualityService';
+import { buildPostulationRows, fetchPlanningSlotsPaginated } from '@/service/siPostulationService';
+import {
+  assignPostulationTeachers as assignPostulationTeachersSecurely,
+  getRecentPostulationAssignments,
+  undoPostulationAssignment
+} from '@/service/siPostulationAssignmentService';
+import { calculatePlanningHours, countPlanningTeacherConflicts, filterPlanningSlotsByModules } from '@/service/siDashboardAggregationService';
 import { useModules } from '@/composables/useModules';
 import { supabase } from '@/supabase';
 
@@ -536,6 +589,8 @@ const completionPercent = ref(0);
 const loadingPostulations = ref(false);
 const postulationRows = ref([]);
 const assigningSlotIds = ref([]);
+const recentPostulationAssignments = ref([]);
+const undoingAssignmentIds = ref([]);
 
 // Mes cours (section planning enseignant)
 const loadingMySlots = ref(false);
@@ -549,6 +604,7 @@ const courseModulesMap = ref([]);
 const academicStartYear = ref(null);
 const activeAcademicYearId = ref(null);
 const activeYearClassCodes = ref(null);
+const planningSlotsSnapshot = ref([]);
 
 function normalizeClassCode(value) {
   return String(value || '')
@@ -572,19 +628,6 @@ function getClassCodeAliases(value) {
   if (bMatch) aliases.add(`BAC${bMatch[1]}${bMatch[2] || ''}`);
 
   return Array.from(aliases);
-}
-
-function slotInActiveYear(slot) {
-  if (!(activeYearClassCodes.value instanceof Set) || activeYearClassCodes.value.size === 0) return true;
-  const slotClassCodes = [];
-  if (Array.isArray(slot?.class_codes)) slotClassCodes.push(...slot.class_codes);
-  if (slot?.class_code) slotClassCodes.push(slot.class_code);
-  if (slotClassCodes.length === 0) return false;
-
-  return slotClassCodes.some(code => {
-    const aliases = getClassCodeAliases(code);
-    return aliases.some(alias => activeYearClassCodes.value.has(alias));
-  });
 }
 
 const isoWeeksInYear = (year) => {
@@ -715,53 +758,6 @@ function getSlotModuleLabel(code) {
   return mod?.label || mod?.title || code || '—'
 }
 
-function isPostulationLabel(value) {
-  const text = String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-
-  return (
-    text.includes('postulation') ||
-    text.includes('postulat') ||
-    text.includes('repourvoir') ||
-    text.includes('repourv') ||
-    text.includes('reattribuer') ||
-    text.includes('reattrib')
-  );
-}
-
-function getPostulationDayLabel(slot) {
-  const raw = String(slot?.day || '').toLowerCase();
-  const map = {
-    monday: 'Lundi',
-    tuesday: 'Mardi',
-    wednesday: 'Mercredi',
-    thursday: 'Jeudi',
-    friday: 'Vendredi',
-    lundi: 'Lundi',
-    mardi: 'Mardi',
-    mercredi: 'Mercredi',
-    jeudi: 'Jeudi',
-    vendredi: 'Vendredi'
-  };
-
-  if (map[raw]) return map[raw];
-
-  const dayIndex = Number(slot?.day_index);
-  const dayByIndex = {
-    0: 'Lundi',
-    1: 'Mardi',
-    2: 'Mercredi',
-    3: 'Jeudi',
-    4: 'Vendredi',
-    5: 'Distance'
-  };
-
-  return dayByIndex[dayIndex] || slot?.day || '—';
-}
-
 function buildTeacherDisplayName(profileRow, userProfileRow) {
   const fromProfiles = profileRow?.display_name || `${profileRow?.forname || ''} ${profileRow?.family_name || ''}`.trim();
   if (fromProfiles) return fromProfiles;
@@ -775,6 +771,30 @@ function buildTeacherDisplayName(profileRow, userProfileRow) {
 function isMissingTableError(error) {
   const text = String([error?.message, error?.details, error?.hint].filter(Boolean).join(' ')).toLowerCase();
   return Number(error?.status || 0) === 404 || text.includes('not found') || text.includes('could not find the table');
+}
+
+function formatAssignmentDate(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Date inconnue'
+  return date.toLocaleString('fr-CH', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+async function loadRecentAssignments() {
+  const moduleCodes = myModules.value.map(module => module?.code).filter(Boolean)
+  if (!moduleCodes.length) {
+    recentPostulationAssignments.value = []
+    return
+  }
+
+  try {
+    recentPostulationAssignments.value = await getRecentPostulationAssignments(moduleCodes)
+  } catch (error) {
+    if (isMissingTableError(error)) {
+      recentPostulationAssignments.value = []
+      return
+    }
+    console.warn('⚠️ [DashboardRM] Historique des affectations indisponible:', error)
+  }
 }
 
 async function loadRmPostulationVotes() {
@@ -792,31 +812,15 @@ async function loadRmPostulationVotes() {
       return;
     }
 
-    const { data: slotsData, error: slotsError } = await supabase
-      .from('planning_time_slots')
-      .select('*')
-      .in('module_code', moduleCodes);
+    const slotsData = filterPlanningSlotsByModules(planningSlotsSnapshot.value, moduleCodes);
+    const coursesResult = await supabase.from('courses').select('id,name,module_id');
 
-    if (slotsError) throw slotsError;
+    if (coursesResult.error) throw coursesResult.error;
 
-    const postulationSlots = (slotsData || []).filter(slot => {
-      const teachers = extractTeacherEntries(slot?.teachers);
-      const texts = [
-        ...teachers,
-        slot?.teacher,
-        slot?.teacher_name,
-        slot?.teacher_label,
-        slot?.notes,
-        slot?.comment,
-        slot?.commentaire,
-        slot?.status,
-        slot?.assignment_status,
-        slot?.teacher_status,
-        slot?.slot_type,
-        slot?.type
-      ].filter(Boolean);
-
-      return texts.some(isPostulationLabel);
+    const postulationSlots = buildPostulationRows({
+      slots: slotsData,
+      modules: myModules.value,
+      courses: coursesResult.data || []
     });
 
     if (!postulationSlots.length) {
@@ -824,7 +828,7 @@ async function loadRmPostulationVotes() {
       return;
     }
 
-    const slotIds = postulationSlots.map(s => String(s.id));
+    const slotIds = postulationSlots.map(slot => String(slot.slotId));
 
     const { data: votesData, error: votesError } = await supabase
       .from(SLOT_VOTES_TABLE)
@@ -896,34 +900,46 @@ async function loadRmPostulationVotes() {
       });
     }
 
-    const moduleByCode = new Map(myModules.value.map(m => [String(m.code || '').toLowerCase(), m]));
-
     postulationRows.value = postulationSlots.map(slot => {
-      const module = moduleByCode.get(String(slot.module_code || '').toLowerCase());
-      const slotVoters = votesBySlot.get(String(slot.id)) || [];
-
+      const slotVoters = votesBySlot.get(String(slot.slotId)) || [];
       return {
-        slotId: slot.id,
-        moduleCode: slot.module_code || null,
-        moduleNumber: module?.number || slot.module_code || '—',
-        moduleTitle: module?.title || 'Module non trouvé',
-        weekNumber: slot.week_number || '—',
-        dayLabel: getPostulationDayLabel(slot),
-        classCode: slot.class_code || '—',
-        timeRange: `${slot.start_time || '--:--'} - ${slot.end_time || '--:--'}`,
+        ...slot,
         voters: slotVoters,
         voterOptions: slotVoters.map(v => ({ label: `${v.name}${v.email ? ` (${v.email})` : ''}`, value: v.id })),
         selectedTeacherIds: []
       };
-    }).sort((a, b) => {
-      const byModule = String(a.moduleNumber).localeCompare(String(b.moduleNumber));
-      if (byModule !== 0) return byModule;
-      return Number(a.weekNumber || 0) - Number(b.weekNumber || 0);
     });
   } catch (error) {
     console.error('❌ [DashboardRM] Erreur chargement postulations RM:', error);
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les votes de postulation.', life: 3500 });
     postulationRows.value = [];
+  } finally {
+    loadingPostulations.value = false;
+  }
+}
+
+async function refreshPlanningSnapshot() {
+  if (!(activeYearClassCodes.value instanceof Set) || activeYearClassCodes.value.size === 0) {
+    planningSlotsSnapshot.value = [];
+    return planningSlotsSnapshot.value;
+  }
+
+  planningSlotsSnapshot.value = await fetchPlanningSlotsPaginated({
+    classCodes: activeYearClassCodes.value,
+    force: true
+  });
+  return planningSlotsSnapshot.value;
+}
+
+async function refreshRmPostulationVotes() {
+  loadingPostulations.value = true;
+  try {
+    await refreshPlanningSnapshot();
+    await loadRmPostulationVotes();
+    await loadRecentAssignments();
+  } catch (error) {
+    console.error('❌ [DashboardRM] Erreur rafraîchissement postulations RM:', error);
+    toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de rafraîchir les postulations.', life: 3500 });
   } finally {
     loadingPostulations.value = false;
   }
@@ -947,27 +963,10 @@ async function assignPostulationTeachers(row) {
   assigningSlotIds.value = [...assigningSlotIds.value, slotKey];
 
   try {
-    const teacherPayload = selectedTeachers.map(teacher => ({
-      id: teacher.id,
-      name: teacher.name,
-      email: teacher.email || null
-    }));
-
-    const { error: updateError } = await supabase
-      .from('planning_time_slots')
-      .update({ teachers: teacherPayload })
-      .eq('id', row.slotId);
-
-    if (updateError) throw updateError;
-
-    const { error: clearVotesError } = await supabase
-      .from(SLOT_VOTES_TABLE)
-      .delete()
-      .eq('slot_id', row.slotId);
-
-    if (clearVotesError) {
-      console.warn('⚠️ [DashboardRM] Nettoyage votes slot impossible:', clearVotesError);
-    }
+    const assignment = await assignPostulationTeachersSecurely(row.slotId, selectedIds);
+    const teacherLabels = Array.isArray(assignment?.teacher_labels)
+      ? assignment.teacher_labels
+      : teacherNames;
 
     toast.add({
       severity: 'success',
@@ -977,13 +976,44 @@ async function assignPostulationTeachers(row) {
     });
 
     postulationRows.value = postulationRows.value.filter(item => String(item.slotId) !== slotKey);
-    await loadMySlots();
-    await loadAllMySlots();
+    planningSlotsSnapshot.value = planningSlotsSnapshot.value.map(slot =>
+      String(slot?.id) === slotKey ? { ...slot, teachers: teacherLabels } : slot
+    );
+    await loadRecentAssignments();
+    loadMySlots();
+    loadAllMySlots();
+    loadDataQuality();
   } catch (error) {
     console.error('❌ [DashboardRM] Erreur assignation postulation:', error);
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible d\'assigner ce créneau.', life: 3500 });
   } finally {
     assigningSlotIds.value = assigningSlotIds.value.filter(id => id !== slotKey);
+  }
+}
+
+async function undoAssignment(assignment) {
+  const assignmentId = String(assignment?.id || '')
+  if (!assignmentId) return
+
+  undoingAssignmentIds.value = [...undoingAssignmentIds.value, assignmentId]
+  try {
+    const result = await undoPostulationAssignment(assignmentId)
+    toast.add({
+      severity: 'success',
+      summary: 'Affectation annulée',
+      detail: `${Number(result?.restored_voter_count || 0)} vote(s) restauré(s).`,
+      life: 3500
+    })
+    await refreshPlanningSnapshot()
+    await Promise.all([loadRmPostulationVotes(), loadRecentAssignments()])
+    loadMySlots()
+    loadAllMySlots()
+    loadDataQuality()
+  } catch (error) {
+    console.error('❌ [DashboardRM] Erreur annulation affectation:', error)
+    toast.add({ severity: 'error', summary: 'Erreur', detail: "Impossible d’annuler cette affectation.", life: 3500 })
+  } finally {
+    undoingAssignmentIds.value = undoingAssignmentIds.value.filter(id => id !== assignmentId)
   }
 }
 
@@ -1002,11 +1032,11 @@ const modulesByResponsable = computed(() => {
   
   supabaseModules.value.forEach(module => {
     const responsable = module.responsable || 'Non assigné';
-    
+
     if (!byResponsable[responsable]) {
       byResponsable[responsable] = [];
     }
-    
+
     byResponsable[responsable].push({
       id: module.id,
       title: module.title,
@@ -1053,7 +1083,7 @@ const dataQualityIssueCards = computed(() => {
     });
   }
 
-  const teacherIssues = (summary.noTeachersDeclared || 0) + (summary.noValidTeacher || 0);
+  const teacherIssues = summary.teacherIssueSlots ?? summary.noValidTeacher ?? 0;
   if (teacherIssues > 0) {
     items.push({
       id: 'missingTeachers',
@@ -1133,53 +1163,20 @@ async function loadRMData() {
     
     console.log('🔄 Chargement données RM pour:', userEmail);
     
-    // 1. Charger tous les modules (pour la vue d'ensemble)
-    await loadModules();
-    
-    // 2. Charger MES modules (dont je suis responsable)
+    // 1. Charger les données indépendantes en parallèle.
+    await Promise.all([
+      loadModules(),
+      loadUserProfile(),
+      planningService.getAllCourseModules().then(modules => {
+        courseModulesMap.value = modules;
+      })
+    ]);
+
+    // 2. Charger MES modules (dont je suis responsable).
     myModules.value = await getMyModules(userId, userEmail);
     console.log('📚 Mes modules:', myModules.value.length);
-    
-    // 3. Charger les enseignants de mes modules
-    if (myModules.value.length > 0) {
-      myTeachers.value = await getModulesTeachers(myModules.value);
-      console.log('👨‍🏫 Mes enseignants:', myTeachers.value.length);
-      await loadRmPostulationVotes();
-    } else {
-      postulationRows.value = [];
-    }
-    
-    // 4. Calculer les stats de mes modules
-    const stats = calculateStats(myModules.value, myTeachers.value);
-    modulesCount.value = stats.modulesCount;
-    totalHours.value = stats.totalHours;
-    activeModulesCount.value = stats.modulesByYear[1] || 0;
-    draftModulesCount.value = stats.modulesByYear[2] || 0;
-    archivedModulesCount.value = stats.modulesByYear[3] || 0;
-    
-    // 5. Calculer heures assignées
-    hoursAssigned.value = myTeachers.value.reduce((sum, t) => sum + (t.totalHours || 0), 0);
-    hoursPlanned.value = totalHours.value;
-    completionPercent.value = hoursPlanned.value > 0 
-      ? Math.round((hoursAssigned.value / hoursPlanned.value) * 100) 
-      : 0;
-    
-    // 6. Identifier modules sans enseignants
-    modulesWithoutTeachers.value = myModules.value.filter(m => {
-      const moduleTeachers = myTeachers.value.filter(t => 
-        t.courses?.some(c => c.moduleId === m.id)
-      );
-      return moduleTeachers.length === 0;
-    });
-    
-    // 7. Charger la vue d'ensemble du planning
-    await loadPlanningOverview();
-    
-    // 8. Charger profil utilisateur + modules pour la section "Mes cours"
-    await loadUserProfile();
-    courseModulesMap.value = await planningService.getAllCourseModules();
-    
-    // 9. Charger l'année académique active pour le calcul des dates
+
+    // 3. Résoudre l'année académique active avant toute lecture du planning.
     try {
       const activeYear = await academicYearService.getActiveAcademicYear();
       if (activeYear) {
@@ -1212,6 +1209,55 @@ async function loadRMData() {
       activeAcademicYearId.value = null;
       activeYearClassCodes.value = null;
     }
+
+    // 4. Un seul instantané paginé alimente toutes les agrégations du dashboard.
+    if (activeYearClassCodes.value?.size > 0) {
+      await refreshPlanningSnapshot();
+    } else {
+      planningSlotsSnapshot.value = [];
+    }
+
+    // 5. Charger les enseignants sans relire planning_time_slots.
+    if (myModules.value.length > 0) {
+      myTeachers.value = await getModulesTeachers(myModules.value, planningSlotsSnapshot.value);
+      console.log('👨‍🏫 Mes enseignants:', myTeachers.value.length);
+    } else {
+      myTeachers.value = [];
+      postulationRows.value = [];
+    }
+
+    // 6. Calculer les stats de mes modules.
+    const stats = calculateStats(myModules.value, myTeachers.value);
+    modulesCount.value = stats.modulesCount;
+    totalHours.value = stats.totalHours;
+    activeModulesCount.value = stats.modulesByYear[1] || 0;
+    draftModulesCount.value = stats.modulesByYear[2] || 0;
+    archivedModulesCount.value = stats.modulesByYear[3] || 0;
+
+    // 7. Calculer heures assignées.
+    hoursAssigned.value = myTeachers.value.reduce((sum, t) => sum + (t.totalHours || 0), 0);
+    hoursPlanned.value = totalHours.value;
+    completionPercent.value = hoursPlanned.value > 0
+      ? Math.round((hoursAssigned.value / hoursPlanned.value) * 100)
+      : 0;
+
+    // 8. Identifier modules sans enseignants.
+    modulesWithoutTeachers.value = myModules.value.filter(m => {
+      const moduleTeachers = myTeachers.value.filter(t =>
+        t.courses?.some(c => c.moduleId === m.id)
+      );
+      return moduleTeachers.length === 0;
+    });
+
+    // 9. Calculer la vue d'ensemble et les postulations depuis le même instantané.
+    await loadPlanningOverview();
+    if (myModules.value.length > 0 && activeYearClassCodes.value?.size > 0) {
+      await loadRmPostulationVotes();
+      await loadRecentAssignments();
+    } else {
+      postulationRows.value = [];
+      recentPostulationAssignments.value = [];
+    }
     
     // Sélectionner la semaine courante
     const nowW = new Date()
@@ -1223,11 +1269,11 @@ async function loadRMData() {
     const currentWeek = diffW + 1
     if (currentWeek >= 1 && currentWeek <= 53) {
       mySlotsWeek.value = currentWeek
-      await loadMySlots()
+      loadMySlots()
     }
     // Pré-charger tous les slots pour l'export ICS
-    await loadAllMySlots();
-    await loadDataQuality();
+    loadAllMySlots();
+    loadDataQuality();
     generateAlerts();
     
     console.log('✅ Données RM chargées');
@@ -1421,18 +1467,16 @@ function filterMySlots(slots) {
 /**
  * Charge les cours de l'enseignant pour la semaine sélectionnée
  */
-async function loadMySlots() {
+function loadMySlots() {
   if (!mySlotsWeek.value) return
   loadingMySlots.value = true
   try {
-    const { data, error } = await supabase
-      .from('planning_time_slots')
-      .select('*')
-      .eq('week_number', mySlotsWeek.value)
-      .order('day_index', { ascending: true })
-      .order('start_time', { ascending: true })
-    if (error) throw error
-    mySlots.value = filterMySlots(data).filter(slotInActiveYear)
+    mySlots.value = filterMySlots(planningSlotsSnapshot.value)
+      .filter(slot => Number(slot?.week_number) === Number(mySlotsWeek.value))
+      .sort((left, right) =>
+        Number(left?.day_index ?? 99) - Number(right?.day_index ?? 99)
+        || String(left?.start_time || '').localeCompare(String(right?.start_time || ''))
+      )
   } catch (err) {
     console.error('Erreur chargement mes cours:', err)
     mySlots.value = []
@@ -1444,49 +1488,21 @@ async function loadMySlots() {
 /**
  * Charge TOUS les cours de l'année pour l'export ICS
  */
-async function loadAllMySlots() {
+function loadAllMySlots() {
   try {
-    const { data, error } = await supabase
-      .from('planning_time_slots')
-      .select('*')
-      .order('week_number', { ascending: true })
-      .order('day_index', { ascending: true })
-      .order('start_time', { ascending: true })
-    if (error) throw error
-    allMySlots.value = filterMySlots(data).filter(slotInActiveYear)
+    allMySlots.value = filterMySlots(planningSlotsSnapshot.value)
+      .sort((left, right) =>
+        Number(left?.week_number ?? 99) - Number(right?.week_number ?? 99)
+        || Number(left?.day_index ?? 99) - Number(right?.day_index ?? 99)
+        || String(left?.start_time || '').localeCompare(String(right?.start_time || ''))
+      )
   } catch (err) {
     console.error('Erreur chargement tous mes cours:', err)
     allMySlots.value = []
   }
 }
 
-function summarizeDataQualityIssues(rows = []) {
-  const summary = {
-    totalSlots: rows.length,
-    missingCourseLink: 0,
-    noTeachersDeclared: 0,
-    noValidTeacher: 0,
-    missingActivity: 0,
-    missingRoom: 0,
-    missingTime: 0,
-    invalidTime: 0
-  };
-
-  rows.forEach(row => {
-    const issues = row?.issues || [];
-    if (issues.includes('missing_course_link')) summary.missingCourseLink++;
-    if (issues.includes('no_teachers_declared')) summary.noTeachersDeclared++;
-    if (issues.includes('no_valid_teacher')) summary.noValidTeacher++;
-    if (issues.includes('missing_activity')) summary.missingActivity++;
-    if (issues.includes('missing_room')) summary.missingRoom++;
-    if (issues.includes('missing_time')) summary.missingTime++;
-    if (issues.includes('invalid_time')) summary.invalidTime++;
-  });
-
-  return summary;
-}
-
-async function loadDataQuality() {
+function loadDataQuality() {
   dataQualityLoading.value = true;
   try {
     const moduleCodes = Array.from(new Set(myModules.value.map(m => m.code).filter(Boolean)));
@@ -1495,18 +1511,15 @@ async function loadDataQuality() {
       return;
     }
 
-    const result = await scanPlanningDataQuality({
-      academicYearId: activeAcademicYearId.value || undefined,
-      includeRows: true,
-      limit: 5000
-    });
+    const scopedSlots = filterPlanningSlotsByModules(planningSlotsSnapshot.value, moduleCodes);
+    const result = analyzePlanningDataQuality(scopedSlots, { includeRows: true });
     if (!result) {
       dataQuality.value = null;
       return;
     }
 
-    const filteredRows = (result.rows || []).filter(row => moduleCodes.includes(row.moduleCode));
-    const summary = summarizeDataQualityIssues(filteredRows);
+    const filteredRows = result.rows || [];
+    const summary = result.summary;
 
     dataQuality.value = {
       fetchedSlots: filteredRows.length,
@@ -1518,7 +1531,7 @@ async function loadDataQuality() {
     console.info('[DashboardRM] DataQuality scan', {
       fetchedSlots: filteredRows.length,
       missingCourseLink: summary.missingCourseLink,
-      missingTeachers: (summary.noTeachersDeclared || 0) + (summary.noValidTeacher || 0),
+      missingTeachers: summary.teacherIssueSlots || 0,
       missingActivity: summary.missingActivity,
       missingRoom: summary.missingRoom,
       invalidTime: summary.invalidTime,
@@ -1640,60 +1653,32 @@ async function loadPlanningOverview() {
   try {
     const moduleCodes = myModules.value.map(m => m.code).filter(Boolean);
     
-    // 1. Charger les validations
-    const { data: validations } = await supabase
-      .from('planning_validations')
-      .select('*')
-      .in('module_code', moduleCodes);
+    // Les seules lectures restantes concernent des tables métier distinctes.
+    const [validationsResult, budgetsResult] = await Promise.all([
+      supabase.from('planning_validations').select('*').in('module_code', moduleCodes),
+      supabase.from('module_hours_budget').select('*').in('module_code', moduleCodes)
+    ]);
+    if (validationsResult.error) throw validationsResult.error;
+    if (budgetsResult.error) throw budgetsResult.error;
+
+    const validations = validationsResult.data || [];
+    const budgets = budgetsResult.data || [];
     
-    const validatedCount = (validations || []).filter(v => v.status === 'validated').length;
-    const pendingCount = (validations || []).filter(v => v.status === 'pending').length;
+    const validatedCount = validations.filter(v => v.status === 'validated').length;
+    const pendingCount = validations.filter(v => v.status === 'pending').length;
     const totalModules = myModules.value.length;
     
     planningStats.value.validatedPercent = totalModules > 0 ? Math.round((validatedCount / totalModules) * 100) : 0;
     planningStats.value.pendingCount = pendingCount;
     
-    // 2. Charger les créneaux pour détecter les conflits
-    const { data: slots } = await supabase
-      .from('planning_time_slots')
-      .select('*')
-      .in('module_code', moduleCodes);
+    // Les créneaux viennent de l'instantané unique et les conflits sont regroupés
+    // par semaine/jour avant comparaison.
+    const slotsList = filterPlanningSlotsByModules(planningSlotsSnapshot.value, moduleCodes);
+    planningStats.value.conflictsCount = countPlanningTeacherConflicts(slotsList);
+
+    const plannedHours = calculatePlanningHours(slotsList);
     
-    // Détecter les conflits (même prof, même jour, même heure)
-    let conflictsCount = 0;
-    const slotsList = slots || [];
-    for (let i = 0; i < slotsList.length; i++) {
-      for (let j = i + 1; j < slotsList.length; j++) {
-        const a = slotsList[i], b = slotsList[j];
-        if (a.week_number === b.week_number && a.day === b.day) {
-          const overlap = (a.start_time || '00:00') < (b.end_time || '23:59') && 
-                          (b.start_time || '00:00') < (a.end_time || '23:59');
-          if (overlap) {
-            const teachersA = (a.teachers || []).map(t => typeof t === 'object' ? t.name : t);
-            const teachersB = (b.teachers || []).map(t => typeof t === 'object' ? t.name : t);
-            if (teachersA.some(t => teachersB.includes(t))) {
-              conflictsCount++;
-            }
-          }
-        }
-      }
-    }
-    planningStats.value.conflictsCount = conflictsCount;
-    
-    // 3. Charger les budgets heures
-    const { data: budgets } = await supabase
-      .from('module_hours_budget')
-      .select('*')
-      .in('module_code', moduleCodes);
-    
-    const plannedHours = slotsList.reduce((sum, s) => {
-      if (!s.start_time || !s.end_time) return sum;
-      const [sh, sm] = s.start_time.split(':').map(Number);
-      const [eh, em] = s.end_time.split(':').map(Number);
-      return sum + (eh + em/60) - (sh + sm/60);
-    }, 0);
-    
-    const budgetHours = (budgets || []).reduce((sum, b) => sum + (b.planned_hours || 0), 0) || 
+    const budgetHours = budgets.reduce((sum, b) => sum + (b.planned_hours || 0), 0) ||
                         myModules.value.reduce((sum, m) => sum + (m.heures_contact || 0), 0);
     
     planningStats.value.hoursDiff = Math.round((plannedHours - budgetHours) * 10) / 10;
@@ -1703,7 +1688,7 @@ async function loadPlanningOverview() {
     
     myModules.value.forEach(m => {
       const moduleSlots = slotsList.filter(s => s.module_code === m.code);
-      const moduleValidation = (validations || []).find(v => v.module_code === m.code);
+      const moduleValidation = validations.find(v => v.module_code === m.code);
       
       // Pas de planning
       if (moduleSlots.length === 0) {
@@ -1728,12 +1713,7 @@ async function loadPlanningOverview() {
       }
       
       // Heures insuffisantes
-      const moduleHours = moduleSlots.reduce((sum, s) => {
-        if (!s.start_time || !s.end_time) return sum;
-        const [sh, sm] = s.start_time.split(':').map(Number);
-        const [eh, em] = s.end_time.split(':').map(Number);
-        return sum + (eh + em/60) - (sh + sm/60);
-      }, 0);
+      const moduleHours = calculatePlanningHours(moduleSlots);
       const expectedHours = m.heures_contact || 0;
       if (expectedHours > 0 && moduleHours < expectedHours * 0.8) {
         issues.push({
@@ -2010,6 +1990,63 @@ function generateAlerts() {
   min-width: 240px;
 }
 
+.rm-course-title {
+  margin-top: 0.3rem;
+  max-width: 30rem;
+  color: var(--text-color);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.rm-assignment-history {
+  margin-top: 1.25rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+.rm-assignment-history__heading,
+.rm-assignment-history__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rm-assignment-history__heading p {
+  margin: 0.25rem 0 0;
+  color: var(--text-color-secondary);
+  font-size: 0.82rem;
+}
+
+.rm-assignment-history__list {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.rm-assignment-history__item {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.75rem;
+  background: var(--surface-ground);
+}
+
+.rm-assignment-history__item > div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.rm-assignment-history__item span,
+.rm-assignment-history__item small {
+  overflow-wrap: anywhere;
+  color: var(--text-color-secondary);
+}
+
+.rm-assignment-history__item small {
+  font-size: 0.76rem;
+}
+
 .slot-row {
   display: flex; align-items: center; gap: 0.75rem;
   padding: 0.6rem 1rem; background: var(--surface-ground); border-radius: 8px;
@@ -2037,7 +2074,10 @@ function generateAlerts() {
   padding: 1.25rem 1rem; border-radius: 1rem; cursor: pointer;
   background: var(--surface-ground); border: 1px solid var(--surface-border);
   transition: all 0.25s;
+  color: inherit;
+  text-decoration: none;
 }
+.quick-tile:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 3px; }
 .quick-tile:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-color: var(--primary-color); }
 
 .quick-tile__icon {
@@ -2183,16 +2223,79 @@ function generateAlerts() {
   .week-calendar { grid-template-columns: repeat(3, 1fr); }
 }
 
+@media (max-width: 700px) {
+  .rm-assignment-history__heading,
+  .rm-assignment-history__item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rm-assignment-history__item :deep(.p-button) {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
 @media (max-width: 768px) {
-  .dashboard-rm { padding: 1rem; }
+  .dashboard-rm { padding: .25rem 0 1rem; }
   .stats-row { grid-template-columns: 1fr; }
   .two-col { grid-template-columns: 1fr; }
-  .quick-grid { grid-template-columns: repeat(2, 1fr); }
+  .quick-grid { grid-template-columns: 1fr; }
   .planning-circles { grid-template-columns: repeat(2, 1fr); }
   .week-calendar { grid-template-columns: 1fr; }
   .slot-row { flex-direction: column; align-items: flex-start; }
   .slot-row__tags { flex-wrap: wrap; }
   .card-section__header { flex-direction: column; align-items: flex-start; }
   .card-section__toolbar { width: 100%; flex-wrap: wrap; }
+
+  .card-section {
+    padding: 1rem;
+  }
+
+  .card-section__toolbar :deep(.p-button),
+  .card-section__toolbar :deep(.p-dropdown),
+  .card-section__toolbar :deep(.p-multiselect) {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .module-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 1rem;
+  }
+
+  .module-card__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .module-card__actions :deep(.p-button) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .rm-postulation-table-wrap {
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+    scrollbar-width: thin;
+  }
+
+  .rm-postulation-table-wrap::after {
+    content: 'Faites glisser horizontalement pour voir toutes les colonnes';
+    display: block;
+    padding: .65rem 0 0;
+    color: var(--text-color-secondary);
+    font-size: .75rem;
+  }
+
+  .rm-postulation-select {
+    min-width: 210px;
+  }
+}
+
+@media (max-width: 480px) {
+  .planning-circles { grid-template-columns: 1fr; }
+  .stat-card { padding: 1rem; }
 }
 </style>

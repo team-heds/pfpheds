@@ -7,6 +7,7 @@
         :severity="stateSeverity"
         size="small"
         rounded
+        :aria-label="stateTooltip"
         @click="cycleState"
         v-tooltip.top="stateTooltip"
       />
@@ -16,6 +17,7 @@
         size="small"
         rounded
         outlined
+        :aria-label="comment ? 'Modifier le commentaire' : 'Ajouter un commentaire'"
         @click="toggleCommentDialog"
         v-tooltip.top="comment ? 'Modifier le commentaire' : 'Ajouter un commentaire'"
       />

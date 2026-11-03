@@ -1,13 +1,13 @@
 <template>
-  <div class="p-4">
+  <div class="p-4 gamification-manager">
     <!-- Header simplifié -->
-    <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border">
+    <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border manager-toolbar">
       <div class="flex align-items-center gap-3">
         <div class="bg-red-50 w-3rem h-3rem border-circle flex align-items-center justify-content-center">
           <i class="pi pi-star text-red-500 text-xl"></i>
         </div>
         <div>
-          <h2 class="text-2xl font-bold text-900 m-0">Gestion des Badges</h2>
+          <h2 class="text-2xl font-bold text-900 m-0">Badges</h2>
           <p class="text-600 m-0">Créez et gérez vos badges de récompense</p>
         </div>
       </div>
@@ -16,19 +16,20 @@
         @click="showCreateDialog = true; resetForm()"
         icon="pi pi-plus"
         label="Nouveau Badge"
-        class="p-button-success"
+        class="p-button-success manager-primary-action"
       />
     </div>
 
     <!-- Filtres et recherche -->
     <div class="mb-4">
-      <div class="flex flex-wrap gap-3 align-items-center">
-        <div class="p-inputgroup" style="min-width: 300px">
+      <div class="flex flex-wrap gap-3 align-items-center manager-filters">
+        <div class="p-inputgroup manager-search" style="min-width: 300px">
           <span class="p-inputgroup-addon">
             <i class="pi pi-search"></i>
           </span>
           <InputText 
             v-model="searchQuery" 
+            aria-label="Rechercher un badge"
             placeholder="Rechercher un badge..."
             @input="filterBadges"
           />
@@ -36,6 +37,7 @@
         
         <Dropdown 
           v-model="selectedCategory" 
+          aria-label="Filtrer les badges par catégorie"
           :options="categoryOptions" 
           optionLabel="label" 
           optionValue="value"
@@ -46,6 +48,7 @@
         
         <Dropdown 
           v-model="selectedRarity" 
+          aria-label="Filtrer les badges par rareté"
           :options="rarityOptions" 
           optionLabel="label" 
           optionValue="value"
@@ -87,16 +90,18 @@
                 <div class="flex gap-2 mb-2">
                   <Tag :value="getCategoryLabel(badge.category)" :severity="getCategorySeverity(badge.category)" />
                   <Tag :value="getRarityLabel(badge.rarity)" :severity="getRaritySeverity(badge.rarity)" />
+                  <Tag :value="badge.active ? 'Actif' : 'Inactif'" :severity="badge.active ? 'success' : 'secondary'" />
                 </div>
               </div>
             </div>
             
             <p class="text-600 line-height-3 mb-3">{{ badge.description }}</p>
+            <p class="text-700 font-medium mb-3"><i class="pi pi-check-circle mr-2"></i>{{ badge.conditionLabel }}</p>
             
             <div class="grid text-center mb-3">
               <div class="col-4">
                 <div class="text-900 font-semibold">{{ badge.points }}</div>
-                <div class="text-600 text-sm">Points</div>
+                <div class="text-600 text-sm">Bonus XP</div>
               </div>
               <div class="col-4">
                 <div class="text-900 font-semibold">{{ badge.unlockedCount || 0 }}</div>
@@ -113,6 +118,7 @@
                 v-if="canEditBadges"
                 @click="editBadge(badge)"
                 icon="pi pi-pencil"
+                :aria-label="`Modifier le badge ${badge.name}`"
                 class="p-button-text p-button-info p-button-sm"
                 v-tooltip="'Modifier'"
               />
@@ -120,12 +126,14 @@
                 v-if="canDeleteBadges"
                 @click="confirmDeleteBadge(badge)"
                 icon="pi pi-trash"
+                :aria-label="`Désactiver le badge ${badge.name}`"
                 class="p-button-text p-button-danger p-button-sm"
-                v-tooltip="'Supprimer'"
+                v-tooltip="'Désactiver'"
               />
               <Button 
                 @click="viewBadgeDetails(badge)"
                 icon="pi pi-eye"
+                :aria-label="`Voir les détails du badge ${badge.name}`"
                 class="p-button-text p-button-sm"
                 v-tooltip="'Voir détails'"
               />
@@ -141,13 +149,15 @@
       :header="editingBadge ? 'Modifier le Badge' : 'Nouveau Badge'"
       :modal="true"
       :closable="true"
-      :style="{ width: '600px' }"
+      :style="{ width: 'min(720px, calc(100vw - 2rem))', maxHeight: 'calc(100vh - 2rem)' }"
+      :contentStyle="{ overflowY: 'auto' }"
+      class="gamification-form-dialog"
     >
       <div class="badge-form">
         <div class="form-group">
-          <label for="name">Nom *</label>
+          <label for="badge-name">Nom *</label>
           <InputText 
-            id="name"
+            id="badge-name"
             v-model="badgeForm.name" 
             placeholder="Nom du badge"
             :class="{ 'p-invalid': errors.name }"
@@ -156,9 +166,9 @@
         </div>
         
         <div class="form-group">
-          <label for="description">Description *</label>
+          <label for="badge-description">Description *</label>
           <Textarea 
-            id="description"
+            id="badge-description"
             v-model="badgeForm.description" 
             placeholder="Description du badge"
             rows="3"
@@ -169,9 +179,10 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label for="category">Catégorie *</label>
+            <label for="badge-category">Catégorie *</label>
             <Dropdown 
-              id="category"
+              inputId="badge-category"
+              aria-label="Catégorie du badge"
               v-model="badgeForm.category" 
               :options="categoryOptions.filter(c => c.value)" 
               optionLabel="label" 
@@ -183,9 +194,10 @@
           </div>
           
           <div class="form-group">
-            <label for="rarity">Rareté *</label>
+            <label for="badge-rarity">Rareté *</label>
             <Dropdown 
-              id="rarity"
+              inputId="badge-rarity"
+              aria-label="Rareté du badge"
               v-model="badgeForm.rarity" 
               :options="rarityOptions.filter(r => r.value)" 
               optionLabel="label" 
@@ -199,11 +211,12 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label for="points">Points *</label>
+            <label for="badge-points">Points *</label>
             <InputNumber 
-              id="points"
+              inputId="badge-points"
+              aria-label="Points attribués par le badge"
               v-model="badgeForm.points" 
-              :min="1"
+              :min="0"
               :max="500"
               placeholder="Points"
               :class="{ 'p-invalid': errors.points }"
@@ -212,23 +225,33 @@
           </div>
           
           <div class="form-group">
-            <label for="icon">Icône</label>
+            <label for="badge-icon">Icône</label>
             <InputText 
-              id="icon"
+              id="badge-icon"
               v-model="badgeForm.icon" 
               placeholder="pi pi-star"
             />
           </div>
         </div>
         
+        <div class="form-row">
+          <div class="form-group">
+            <label for="badge-condition-type">Condition *</label>
+            <Dropdown inputId="badge-condition-type" aria-label="Condition de déblocage du badge" v-model="badgeForm.conditionType" :options="conditionOptions" optionLabel="label" optionValue="value" />
+          </div>
+          <div class="form-group">
+            <label for="badge-condition-target">Valeur cible *</label>
+            <InputNumber inputId="badge-condition-target" aria-label="Valeur cible du badge" v-model="badgeForm.conditionTarget" :min="1" />
+          </div>
+        </div>
+        <div v-if="badgeForm.conditionType === 'action_count'" class="form-group">
+          <label for="badge-action-type">Action vérifiée *</label>
+          <Dropdown inputId="badge-action-type" aria-label="Action vérifiée pour le badge" v-model="badgeForm.actionType" :options="actionOptions" optionLabel="label" optionValue="value" />
+        </div>
+        <small v-if="errors.condition" class="p-error">{{ errors.condition }}</small>
         <div class="form-group">
-          <label for="requirements">Conditions d'obtention</label>
-          <Textarea 
-            id="requirements"
-            v-model="badgeForm.requirements" 
-            placeholder="Comment obtenir ce badge"
-            rows="2"
-          />
+          <label for="badge-active">État</label>
+          <Dropdown inputId="badge-active" aria-label="État du badge" v-model="badgeForm.isActive" :options="activeOptions" optionLabel="label" optionValue="value" />
         </div>
       </div>
       
@@ -247,18 +270,18 @@
       </template>
     </Dialog>
 
-    <!-- Dialog de confirmation de suppression -->
+    <!-- Dialog de confirmation de désactivation -->
     <Dialog 
       v-model:visible="showDeleteDialog" 
-      header="Confirmer la suppression"
+      header="Confirmer la désactivation"
       :modal="true"
       :closable="true"
       :style="{ width: '400px' }"
     >
       <div class="delete-confirmation">
         <i class="pi pi-exclamation-triangle warning-icon"></i>
-        <p>Êtes-vous sûr de vouloir supprimer le badge <strong>"{{ badgeToDelete?.name }}"</strong> ?</p>
-        <p class="warning-text">Cette action est irréversible.</p>
+        <p>Désactiver le badge <strong>"{{ badgeToDelete?.name }}"</strong> ?</p>
+        <p class="warning-text">Son historique sera conservé et il restera visible ici.</p>
       </div>
       
       <template #footer>
@@ -269,7 +292,7 @@
         />
         <Button 
           @click="deleteBadge" 
-          label="Supprimer"
+          label="Désactiver"
           :loading="deleting"
           class="p-button-danger"
         />
@@ -289,8 +312,7 @@ import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
-import adminService from '../../service/adminService'
-import rolesService, { PERMISSIONS } from '../../service/rolesService'
+import adminBadgesService, { BADGE_ACTIONS } from '../../service/adminBadgesService'
 
 const toast = useToast()
 
@@ -318,9 +340,12 @@ const badgeForm = reactive({
   description: '',
   category: '',
   rarity: '',
-  points: 10,
+  points: 0,
   icon: 'pi pi-star',
-  requirements: ''
+  conditionType: 'total_xp',
+  conditionTarget: 100,
+  actionType: 'POST',
+  isActive: true
 })
 
 const errors = ref({})
@@ -343,6 +368,17 @@ const rarityOptions = [
   { label: 'Légendaire', value: 'legendary' }
 ]
 
+const conditionOptions = [
+  { label: 'XP cumulés', value: 'total_xp' },
+  { label: 'Niveau atteint', value: 'level' },
+  { label: 'Nombre d’actions validées', value: 'action_count' }
+]
+const actionOptions = BADGE_ACTIONS
+const activeOptions = [
+  { label: 'Actif — peut progresser', value: true },
+  { label: 'Inactif — historique uniquement', value: false }
+]
+
 // Permissions supprimées - accès libre pour le développement
 const canCreateBadges = computed(() => true)
 const canEditBadges = computed(() => true)
@@ -352,11 +388,7 @@ const canDeleteBadges = computed(() => true)
 const loadBadges = async () => {
   try {
     loading.value = true
-    const data = await adminService.getBadges()
-    badges.value = Object.keys(data || {}).map(key => ({
-      id: key,
-      ...data[key]
-    }))
+    badges.value = await adminBadgesService.getBadges()
     filterBadges()
   } catch (error) {
     console.error('Erreur lors du chargement des badges:', error)
@@ -399,9 +431,12 @@ const resetForm = () => {
     description: '',
     category: '',
     rarity: '',
-    points: 10,
+    points: 0,
     icon: 'pi pi-star',
-    requirements: ''
+    conditionType: 'total_xp',
+    conditionTarget: 100,
+    actionType: 'POST',
+    isActive: true
   })
   errors.value = {}
   editingBadge.value = null
@@ -426,8 +461,16 @@ const validateForm = () => {
     errors.value.rarity = 'La rareté est requise'
   }
   
-  if (!badgeForm.points || badgeForm.points < 1) {
-    errors.value.points = 'Les points doivent être supérieurs à 0'
+  if (badgeForm.points === null || badgeForm.points < 0) {
+    errors.value.points = 'Le bonus XP ne peut pas être négatif'
+  }
+
+  if (!badgeForm.conditionTarget || badgeForm.conditionTarget < 1) {
+    errors.value.condition = 'La valeur cible doit être supérieure à 0'
+  }
+
+  if (badgeForm.conditionType === 'action_count' && !badgeForm.actionType) {
+    errors.value.condition = 'L’action vérifiée est requise'
   }
   
   return Object.keys(errors.value).length === 0
@@ -444,13 +487,16 @@ const saveBadge = async () => {
       description: badgeForm.description.trim(),
       category: badgeForm.category,
       rarity: badgeForm.rarity,
-      points: badgeForm.points,
+      xpBonus: badgeForm.points,
       icon: badgeForm.icon.trim() || 'pi pi-star',
-      requirements: badgeForm.requirements.trim()
+      conditionType: badgeForm.conditionType,
+      conditionTarget: badgeForm.conditionTarget,
+      actionType: badgeForm.actionType,
+      isActive: badgeForm.isActive
     }
     
     if (editingBadge.value) {
-      await adminService.updateBadge(editingBadge.value.id, badgeData)
+      await adminBadgesService.updateBadge(editingBadge.value.id, badgeData)
       toast.add({
         severity: 'success',
         summary: 'Succès',
@@ -458,7 +504,7 @@ const saveBadge = async () => {
         life: 3000
       })
     } else {
-      await adminService.createBadge(badgeData)
+      await adminBadgesService.createBadge(badgeData)
       toast.add({
         severity: 'success',
         summary: 'Succès',
@@ -491,9 +537,12 @@ const editBadge = (badge) => {
     description: badge.description || '',
     category: badge.category || '',
     rarity: badge.rarity || '',
-    points: badge.points || 10,
+    points: badge.points || 0,
     icon: badge.icon || 'pi pi-star',
-    requirements: badge.requirements || ''
+    conditionType: badge.condition?.type || 'total_xp',
+    conditionTarget: badge.condition?.target || 1,
+    actionType: badge.condition?.actionType || 'POST',
+    isActive: badge.active
   })
   showCreateDialog.value = true
 }
@@ -508,12 +557,12 @@ const deleteBadge = async () => {
   
   try {
     deleting.value = true
-    await adminService.deleteBadge(badgeToDelete.value.id)
+    await adminBadgesService.deactivateBadge(badgeToDelete.value.id)
     
     toast.add({
       severity: 'success',
       summary: 'Succès',
-      detail: 'Badge supprimé avec succès',
+      detail: 'Badge désactivé, historique conservé',
       life: 3000
     })
     
@@ -522,11 +571,11 @@ const deleteBadge = async () => {
     await loadBadges()
     
   } catch (error) {
-    console.error('Erreur lors de la suppression:', error)
+    console.error('Erreur lors de la désactivation:', error)
     toast.add({
       severity: 'error',
       summary: 'Erreur',
-      detail: error.message || 'Erreur lors de la suppression',
+      detail: error.message || 'Erreur lors de la désactivation',
       life: 3000
     })
   } finally {
@@ -604,5 +653,51 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Styles personnalisés supprimés - utilisation exclusive de PrimeVue et classes utilitaires */
+.badge-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.badge-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.badge-form .form-group {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.badge-form label {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.badge-form :deep(.p-inputtext),
+.badge-form :deep(.p-inputnumber),
+.badge-form :deep(.p-dropdown) {
+  width: 100%;
+}
+
+:deep(.gamification-form-dialog .p-dialog-content) {
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  .gamification-manager { padding: 1rem 0 !important; }
+  .manager-toolbar { align-items: stretch !important; flex-direction: column; gap: 1rem; }
+  .manager-primary-action { width: 100%; justify-content: center; }
+  .manager-filters { align-items: stretch !important; flex-direction: column; }
+  .manager-search { width: 100%; min-width: 0 !important; }
+  .manager-filters :deep(.p-dropdown) { width: 100%; min-width: 0 !important; }
+  .badge-form .form-row { grid-template-columns: 1fr; }
+  :deep(.gamification-form-dialog .p-dialog-header),
+  :deep(.gamification-form-dialog .p-dialog-content),
+  :deep(.gamification-form-dialog .p-dialog-footer) { padding-left: 1rem; padding-right: 1rem; }
+  :deep(.gamification-form-dialog .p-dialog-footer) { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+  :deep(.gamification-form-dialog .p-dialog-footer .p-button) { width: 100%; justify-content: center; margin: 0; }
+}
 </style>

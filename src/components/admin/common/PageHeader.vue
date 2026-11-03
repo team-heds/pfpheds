@@ -4,7 +4,7 @@
       <div class="title-wrap">
         <i v-if="icon" :class="icon" class="title-icon" />
         <div>
-          <h1 class="title">{{ title }}</h1>
+          <h1 class="title" tabindex="-1">{{ title }}</h1>
           <p v-if="subtitle" class="subtitle">{{ subtitle }}</p>
         </div>
       </div>
@@ -41,4 +41,43 @@ defineProps({
 .subtitle { margin: .25rem 0 0; color: var(--text-color-secondary); font-size: .95rem; }
 .actions :deep(> *) { margin-left: .5rem; }
 .header-extra { margin-top: .75rem; }
+
+@media (max-width: 640px) {
+  .page-header {
+    padding: .9rem 1rem;
+    margin-bottom: .75rem;
+  }
+
+  .title-row,
+  .actions {
+    width: 100%;
+  }
+
+  .title-wrap {
+    align-items: flex-start;
+    min-width: 0;
+  }
+
+  .title {
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-size: .875rem;
+    line-height: 1.45;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+
+  .actions :deep(> *) {
+    width: 100%;
+    min-height: 44px;
+    margin-left: 0;
+  }
+}
 </style>
