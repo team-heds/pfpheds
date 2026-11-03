@@ -81,6 +81,19 @@ describe('local PFP population preflight', () => {
     expect(inspectPfpPopulation(input).summary.issueCounts.inactive_or_unverified_respondent).toBe(1)
   })
 
+  it('accepts a respondent pair only when both members are known and active', () => {
+    const input = snapshot()
+    input.physioStudents[0].repondant_hes = 'Example Tutor / Second Tutor'
+    input.respondents.push({ first_name: 'Second', last_name: 'Tutor', is_active: true })
+    expect(inspectPfpPopulation(input).populationReady).toBe(true)
+
+    input.respondents[1].is_active = false
+    expect(inspectPfpPopulation(input).summary.issueCounts.inactive_or_unverified_respondent).toBe(1)
+
+    input.respondents.pop()
+    expect(inspectPfpPopulation(input).summary.issueCounts.unknown_respondent).toBe(1)
+  })
+
   it('never considers missing, empty or incomplete sources ready', () => {
     const input = snapshot()
     expect(() => inspectPfpPopulation({ ...input, profiles: undefined })).toThrow()

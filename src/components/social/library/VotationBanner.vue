@@ -32,6 +32,8 @@ import Tag from 'primevue/tag'
 import votationSessionService from '@/service/votationSessionService'
 import { useUserStore } from '@/stores/userStore'
 import { supabase } from '@/supabase'
+import { runtimeFeatures } from '@/config/runtimeFeatures'
+import { removeAssignedCampaigns } from '@/service/votationEligibilityService'
 
 export default {
   name: 'VotationBanner',
@@ -89,12 +91,13 @@ export default {
           // Pas de classe — essayer de récupérer toutes les sessions ouvertes et filtrer par userId
           if (!currentUserId) return
           const allSessions = await votationSessionService.getAllActiveSessions()
-          this.openSessions = allSessions.filter(s => {
+          const visibleSessions = allSessions.filter(s => {
             if (s.is_priority && Array.isArray(s.priority_user_ids)) {
               return s.priority_user_ids.includes(currentUserId)
             }
             return false // Sans classe, on ne montre que les sessions prioritaires où l'étudiant est listé
           })
+          this.openSessions = await removeAssignedCampaigns(currentUserId, visibleSessions)
           return
         }
 
@@ -121,13 +124,17 @@ export default {
         })
         prioritySessions.forEach(s => sessionMap.set(s.id, s))
 
-        this.openSessions = Array.from(sessionMap.values())
+        this.openSessions = await removeAssignedCampaigns(
+          currentUserId,
+          Array.from(sessionMap.values())
+        )
       } catch (error) {
         console.error('Erreur chargement sessions votation:', error)
         this.openSessions = []
       }
     },
     subscribeRealtime() {
+      if (!runtimeFeatures.supabaseRealtime) return
       try {
         this.realtimeChannel = supabase
           .channel('votation-sessions-realtime')

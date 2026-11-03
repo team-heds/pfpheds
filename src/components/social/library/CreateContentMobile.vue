@@ -36,6 +36,7 @@ import { ref as dbRef, push, set } from 'firebase/database';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { supabase } from '@/supabase.js';
 import { useAuthStore } from '@/stores/authStore';
+import gamificationIntegration from '@/service/gamificationIntegration';
 
 export default {
   name: 'CreateContentMobile',
@@ -174,6 +175,16 @@ export default {
               if (mErr) throw mErr;
             }
           }
+          await gamificationIntegration.onSocialInteraction(user.id, {
+            action: 'post',
+            targetType: 'post',
+            targetId: inserted.id,
+            postLength: String(postData.content || '').replace(/<[^>]+>/g, '').trim().length,
+            hasMedia: rows.length > 0,
+            hashtagsCount: Object.keys(hashtags).length,
+            mentionsCount: Object.keys(mentions).length,
+            timestamp: Date.now(),
+          });
           this.$toast && this.$toast.add({severity:'success', summary:'Post publié', life: 2000});
           this.goBack();
         } else {

@@ -170,6 +170,19 @@ describe('passwordRecoveryService', () => {
     })
   })
 
+  it('normalise l’adresse avant de vérifier le code de récupération', async () => {
+    const auth = createAuth()
+    const recovery = createPasswordRecoveryService(auth, createNavigation())
+
+    await recovery.authorizeWithOtp('  Student@Example.CH  ', '123456')
+
+    expect(auth.verifyOtp).toHaveBeenCalledWith({
+      email: 'student@example.ch',
+      token: '123456',
+      type: 'recovery'
+    })
+  })
+
   it('refuse un changement sans preuve de récupération', async () => {
     const auth = createAuth()
     const recovery = createPasswordRecoveryService(auth, createNavigation())

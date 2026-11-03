@@ -1,5 +1,9 @@
 import { ref, computed } from 'vue'
 import academicYearService from '@/service/academicYearService'
+import {
+  resetActiveAcademicYearContext,
+  useActiveAcademicYearContext
+} from '@/composables/useActiveAcademicYearContext'
 
 export function useAcademicYear() {
   const academicYears = ref([])
@@ -80,6 +84,8 @@ export function useAcademicYear() {
     error.value = null
     try {
       await academicYearService.setActiveAcademicYear(id)
+      resetActiveAcademicYearContext()
+      await useActiveAcademicYearContext().loadActiveAcademicYearContext({ force: true })
       await loadActiveAcademicYear()
     } catch (e) {
       error.value = e.message

@@ -109,7 +109,7 @@ export async function getModuleCourses(moduleId) {
  * Récupère tous les enseignants intervenant dans les modules du RM
  * @param {Array} modules - Objets modules complets (avec id et code)
  */
-export async function getModulesTeachers(modules) {
+export async function getModulesTeachers(modules, planningSlots = null) {
   try {
     if (!modules || modules.length === 0) return []
     
@@ -122,7 +122,15 @@ export async function getModulesTeachers(modules) {
 
     let courseIds = []
 
-    if (moduleCodes.length > 0) {
+    if (Array.isArray(planningSlots)) {
+      const moduleCodeSet = new Set(moduleCodes.map(code => code.toLowerCase()))
+      courseIds = Array.from(new Set(
+        planningSlots
+          .filter(slot => moduleCodeSet.has(String(slot?.module_code || '').trim().toLowerCase()))
+          .map(slot => slot?.course_id)
+          .filter(Boolean)
+      ))
+    } else if (moduleCodes.length > 0) {
       const { data: slotsData, error: slotsError } = await supabase
         .from('planning_time_slots')
         .select('course_id')

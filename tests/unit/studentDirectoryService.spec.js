@@ -42,4 +42,36 @@ describe('studentDirectoryService', () => {
     apiGet.mockResolvedValue({ data: { data: null } })
     await expect(getAllStudents()).rejects.toThrow('Invalid student directory response')
   })
+
+  it('isolates academic-year caches and normalizes aliases', async () => {
+    apiGet.mockImplementation(async (_url, options) => ({ data: { data: [{ user_id: 's', year: options?.params.year || 'latest' }] } }))
+    expect((await getAllStudents('2026'))[0].year).toBe('2026')
+    expect((await getAllStudents('2026-2027'))[0].year).toBe('2027')
+    expect((await getAllStudents('2027'))[0].year).toBe('2027')
+    expect((await getAllStudents())[0].year).toBe('latest')
+    expect(apiGet).toHaveBeenCalledTimes(3)
+    invalidateStudentDirectoryCache()
+    await getAllStudents('2027')
+    expect(apiGet).toHaveBeenCalledTimes(4)
+  })
+
+  it('does not reuse in-flight requests across years or after invalidation', async () => {
+    let resolveOld
+    apiGet.mockImplementationOnce(() => new Promise(resolve => { resolveOld = resolve }))
+      .mockResolvedValue({ data: { data: [{ user_id: 'new' }] } })
+    const old = getAllStudents('2026')
+    await getAllStudents('2027')
+    invalidateStudentDirectoryCache()
+    const current = await getAllStudents('2026')
+    resolveOld({ data: { data: [{ user_id: 'old' }] } })
+    await old
+    expect(await getAllStudents('2026')).toBe(current)
+    expect(current[0].user_id).toBe('new')
+    expect(apiGet).toHaveBeenCalledTimes(3)
+  })
+
+  it('rejects invalid years without making an API request', async () => {
+    await expect(getAllStudents('2027-2026')).rejects.toThrow()
+    expect(apiGet).not.toHaveBeenCalled()
+  })
 })

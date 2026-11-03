@@ -157,8 +157,10 @@
                   :key="file.url"
                   :href="file.url"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="iv-file"
-                  @click="handleFileClick(file)"
+                  @click.prevent="handleFileClick(file)"
+                  @auxclick.middle.prevent="handleFileClick(file)"
                 >
                   <div class="iv-file__icon"><i class="pi pi-file-pdf"></i></div>
                   <div class="iv-file__info">
@@ -214,6 +216,7 @@ import RightSidebar from '@/components/social/library/RightSidebar.vue'
 import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
+import { openPfpDocument } from '@/service/pfpDocumentMediaService'
 import { db, auth } from '../../../firebase.js'
 import schoolLogo from '../../..//public/assets/images/markerheds.png'
 
@@ -362,13 +365,7 @@ async function fetchInstitutionFiles(id) {
     }
 
     // Charger les places depuis Supabase pour cette institution
-    const places = await placesStore.fetchPlacesByInstitution(id)
-
-    if (!places || places.length === 0) {
-      console.warn(`⚠️ Aucune place trouvée pour l'institution ${id}`)
-      institutionFiles.value = []
-      return
-    }
+    const places = await placesStore.fetchPlacesByInstitution(id) || []
 
     const inst = institutionDetails.value
     const globalConceptUrl = inst?.CyberleanURL || inst?.CyberlearnURL
@@ -426,6 +423,10 @@ async function fetchInstitutionFiles(id) {
       }
     }
 
+    if (globalConceptUrl && !urlMap.has(globalConceptUrl.trim())) {
+      urlMap.set(globalConceptUrl.trim(), { name: 'Concept de formation pratique', url: globalConceptUrl.trim(), isGlobal: true })
+    }
+
     // Convertir la map en array et trier (documents spécifiques en premier)
     const files = Array.from(urlMap.values()).sort((a, b) => {
       if (a.isGlobal === b.isGlobal) return 0
@@ -454,12 +455,9 @@ async function fetchInstitutionFiles(id) {
 /**
  * Gère le clic sur un fichier PDF
  */
-function handleFileClick(file) {
-  console.log(`🖱️ Clic sur fichier: ${file.name}`)
-  console.log(`   URL: ${file.url}`)
-  console.log(`   Type: ${file.isGlobal ? 'Document global' : 'Document spécifique'}`)
-  
-  // Le lien s'ouvrira normalement via le href, on log juste pour le debug
+async function handleFileClick(file) {
+  try { await openPfpDocument(file.url) }
+  catch (error) { window.alert(error.message) }
 }
 
 function setupMap(inst) {

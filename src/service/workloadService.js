@@ -1,4 +1,9 @@
 import { supabase } from '@/supabase'
+import {
+  createTeacherIdentityResolver,
+  normalizeTeacherIdentityKey,
+  stripTeacherAccents
+} from '@/domain/si/teacherIdentity'
 
 /**
  * Service de calcul de feuille de charges pour les enseignants SI
@@ -44,36 +49,13 @@ const EXCLUDED_TEACHER_KEYWORDS = [
   'a réattribuer'
 ]
 
-// Alias manuels : variantes de noms impossibles à résoudre automatiquement
-// Clé = teacherKey de la variante, Valeur = teacherKey canonique
-const TEACHER_ALIASES = {
-  'deborah dias': 'debora dias',
-  'jonathan tam': 'jonathan tam tschopp',
-  'jonathan tschopp tam': 'jonathan tam tschopp',
-  'bestien cheseaux': 'bastien cheseaux',
-  'camille gaglio': 'camille caglio',
-  'romaine hornerger': 'romaine hornberger',
-  'nathalie rouvinez nils': 'nathalie rouvinez neel',
-  'dr ionnis rotas': 'dr ioannis rotas',
-  'yohan obrist': 'yohann obrist',
-  'mnicole barmaz': 'marie nicole barmaz',
-  'calexandre fournier': 'alexandre fournier',
-  'gerber fabien': 'fabien gerber',
-  'rudaz laura': 'laura rudaz',
-  'raetz sylvia': 'sylvia raetz',
-  'gregory deletre': 'gregoire deletre',
-  'rachel grange varone': 'rachel granges',
-  'alainmiguel berard': 'alain berard',
-  'matthieu wildhaber': 'mathieu wildhaber',
-}
-
 // ── Helpers ─────────────────────────────────────────────
 
 /**
  * Supprime les accents d'une chaîne (é→e, è→e, ê→e, etc.)
  */
 function stripAccents(str) {
-  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return stripTeacherAccents(str)
 }
 
 /**
@@ -81,14 +63,7 @@ function stripAccents(str) {
  * Applique les alias manuels pour fusionner les variantes impossibles à résoudre
  */
 export function teacherKey(raw) {
-  if (!raw) return null
-  let k = raw.replace(/"/g, '').trim()
-  if (!k) return null
-  k = stripAccents(k)
-  k = k.replace(/[.-]/g, ' ')   // points et tirets → espaces
-  k = k.replace(/\s+/g, ' ').trim().toLowerCase()
-  // Appliquer les alias manuels
-  return TEACHER_ALIASES[k] || k
+  return normalizeTeacherIdentityKey(raw)
 }
 
 export function normalizeTeacherName(raw) {
@@ -243,30 +218,31 @@ function buildAcademicYearClassCodeSet(classes) {
 
 /**
  * Parse un horaire en { h, m } en gérant tous les formats :
- *  "08:30", "08.30", "8.30", "0830", "1530", "8:30"
+ *  "08:30", "08.30", "08h30", "8.30", "0830", "1530", "8:30"
  */
 function parseTime(t) {
   if (!t) return null
   t = t.trim()
-  // Format HH:MM ou HH.MM
-  if (t.includes(':') || t.includes('.')) {
-    const sep = t.includes(':') ? ':' : '.'
-    const parts = t.split(sep).map(Number)
-    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-      return { h: parts[0], m: parts[1] }
-    }
+  // Formats HH:MM, HH.MM et HHhMM (avec secondes optionnelles pour HH:MM).
+  const separated = t.match(/^(\d{1,2})\s*[:.h]\s*(\d{2})(?::\d{2})?$/i)
+  if (separated) {
+    const h = Number(separated[1])
+    const m = Number(separated[2])
+    if (h <= 23 && m <= 59) return { h, m }
   }
   // Format HHMM (ex: "1530") ou HMM (ex: "930")
   if (/^\d{3,4}$/.test(t)) {
     const n = parseInt(t, 10)
-    return { h: Math.floor(n / 100), m: n % 100 }
+    const h = Math.floor(n / 100)
+    const m = n % 100
+    if (h <= 23 && m <= 59) return { h, m }
   }
   return null
 }
 
 /**
  * Calcule la durée en heures entre start_time et end_time
- * Gère les formats : "HH:MM", "HH.MM", "HHMM"
+ * Gère les formats : "HH:MM", "HH.MM", "HHhMM", "HHMM"
  */
 export function computeHours(startTime, endTime) {
   const s = parseTime(startTime)
@@ -401,55 +377,29 @@ class WorkloadService {
     return map
   }
 
-  async computeWorkload(semester, academicYearId) {
+  async computeWorkload(semester, academicYearId, { planningSlots = null } = {}) {
     // 1. Charger les données
-    const [teachers, classes, allSlotsRaw, moduleNames] = await Promise.all([
+    const [teachers, classes, moduleNames] = await Promise.all([
       this.getTeachers(),
       this.getClassesWithStudentCount(academicYearId),
-      semester === 'all'
-        ? this._getAllSlots()
-        : this.getAllTimeSlots(semester),
       this.getModuleNames()
     ])
 
-    const teachersById = new Map((teachers || []).map(t => [String(t.id || ''), t]))
-    const resolveTeacherLabel = (rawEntry) => {
-      if (!rawEntry) return null
-      if (typeof rawEntry === 'string') {
-        const trimmed = rawEntry.trim()
-        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-          try {
-            const parsed = JSON.parse(trimmed)
-            if (parsed && typeof parsed === 'object') {
-              const parsedId = String(parsed.id || parsed.user_id || parsed.profile_id || '').trim()
-              if (parsedId && teachersById.has(parsedId)) {
-                return teachersById.get(parsedId)?.name || null
-              }
-              return parsed.display_name || parsed.name || `${parsed.forname || ''} ${parsed.family_name || ''}`.trim() || parsed.email || null
-            }
-          } catch {
-            return rawEntry
-          }
-        }
-        return rawEntry
-      }
-
-      if (typeof rawEntry === 'object') {
-        const rawId = String(rawEntry.id || rawEntry.user_id || rawEntry.profile_id || '').trim()
-        if (rawId && teachersById.has(rawId)) {
-          return teachersById.get(rawId)?.name || null
-        }
-
-        return rawEntry.display_name || rawEntry.name || `${rawEntry.forname || ''} ${rawEntry.family_name || ''}`.trim() || rawEntry.email || null
-      }
-
-      return null
-    }
+    const identityResolver = createTeacherIdentityResolver(teachers)
 
     // 2. Filtrer les créneaux sur les classes de l'année académique active
     // (sinon on mélange plusieurs cohortes/années et les heures deviennent fausses)
     const classCodeSet = buildAcademicYearClassCodeSet(classes)
-    const allSlots = classCodeSet.size > 0
+    let allSlotsRaw = Array.isArray(planningSlots)
+      ? planningSlots
+      : await this._getAllSlots()
+
+    if (semester === 'spring') {
+      allSlotsRaw = allSlotsRaw.filter(slot => Number(slot.week_number) >= 8 && Number(slot.week_number) <= 37)
+    } else if (semester === 'autumn') {
+      allSlotsRaw = allSlotsRaw.filter(slot => Number(slot.week_number) >= 38 || Number(slot.week_number) <= 7)
+    }
+    const allSlots = academicYearId
       ? (allSlotsRaw || []).filter(slot => classCodeSet.has(normalizeClassCode(slot.class_code)))
       : (allSlotsRaw || [])
 
@@ -464,6 +414,15 @@ class WorkloadService {
       slotsWithNoValidTeacher: 0,
       slotsWithInvalidTime: 0,
       slotsWithExcludedTeacherEntries: 0,
+      resolvedTeacherEntries: 0,
+      resolvedById: 0,
+      resolvedByEmail: 0,
+      resolvedByName: 0,
+      unresolvedTeacherEntries: 0,
+      ambiguousTeacherEntries: 0,
+      excludedTeacherEntries: 0,
+      unresolvedTeachers: [],
+      ambiguousTeachers: [],
       atelierDetectedByActivityType: 0,
       atelierDetectedByFallback: 0,
       coefficientDistribution: {
@@ -482,10 +441,13 @@ class WorkloadService {
       if (candidate.length > current.length) keyDisplayName[key] = candidate
     }
 
-    // Initialiser chaque prof depuis user_profiles
-    for (const teacher of teachers) {
+    const unresolvedTeacherNames = new Set()
+    const ambiguousTeacherNames = new Set()
+
+    // Initialiser chaque prof depuis user_profiles avec une clé stable Supabase.
+    for (const teacher of identityResolver.teachers) {
       const normName = normalizeTeacherName(teacher.name) || teacher.name
-      const key = teacherKey(normName) || normName
+      const key = `user:${teacher.id}`
       teacher.name = normName
       pickBestName(key, normName)
       if (!teacherWorkloads[key]) {
@@ -568,19 +530,41 @@ class WorkloadService {
           diagnostics.atelierDetectedByFallback++
         }
       }
-      // Normaliser et dédupliquer par teacherKey
+      // Résoudre puis dédupliquer chaque identité vers le profil Supabase canonique.
       const seen = new Set()
       const slotTeacherKeys = []
       const normalizedTeacherNames = []
+      const slotTeacherResolutions = new Map()
+      const identityIssues = []
       for (const raw of rawTeachers) {
-        const resolvedLabel = resolveTeacherLabel(raw)
-        const norm = normalizeTeacherName(resolvedLabel)
-        if (!norm) continue
-        const key = teacherKey(norm)
+        const resolution = identityResolver.resolve(raw)
+        if (resolution.status === 'excluded') {
+          diagnostics.excludedTeacherEntries++
+          continue
+        }
+
+        if (resolution.status === 'resolved') {
+          diagnostics.resolvedTeacherEntries++
+          if (resolution.source === 'id') diagnostics.resolvedById++
+          if (resolution.source === 'email') diagnostics.resolvedByEmail++
+          if (resolution.source === 'name') diagnostics.resolvedByName++
+        } else if (resolution.status === 'ambiguous') {
+          diagnostics.ambiguousTeacherEntries++
+          ambiguousTeacherNames.add(resolution.displayName)
+          identityIssues.push(`ambigu: ${resolution.displayName}`)
+        } else {
+          diagnostics.unresolvedTeacherEntries++
+          unresolvedTeacherNames.add(resolution.displayName)
+          identityIssues.push(`non résolu: ${resolution.displayName}`)
+        }
+
+        const key = resolution.key
         if (!key || seen.has(key)) continue
+        const norm = normalizeTeacherName(resolution.displayName) || resolution.displayName
         seen.add(key)
         slotTeacherKeys.push(key)
         normalizedTeacherNames.push(norm)
+        slotTeacherResolutions.set(key, resolution)
         pickBestName(key, norm)
       }
       const teacherCount = slotTeacherKeys.length
@@ -605,6 +589,7 @@ class WorkloadService {
           coefficient: '',
           coeffLabel: '',
           weightedPeriods: 0,
+          identityIssues: identityIssues.join(' | '),
           issue: 'no_valid_teacher'
         })
         continue
@@ -641,15 +626,24 @@ class WorkloadService {
         coefficient: coeff,
         coeffLabel,
         weightedPeriods,
-        issue: teacherCount < rawTeachers.length ? 'excluded_teacher_entries' : ''
+        identityIssues: identityIssues.join(' | '),
+        issue: identityIssues.length > 0
+          ? 'teacher_identity_issue'
+          : teacherCount < rawTeachers.length ? 'excluded_teacher_entries' : ''
       })
 
       for (const key of slotTeacherKeys) {
+        const identity = slotTeacherResolutions.get(key)
 
         // Si le prof n'est pas dans la liste user_profiles, l'ajouter dynamiquement
         if (!teacherWorkloads[key]) {
           teacherWorkloads[key] = {
-            teacher: { id: null, name: keyDisplayName[key] || key, email: null },
+            teacher: identity?.teacher || {
+              id: null,
+              name: keyDisplayName[key] || identity?.displayName || key,
+              email: null,
+              identityStatus: identity?.status || 'unresolved'
+            },
             slots: [],
             totalPresencePeriods: 0,
             totalWeightedPeriods: 0,
@@ -786,6 +780,9 @@ class WorkloadService {
       classesUsed: [...new Set(allSlots.map(s => s.class_code).filter(Boolean))].length
     }
 
+    diagnostics.unresolvedTeachers = [...unresolvedTeacherNames].filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'))
+    diagnostics.ambiguousTeachers = [...ambiguousTeacherNames].filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'))
+
     return { teachers: result, summary, classes, diagnostics }
   }
 
@@ -793,15 +790,20 @@ class WorkloadService {
    * Charge tous les créneaux (les deux semestres)
    */
   async _getAllSlots() {
-    const { data, error } = await supabase
-      .from('planning_time_slots')
-      .select('*')
-      .order('week_number')
-      .order('day_index')
-      .order('start_time')
+    const rows = []
+    for (let offset = 0; offset < 10000; offset += 1000) {
+      const { data, error } = await supabase
+        .from('planning_time_slots')
+        .select('*')
+        .order('id')
+        .range(offset, offset + 999)
 
-    if (error) throw error
-    return data || []
+      if (error) throw error
+      const page = data || []
+      rows.push(...page)
+      if (page.length < 1000) break
+    }
+    return rows
   }
 }
 

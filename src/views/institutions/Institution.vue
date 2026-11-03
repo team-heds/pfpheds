@@ -48,7 +48,8 @@
                   >
                     <template #header>
                       <div class="card-header">
-                        <img :src="getInstitutionImage(institution)" :alt="`Illustration de ${institution.Name}`" class="card-image" />
+                        <img v-if="getInstitutionImage(institution) && !failedImages[getInstitutionImage(institution)]" :src="getInstitutionImage(institution)" :alt="`Illustration de ${institution.Name}`" class="card-image" @error="failedImages[getInstitutionImage(institution)] = true" />
+                        <div v-else class="card-image card-image-placeholder" role="img" :aria-label="`Photo indisponible pour ${institution.Name}`"><i class="pi pi-building" aria-hidden="true"></i><span>Photo indisponible</span></div>
                         <Tag class="card-tag">{{ institution.Canton }}</Tag>
                       </div>
                       <p ref="institutionName" class="card-title">{{ institution.Name }}</p>
@@ -110,6 +111,8 @@
 </template>
 
 <script>
+import { ref } from 'vue'
+import { usePageListContext } from '@/composables/usePageListContext'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
@@ -139,13 +142,7 @@ export default {
   data() {
     return {
       descriptionClass: 'description',
-      searchTerm: '',
-      activeFilters: {
-        cantons: [],
-        criter: [],
-        pfp: [],
-        languages: []
-      },
+      failedImages: {},
       cantonsList: [], // Liste dynamique des cantons
       isMobile: window.innerWidth < 768,
     };
@@ -153,7 +150,10 @@ export default {
   setup() {
     const institutionsStore = useInstitutionsStore();
     const placesStore = usePlacesStore();
-    return { institutionsStore, placesStore };
+    const searchTerm = ref('');
+    const activeFilters = ref({ cantons: [], criter: [], pfp: [], languages: [] });
+    usePageListContext('institutions', { searchTerm, activeFilters });
+    return { institutionsStore, placesStore, searchTerm, activeFilters };
   },
   computed: {
     allInstitutions() {
@@ -175,7 +175,7 @@ export default {
         return institution.ImageURL[0];
       }
       // Image par défaut si pas d'image disponible
-      return 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg';
+      return null;
     },
     truncateText(text, length) {
       if (text && text.length > length) {
@@ -308,6 +308,17 @@ export default {
   max-width: 20rem;
   height: 100%;
 }
+.card-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: .75rem;
+  background: var(--surface-ground);
+  color: var(--text-color-secondary);
+  font-size: .9rem;
+}
+.card-image-placeholder .pi { font-size: 2rem; color: var(--primary-color); }
 .card-image {
   width: 100%;
   height: 13rem;

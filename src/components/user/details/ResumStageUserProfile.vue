@@ -47,7 +47,9 @@
       <!-- Ligne du titre + statut + bouton -->
       <div class="flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
         <div class="flex align-items-center gap-2 flex-wrap">
-          <h4 class="m-0">Formation Pratique {{ place._displayFpNumber || (index + 1) }}</h4>
+          <h4 class="m-0">{{ place._pfpLabel }}</h4>
+          <Tag v-if="place.period" :value="`Période : ${place.period}`" severity="secondary" />
+          <Tag v-if="place._progressionNeedsReview" value="Parcours à vérifier" severity="warning" />
           <Tag v-if="place.year" :value="place.year" severity="secondary" class="text-xs" />
           <Tag :value="getStatusLabel(place.status)" :severity="getStatusSeverity(place.status)" :icon="getStatusIcon(place.status)" />
         </div>
@@ -62,6 +64,9 @@
       </div>
 
       <!-- Bandeau d'échec -->
+      <p v-if="place.startDate || place.endDate" class="text-sm">
+        Dates du stage : {{ place.startDate || 'à préciser' }} — {{ place.endDate || 'à préciser' }}
+      </p>
       <div v-if="place.status === 'echec'" class="status-banner status-banner-echec">
         <div class="flex align-items-center gap-2">
           <i class="pi pi-times-circle text-red-600 text-xl"></i>
@@ -129,7 +134,10 @@
       </div>
 
       <!-- Documents -->
-      <div>
+      <p v-if="!place._displayFpNumber" class="text-secondary m-2">
+        Le rattachement des documents à cette tentative doit être vérifié. Aucun document n’a été déplacé.
+      </p>
+      <div v-if="place._displayFpNumber">
         <h6 class="m-2">Documents liés à cette formation pratique</h6>
         <div
           class="mt-2"
@@ -192,7 +200,7 @@
       </div>
 
       <!-- Sélection et upload de fichiers alignés à droite -->
-      <div class="flex justify-content-end align-items-center gap-8 w-6 m-2">
+      <div v-if="place._displayFpNumber" class="flex justify-content-end align-items-center gap-8 w-6 m-2">
         <FileUpload
           mode="basic"
           customUpload
@@ -222,6 +230,9 @@
 import { ref, onMounted, computed, watch } from "vue";
 import { supabase } from '@/supabase';
 import {
+  buildProgressionProfileStages,
+  getProfileDocumentSlot,
+  parseProfileAttemptEntries,
   computeAggregatedCriteriaFromSources,
   extractStudentsPhysioFieldEntries,
   normalizeProfileStageEntries,
@@ -490,6 +501,8 @@ const praticiensByInstitution = ref({});
 
 // Liste PFP validées pour l'étudiant (depuis StudentsPhysio)
 const studentPfpList = ref([]);
+// Preserve all attempts for the profile; legacy criteria/voting readers stay unchanged.
+const studentPfpAttempts = ref([]);
 // Liste des résultats de votation (depuis student_result_vote)
 const studentResultVotes = ref([]);
 // Map des places pour récupérer les critères
@@ -538,7 +551,7 @@ const normalizeLegacyPfpType = (entry) => {
 }
 
 // Construit la liste des places en fusionnant student_result_vote (priorité) + pfp_valided (backup/legacy)
-const assignedPlaces = computed(() => {
+const legacyDocumentStages = computed(() => {
   const results = []
   const seenStageKeys = new Set() // Déduplication globale entre les 2 sources
   const criteriaMap = {
@@ -698,6 +711,19 @@ const assignedPlaces = computed(() => {
   })
 
   return results
+})
+
+const assignedPlaces = computed(() => {
+  const stages = buildProgressionProfileStages({
+    studentResultVotes: studentResultVotes.value,
+    physioStages: studentPfpAttempts.value,
+    placesById: placesFullMap.value,
+    resolveInstitutionName: getInstitutionNameById
+  })
+  return stages.map(stage => ({
+    ...stage,
+    _displayFpNumber: getProfileDocumentSlot(stage, stages, legacyDocumentStages.value)
+  }))
 })
 
 const getInstitutionNameById = (idInstitution) => {
@@ -923,12 +949,14 @@ const fetchPraticienFormateurs = async () => {
 async function fetchStudentPfpList() {
   isStagesLoading.value = true
   stagesLoadError.value = ''
+  studentPfpAttempts.value = []
   try {
     // Charger student_result_vote (source prioritaire)
-    const { data: rvData } = await supabase
+    const { data: rvData, error: resultError } = await supabase
       .from('student_result_vote')
       .select('*')
       .eq('user_id', props.userId)
+    if (resultError) throw resultError
     studentResultVotes.value = rvData || []
     // Construire la map des places pour les critères
     if (placesFullMap.value.size === 0) {
@@ -957,15 +985,22 @@ async function fetchStudentPfpList() {
     if (error) throw error
     if (!data || data.length === 0) {
       studentPfpList.value = []
+      await loadUploadedDocsForAll()
       return
     }
 
+    studentPfpAttempts.value = data.flatMap(row => [
+      ...parseProfileAttemptEntries(row.pfp_valided),
+      ...parseProfileAttemptEntries(row.pfp2_data)
+    ])
     const arr = extractStudentsPhysioFieldEntries(data, ['pfp_valided', 'pfp2_data'])
     
     studentPfpList.value = arr
     await loadUploadedDocsForAll()
   } catch (e) {
     studentPfpList.value = []
+    studentPfpAttempts.value = []
+    studentResultVotes.value = []
     stagesLoadError.value = 'Impossible de charger les stages pour le moment.'
   } finally {
     isStagesLoading.value = false
@@ -1112,7 +1147,7 @@ const loadUploadedDocsForAll = async () => {
     })
 
     const nextUploads = {}
-    assignedPlaces.value.forEach((place, index) => {
+    legacyDocumentStages.value.forEach((place, index) => {
       const formationNumber = Number(place._displayFpNumber || (index + 1))
       const key = stageUploadsKey(formationNumber)
       nextUploads[key] = {
@@ -1318,6 +1353,7 @@ const navigateToInstitution = (instId) => {
 
 // --- Fonctions d'affichage du statut ---
 const getStatusLabel = (status) => {
+  if (status === 'a_verifier') return 'Résultat à vérifier'
   if (status === 'validee') return 'Réussi'
   if (status === 'echec') return 'Échec'
   if (status === 'arret') return 'Arrêt'

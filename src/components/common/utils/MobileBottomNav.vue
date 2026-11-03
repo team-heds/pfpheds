@@ -25,13 +25,14 @@ const userId = computed(() => authStore.user?.id || authStore.user?.uid || '');
 const navItems = computed(() => [
   { key: 'feed', to: '/feed', match: '/feed', icon: 'pi pi-home', label: 'Accueil', shortLabel: 'Accueil' },
   { key: 'search', to: '/mobile-search', match: '/mobile-search', icon: 'pi pi-search', label: 'Recherche', shortLabel: 'Chercher' },
-  { key: 'tools', to: '/mobile-outils', match: '/mobile-outils', icon: 'pi pi-th-large', label: 'Outils', shortLabel: 'Outils' },
+  { key: 'tools', to: '/mobile-outils', match: '/mobile-outils', aliases: ['/mobile-tools'], icon: 'pi pi-th-large', label: 'Mon espace', shortLabel: 'Espace' },
   { key: 'communities', to: '/communities', match: '/communities', icon: 'pi pi-comments', label: 'Communautés', shortLabel: 'Groupes' },
   { key: 'profile', to: userId.value ? `/profile/${userId.value}` : '/profile', match: '/profile', icon: 'pi pi-user', label: 'Profil', shortLabel: 'Profil' },
 ]);
 
 const route = useRoute();
-const isActive = (item) => route.path === item.match || route.path.startsWith(`${item.match}/`);
+const isActive = (item) => [item.match, ...(item.aliases || [])]
+  .some(path => route.path === path || route.path.startsWith(`${path}/`));
 
 const mediaQuery = window.matchMedia('(max-width: 768px)');
 const isMobile = ref(mediaQuery.matches);

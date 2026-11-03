@@ -1,29 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-
-// ── Mock Firebase ──────────────────────────────────────────────
-const mockFirebaseSignIn = vi.fn()
-const mockFirebaseSignUp = vi.fn()
-const mockFirebaseSendReset = vi.fn()
-const mockFirebaseSignOut = vi.fn()
-let firebaseAuthCallback = null
-
-vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: vi.fn((auth, cb) => {
-    firebaseAuthCallback = cb
-    return vi.fn() // unsubscribe
-  }),
-  signInWithEmailAndPassword: (...args) => mockFirebaseSignIn(...args),
-  createUserWithEmailAndPassword: (...args) => mockFirebaseSignUp(...args),
-  sendPasswordResetEmail: (...args) => mockFirebaseSendReset(...args),
-}))
-
-vi.mock('@/firebase', () => ({
-  isFirebaseEnabled: true,
-  auth: {
-    signOut: () => mockFirebaseSignOut(),
-  }
-}))
+import authStoreSource from '@/stores/authStore.js?raw'
 
 // ── Mock Supabase ──────────────────────────────────────────────
 const mockSupabaseSignUp = vi.fn()
@@ -68,6 +45,11 @@ describe('authStore', () => {
     mockSupabaseGetSession.mockResolvedValue({ data: { session: null }, error: null })
     mockSupabaseGetUser.mockResolvedValue({ data: { user: null }, error: null })
     mockSupabaseRefreshSession.mockResolvedValue({ data: { session: null }, error: null })
+  })
+
+  it('ne charge ni Firebase ni ses anciennes actions', () => {
+    expect(authStoreSource).not.toMatch(/from ['"](?:@\/firebase|firebase\/auth)['"]/)
+    expect(authStoreSource).not.toMatch(/signInFirebase|signUpFirebase|resetPasswordFirebase/)
   })
 
   // ─── État initial ───
@@ -296,67 +278,6 @@ describe('authStore', () => {
     })
   })
 
-  // ─── Firebase signUp ───
-  describe('signUpFirebase', () => {
-    it('crée un compte Firebase', async () => {
-      const mockUser = { uid: 'fb1', email: 'test@hevs.ch' }
-      mockFirebaseSignUp.mockResolvedValue({ user: mockUser })
-
-      const result = await store.signUpFirebase({ email: 'test@hevs.ch', password: 'pass' })
-
-      expect(store.user).toEqual(mockUser)
-      expect(store.authProvider).toBe('firebase')
-      expect(store.session).toBeNull()
-      expect(result.user).toEqual(mockUser)
-    })
-
-    it('gère les erreurs Firebase', async () => {
-      mockFirebaseSignUp.mockRejectedValue(new Error('auth/email-already-in-use'))
-
-      await expect(store.signUpFirebase({ email: 'x', password: 'y' })).rejects.toThrow()
-      expect(store.error).toBe('auth/email-already-in-use')
-    })
-  })
-
-  // ─── Firebase signIn ───
-  describe('signInFirebase', () => {
-    it('connecte via Firebase', async () => {
-      const mockUser = { uid: 'fb1', email: 'test@hevs.ch' }
-      mockFirebaseSignIn.mockResolvedValue({ user: mockUser })
-
-      await store.signInFirebase({ email: 'test@hevs.ch', password: 'pass' })
-
-      expect(store.user).toEqual(mockUser)
-      expect(store.authProvider).toBe('firebase')
-    })
-
-    it('gère les erreurs', async () => {
-      mockFirebaseSignIn.mockRejectedValue(new Error('auth/wrong-password'))
-
-      await expect(store.signInFirebase({ email: 'x', password: 'y' })).rejects.toThrow()
-      expect(store.error).toBe('auth/wrong-password')
-    })
-  })
-
-  // ─── Firebase resetPassword ───
-  describe('resetPasswordFirebase', () => {
-    it('envoie un email de reset Firebase', async () => {
-      mockFirebaseSendReset.mockResolvedValue()
-
-      await store.resetPasswordFirebase('test@hevs.ch')
-
-      expect(mockFirebaseSendReset).toHaveBeenCalled()
-      expect(store.loading).toBe(false)
-    })
-
-    it('gère les erreurs', async () => {
-      mockFirebaseSendReset.mockRejectedValue(new Error('auth/user-not-found'))
-
-      await expect(store.resetPasswordFirebase('x@y.z')).rejects.toThrow()
-      expect(store.error).toBe('auth/user-not-found')
-    })
-  })
-
   // ─── signOut ───
   describe('signOut', () => {
     it('déconnecte Supabase et nettoie le state', async () => {
@@ -372,17 +293,6 @@ describe('authStore', () => {
       expect(store.session).toBeNull()
       expect(store.authProvider).toBeNull()
       expect(store.loading).toBe(false)
-    })
-
-    it('déconnecte Firebase et nettoie le state', async () => {
-      store.user = { uid: 'fb1' }
-      store.authProvider = 'firebase'
-      mockFirebaseSignOut.mockResolvedValue()
-
-      await store.signOut()
-
-      expect(store.user).toBeNull()
-      expect(store.authProvider).toBeNull()
     })
 
     it('gère les erreurs de déconnexion', async () => {
@@ -420,7 +330,7 @@ describe('authStore', () => {
         error: { message: 'fail' }
       })
 
-      try { await store.signInSupabase({ email: 'a', password: 'b' }) } catch {}
+      await expect(store.signInSupabase({ email: 'a', password: 'b' })).rejects.toBeTruthy()
 
       expect(store.loading).toBe(false)
     })

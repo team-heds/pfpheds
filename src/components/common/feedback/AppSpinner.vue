@@ -16,7 +16,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 
 const props = defineProps({
   inline: { type: Boolean, default: true },
-  size: { type: String, default: 'sm' }, // sm | md | lg
+  size: { type: String, default: 'sm', validator: value => ['sm', 'md', 'lg'].includes(value) },
   label: { type: String, default: '' },
 })
 

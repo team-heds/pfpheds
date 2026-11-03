@@ -23,6 +23,7 @@
       <GamificationNotification
         v-if="gamificationUserJourneyEnabled && gamificationUserId"
         :user-id="gamificationUserId"
+        :realtime-enabled="realtimeEnabled"
       />
     </div>
 
@@ -40,11 +41,11 @@ import VersionningComponent from './components/common/utils/VersionningComponent
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
-// import notificationService from '@/service/notificationService';
 import questExpirationService from '@/service/questExpirationService';
 import { mapState } from 'pinia';
 import { useAuthStore } from '@/stores/authStore';
 import { gamificationFeatures } from '@/config/gamificationFeatures';
+import { runtimeFeatures } from '@/config/runtimeFeatures';
 
 export default {
   name: "App",
@@ -70,6 +71,9 @@ export default {
     gamificationUserJourneyEnabled() {
       return gamificationFeatures.userJourney;
     },
+    realtimeEnabled() {
+      return runtimeFeatures.supabaseRealtime;
+    },
     showMobileBottomNav() {
       return this.$route.meta?.hideMobileNav !== true;
     },
@@ -94,9 +98,6 @@ export default {
     setTimeout(() => {
       this.isLoading = false; // Masquer le loader après 3 secondes
     }, 3000); // Temps en millisecondes
-    // Le service de notifications est déjà initialisé automatiquement
-    // via l'instance singleton dans notificationService.js
-    
     // 🕐 Démarrer la vérification automatique des quêtes expirées (toutes les 5 min)
     console.log('🚀 Démarrage service d\'expiration des quêtes...')
     this.expirationCheckInterval = questExpirationService.startPeriodicCheck(5)

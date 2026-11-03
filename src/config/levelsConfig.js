@@ -363,8 +363,9 @@ export const HOUSE_PALIER_BONUSES = {
  * Calcule le niveau depuis l'XP total
  */
 export function getLevelFromXP(totalXP) {
-  // Formule: niveau = sqrt(XP / 100)
-  const level = Math.floor(Math.sqrt(totalXP / 100))
+  // Formule canonique Supabase: floor(sqrt(XP / 100)) + 1.
+  const safeXP = Math.max(0, Number(totalXP) || 0)
+  const level = Math.floor(Math.sqrt(safeXP / 100)) + 1
   return Math.min(Math.max(level, 1), 20) // Entre 1 et 20
 }
 
@@ -372,7 +373,8 @@ export function getLevelFromXP(totalXP) {
  * Calcule l'XP total nécessaire pour atteindre un niveau
  */
 export function getXPForLevel(level) {
-  return level * level * 100
+  const safeLevel = Math.min(20, Math.max(1, Number(level) || 1))
+  return (safeLevel - 1) * (safeLevel - 1) * 100
 }
 
 /**

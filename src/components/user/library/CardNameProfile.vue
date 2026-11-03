@@ -35,6 +35,17 @@
     class="mb-4"
   />
 
+  <div v-if="SHOW_GAMIFICATION_UI && hasValidHouse" class="gamification-actions mb-4" aria-label="Accès gamification">
+    <div>
+      <strong>Mon parcours {{ houseDisplayName }}</strong>
+      <span>Niveau {{ userGamification.niveau }} · {{ userGamification.totalXP }} XP</span>
+    </div>
+    <div class="gamification-actions__buttons">
+      <Button label="Voir le parcours" icon="pi pi-compass" @click="openGamificationProfile" />
+      <Button label="Classement des maisons" icon="pi pi-chart-bar" severity="secondary" outlined @click="openHousesRanking" />
+    </div>
+  </div>
+
   <!-- FIN BANDEAU MAISON + XP -->
   <div class="mb-4 card-profile-responsive">
     <div class="avatar-wrapper">
@@ -89,7 +100,52 @@
       <div class="info-item">
         <i class="pi pi-map-marker info-icon"></i>
         <span class="info-label">Ville :</span>
-        <span class="info-value">{{ user.ville || 'Non renseignée' }}</span>
+        <span class="info-value">
+          <InputText
+            v-if="canEditPersonalInfo"
+            v-model="user.ville"
+            maxlength="100"
+            autocomplete="address-level2"
+            placeholder="Ex. Sion"
+            aria-label="Ville"
+          />
+          <template v-else>{{ user.ville || 'Non renseignée' }}</template>
+        </span>
+      </div>
+      <div class="info-item">
+        <i class="pi pi-language info-icon"></i>
+        <span class="info-label">Langue :</span>
+        <span class="info-value">
+          <Dropdown
+            v-if="canEditPersonalInfo"
+            v-model="user.languePreferee"
+            :options="PROFILE_LANGUAGE_OPTIONS"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Choisir une langue"
+            showClear
+            aria-label="Langue préférée"
+          />
+          <template v-else>{{ getProfileLanguageLabel(user.languePreferee) }}</template>
+        </span>
+      </div>
+      <div class="info-item">
+        <i class="pi pi-flag info-icon"></i>
+        <span class="info-label">Canton d’origine :</span>
+        <span class="info-value">
+          <Dropdown
+            v-if="canEditPersonalInfo"
+            v-model="user.cantonOrigine"
+            :options="SWISS_CANTON_OPTIONS"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Choisir un canton"
+            showClear
+            filter
+            aria-label="Canton d’origine"
+          />
+          <template v-else>{{ getCantonOfOriginLabel(user.cantonOrigine) }}</template>
+        </span>
       </div>
       <div class="info-item">
         <i class="pi pi-id-card info-icon"></i>
@@ -123,7 +179,7 @@
           <span class="text-xs text-600">{{ isSae ? 'Marqué' : 'Non marqué' }}</span>
         </span>
       </div>
-      <div class="info-item info-item-full actions-row">
+      <div v-if="canEditPersonalInfo" class="info-item info-item-full actions-row">
         <Button
           label="Sauvegarder le profil"
           :loading="profileSaving"
@@ -143,6 +199,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import { supabase } from '@/supabase.js';
 import Dropdown from 'primevue/dropdown';
+import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import InputSwitch from 'primevue/inputswitch';
 import { useToast } from 'primevue/usetoast';
@@ -152,6 +209,13 @@ import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import gamificationIntegration from '@/service/gamificationIntegration'
 import supabaseStorageService from '@/service/supabaseStorageService'
 import { gamificationFeatures } from '@/config/gamificationFeatures'
+import {
+  getCantonOfOriginLabel,
+  getProfileLanguageLabel,
+  normalizeProfilePreferences,
+  PROFILE_LANGUAGE_OPTIONS,
+  SWISS_CANTON_OPTIONS,
+} from '@/domain/profile/profilePreferences'
 
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 const toast = useToast();
@@ -168,6 +232,8 @@ const user = ref({
   photoURL: '',
   email: '',
   ville: '',
+  languePreferee: null,
+  cantonOrigine: null,
   classe: '',
   repondantHES: '',
   maison: '',
@@ -263,10 +329,16 @@ const isAdmin = computed(() => {
   return currentUserProfile.value.Roles && currentUserProfile.value.Roles.admin === true;
 });
 
-const canEditAvatar = computed(() => {
+const isOwnProfile = computed(() => {
   const routeUserId = String(route.params.id || '')
   const currentUserId = String(authStore.user?.id || currentUserProfile.value.uid || '')
   return Boolean(routeUserId && currentUserId && routeUserId === currentUserId)
+})
+
+const canEditPersonalInfo = computed(() => isOwnProfile.value || isAdmin.value)
+
+const canEditAvatar = computed(() => {
+  return isOwnProfile.value
 });
 
 // Fonction helper pour capitaliser (première lettre en majuscule)
@@ -345,6 +417,8 @@ const fetchUserProfileById = async (userId) => {
       nom: profileData.family_name || '',
       email: profileData.email || '',
       ville: profileData.city || '',
+      languePreferee: profileData.preferred_language || null,
+      cantonOrigine: profileData.canton_of_origin || null,
       bio: profileData.bio || '',
       photoURL: profileData.avatar_url || profileData.profile_picture_url || defaultAvatar,
       classe: resolveClassValue(profileData),
@@ -491,8 +565,6 @@ const fetchCurrentUserProfile = async (currentUserId) => {
 
   console.log('✅ Rôles utilisateur:', roles)
 
-  // Récupérer aussi les données de gamification pour l'utilisateur connecté
-  await fetchGamificationData(currentUserId);
 };
 
 // Importation des enseignants depuis user_profiles (filtrés par rôle)
@@ -699,15 +771,23 @@ const saveProfile = async () => {
     }
 
     const profileChanges = {
-      forname: user.value.prenom,
-      family_name: user.value.nom,
-      email: user.value.email,
-      city: user.value.ville,
-      bio: user.value.bio,
-      avatar_url: user.value.photoURL,
-      class: user.value.classe,
-      hes_referent: hesReferent,
+      ...normalizeProfilePreferences({
+        city: user.value.ville,
+        preferredLanguage: user.value.languePreferee,
+        cantonOfOrigin: user.value.cantonOrigine,
+      }),
       updated_at: new Date().toISOString()
+    }
+
+    if (isAdmin.value) {
+      Object.assign(profileChanges, {
+        forname: user.value.prenom,
+        family_name: user.value.nom,
+        email: user.value.email,
+        bio: user.value.bio,
+        classe: user.value.classe,
+        hes_referent: hesReferent,
+      })
     }
 
     let updatedProfile = null
@@ -735,7 +815,7 @@ const saveProfile = async () => {
         .from('user_profiles')
         .update(profileChanges)
         .eq('user_id', user.value.uid)
-        .select('user_id, forname, family_name, email, city, bio, avatar_url, class, hes_referent, updated_at')
+        .select('user_id, city, preferred_language, canton_of_origin, updated_at')
         .single()
       updatedProfile = result.data
       updateError = result.error
@@ -756,21 +836,16 @@ const saveProfile = async () => {
     }
 
     user.value.repondantHES = hesReferent
+    if (Object.prototype.hasOwnProperty.call(updatedProfile || {}, 'city')) {
+      user.value.ville = updatedProfile.city || ''
+    }
+    if (Object.prototype.hasOwnProperty.call(updatedProfile || {}, 'preferred_language')) {
+      user.value.languePreferee = updatedProfile.preferred_language || null
+    }
+    if (Object.prototype.hasOwnProperty.call(updatedProfile || {}, 'canton_of_origin')) {
+      user.value.cantonOrigine = updatedProfile.canton_of_origin || null
+    }
     console.log('✅ Profil mis à jour dans Supabase')
-
-    // NOUVEAU : Déclencher l'intégration gamification pour mise à jour profil
-    await gamificationIntegration.onProfileUpdate(user.value.uid, {
-      profileCompleted: true,
-      hasAvatar: !!user.value.photoURL,
-      hasBio: !!user.value.bio,
-      hasCity: !!user.value.ville,
-      timestamp: Date.now()
-    });
-
-    toast.add({ severity: 'success', summary: 'Profil', detail: 'Profil mis à jour avec succès', life: 2500 })
-
-    // Recharger les données de gamification pour afficher les nouveaux badges/XP
-    await fetchGamificationData(user.value.uid);
 
     return true;
 
@@ -950,44 +1025,25 @@ const hasValidHouse = computed(() => {
   return validHouses.includes(userGamification.value.maison.toLowerCase());
 });
 
+const houseDisplayName = computed(() => ({
+  harmonis: 'Harmonis',
+  elaris: 'Elaris',
+  doloris: 'Doloris',
+  solencia: 'Solencia',
+  gamemaster: 'Maître du jeu'
+})[(userGamification.value.maison || '').toLowerCase()] || '');
+
 // Méthode pour démarrer le quiz HES
 const startHESQuiz = () => {
   router.push('/hes-house-quiz');
 };
 
-// Fonction pour ajouter de l'XP à l'utilisateur avec le service Supabase
-const giveUserXP = async (action, customXP = null) => {
-  try {
-    const userId = route.params.id || currentUserProfile.value?.uid
-    if (!userId) return
+const openGamificationProfile = () => {
+  const targetId = route.params.id || authStore.user?.id
+  if (targetId) router.push({ name: 'GamificationProfilePage', params: { id: targetId } })
+};
 
-    // Utiliser le service Supabase pour ajouter de l'XP
-    const xpAmount = customXP || 10;
-    const newData = await gamificationServiceSupabase.addUserXP(userId, action, xpAmount);
-
-    // Mettre à jour les données locales avec les nouvelles données
-    if (newData) {
-      userGamification.value = {
-        ...userGamification.value,
-        maison: newData.maison || userGamification.value.maison,
-        niveau: newData.niveau || 1,
-        xp: newData.xp || 0,
-        totalXP: newData.totalXP || 0,
-        xpToNext: newData.xpToNext || 100,
-        lastXPGain: newData.lastXPGain || null,
-        loginStreak: newData.loginStreak || userGamification.value.loginStreak || 0
-      };
-
-      // Afficher une notification de gain d'XP
-      if (newData.lastXPGain) {
-        console.log(`+${newData.lastXPGain.amount} XP - ${newData.lastXPGain.description}`);
-      }
-    }
-
-  } catch (error) {
-    console.error('Erreur lors de l\'ajout d\'XP:', error)
-  }
-}
+const openHousesRanking = () => router.push({ name: 'HousesRankingPage' });
 
 // Fonction appelée lors de la sauvegarde du profil (pour donner de l'XP)
 const saveProfileWithXP = async () => {
@@ -999,7 +1055,8 @@ const saveProfileWithXP = async () => {
 
     // NOUVEAU : Utiliser gamificationIntegration pour déclencher tous les événements
     const userId = route.params.id || currentUserProfile.value?.uid
-    if (userId) {
+    const currentUserId = authStore.user?.id
+    if (userId && currentUserId && userId === currentUserId) {
       await gamificationIntegration.onProfileUpdate(userId, {
         profileCompleted: true,
         hasAvatar: !!user.value.photoURL,
@@ -1011,6 +1068,11 @@ const saveProfileWithXP = async () => {
       // Recharger les données gamification pour voir les nouveaux badges/XP
       await fetchGamificationData(userId)
     }
+
+    // La confirmation n'est affichée qu'une fois la sauvegarde et le traitement
+    // gamification terminés. Un départ immédiat après le toast ne peut donc plus
+    // interrompre silencieusement l'attribution.
+    toast.add({ severity: 'success', summary: 'Profil', detail: 'Profil mis à jour avec succès', life: 2500 })
   } catch (error) {
     console.error('Erreur lors de la sauvegarde avec gamification:', error)
   } finally {
@@ -1023,6 +1085,44 @@ const saveProfileWithXP = async () => {
 .surfaces-card,
 .info-item {
   box-sizing: border-box;
+}
+
+.gamification-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+}
+
+.gamification-actions > div:first-child {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.gamification-actions span {
+  color: var(--text-color-secondary);
+}
+
+.gamification-actions__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .gamification-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gamification-actions__buttons :deep(.p-button) {
+    flex: 1 1 100%;
+    min-height: 44px;
+  }
 }
 
 .actions-row,
@@ -1040,6 +1140,11 @@ const saveProfileWithXP = async () => {
 .p-dropdown {
   max-width: 100%;
   min-width: 0;
+}
+
+.info-value :deep(.p-inputtext),
+.info-value :deep(.p-dropdown) {
+  width: 100%;
 }
 
 .surfaces-card {

@@ -119,7 +119,7 @@ export function createPasswordRecoveryService(
 
   async function authorizeWithOtp(email, token) {
     const { error } = await auth.verifyOtp({
-      email,
+      email: String(email || '').trim().toLowerCase(),
       token,
       type: 'recovery'
     })

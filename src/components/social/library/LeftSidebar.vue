@@ -136,7 +136,7 @@
     :closable="true"
     :draggable="false"
   >
-    <EventDetail
+    <AsyncEventDetail
       v-if="selectedEvent"
       :event="selectedEvent"
       :user-id="user.id"
@@ -151,6 +151,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import Toast from "primevue/toast";
 import { getDatabase, ref as dbRef, get, onValue } from "firebase/database";
 import { supabase } from '@/supabase.js';
@@ -159,17 +160,18 @@ import { useEventStore } from '@/stores/eventStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import supabaseStorageService from '@/service/supabaseStorageService';
-import EventDetail from '@/components/events/EventDetail.vue';
 import QuestsSidebarCard from '@/components/gamification/QuestsSidebarCard.vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { gamificationFeatures } from '@/config/gamificationFeatures';
 
+const AsyncEventDetail = defineAsyncComponent(() => import('@/components/events/EventDetail.vue'));
+
 const defaultAvatar = '@/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, Toast, EventDetail, Dialog, Button, QuestsSidebarCard },
+  components: { UserCard, Toast, AsyncEventDetail, Dialog, Button, QuestsSidebarCard },
   props: {
     // Masque la carte gamification du sidebar (utilisé sur le profil pour la présentation)
     hideGamification: { type: Boolean, default: false }

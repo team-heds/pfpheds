@@ -1,20 +1,17 @@
 /**
  * @module authStore
- * @description Store Pinia pour l'authentification multi-provider (Firebase + Supabase).
+ * @description Store Pinia pour l'authentification Supabase.
  *
- * @state {Object|null} user - Utilisateur connecté (Firebase User ou Supabase User)
+ * @state {Object|null} user - Utilisateur Supabase connecté
  * @state {Object|null} session - Session Supabase active
  * @state {boolean} loading - Indicateur de chargement
  * @state {string|null} error - Dernier message d'erreur
- * @state {string|null} authProvider - Provider actif ('firebase' | 'supabase')
+ * @state {string|null} authProvider - Provider actif (`supabase` ou null)
  *
  * @getter {boolean} isLoggedIn - true si un utilisateur est connecté
  * @getter {boolean} isFirebaseUser - true si connecté via Firebase
  * @getter {boolean} isSupabaseUser - true si connecté via Supabase
  *
- * @action signUpFirebase(credentials) - Inscription Firebase
- * @action signInFirebase(credentials) - Connexion Firebase
- * @action resetPasswordFirebase(email) - Réinitialisation mot de passe Firebase
  * @action signUpSupabase(credentials) - Inscription Supabase
  * @action signInSupabase(credentials) - Connexion Supabase
  * @action resetPasswordSupabase(email) - Réinitialisation mot de passe Supabase
@@ -24,8 +21,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { supabase } from '@/supabase';
-import { auth, isFirebaseEnabled } from '@/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { requestPasswordRecovery } from '@/service/passwordRecoveryRequestService';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -41,7 +36,7 @@ export const useAuthStore = defineStore('auth', () => {
   const session = ref(null);
   const loading = ref(false);
   const error = ref(null);
-  const authProvider = ref(null); // 'firebase' ou 'supabase'
+  const authProvider = ref(null); // 'supabase' ou null
   const sessionCheckInterval = ref(null);
   const lastSessionCheck = ref(null);
   const initialized = ref(false);
@@ -99,83 +94,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Getters
   const isLoggedIn = computed(() => AUTH_BYPASS || !!user.value);
-  // Firebase reste disponible pour quelques données historiques, mais ne constitue
-  // plus jamais un fournisseur d'authentification de la plateforme.
+  // Getter conservé temporairement pour les écrans historiques hors périmètre.
   const isFirebaseUser = computed(() => false);
   const isSupabaseUser = computed(() => AUTH_BYPASS || authProvider.value === 'supabase');
-
-  // Actions Firebase
-  async function signUpFirebase(credentials) {
-    if (AUTH_BYPASS) {
-      user.value = GUEST_USER;
-      authProvider.value = 'supabase';
-      session.value = { user: GUEST_USER };
-      return { user: GUEST_USER, session: session.value };
-    }
-    if (!isFirebaseEnabled || !auth) {
-      throw new Error('Firebase is disabled. Configure VITE_FIREBASE_* env vars to use Firebase auth.');
-    }
-    loading.value = true;
-    error.value = null;
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
-      user.value = userCredential.user;
-      authProvider.value = 'firebase';
-      session.value = null;
-      return userCredential;
-    } catch (e) {
-      error.value = e.message;
-      console.error('Firebase sign up error:', e.message);
-      throw e;
-    } finally {
-      loading.value = false;
-    }
-  }
-
-  async function signInFirebase(credentials) {
-    if (AUTH_BYPASS) {
-      user.value = GUEST_USER;
-      authProvider.value = 'supabase';
-      session.value = { user: GUEST_USER };
-      return { user: GUEST_USER, session: session.value };
-    }
-    if (!isFirebaseEnabled || !auth) {
-      throw new Error('Firebase is disabled. Configure VITE_FIREBASE_* env vars to use Firebase auth.');
-    }
-    loading.value = true;
-    error.value = null;
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
-      user.value = userCredential.user;
-      authProvider.value = 'firebase';
-      session.value = null;
-      return userCredential;
-    } catch (e) {
-      error.value = e.message;
-      console.error('Firebase sign in error:', e.message);
-      throw e;
-    } finally {
-      loading.value = false;
-    }
-  }
-
-  async function resetPasswordFirebase(email) {
-    if (AUTH_BYPASS) return;
-    if (!isFirebaseEnabled || !auth) {
-      throw new Error('Firebase is disabled. Configure VITE_FIREBASE_* env vars to use Firebase auth.');
-    }
-    loading.value = true;
-    error.value = null;
-    try {
-      await sendPasswordResetEmail(auth, email);
-    } catch (e) {
-      error.value = e.message;
-      console.error('Firebase reset password error:', e.message);
-      throw e;
-    } finally {
-      loading.value = false;
-    }
-  }
 
   // Actions Supabase
   async function signUpSupabase(credentials) {
@@ -255,8 +176,6 @@ export const useAuthStore = defineStore('auth', () => {
       if (authProvider.value === 'supabase') {
         const { error: signOutError } = await supabase.auth.signOut();
         if (signOutError) throw signOutError;
-      } else if (authProvider.value === 'firebase' && auth) {
-        await auth.signOut();
       }
       user.value = null;
       session.value = null;
@@ -390,9 +309,7 @@ export const useAuthStore = defineStore('auth', () => {
     return initializePromise;
   }
 
-  // Gérer les changements d'état d'authentification pour les deux systèmes
-
-  // Supabase auth state change
+  // Supabase est l'unique source de changements d'état d'authentification.
   supabase.auth.onAuthStateChange((event, newSession) => {
     if (AUTH_BYPASS) return;
     // Gérer tous les événements qui indiquent une session active
@@ -428,10 +345,6 @@ export const useAuthStore = defineStore('auth', () => {
     isSupabaseUser,
     lastSessionCheck,
     initialized,
-    // Firebase methods
-    signUpFirebase,
-    signInFirebase,
-    resetPasswordFirebase,
     // Supabase methods
     signUpSupabase,
     signInSupabase,

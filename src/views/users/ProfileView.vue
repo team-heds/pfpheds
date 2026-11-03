@@ -1,27 +1,34 @@
 <template>
   <Navbar />
   <ProfileInfo v-if="activeTab === 0" />
-  <DocumentsUserProfile v-if="activeTab === 1" />
-  <ResumStageUserProfile v-if="activeTab === 2" />
-  <ChatProfil v-if="activeTab === 3" />
+  <AsyncDocumentsUserProfile v-if="activeTab === 1" />
+  <AsyncResumStageUserProfile v-if="activeTab === 2" />
+  <AsyncChatProfil v-if="activeTab === 3" />
 </template>
 
 <script>
-import { ref } from 'vue';
+import { defineAsyncComponent, ref } from 'vue';
 import Navbar from '@/components/common/utils/Navbar.vue';
 import ProfileInfo from '@/components/user/details/ProfileInfo.vue'
-import ResumStageUserProfile from '@/components/user/details/ResumStageUserProfile.vue'
-import DocumentsUserProfile from '@/components/user/details/DocumentsUserProfile.vue'
-import ChatProfil from '@/components/user/details/ChatProfil.vue'
+
+const AsyncResumStageUserProfile = defineAsyncComponent(
+  () => import('@/components/user/details/ResumStageUserProfile.vue')
+)
+const AsyncDocumentsUserProfile = defineAsyncComponent(
+  () => import('@/components/user/details/DocumentsUserProfile.vue')
+)
+const AsyncChatProfil = defineAsyncComponent(
+  () => import('@/components/user/details/ChatProfil.vue')
+)
 
 export default {
   name: 'ProfileView',
   components: {
     Navbar,
     ProfileInfo,
-    ResumStageUserProfile,
-    DocumentsUserProfile,
-    ChatProfil,
+    AsyncResumStageUserProfile,
+    AsyncDocumentsUserProfile,
+    AsyncChatProfil,
   },
   setup() {
     const activeTab = ref(0);

@@ -1,4 +1,4 @@
-import { createApp } from 'vue';
+import { createApp, nextTick, watch } from 'vue';
 import { createPinia } from 'pinia';
 import PrimeVue from 'primevue/config';
 import BadgeDirective from 'primevue/badgedirective';
@@ -14,10 +14,13 @@ import router from './router';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import { bootstrapApplication } from '@/service/appBootstrap';
+import { installPageNavigation } from '@/service/pageNavigationService';
+import { clearPageListContexts, disposePageListContexts } from '@/composables/usePageListContext';
 
 import '@/assets/styles/styles.scss';
 import 'primeflex/primeflex.css';
 import '@/assets/styles/platform-foundations.scss';
+import '@/assets/styles/si-admin-system.scss';
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -28,6 +31,25 @@ app.use(PrimeVue, { ripple: true });
 app.use(ToastService);
 app.use(DialogService);
 app.use(ConfirmationService);
+
+const pageNavigation = installPageNavigation(router, { nextTick });
+const stopNavigationAccountWatch = watch(
+  () => useAuthStore(pinia).user?.id || null,
+  () => {
+    clearPageListContexts();
+    pageNavigation.clearHistory();
+    void pageNavigation.refresh();
+  },
+  { flush: 'sync' },
+);
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    stopNavigationAccountWatch();
+    pageNavigation.dispose();
+    disposePageListContexts();
+  });
+}
 
 app.directive('tooltip', Tooltip);
 app.directive('badge', BadgeDirective);
@@ -77,7 +99,10 @@ async function bootstrap() {
       sessionResolved: authStore.initialized,
     }),
     waitForRouter: () => router.isReady(),
-    mount: () => app.mount('#app'),
+    mount: () => {
+      app.mount('#app');
+      void pageNavigation.refresh();
+    },
     onError: showBootstrapFailure,
   });
 }
