@@ -53,3 +53,26 @@ Preuves : [recette navigateur](/Users/antoinequarroz/Lab/projets/pfpheds/artifac
 - Les empreintes HTML/service worker de production sont identiques avant/après. Aucun déploiement backend ni écriture de données de production.
 
 La connexion Jira reste indisponible (`UNAUTHORIZED`, reconnexion nécessaire) : aucun statut Jira modifié. ENG-10 est corrigé sur TEST ; les autres sujets généraux de l’audit ne sont pas déclarés terminés.
+
+## Reprise du 3 novembre — confort du jeu et changement de compte
+
+**Publié sur TEST uniquement.** Le lot ajoute Pause/Reprendre dans Ventriglisse, pendant le décompte comme pendant la course. Espace et P fonctionnent lorsque la piste a le focus, sans détourner la saisie des noms ni les boutons. Masquer l’onglet met la manche en pause ; revenir ne relance pas la course automatiquement. La phase, le délai restant, les distances et la manche sont conservés à la reprise. Une manche ne peut attribuer son score qu’une fois.
+
+Le mode « Limiter les mouvements » reprend la préférence système et reste réglable dans le jeu : caméra fixe cadrant toute la piste, effets décoratifs atténués, déplacement essentiel des participants conservé. Le son s’arrête immédiatement à la désactivation ; sa réactivation pendant la course ne relance que la glissade. Les lectures audio tardives, doubles lancements et chargements terminés après démontage sont neutralisés. Timers, animation, écouteurs et observateur sont arrêtés en quittant la page. Les titres restent lisibles sur le fond bleu du jeu en thème clair.
+
+Les quêtes sont maintenant rechargées au changement de compte. Anciennes quêtes, statistiques, filtres et détail sont effacés immédiatement ; réponses tardives et événements d’une ancienne carte sont ignorés. La limite de changement de compte mentionnée dans le rapport du 2 novembre est donc corrigée.
+
+Les avatars fille/garçon, textures, décor, couleurs, graine et calcul des scores n’ont pas été remplacés. Aucune écriture serveur, règle XP, donnée de base, audience pilote ou configuration d’accès n’est modifiée par ce lot.
+
+Validation : **283 tests dans 19 fichiers** sur la branche isolée, puis **323 tests dans 25 fichiers** dans le projet principal, dont 14 nouveaux cas de cycle de compte et 18 cas de lecture/pause/audio/cadrage. Une première exécution parallèle a dépassé le délai d’un test PrimeVue ; l’exécution bornée à deux workers passe sans changer son délai maximal. Build Vite/PWA réussi et revue indépendante sans défaut matériel. Le détecteur Impeccable n’a pas relevé de signal sur les deux vues concernées.
+
+Recette navigateur avec le compte fictif, via le tunnel TEST existant : vraie scène 3D et quatre avatars chargés, distances identiques pendant la pause, reprise avec P, course terminée et scores 4/3/2/1 attribués une fois ; pause pendant le décompte vérifiée sur mobile. Aucun débordement horizontal en 390, 834 et 1 440 px ; contraste des titres vérifié après correction en thème clair. Les tests montés couvrent aussi l’onglet masqué, le délai entre GO et départ, les promesses audio tardives et la sortie pendant un chargement. Pas de recette tactile physique ni VoiceOver revendiquée : ENG-09 reste ouvert pour ces contrôles.
+
+La publication serveur est vérifiée (1 365 fichiers, gateway et réponse HTTP), mais **l’ouverture publique depuis le navigateur de recette renvoie un refus réseau 403**. Aucun élargissement de la liste réseau n’a été effectué pour contourner ce refus. La recette fonctionnelle du navigateur utilise le frontend local du même code et la base TEST via son tunnel autorisé. Aucun affichage post-publication dans le navigateur public n’est revendiqué.
+
+- Branche : `codex/gamification-play-comfort`, code `d27a1788`, socle `b516d732`. Les cinq fichiers concernés sont reportés dans le projet principal après précontrôle et sauvegarde ; travaux indépendants préservés. Aucun push GitHub revendiqué.
+- Entrée TEST : `/assets/index-BLAkCGGf.js` ; HTML `0cdbcbeec8419c266f6c77116903165d738e5d3e2944d80453f9d631fc59a4d1`, service worker `c2c88f982403e115211086ce47339b19cf2650497af796650beb50c48cfe092b`.
+- Sauvegarde frontend : `/opt/pfpheds-staging/backups/frontend-dist-before-apple-navigation-20261103T103818Z-Ms86YnAc.tar.gz`, SHA256 `cebaa04e9a65e1b68c3f049f34ed1bfc1f065972bc9042a2332325f6a252a51c`.
+- 448 assets ajoutés, aucun asset existant supprimé ou écrasé. Empreintes du frontend de production identiques avant/après. Aucun backend déployé.
+
+Preuves : [recette](/Users/antoinequarroz/Lab/projets/pfpheds/artifacts/gamification-play-comfort-2026-11-03/browser-evidence.json), [pause bureau](/Users/antoinequarroz/Lab/projets/pfpheds/artifacts/gamification-play-comfort-2026-11-03/ventriglisse-pause-desktop.png), [pause mobile et thème clair](/Users/antoinequarroz/Lab/projets/pfpheds/artifacts/gamification-play-comfort-2026-11-03/ventriglisse-mobile-clair.png). La suite reste la recette humaine du pilote fermé, puis les contrôles sur appareils physiques avant une ouverture plus large.
