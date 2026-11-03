@@ -1,8 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import * as THREE from 'three'
 import { getVentriglisseOverviewCamera } from '@/domain/games/ventriglissePlayback'
+import bipAudioUrl from '@/components/games/assets/bip.wav?url'
+import goAudioUrl from '@/components/games/assets/go.wav?url'
+import slideAudioUrl from '@/components/games/assets/slide.wav?url'
+import finishAudioUrl from '@/components/games/assets/finish.wav?url'
 
 const mocks = vi.hoisted(() => ({
   webgl: false, hidden: false, systemMotion: false,
@@ -105,6 +112,26 @@ describe('confort de lecture du Ventriglisse', () => {
   const scores = () => wrapper.findAll('.scoreboard li b').map(node => parseInt(node.text(), 10))
   const soundButton = () => wrapper.find('[role="switch"][aria-label*="effets sonores"]')
   const audio = name => wrapper.findAll('audio').find(node => node.attributes('src').includes(name)).element
+
+  it('charge quatre sons WAV valides avec les URLs résolues par le bundler', async () => {
+    await open()
+    const sounds = [
+      ['bip', bipAudioUrl], ['go', goAudioUrl], ['slide', slideAudioUrl], ['finish', finishAudioUrl],
+    ]
+    const elements = wrapper.findAll('audio')
+    expect(elements).toHaveLength(sounds.length)
+    sounds.forEach(([name, url], index) => {
+      expect(elements[index].attributes('src')).toBe(url)
+      expect(url).toMatch(new RegExp(`${name}\\.wav(?:\\?.*)?$`))
+      const bytes = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), `../../src/components/games/assets/${name}.wav`))
+      expect(bytes.length).toBeGreaterThan(44)
+      expect(bytes.toString('ascii', 0, 4)).toBe('RIFF')
+      expect(bytes.toString('ascii', 8, 12)).toBe('WAVE')
+      expect(bytes.readUInt32LE(4)).toBe(bytes.length - 8)
+    })
+    expect(elements[2].attributes('loop')).toBeDefined()
+    expect(elements.filter(node => node.attributes('loop') !== undefined)).toHaveLength(1)
+  })
 
   it('préserve le décompte et son délai restant pendant une pause, sans lancer une autre manche', async () => {
     await open()
@@ -239,6 +266,7 @@ describe('confort de lecture du Ventriglisse', () => {
     const go = audio('go.')
     const slidePlays = played.filter(item => item === slide).length
     const goPlays = played.filter(item => item === go).length
+    expect(soundButton().attributes('aria-checked')).toBe('true')
     await soundButton().trigger('click')
     expect(soundButton().attributes('aria-checked')).toBe('false')
     expect(pauseSpy.mock.instances).toContain(slide)
@@ -246,6 +274,11 @@ describe('confort de lecture du Ventriglisse', () => {
     await flushPromises()
     expect(played.filter(item => item === slide)).toHaveLength(slidePlays + 1)
     expect(played.filter(item => item === go)).toHaveLength(goPlays)
+    expect(soundButton().attributes('aria-checked')).toBe('true')
+    for (let count = 0; count < 100 && !wrapper.find('.results-panel').exists(); count += 1) await step(250)
+    await flushPromises()
+    expect(played).toContain(audio('finish'))
+    expect(soundButton().attributes('aria-checked')).toBe('true')
   })
 
   it('neutralise une lecture audio qui se résout après la désactivation du son', async () => {

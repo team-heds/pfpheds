@@ -225,10 +225,10 @@
       </section>
     </main>
 
-    <audio ref="audioBip" src="./assets/bip.wav" preload="auto"></audio>
-    <audio ref="audioGo" src="./assets/go.wav" preload="auto"></audio>
-    <audio ref="audioSlide" src="./assets/slide.mp3" preload="auto" loop></audio>
-    <audio ref="audioFinish" src="./assets/finish.mp3" preload="auto"></audio>
+    <audio ref="audioBip" :src="bipAudioUrl" preload="auto"></audio>
+    <audio ref="audioGo" :src="goAudioUrl" preload="auto"></audio>
+    <audio ref="audioSlide" :src="slideAudioUrl" preload="auto" loop></audio>
+    <audio ref="audioFinish" :src="finishAudioUrl" preload="auto"></audio>
   </div>
 </template>
 
@@ -243,6 +243,10 @@ import wallTextureImg from './assets/wall.png'
 import wallLeftImg from './assets/cafte1.png'
 import wallRightImg from './assets/cafte2.png'
 import cafeteriaImg from './assets/cafte3.png'
+import bipAudioUrl from './assets/bip.wav?url'
+import goAudioUrl from './assets/go.wav?url'
+import slideAudioUrl from './assets/slide.wav?url'
+import finishAudioUrl from './assets/finish.wav?url'
 import femaleAvatarUrl from './assets/avatars/fille.glb?url'
 import maleAvatarUrl from './assets/avatars/garcon.glb?url'
 import {
