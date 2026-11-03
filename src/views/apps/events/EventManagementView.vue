@@ -9,7 +9,7 @@
     <main class="main-content main-content-padded">
       <div class="event-header-bar event-header-bar-centered">
         <header class="page-header">
-          <h1 class="title">Évenements</h1>
+          <h1 class="title">Événements</h1>
           <p class="subtitle">
             Découvrez et participez aux événements de notre communauté
           </p>

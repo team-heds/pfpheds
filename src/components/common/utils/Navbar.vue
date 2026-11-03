@@ -23,11 +23,10 @@
                 :to="resolveMenuLink(item)"
                 class="navbar-destination"
                 :class="{ 'navbar-destination--active': isMenuItemActive(item) }"
-                :title="item.title"
-                :aria-label="item.title"
                 :aria-current="isMenuItemActive(item) ? 'page' : undefined"
               >
                 <i :class="item.icon" aria-hidden="true"></i>
+                <span class="navbar-destination__label">{{ item.title }}</span>
               </router-link>
             </li>
           </ul>
@@ -74,13 +73,10 @@
     <!-- Ô£à Fen├¬tre de dialogue Param├¿tres -->
     <Dialog v-model:visible="isSettingsDialogVisible" modal header="Paramètres" :style="{ width: 'min(20rem, calc(100vw - 2rem))' }">
       <div class="flex flex-column gap-3">
-        <Button label="Profil" icon="pi pi-user" class="w-full p-button-outlined" @click="navigateToProfile" />
-        <Button label="Paramètres" icon="pi pi-cog" class="w-full p-button-outlined" @click="navigateTo('/admin/settings')" />
+        <Button label="Mon profil" icon="pi pi-user" class="w-full p-button-outlined" @click="navigateToProfile" />
+        <Button label="Paramètres du compte" icon="pi pi-sliders-h" class="w-full p-button-outlined" @click="navigateTo('/settings')" />
         <Button label="Se déconnecter" icon="pi pi-power-off" class="w-full p-button-danger" @click="logout" />
-
       </div>
-      <br>
-      @Copyright HEdS
     </Dialog>
   </header>
 </template>
@@ -96,6 +92,7 @@ import Dialog from 'primevue/dialog';
 import GlobalSearch from '@/components/common/utils/GlobalSearch.vue';
 import hedsIcon from '@/assets/images/hespicto.png';
 import { getVotationDestination } from '@/composables/useNavigationDestinations';
+import { gamificationFeatures } from '@/config/gamificationFeatures';
 
 const router = useRouter();
 const route = useRoute();
@@ -111,12 +108,15 @@ const isAcademicRestricted = computed(() =>
   permissions.value.includes('academic.restricted')
 );
 
+// Icônes et libellés alignés sur useNavigationDestinations (hub « Mon espace » mobile).
 const allMenuItems = [
   { icon: "pi pi-home", link: "/feed", title: "Accueil" },
-  { icon: "pi pi-bookmark", link: "/institution", title: "Institutions" },
-  { icon: "pi pi-check", link: "votation_dynamic", title: "Votation", isVotation: true },
+  { icon: "pi pi-building", link: "/institution", title: "Institutions" },
+  { icon: "pi pi-check-square", link: "votation_dynamic", title: "Votation", isVotation: true },
   { icon: "pi pi-map-marker", link: "/map", title: "Carte" },
-  { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true },
+  { icon: "pi pi-calendar", link: "/events", title: "Événements" },
+  { icon: "pi pi-compass", link: "/gamification-profile", title: "Progression", feature: "userJourney" },
+  { icon: "pi pi-cog", link: "/admin", title: "Administration", adminOnly: true },
   { icon: "pi pi-chart-bar", link: "/admin/dashboard-rm", title: "Dashboard", restrictedAcademicOnly: true }
 ];
 
@@ -128,6 +128,10 @@ const filteredMenuItems = computed(() => {
   }
 
   return allMenuItems.filter(item => {
+    if (item.feature && !gamificationFeatures[item.feature]) {
+      return false;
+    }
+
     // Si l'item nécessite un accès admin
     if (item.adminOnly && !hasAdminAccess.value) {
       return false;
@@ -298,6 +302,8 @@ onMounted(async () => {
 
 .navbar-primary-scroll {
   min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .navbar-primary-scroll::-webkit-scrollbar {
@@ -326,27 +332,32 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--navbar-control-size);
+  gap: 0.5rem;
   min-width: var(--navbar-control-size);
   height: var(--navbar-control-size);
+  padding-inline: 0.85rem;
   border-radius: 12px;
-  color: var(--primary-color);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-color);
   background: var(--surface-overlay);
   text-decoration: none;
   transition: background-color 150ms ease, color 150ms ease, transform 100ms ease;
 }
 
 .navbar-destination i {
-  font-size: 20px;
+  font-size: 1.1rem;
 }
 
 .navbar-destination:hover {
   background: var(--surface-hover);
 }
 
+/* Texte foncé sur le jaune HEdS : lisible dans les deux thèmes. */
 .navbar-destination--active,
 .navbar-destination--active:hover {
-  color: var(--surface-overlay);
+  color: #071426;
   background: var(--primary-color);
 }
 
@@ -365,7 +376,7 @@ onMounted(async () => {
 }
 
 /* Sur les tablettes étroites, les destinations restent visibles sur une seconde ligne. */
-@media (min-width: 769px) and (max-width: 1000px) {
+@media (min-width: 769px) and (max-width: 1279px) {
   .desktop-nav {
     padding-inline: 1rem;
   }

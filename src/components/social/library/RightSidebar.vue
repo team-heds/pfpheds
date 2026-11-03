@@ -7,7 +7,9 @@
     <!-- Section Communauté -->
     <div class="profile-section">
       <div class="communities-header">
-        <h4 @click="goToCommunities" class="clickable">Communautés</h4>
+        <h2 class="sidebar-heading">
+          <button type="button" class="sidebar-heading__link" @click="goToCommunities">Communautés</button>
+        </h2>
       </div>
       <ul class="communities-list">
         <li v-if="isLoadingCommunities" v-for="n in 2" :key="`community-skeleton-${n}`" class="community-item community-item--placeholder">
@@ -54,10 +56,10 @@
     <!-- Section Hashtags -->
     <div class="profile-section">
       <div class="hashtags">
-        <h4 class="text-color">Hashtags</h4>
+        <h2 class="sidebar-heading text-color">Hashtags</h2>
         <ul>
           <li v-for="hashtag in hashtags" :key="hashtag">
-            <Chip :label="hashtag" removable />
+            <Chip :label="hashtag" />
           </li>
         </ul>
       </div>
@@ -271,14 +273,33 @@ export default {
   padding: 1rem;
 }
 
-.communities-header h4.clickable {
-  cursor: pointer;
+.sidebar-heading {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+}
+
+.communities-header .sidebar-heading {
+  margin: 0;
+}
+
+.sidebar-heading__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   color: var(--text-color);
+  cursor: pointer;
   transition: color 0.2s ease;
 }
 
-.communities-header h4.clickable:hover {
+.sidebar-heading__link:hover {
   color: var(--primary-color);
+}
+
+.sidebar-heading__link:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .communities-list {

@@ -16,7 +16,7 @@
         >
           <img
             :src="userPhotoURL"
-            alt="Avatar"
+            alt=""
             class="user-avatar"
           />
           <span class="avatar-edit" aria-hidden="true"><i class="pi pi-camera"></i></span>
@@ -38,12 +38,12 @@
       <!-- Liens supplémentaires -->
       <nav class="profile-links" aria-label="Raccourcis personnels">
         <button type="button" class="profile-action" @click="goToDocumentPFP">
-            <span class="profile-action__icon"><i class="pi pi-file"></i></span>
+            <span class="profile-action__icon" aria-hidden="true"><i class="pi pi-file"></i></span>
             <span>Documents pour les PFPs</span>
             <i class="pi pi-chevron-right profile-action__arrow" aria-hidden="true"></i>
         </button>
         <button type="button" class="profile-action" @click="goToTools">
-            <span class="profile-action__icon"><i class="pi pi-wrench"></i></span>
+            <span class="profile-action__icon" aria-hidden="true"><i class="pi pi-wrench"></i></span>
             <span>Outils</span>
             <i class="pi pi-chevron-right profile-action__arrow" aria-hidden="true"></i>
         </button>
@@ -59,10 +59,11 @@
   <!-- Nouvelle card Messagerie détachée -->
   <div class="messaging-card" v-if="authStore.isFirebaseUser">
     <div class="flex justify-content-between align-items-center mb-3">
-      <h4 class="m-0">Messagerie</h4>
+      <h2 class="sidebar-heading m-0">Messagerie</h2>
       <Button
         icon="pi pi-arrow-right"
         class="p-button-text p-button-sm"
+        aria-label="Voir tous les chats"
         @click="goToChat"
         v-tooltip.top="'Voir tous les chats'"
       />
@@ -84,12 +85,13 @@
   <!-- Section Événements à venir -->
   <div class="upcoming-events-section">
     <div class="flex justify-content-between align-items-center mb-3">
-      <h4 class="section-title m-0">
+      <h2 class="sidebar-heading section-title m-0">
         Événements à venir
-      </h4>
+      </h2>
       <Button
         icon="pi pi-arrow-right"
         class="p-button-text p-button-sm"
+        aria-label="Voir tous les événements"
         @click="goToEventManagement"
         v-tooltip.top="'Voir tous les événements'"
       />
@@ -151,6 +153,7 @@
 </template>
 
 <script>
+import defaultAvatarUrl from '@/assets/images/avatar/01.jpg';
 import { defineAsyncComponent } from 'vue';
 import Toast from "primevue/toast";
 import { getDatabase, ref as dbRef, get, onValue } from "firebase/database";
@@ -167,7 +170,7 @@ import { gamificationFeatures } from '@/config/gamificationFeatures';
 
 const AsyncEventDetail = defineAsyncComponent(() => import('@/components/events/EventDetail.vue'));
 
-const defaultAvatar = '@/assets/images/avatar/01.jpg';
+const defaultAvatar = defaultAvatarUrl;
 
 export default {
   name: "LeftSidebar",
@@ -828,6 +831,10 @@ export default {
   background: var(--surface-card);
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   margin-left: 4rem;
+}
+
+.sidebar-heading {
+  font-size: 1.5rem;
 }
 
 .section-title {

@@ -29,6 +29,29 @@ import { useLayout } from "@/layout/composables/layout";
 
 const { layoutConfig } = useLayout();
 const isDimTheme = ref(layoutConfig.colorScheme.value === "dim");
+const STORAGE_KEY = "heds-color-scheme";
+
+const readStoredScheme = () => {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    return stored === "light" || stored === "dim" ? stored : null;
+  } catch {
+    return null;
+  }
+};
+
+const storeScheme = (scheme) => {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, scheme);
+  } catch {
+    // Stockage indisponible (navigation privée) : le choix vaut pour la session.
+  }
+};
+
+// Permet aux composants hors PrimeVue d'adapter leurs couleurs au thème actif.
+const markDocumentScheme = (scheme) => {
+  document.documentElement.dataset.colorScheme = scheme;
+};
 
 const getThemeLinks = () => Array.from(
   document.querySelectorAll('link[data-theme-link="heds"]')
@@ -50,12 +73,19 @@ onMounted(() => {
     layoutConfig.colorScheme.value = actual;
     isDimTheme.value = actual === 'dim';
   }
+
+  const stored = readStoredScheme();
+  if (stored && stored !== actual && changeColorScheme(stored)) {
+    isDimTheme.value = stored === 'dim';
+  }
+  markDocumentScheme(layoutConfig.colorScheme.value);
 });
 
 const toggleTheme = () => {
   const newScheme = isDimTheme.value ? "light" : "dim";
   if (changeColorScheme(newScheme)) {
     isDimTheme.value = newScheme === "dim";
+    storeScheme(newScheme);
   }
 };
 
@@ -80,6 +110,7 @@ const changeColorScheme = (newColorScheme) => {
   });
 
   layoutConfig.colorScheme.value = newColorScheme;
+  markDocumentScheme(newColorScheme);
   return true;
 };
 

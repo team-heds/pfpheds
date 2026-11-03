@@ -2,15 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { enablePush, disablePush } from '@/push'
 import { createClient } from '@supabase/supabase-js'
+import { SUPABASE_REST_URL } from '@/config/supabaseRest'
 const SB_URL = import.meta.env.VITE_SUPABASE_URL
 const SB_ANON = import.meta.env.VITE_SUPABASE_KEY
 const sb = createClient(SB_URL, SB_ANON)
-const REST    = import.meta.env.VITE_SUPABASE_REST_URL      // ex: https://api2.hedsvs.ch/rest/v1
-  || 'https://api2.hedsvs.ch/rest/v1'  
- 
-const REST_BASE =
-  import.meta.env.VITE_SUPABASE_REST_URL ||
-  'https://api2.hedsvs.ch/rest/v1'
+const REST_BASE = SUPABASE_REST_URL
  
 const ANON_KEY = import.meta.env.VITE_SUPABASE_KEY
  
@@ -18,7 +14,7 @@ if (!ANON_KEY) {
   console.error('[PushStore] VITE_SUPABASE_KEY manquant dans .env')
 }
 if (!REST_BASE) {
-  console.error('[PushStore] VITE_SUPABASE_REST_URL manquant (fallback utilisé)')
+  console.error('[PushStore] VITE_SUPABASE_URL ou VITE_SUPABASE_REST_URL manquant')
 }
  
 const baseHeaders = {
@@ -165,7 +161,7 @@ async function sendTest(payload = {}) {
     ? { user_id: user_id ?? session.user.id, title, body, url }
     : { title, body, url }
  
-  const res = await fetch(`${REST}/push_outbox`, {
+  const res = await fetch(`${REST_BASE}/push_outbox`, {
     method: 'POST',
     headers,
     body: JSON.stringify(bodyObj)
@@ -282,7 +278,7 @@ async function sendToAllAdmins(payload = {}) {
       }
  
  
-      return fetch(`${REST}/push_outbox`, {
+      return fetch(`${REST_BASE}/push_outbox`, {
         method: 'POST',
         headers,
         body: JSON.stringify(bodyObj)

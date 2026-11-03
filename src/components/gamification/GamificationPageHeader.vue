@@ -47,11 +47,11 @@ defineEmits(['back'])
   max-width: 1200px;
   margin: 0 auto 1.5rem;
   padding: 1.5rem;
-  color: #f8fafc;
-  background: #071426;
-  border: 1px solid color-mix(in srgb, var(--house-color, #f3c300) 38%, #243a58);
+  color: var(--text-color);
+  background: var(--surface-card);
+  border: 1px solid color-mix(in srgb, var(--house-color, #f3c300) 38%, var(--surface-border));
   border-radius: 1rem;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
 .game-header__identity {
@@ -81,7 +81,7 @@ defineEmits(['back'])
   width: 0.85rem;
   height: 0.85rem;
   background: var(--house-color, #f3c300);
-  border: 2px solid #071426;
+  border: 2px solid var(--surface-card);
   border-radius: 50%;
   content: '';
 }
@@ -89,7 +89,7 @@ defineEmits(['back'])
 .game-header__icon i { font-size: 1.35rem; }
 .game-header__eyebrow {
   margin: 0 0 0.25rem;
-  color: #f3c300;
+  color: var(--text-color-secondary);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.09em;
@@ -98,7 +98,7 @@ defineEmits(['back'])
 
 h1 {
   margin: 0;
-  color: #f8fafc;
+  color: var(--text-color);
   font-size: clamp(1.55rem, 3vw, 2.15rem);
   line-height: 1.1;
 }
@@ -106,7 +106,7 @@ h1 {
 .game-header__description {
   max-width: 46rem;
   margin: 0.45rem 0 0;
-  color: #b8c3d1;
+  color: var(--text-color-secondary);
   line-height: 1.5;
 }
 
@@ -114,8 +114,8 @@ h1 {
 
 :deep(.game-header__back) {
   min-height: 44px;
-  color: #f8fafc;
-  border-color: #465c78;
+  color: var(--text-color);
+  border-color: var(--surface-border);
   border-radius: 0.75rem;
   font-weight: 700;
 }

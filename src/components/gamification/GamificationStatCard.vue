@@ -31,10 +31,10 @@ const safeProgress = computed(() => Math.max(0, Math.min(100, props.progress ?? 
   min-height: 7rem;
   gap: 1rem;
   padding: 1.2rem;
-  background: #071426;
-  border: 1px solid color-mix(in srgb, var(--house-color, #f3c300) 24%, #243a58);
+  background: var(--surface-card);
+  border: 1px solid color-mix(in srgb, var(--house-color, #f3c300) 24%, var(--surface-border));
   border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .game-stat__icon {
@@ -50,8 +50,8 @@ const safeProgress = computed(() => Math.max(0, Math.min(100, props.progress ?? 
 
 .game-stat__icon i { font-size: 1.15rem; }
 .game-stat__body { display: grid; flex: 1; gap: 0.2rem; min-width: 0; }
-.game-stat__body strong { color: #f8fafc; font-size: 1.65rem; line-height: 1; }
-.game-stat__body > span { color: #b8c3d1; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.035em; text-transform: uppercase; }
-.game-stat__track { height: 0.35rem; margin-top: 0.35rem; overflow: hidden; background: #243a58; border-radius: 999px; }
+.game-stat__body strong { color: var(--text-color); font-size: 1.65rem; line-height: 1; }
+.game-stat__body > span { color: var(--text-color-secondary); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.035em; text-transform: uppercase; }
+.game-stat__track { height: 0.35rem; margin-top: 0.35rem; overflow: hidden; background: var(--surface-border); border-radius: 999px; }
 .game-stat__track span { display: block; height: 100%; background: var(--house-color, #f3c300); border-radius: inherit; }
 </style>
