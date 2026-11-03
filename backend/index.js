@@ -48,6 +48,9 @@ const {
 const { createPfpOutcomeRouter } = require('./supabase/pfpOutcomeBackend.js')
 const { createStudentInitialAccessRouters } = require('./supabase/studentInitialAccessBackend.js')
 const {
+  createAdminPasswordRecoveryRouter
+} = require('./supabase/adminPasswordRecoveryBackend.js')
+const {
   createSIPlanningRemediationRouter
 } = require('./supabase/siPlanningRemediationBackend.js')
 
@@ -122,6 +125,7 @@ app.use(
 app.use('/api/auth/password-recovery', createPasswordRecoveryRequestRouter())
 app.use('/api', authenticate)
 const studentInitialAccessRouters = createStudentInitialAccessRouters()
+const adminPasswordRecoveryRouter = createAdminPasswordRecoveryRouter()
 
 // Routes - specific routes FIRST, then general ones
 console.log('[ROUTES] Mounting routes...')
@@ -139,6 +143,7 @@ app.use('/api/feedbacka', feedbackaRoutes)
 app.use('/api/push', requireAdmin, pushRoutes)
 app.use('/api/ftp', requireAdmin, ftpRoutes)
 app.use('/api/admin/users', requireAdmin, adminUsersRoutes)
+app.use('/api/admin/users', requireAdmin, adminPasswordRecoveryRouter)
 app.use('/api/admin/users', requireAdmin, studentInitialAccessRouters.adminRouter)
 app.use('/api/auth', studentInitialAccessRouters.selfRouter)
 app.use(

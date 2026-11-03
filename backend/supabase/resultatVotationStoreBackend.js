@@ -1,8 +1,13 @@
 const { Router } = require('express')
 const { supabaseAdmin } = require('../supabaseClient')
 const { v4: uuidv4 } = require('uuid')
-const { requireAdmin: requireCentralAdmin, requireSelfParam } = require('../middleware/auth')
+const {
+  isAdmin,
+  requireAdmin: requireCentralAdmin,
+  requireSelfParam
+} = require('../middleware/auth')
 const { normalizePfpRequest } = require('../middleware/pfpAcademicPeriod')
+const { canReadAssignmentCounts } = require('../domain/votationAssignmentAccess')
 
 const router = Router()
 
@@ -78,6 +83,45 @@ router.use(normalizePfpRequest)
 // Middleware pour vérifier si l'utilisateur est admin
 const requireAdmin = async (req, res, next) => {
   return requireCentralAdmin(req, res, next)
+}
+
+const requireAssignmentCountAccess = async (req, res, next) => {
+  if (!req.auth) {
+    return res.status(401).json({ ok: false, error: 'Authentication required' })
+  }
+  if (isAdmin(req.auth)) return next()
+
+  try {
+    const [{ data: profile, error: profileError }, { data: sessions, error: sessionsError }] =
+      await Promise.all([
+        supabaseAdmin
+          .from('user_profiles')
+          .select('classe, pfp_cohort')
+          .eq('user_id', req.auth.userId)
+          .maybeSingle(),
+        supabaseAdmin
+          .from('votation_sessions')
+          .select('target_class, is_priority, priority_user_ids')
+          .eq('pfp_type', req.params.pfpType)
+          .in('year', req.academicPeriod.getAcademicYearKeys(req.params.year))
+          .eq('status', 'open')
+      ])
+
+    if (profileError) throw profileError
+    if (sessionsError) throw sessionsError
+
+    if (!canReadAssignmentCounts({
+      userId: req.auth.userId,
+      profile,
+      sessions
+    })) {
+      return res.status(403).json({ ok: false, error: 'Campaign access required' })
+    }
+    return next()
+  } catch (error) {
+    console.error('❌ Erreur contrôle accès assignment-counts:', error)
+    return res.status(503).json({ ok: false, error: 'Assignment counts temporarily unavailable' })
+  }
 }
 
 /**
@@ -650,38 +694,49 @@ router.get('/pfp3-proposals/:year', requireAdmin, async (req, res) => {
  * GET /api/resultat-votation/assignment-counts/:pfpType/:year
  * Renvoie le nombre de places déjà assignées par place pour un PFP/année
  */
-router.get('/assignment-counts/:pfpType/:year', requireAdmin, async (req, res) => {
-  try {
-    const { pfpType, year } = req.params
+router.get(
+  '/assignment-counts/:pfpType/:year',
+  requireAssignmentCountAccess,
+  async (req, res) => {
+    try {
+      // Ces compteurs changent dès qu'une attribution manuelle est enregistrée.
+      // Une réponse 304 peut laisser le formulaire avec un ancien nombre de places.
+      res.set({
+        'Cache-Control': 'no-store, max-age=0',
+        ETag: `"assignment-counts-${uuidv4()}"`
+      })
 
-    if (!req.user) {
-      return res.status(401).json({ ok: false, error: 'Authentication required' })
+      const { pfpType, year } = req.params
+
+      if (!req.user) {
+        return res.status(401).json({ ok: false, error: 'Authentication required' })
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('student_result_vote')
+        .select('assigned_place_id')
+        .eq('pfp_type', pfpType)
+        .in('year', req.academicPeriod.getAcademicYearKeys(year))
+        .not('assigned_place_id', 'is', null)
+
+      if (error) {
+        throw error
+      }
+
+      const counts = {}
+      ;(data || []).forEach((row) => {
+        const placeId = row.assigned_place_id
+        if (!placeId) return
+        counts[placeId] = (counts[placeId] || 0) + 1
+      })
+
+      return res.json({ ok: true, counts })
+    } catch (error) {
+      console.error('❌ Erreur assignment-counts:', error)
+      return res.status(500).json({ ok: false, error: error.message })
     }
-
-    const { data, error } = await supabaseAdmin
-      .from('student_result_vote')
-      .select('assigned_place_id, user_id')
-      .eq('pfp_type', pfpType)
-      .in('year', req.academicPeriod.getAcademicYearKeys(year))
-      .not('assigned_place_id', 'is', null)
-
-    if (error) {
-      throw error
-    }
-
-    const counts = {}
-    ;(data || []).forEach((row) => {
-      const placeId = row.assigned_place_id
-      if (!placeId) return
-      counts[placeId] = (counts[placeId] || 0) + 1
-    })
-
-    return res.json({ ok: true, counts })
-  } catch (error) {
-    console.error('❌ Erreur assignment-counts:', error)
-    return res.status(500).json({ ok: false, error: error.message })
   }
-})
+)
 
 /**
  * POST /api/resultat-votation/save-pfp3-proposals
