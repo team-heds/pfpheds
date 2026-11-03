@@ -97,6 +97,7 @@
         @like="likeEvent"
         @edit="editEvent"
         @delete="deleteEvent"
+        @attendance-updated="refreshAfterAttendance"
         @fixAdmin="fixEventAdmin"
         @close="showDetailDialog = false" />
     </Dialog>
@@ -106,7 +107,6 @@
 <script setup>
 // Imports Vue/Pinia/PrimeVue
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { supabase } from '@/supabase';
 import Navbar from '@/components/common/utils/Navbar.vue';
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
@@ -125,9 +125,6 @@ import EventDetail from '@/components/events/EventDetail.vue';
 // Pinia store
 const eventStore = useEventStore();
 const events = computed(() => eventStore.events || []);
-
-// Router
-const router = useRouter();
 
 // Utilisateur courant avec Supabase Auth
 const currentUser = ref(null);
@@ -289,6 +286,11 @@ async function registerEvent(event) {
     await eventStore.toggleRegistration(event.id, userId.value, event.registered, currentUserInfo);
   }
 }
+
+async function refreshAfterAttendance({ eventId, response }) {
+  await eventStore.fetchEvents();
+  selectedEvent.value = eventStore.events.find((item) => item.id === eventId) || { ...selectedEvent.value, current_response: response };
+}
 function openEventDetails(event) {
   selectedEvent.value = event;
   showDetailDialog.value = true;
@@ -321,34 +323,6 @@ async function deleteEvent(event) {
       console.error('Erreur lors de la suppression:', error);
       alert('Erreur lors de la suppression de l\'événement');
     }
-  }
-}
-
-async function fixExistingEvent() {
-  if (!userId.value) {
-    alert('Vous devez être connecté pour corriger un événement');
-    return;
-  }
-
-  // Trouver tous les événements sans admin
-  const eventsToFix = events.value.filter(event => !event.admin_uid);
-
-  if (eventsToFix.length > 0) {
-    const confirmFix = confirm(`Voulez-vous vous attribuer la propriété de ${eventsToFix.length} événement(s) sans propriétaire ?`);
-
-    if (confirmFix) {
-      try {
-        for (const event of eventsToFix) {
-          await eventStore.fixEventAdmin(event.id, userId.value);
-        }
-        alert(`${eventsToFix.length} événement(s) corrigé(s) ! Vous pouvez maintenant les modifier/supprimer.`);
-      } catch (error) {
-        console.error('Erreur:', error);
-        alert('Erreur lors de la correction des événements');
-      }
-    }
-  } else {
-    alert('Aucun événement à corriger trouvé');
   }
 }
 

@@ -4,7 +4,7 @@
       <template #header>
         <div class="event-card-header">
           <div class="event-image-wrapper">
-            <img v-if="event.image" :src="event.image" :alt="`Illustration de l’événement ${event.title}`" class="event-image" />
+            <img v-if="event.image" :src="event.image" alt="event image" class="event-image" />
             <div v-else class="event-image-placeholder">
               <i class="pi pi-calendar"></i>
             </div>
@@ -34,11 +34,11 @@
           {{ truncateText(event.description, 100) }}
         </div>
         <div class="event-card-actions">
-          <Button icon="pi pi-user-plus"
-            :label="isUserRegistered ? 'Inscrit !' : 'S\'inscrire'"
+          <Button :icon="event.type === 'alpinphysio' ? 'pi pi-check-circle' : 'pi pi-user-plus'"
+            :label="event.type === 'alpinphysio' ? responseLabel : (isUserRegistered ? 'Inscrit !' : 'S\'inscrire')"
             class="p-button-rounded event-register-btn event-register-btn-small"
             :severity="isUserRegistered ? 'success' : 'primary'"
-            @click="$emit('register', event)" />
+            @click="event.type === 'alpinphysio' ? $emit('show-details', event) : $emit('register', event)" />
           <Button icon="pi pi-info-circle"
             class=" details-btn"
             :aria-label="`Voir le détail de ${event.title}`"
@@ -92,6 +92,11 @@ const isUserRegistered = computed(() => {
   if (props.event.registered && props.event.registered.find(user => user.uid === props.userId)) return true;
   return false;
 });
+const responseLabel = computed(() => ({
+  going: 'Présent·e',
+  maybe: 'Peut-être',
+  not_going: 'Absent·e',
+}[props.event.current_response] || 'Répondre'));
 function formatDateTime(date) {
   if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;

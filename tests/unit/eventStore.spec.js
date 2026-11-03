@@ -14,6 +14,9 @@ vi.mock('@/supabase', () => ({
     from: (...args) => mockFrom(...args),
     channel: (...args) => mockChannel(...args),
     removeChannel: (...args) => mockRemoveChannel(...args),
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    },
     storage: {
       from: (...args) => mockStorageFrom(...args),
     },
@@ -65,7 +68,10 @@ describe('eventStore', () => {
       expect(mockFrom).toHaveBeenCalledWith('events_with_counts')
       expect(store.events).toHaveLength(2)
       expect(store.loading).toBe(false)
-      expect(result).toEqual(mockEvents)
+      expect(result).toEqual([
+        expect.objectContaining({ id: '1', title: 'Event A', startDate: '2024-01-01' }),
+        expect.objectContaining({ id: '2', title: 'Event B', startDate: '2024-02-01' }),
+      ])
     })
 
     it('falls back to events table if view does not exist', async () => {
@@ -83,7 +89,7 @@ describe('eventStore', () => {
         return chain
       })
 
-      const result = await store.fetchEvents()
+      await store.fetchEvents()
 
       expect(mockFrom).toHaveBeenCalledTimes(2)
       expect(mockFrom).toHaveBeenNthCalledWith(2, 'events')
@@ -121,7 +127,7 @@ describe('eventStore', () => {
     it('deletes event and its image from storage', async () => {
       // Mock: fetch event to get image_url
       let fromCallCount = 0
-      mockFrom.mockImplementation((table) => {
+      mockFrom.mockImplementation(() => {
         fromCallCount++
         if (fromCallCount === 1) {
           // Select image_url
