@@ -1,4 +1,5 @@
 import { formatAcademicYear, getTargetClass, requireAcademicYear } from './academicPeriod.js'
+import { normalizeRespondentName, splitRespondentNames } from './respondentNames.js'
 
 const clean = value => typeof value === 'string' ? value.trim() : ''
 const normalized = value => clean(value).normalize('NFC').replace(/\s+/g, ' ').toUpperCase()
@@ -36,7 +37,7 @@ export function inspectPfpPopulation({ year, pfpType, profiles, physioStudents, 
   const respondentNames = new Map()
   respondents.forEach(row => {
     if (!clean(row?.first_name) || !clean(row?.last_name)) return
-    const name = normalized(`${row.first_name} ${row.last_name}`)
+    const name = normalizeRespondentName(`${row.first_name} ${row.last_name}`)
     if (!respondentNames.has(name)) respondentNames.set(name, [])
     respondentNames.get(name).push(row)
   })
@@ -62,14 +63,18 @@ export function inspectPfpPopulation({ year, pfpType, profiles, physioStudents, 
     if (rows.physio.length > 1) flag('duplicate_physio')
     if (rows.profiles.some(row => row.is_active === false)) flag('inactive_profile')
 
-    const names = [...new Set(rows.physio.map(row => normalized(row.repondant_hes)).filter(Boolean))]
-    if (!names.length) flag('missing_respondent')
-    else if (names.length > 1) flag('conflicting_respondents')
+    const labels = [...new Set(rows.physio.map(row => clean(row.repondant_hes)).filter(Boolean))]
+    if (!labels.length) flag('missing_respondent')
+    else if (labels.length > 1) flag('conflicting_respondents')
     else {
-      const matches = respondentNames.get(names[0]) || []
-      if (!matches.length) flag('unknown_respondent')
-      else if (matches.length > 1) flag('ambiguous_respondent')
-      else if (matches[0].is_active !== true) flag('inactive_or_unverified_respondent')
+      const names = [...new Set(splitRespondentNames(labels[0]).map(normalizeRespondentName))]
+      if (!names.length) flag('missing_respondent')
+      else {
+        const matchesByName = names.map(name => respondentNames.get(name) || [])
+        if (matchesByName.some(matches => !matches.length)) flag('unknown_respondent')
+        else if (matchesByName.some(matches => matches.length > 1)) flag('ambiguous_respondent')
+        else if (matchesByName.some(matches => matches[0].is_active !== true)) flag('inactive_or_unverified_respondent')
+      }
     }
     const entry = { userId, profileClasses, physioClasses, issues: rowIssues }
     if (rowIssues.length) unresolved.push(entry)

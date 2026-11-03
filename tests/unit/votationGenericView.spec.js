@@ -194,7 +194,7 @@ describe('VotationGenericView', () => {
       const wrapper = createWrapper({ params: { pfpType: 'PFP1A' } })
       await flushPromises()
 
-      expect(wrapper.text()).toContain('Aucune place disponible')
+      expect(wrapper.text()).toContain('Aucune place proposée pour cette session')
     })
   })
 
@@ -223,6 +223,56 @@ describe('VotationGenericView', () => {
 
   // ==================== LOGIQUE MÉTIER ====================
   describe('logique métier', () => {
+    it('retire une seule capacité par attribution et conserve la capacité restante', async () => {
+      const wrapper = createWrapper()
+      await flushPromises()
+
+      wrapper.vm.targetPFP = 'PFP2'
+      wrapper.vm.selectedYear = '2027'
+      wrapper.vm.places = [
+        {
+          PlaceId: 'place-double',
+          InstitutionId: 'institution-1',
+          NomPlace: 'Ortho - Med',
+          PFP2: { 2027: '2' },
+        },
+      ]
+      wrapper.vm.pfp4AssignCountByPlace = { 'place-double': 1 }
+      wrapper.vm.offerOccupiedSeatCountByPlace = {}
+      wrapper.vm.useOfferSeatActivation = false
+
+      wrapper.vm.updateExpandedData()
+
+      expect(wrapper.vm.expandedPFPData).toHaveLength(1)
+      expect(wrapper.vm.expandedPFPData[0]).toMatchObject({
+        PlaceId: 'place-double',
+        seatIndex: 1,
+      })
+    })
+
+    it('retire complètement une place dont toutes les capacités sont attribuées', async () => {
+      const wrapper = createWrapper()
+      await flushPromises()
+
+      wrapper.vm.targetPFP = 'PFP2'
+      wrapper.vm.selectedYear = '2027'
+      wrapper.vm.places = [
+        {
+          PlaceId: 'place-simple',
+          InstitutionId: 'institution-1',
+          NomPlace: 'Cardio',
+          PFP2: { 2027: '1' },
+        },
+      ]
+      wrapper.vm.pfp4AssignCountByPlace = { 'place-simple': 1 }
+      wrapper.vm.offerOccupiedSeatCountByPlace = {}
+      wrapper.vm.useOfferSeatActivation = false
+
+      wrapper.vm.updateExpandedData()
+
+      expect(wrapper.vm.expandedPFPData).toEqual([])
+    })
+
     it('isPlaceDisabled empêche de choisir la même place deux fois', async () => {
       const session = { id: '1', pfp_type: 'PFP1A', year: '2026', status: 'open', target_class: 'BA25' }
       mockGetAllActiveSessions.mockResolvedValue([session])
