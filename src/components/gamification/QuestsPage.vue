@@ -42,6 +42,11 @@
         </div>
       </div>
 
+      <section v-else-if="!authStore.user?.id" class="quest-load-error" role="status">
+        <div><h2>Connexion requise</h2><p>Connectez-vous pour retrouver vos quêtes.</p></div>
+        <Button label="Se connecter" icon="pi pi-sign-in" @click="router.push('/home')" />
+      </section>
+
       <!-- Main Content -->
       <div v-else>
         
@@ -329,7 +334,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Navbar from '../common/utils/Navbar.vue'
@@ -357,6 +362,8 @@ const authStore = useAuthStore()
 const loading = ref(true)
 const loadError = ref('')
 let loadGeneration = 0
+let accountGeneration = 0
+let disposed = false
 const viewMode = ref('grid') // 'grid' ou 'list'
 
 // House configuration (identique à GamificationProfilePage)
@@ -525,6 +532,7 @@ const hasFilters = computed(() => {
 const loadQuestsData = async () => {
   const generation = ++loadGeneration
   const userId = authStore.user?.id
+  const isCurrent = () => !disposed && generation === loadGeneration && authStore.user?.id === userId
   try {
     loading.value = true
     loadError.value = ''
@@ -539,7 +547,7 @@ const loadQuestsData = async () => {
       userQuestsService.getUserQuests(userId),
       userQuestsService.getQuestStats(userId, { strict: true })
     ])
-    if (generation !== loadGeneration || authStore.user?.id !== userId) return
+    if (!isCurrent()) return
     userQuests.value = quests
     questStats.value = stats
     
@@ -548,7 +556,7 @@ const loadQuestsData = async () => {
     console.log('📊 Stats quêtes:', questStats.value)
     
   } catch (error) {
-    if (generation !== loadGeneration || authStore.user?.id !== userId) return
+    if (!isCurrent()) return
     console.error('Erreur lors du chargement des quêtes:', error)
     loadError.value = 'Vérifiez votre connexion puis réessayez. Vos filtres sont conservés.'
     toast.add({
@@ -558,21 +566,22 @@ const loadQuestsData = async () => {
       life: 3000
     })
   } finally {
-    if (generation === loadGeneration) loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
 const startQuest = async (questId) => {
+  const userId = authStore.user?.id
+  const generation = accountGeneration
+  const isCurrent = () => !disposed && generation === accountGeneration && authStore.user?.id === userId
+  if (!userId || !questsArray.value.some(quest => quest.id === questId)) return
   try {
-    const user = authStore.user
-    if (!user) return
-    const userId = user.id
-    if (!userId) return
-
     await userQuestsService.startQuest(userId, questId)
+    if (!isCurrent()) return
     
     // Recharger les données
     await loadQuestsData()
+    if (!isCurrent()) return
     
     toast.add({
       severity: 'success',
@@ -581,6 +590,7 @@ const startQuest = async (questId) => {
       life: 3000
     })
   } catch (error) {
+    if (!isCurrent()) return
     console.error('❌ Erreur lors du démarrage de la quête:', error)
     toast.add({
       severity: 'error',
@@ -597,7 +607,9 @@ const startQuestFromModal = async (questId) => {
 }
 
 const showQuestDetails = (quest) => {
-  selectedQuest.value = quest
+  const currentQuest = questsArray.value.find(item => item.id === quest?.id)
+  if (!currentQuest) return
+  selectedQuest.value = currentQuest
   showModal.value = true
 }
 
@@ -684,11 +696,23 @@ watch([searchQuery, selectedDifficulty, selectedType, sortBy], () => {
   currentPage.value = 0
 })
 
-// Lifecycle
-onMounted(() => {
-  loadQuestsData()
+// Account changes must hide the previous actor's data before any new read settles.
+watch(() => authStore.user?.id || null, () => {
+  accountGeneration += 1
+  userQuests.value = []
+  questStats.value = {}
+  showModal.value = false
+  selectedQuest.value = null
+  activeTab.value = 'active'
+  clearFilters()
+  void loadQuestsData()
+}, { immediate: true, flush: 'sync' })
+
+onBeforeUnmount(() => {
+  disposed = true
+  loadGeneration += 1
+  accountGeneration += 1
 })
-onUnmounted(() => { loadGeneration += 1 })
 </script>
 
 <style scoped>

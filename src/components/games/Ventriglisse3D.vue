@@ -1,5 +1,5 @@
 <template>
-  <div class="ventriglisse-page">
+  <div class="ventriglisse-page" :class="{ 'reduced-motion': reducedMotion }">
     <Navbar />
 
     <main class="ventriglisse-shell">
@@ -84,6 +84,19 @@
             ><span></span></button>
           </div>
 
+          <div class="sound-control motion-control">
+            <i class="pi pi-eye" aria-hidden="true"></i>
+            <span>Limiter les mouvements<small>Caméra fixe et effets allégés</small></span>
+            <button
+              class="sound-toggle"
+              type="button"
+              role="switch"
+              :aria-checked="reducedMotion"
+              aria-label="Limiter les mouvements"
+              @click="reducedMotion = !reducedMotion"
+            ><span></span></button>
+          </div>
+
           <div class="scoreboard" aria-labelledby="scoreboard-title">
             <div class="scoreboard-heading">
               <h3 id="scoreboard-title">Scores</h3>
@@ -105,18 +118,36 @@
               <h2 id="race-title">Manche {{ raceRound || 1 }}</h2>
               <p aria-live="polite">{{ raceStatusText }}</p>
             </div>
-            <button
-              class="primary-button"
-              type="button"
-              :disabled="raceLocked"
-              @click="startRace"
-            >
-              <i class="pi pi-play" aria-hidden="true"></i>
-              {{ avatarLoading ? 'Chargement des personnages…' : raceState === 'finished' ? 'Nouvelle manche' : 'Lancer la course' }}
-            </button>
+            <div class="race-controls">
+              <button class="secondary-button" type="button" :disabled="!canTogglePause" @click="togglePause">
+                <i :class="raceState === 'paused' ? 'pi pi-play' : 'pi pi-pause'" aria-hidden="true"></i>
+                {{ raceState === 'paused' ? 'Reprendre' : 'Pause' }}
+              </button>
+              <button
+                class="primary-button"
+                type="button"
+                :disabled="raceLocked"
+                @click="startRace"
+              >
+                <i class="pi pi-play" aria-hidden="true"></i>
+                {{ raceState === 'preparing' || avatarLoading ? 'Préparation de la piste…' : raceState === 'finished' ? 'Nouvelle manche' : 'Lancer la course' }}
+              </button>
+            </div>
           </div>
 
-          <div ref="stage" class="race-stage" :class="{ 'is-racing': raceState === 'racing' }">
+          <p id="race-shortcuts" class="race-shortcuts">Sur la piste, appuyez sur Espace ou P pour mettre en pause ou reprendre. Un changement d’onglet met la manche en pause.</p>
+
+          <div
+            ref="stage"
+            class="race-stage"
+            :class="{ 'is-racing': raceState === 'racing' }"
+            tabindex="0"
+            role="group"
+            aria-label="Piste de Ventriglisse"
+            aria-describedby="race-shortcuts"
+            aria-keyshortcuts="Space P"
+            @keydown="handleStageKeydown"
+          >
             <canvas ref="canvas3d" class="ventriglisse-canvas" aria-label="Animation 3D de la course de Ventriglisse"></canvas>
 
             <div v-if="avatarLoading && !sceneError" class="avatar-loading" role="status">Chargement des personnages 3D…</div>
@@ -150,6 +181,12 @@
                 <span class="countdown-number">{{ countdownValue }}</span>
               </div>
             </Transition>
+
+            <div v-if="raceState === 'paused'" class="paused-overlay" aria-hidden="true">
+              <i class="pi pi-pause" aria-hidden="true"></i>
+              <strong>Manche en pause</strong>
+              <span>Reprenez avec le bouton ou depuis la piste au clavier.</span>
+            </div>
           </div>
 
           <p v-if="avatarWarning && !sceneError" class="model-warning" role="status">Un personnage 3D n’a pas pu être chargé. La course reste jouable avec son avatar de secours.</p>
@@ -196,7 +233,7 @@
 </template>
 
 <script setup>
-import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone as cloneSkinnedModel } from 'three/examples/jsm/utils/SkeletonUtils.js'
@@ -214,6 +251,7 @@ import {
   rankVentriglisseRace,
   scoreVentriglisseRound,
 } from '@/domain/games/ventriglisseRace'
+import { getVentriglisseOverviewCamera } from '@/domain/games/ventriglissePlayback'
 
 const trackLength = 120
 const racerColors = ['#ffc400', '#3fc380', '#f25f5c', '#5b8def', '#35c2d5', '#a66cff']
@@ -240,6 +278,8 @@ const raceRound = ref(0)
 const countdownValue = ref(null)
 const showResults = ref(false)
 const soundEnabled = ref(true)
+const reducedMotion = ref(false)
+const pauseReason = ref('')
 const formError = ref('')
 const sceneError = ref(false)
 const avatarLoading = ref(false)
@@ -258,26 +298,47 @@ let countdownTimer
 let launchTimer
 let resizeObserver
 let sceneGeneration = 0
+let operationGeneration = 0
+let playbackGeneration = 0
+let disposed = false
+let pausedPhase = null
+let countdownIndex = 0
+let countdownDeadline = 0
+let countdownRemaining = 700
+let countdownPart = 'tick'
+let motionQuery
+let audioGeneration = 0
+let audioSequence = 0
+const audioRequests = new WeakMap()
+const countdownSequence = [3, 2, 1, 'GO !']
 
-const raceLocked = computed(() => avatarLoading.value || ['countdown', 'racing'].includes(raceState.value))
+const raceLocked = computed(() => avatarLoading.value || ['preparing', 'countdown', 'racing', 'paused'].includes(raceState.value))
+const canTogglePause = computed(() => ['countdown', 'racing', 'paused'].includes(raceState.value))
 const liveRanking = computed(() => rankVentriglisseRace(participants))
 const scoreRanking = computed(() => [...participants].sort((left, right) => (
   right.score - left.score || left.lane - right.lane
 )))
 const raceStatusText = computed(() => ({
   idle: 'La piste est prête.',
+  preparing: 'Préparation de la piste et des personnages…',
   countdown: 'Départ imminent…',
   racing: 'Course en cours…',
+  paused: pauseReason.value === 'visibility' ? 'Manche en pause après un changement d’onglet. Reprenez quand vous êtes prêt.' : 'Manche en pause. Reprenez quand vous êtes prêt.',
   finished: `${winner.value.name} remporte la manche.`,
 }[raceState.value]))
 
 const safePlay = async (audio) => {
-  if (!soundEnabled.value || !audio) return
+  if (disposed || !soundEnabled.value || !audio) return
+  const generation = audioGeneration
+  const request = ++audioSequence
+  audioRequests.set(audio, request)
   try {
     audio.currentTime = 0
     await audio.play()
+    if (audioRequests.get(audio) !== request) return
+    if (disposed || generation !== audioGeneration || !soundEnabled.value) stopAudio(audio)
   } catch {
-    soundEnabled.value = false
+    if (!disposed && generation === audioGeneration && audioRequests.get(audio) === request) soundEnabled.value = false
   }
 }
 
@@ -287,13 +348,23 @@ const stopAudio = (audio) => {
   audio.currentTime = 0
 }
 
+const stopAllAudio = () => {
+  audioGeneration += 1
+  ;[audioBip.value, audioGo.value, audioSlide.value, audioFinish.value].forEach(stopAudio)
+}
+
+watch(soundEnabled, enabled => {
+  if (!enabled) stopAllAudio()
+  else if (!disposed && raceState.value === 'racing') safePlay(audioSlide.value)
+}, { flush: 'sync' })
+
 const addParticipant = () => {
-  if (editableParticipants.value.length >= 6) return
+  if (disposed || raceLocked.value || editableParticipants.value.length >= 6) return
   editableParticipants.value.push(makeParticipant(editableParticipants.value.length))
 }
 
 const removeParticipant = (index) => {
-  if (editableParticipants.value.length <= 2) return
+  if (disposed || raceLocked.value || editableParticipants.value.length <= 2) return
   editableParticipants.value.splice(index, 1)
 }
 
@@ -353,6 +424,30 @@ const createRacer = (participant, index, template) => {
   participant.racerModel = markRaw(model)
 }
 
+const positionCamera = () => {
+  if (!camera) return
+  if (reducedMotion.value) {
+    const overview = getVentriglisseOverviewCamera(trackLength, Math.max(26, participants.length * 4.2), camera.aspect, camera.fov)
+    camera.far = Math.max(500, overview.distance + overview.radius * 2)
+    camera.updateProjectionMatrix()
+    camera.position.set(overview.x, overview.y, overview.z)
+    camera.lookAt(0, 0, overview.targetZ)
+    return
+  }
+  if (camera.far !== 500) {
+    camera.far = 500
+    camera.updateProjectionMatrix()
+  }
+  if (['racing', 'finished'].includes(raceState.value) || (raceState.value === 'paused' && pausedPhase === 'racing')) {
+    const leadDistance = Math.max(0, ...participants.map(participant => participant.distance))
+    camera.position.set(0, 11, Math.max(-88, 24 - leadDistance * 0.78))
+    camera.lookAt(0, 0, Math.max(-112, -38 - leadDistance * 0.72))
+  } else {
+    camera.position.set(0, 11, 24)
+    camera.lookAt(0, 0, -45)
+  }
+}
+
 const resizeRenderer = () => {
   if (!renderer || !camera || !stage.value) return
   const width = Math.max(1, stage.value.clientWidth)
@@ -360,8 +455,21 @@ const resizeRenderer = () => {
   renderer.setSize(width, height, false)
   camera.aspect = width / height
   camera.updateProjectionMatrix()
+  positionCamera()
   renderer.render(scene, camera)
+  updateLabels()
 }
+
+watch(reducedMotion, () => {
+  if (disposed) return
+  const racing = raceState.value === 'racing' || (raceState.value === 'paused' && pausedPhase === 'racing')
+  participants.forEach(participant => {
+    if (participant.racerModel) participant.racerModel.rotation.x = !reducedMotion.value && racing ? -Math.PI / 2 : 0
+  })
+  positionCamera()
+  if (renderer && scene && camera) renderer.render(scene, camera)
+  updateLabels()
+})
 
 const supportsWebGL = () => {
   try {
@@ -375,7 +483,7 @@ const supportsWebGL = () => {
 }
 
 const buildScene = async () => {
-  if (!canvas3d.value || !stage.value) return
+  if (disposed || !canvas3d.value || !stage.value) return
   const generation = ++sceneGeneration
   disposeScene()
   sceneError.value = false
@@ -408,7 +516,10 @@ const buildScene = async () => {
       textureLoader.loadAsync(wallRightImg),
       textureLoader.loadAsync(cafeteriaImg),
     ])
-    if (generation !== sceneGeneration) return
+    if (disposed || generation !== sceneGeneration) {
+      ;[floorTexture, wallTexture, leftTexture, rightTexture, backTexture].forEach(texture => texture.dispose())
+      return
+    }
     floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping
     floorTexture.repeat.set(8, 34)
     floorTexture.colorSpace = THREE.SRGBColorSpace
@@ -508,7 +619,7 @@ const buildScene = async () => {
     const loadedAvatars = await Promise.allSettled(
       participants.map((participant) => loadAvatarTemplate(participant.avatarStyle))
     )
-    if (generation !== sceneGeneration) return
+    if (disposed || generation !== sceneGeneration) return
     loadedAvatars.forEach((result, index) => {
       if (result.status === 'rejected') avatarWarning.value = true
       createRacer(participants[index], index, result.status === 'fulfilled' ? result.value : null)
@@ -516,6 +627,7 @@ const buildScene = async () => {
     renderer.render(scene, camera)
     updateLabels()
   } catch (error) {
+    if (disposed || generation !== sceneGeneration) return
     console.warn('Vue 3D du Ventriglisse indisponible, activation du suivi simplifié.', error)
     sceneError.value = true
   } finally {
@@ -546,14 +658,12 @@ const resetRacePositions = () => {
     participant.mesh?.position.set((index - (participants.length - 1) / 2) * 3.6, -0.72, 2)
     if (participant.racerModel) participant.racerModel.rotation.x = 0
   })
-  camera?.position.set(0, 11, 24)
-  camera?.lookAt(0, 0, -45)
+  positionCamera()
   renderer?.render(scene, camera)
   updateLabels()
 }
 
-const applyParticipants = async () => {
-  if (raceLocked.value) return false
+const prepareParticipants = async (generation) => {
   const names = editableParticipants.value.map(({ name }) => String(name || '').trim())
   if (names.some((name) => !name)) {
     formError.value = 'Chaque couloir doit avoir un nom.'
@@ -574,16 +684,37 @@ const applyParticipants = async () => {
     mesh: null,
   })))
   showResults.value = false
-  raceState.value = 'idle'
   await nextTick()
+  if (disposed || generation !== operationGeneration) return false
   await buildScene()
-  return true
+  return !disposed && generation === operationGeneration
+}
+
+const applyParticipants = async () => {
+  if (disposed || raceLocked.value) return false
+  const generation = ++operationGeneration
+  const previousState = raceState.value
+  raceState.value = 'preparing'
+  const valid = await prepareParticipants(generation)
+  if (disposed || generation !== operationGeneration) return false
+  raceState.value = valid ? 'idle' : previousState
+  return valid
+}
+
+const cancelScheduledPlayback = () => {
+  playbackGeneration += 1
+  clearTimeout(countdownTimer)
+  clearTimeout(launchTimer)
+  cancelAnimationFrame(animationId)
+  countdownTimer = null
+  launchTimer = null
+  animationId = null
 }
 
 const finishRace = () => {
-  cancelAnimationFrame(animationId)
-  animationId = null
-  stopAudio(audioSlide.value)
+  if (disposed || raceState.value !== 'racing') return
+  cancelScheduledPlayback()
+  stopAllAudio()
   sortedParticipants.value = scoreVentriglisseRound(participants)
   sortedParticipants.value.forEach((scoredParticipant) => {
     const participant = participants.find(({ id }) => id === scoredParticipant.id)
@@ -597,10 +728,10 @@ const finishRace = () => {
   safePlay(audioFinish.value)
 }
 
-const animateRace = () => {
+const animateRace = (generation) => {
+  if (disposed || generation !== playbackGeneration || raceState.value !== 'racing') return
   const delta = Math.min(clock.getDelta(), 0.25)
   let moving = false
-  let leadDistance = 0
   participants.forEach((participant) => {
     if (participant.velocity > 0.1 && participant.distance < trackLength) {
       participant.distance = Math.min(trackLength, participant.distance + participant.velocity * delta)
@@ -608,71 +739,156 @@ const animateRace = () => {
       moving = participant.velocity > 0.1 && participant.distance < trackLength || moving
     }
     participant.mesh?.position.setZ(2 - participant.distance)
-    leadDistance = Math.max(leadDistance, participant.distance)
   })
   if (camera && renderer && scene) {
-    camera.position.z = Math.max(-88, 24 - leadDistance * 0.78)
-    camera.lookAt(0, 0, Math.max(-112, -38 - leadDistance * 0.72))
+    if (!reducedMotion.value) positionCamera()
     renderer.render(scene, camera)
   }
   updateLabels()
-  if (moving) animationId = requestAnimationFrame(animateRace)
+  if (moving) animationId = requestAnimationFrame(() => animateRace(generation))
   else finishRace()
 }
 
 const beginMotion = () => {
+  if (disposed || raceState.value !== 'countdown') return
+  if (document.hidden) {
+    countdownRemaining = 0
+    pauseRace('visibility')
+    return
+  }
   const race = createVentriglisseRace(participants, raceRound.value)
   race.forEach((result, index) => {
     Object.assign(participants[index], { velocity: result.velocity, drag: result.drag })
-    if (participants[index].racerModel) participants[index].racerModel.rotation.x = -Math.PI / 2
+    if (participants[index].racerModel) participants[index].racerModel.rotation.x = reducedMotion.value ? 0 : -Math.PI / 2
   })
   raceState.value = 'racing'
   clock.start()
   safePlay(audioGo.value)
   safePlay(audioSlide.value)
-  animationId = requestAnimationFrame(animateRace)
+  const generation = playbackGeneration
+  animationId = requestAnimationFrame(() => animateRace(generation))
 }
 
+const queueCountdown = (delay, part) => {
+  countdownPart = part
+  countdownRemaining = delay
+  countdownDeadline = Date.now() + delay
+  const generation = playbackGeneration
+  const callback = () => {
+    if (disposed || generation !== playbackGeneration || raceState.value !== 'countdown') return
+    countdownTimer = null
+    launchTimer = null
+    if (part === 'launch') {
+      beginMotion()
+      return
+    }
+    countdownIndex += 1
+    if (countdownIndex < countdownSequence.length) {
+      countdownValue.value = countdownSequence[countdownIndex]
+      if (typeof countdownValue.value === 'number') safePlay(audioBip.value)
+      queueCountdown(700, 'tick')
+    } else {
+      countdownValue.value = null
+      queueCountdown(250, 'launch')
+    }
+  }
+  if (part === 'launch') launchTimer = window.setTimeout(callback, delay)
+  else countdownTimer = window.setTimeout(callback, delay)
+}
+
+const pauseRace = (reason = 'manual') => {
+  if (disposed || !['countdown', 'racing'].includes(raceState.value)) return
+  pausedPhase = raceState.value
+  pauseReason.value = reason
+  if (pausedPhase === 'countdown') countdownRemaining = Math.max(0, countdownDeadline - Date.now())
+  cancelScheduledPlayback()
+  clock?.stop()
+  stopAllAudio()
+  raceState.value = 'paused'
+}
+
+const resumeRace = () => {
+  if (disposed || raceState.value !== 'paused' || document.hidden) return
+  const phase = pausedPhase
+  pauseReason.value = ''
+  pausedPhase = null
+  raceState.value = phase
+  if (phase === 'countdown') queueCountdown(countdownRemaining, countdownPart)
+  else if (phase === 'racing') {
+    clock.start()
+    safePlay(audioSlide.value)
+    const generation = playbackGeneration
+    animationId = requestAnimationFrame(() => animateRace(generation))
+  }
+}
+
+const togglePause = () => {
+  if (raceState.value === 'paused') resumeRace()
+  else pauseRace()
+}
+
+const handleStageKeydown = (event) => {
+  if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || !canTogglePause.value) return
+  if (event.target?.closest?.('input, select, textarea, button, a, [contenteditable="true"]')) return
+  if (event.code === 'Space' || event.key === ' ' || event.key?.toLowerCase() === 'p') {
+    event.preventDefault()
+    togglePause()
+  }
+}
+
+const handleVisibilityChange = () => { if (document.hidden) pauseRace('visibility') }
+const handleMotionPreference = event => { reducedMotion.value = event.matches }
+
 const startRace = async () => {
-  if (raceLocked.value) return
-  const valid = await applyParticipants()
-  if (!valid) return
+  if (disposed || raceLocked.value) return
+  const generation = ++operationGeneration
+  const previousState = raceState.value
+  raceState.value = 'preparing'
+  const valid = await prepareParticipants(generation)
+  if (disposed || generation !== operationGeneration) return
+  if (!valid) {
+    raceState.value = previousState
+    return
+  }
+  cancelScheduledPlayback()
+  stopAllAudio()
   raceRound.value += 1
   showResults.value = false
   resetRacePositions()
   raceState.value = 'countdown'
-  const sequence = [3, 2, 1, 'GO !']
-  let index = 0
-  countdownValue.value = sequence[index]
+  countdownIndex = 0
+  countdownValue.value = countdownSequence[countdownIndex]
+  queueCountdown(700, 'tick')
+  if (document.hidden) {
+    pauseRace('visibility')
+    return
+  }
   safePlay(audioBip.value)
-  clearInterval(countdownTimer)
-  countdownTimer = window.setInterval(() => {
-    index += 1
-    if (index < sequence.length) {
-      countdownValue.value = sequence[index]
-      if (typeof sequence[index] === 'number') safePlay(audioBip.value)
-      return
-    }
-    clearInterval(countdownTimer)
-    countdownTimer = null
-    countdownValue.value = null
-    launchTimer = window.setTimeout(beginMotion, 250)
-  }, 700)
 }
 
 onMounted(async () => {
+  motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+  if (motionQuery) {
+    reducedMotion.value = motionQuery.matches
+    motionQuery.addEventListener?.('change', handleMotionPreference)
+  }
+  document.addEventListener('visibilitychange', handleVisibilityChange)
   await applyParticipants()
+  if (disposed) return
   resizeObserver = new ResizeObserver(resizeRenderer)
   if (stage.value) resizeObserver.observe(stage.value)
 })
 
 onBeforeUnmount(() => {
+  disposed = true
+  operationGeneration += 1
   sceneGeneration += 1
-  clearInterval(countdownTimer)
-  clearTimeout(launchTimer)
-  cancelAnimationFrame(animationId)
+  cancelScheduledPlayback()
+  clock?.stop()
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  motionQuery?.removeEventListener?.('change', handleMotionPreference)
   resizeObserver?.disconnect()
-  stopAudio(audioSlide.value)
+  stopAllAudio()
   disposeScene()
 })
 </script>
@@ -680,6 +896,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .ventriglisse-page { min-height: 100vh; overflow-y: auto; background: #0b213f; color: #f7f9fc; }
 .ventriglisse-shell { width: min(1500px, calc(100% - 2rem)); margin: 0 auto; padding: 2rem 0 5rem; }
+.ventriglisse-shell h1, .ventriglisse-shell h2, .ventriglisse-shell h3 { color: #f7f9fc; }
 .game-heading { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
 .heading-icon, .winner-icon { display: grid; width: 3.5rem; height: 3.5rem; place-items: center; border-radius: 14px; background: #ffc400; color: #071426; font-size: 1.45rem; }
 .game-heading h1, .game-heading p, .setup-heading h2, .setup-heading p, .race-toolbar h2, .race-toolbar p, .winner-summary p, .winner-summary h2 { margin: 0; }
@@ -709,6 +926,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .primary-button:hover:not(:disabled) { background: #ffd84d; }
 .form-error { display: flex; gap: .5rem; color: #ffb8be; font-size: .82rem; }
 .sound-control { display: grid; grid-template-columns: auto 1fr auto; gap: .7rem; align-items: center; margin-top: 1rem; color: #c6d3e1; }
+.motion-control small { display: block; margin-top: .2rem; color: #b8c7d9; font-size: .78rem; line-height: 1.4; }
 .sound-toggle { position: relative; width: 54px; min-height: 44px; background: #314760; border-radius: 999px; }
 .sound-toggle span { position: absolute; top: 11px; left: 5px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .2s ease; }
 .sound-toggle[aria-checked="true"] { background: #ffc400; }
@@ -724,13 +942,21 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .scoreboard li b { color: #ffc400; }
 .race-area { overflow: hidden; }
 .race-toolbar { padding: 1rem 1.15rem; }
+.race-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.race-controls button { display: inline-flex; justify-content: center; align-items: center; gap: .45rem; }
+.race-shortcuts { margin: 0; padding: 0 1.15rem .85rem; color: #b8c7d9; font-size: .82rem; line-height: 1.5; }
 .race-stage { position: relative; height: clamp(28rem, 58vw, 42rem); min-height: 420px; background: #102c4d url('./assets/cafte3.png') center / cover no-repeat; overflow: hidden; }
+.race-stage:focus-visible { outline: 3px solid #ffc400; outline-offset: 3px; }
 .race-stage::after { position: absolute; inset: 0; content: ''; pointer-events: none; background: linear-gradient(180deg, transparent 58%, rgba(5, 20, 38, .36)); }
 .ventriglisse-canvas { width: 100%; height: 100%; display: block; }
 .labels-3d { position: absolute; z-index: 2; inset: 0; pointer-events: none; }
 .avatar-label { --racer-color: #ffc400; position: absolute; transform: translate(-50%, -110%); padding: .28rem .5rem; border-radius: 8px; background: #071426; color: #fff; font-size: .75rem; font-weight: 700; box-shadow: 0 4px 12px rgba(0, 0, 0, .3); border: 1px solid var(--racer-color); }
 .countdown-overlay, .scene-error { position: absolute; z-index: 3; inset: 0; display: grid; place-content: center; text-align: center; }
 .countdown-overlay { background: rgba(7, 20, 38, .62); }
+.paused-overlay { position: absolute; z-index: 5; inset: 0; display: grid; align-content: center; justify-items: center; gap: .8rem; padding: 1.25rem; background: rgba(7, 20, 38, .82); color: #f7f9fc; text-align: center; }
+.paused-overlay > i { color: #ffc400; font-size: 2rem; }
+.paused-overlay strong { font-size: 1.5rem; }
+.paused-overlay > span { max-width: 30ch; color: #d7e1ed; line-height: 1.5; }
 .countdown-number { color: #ffc400; font-size: clamp(4rem, 14vw, 8rem); font-weight: 800; animation: countdown-pop .55s ease-out; }
 .scene-error { grid-template-rows: auto auto; gap: 1.5rem; width: 100%; padding: 1.25rem; box-sizing: border-box; background: linear-gradient(rgba(9, 34, 61, .78), rgba(9, 34, 61, .9)); color: #f7f9fc; }
 .fallback-message { display: grid; gap: .35rem; justify-items: center; }
@@ -762,6 +988,8 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .results-panel > .primary-button { width: 100%; }
 .countdown-fade-enter-active, .countdown-fade-leave-active { transition: opacity .2s ease; }
 .countdown-fade-enter-from, .countdown-fade-leave-to { opacity: 0; }
+.reduced-motion .countdown-number { animation: none; }
+.reduced-motion .countdown-fade-enter-active, .reduced-motion .countdown-fade-leave-active, .reduced-motion .sound-toggle span, .reduced-motion .fallback-avatar { transition: none; }
 @keyframes countdown-pop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
 @media (max-width: 900px) {
   .game-heading { grid-template-columns: auto 1fr; }
@@ -776,6 +1004,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
   .game-heading p { font-size: .9rem; }
   .race-toolbar { align-items: stretch; flex-direction: column; }
   .race-toolbar .primary-button { width: 100%; }
+  .race-controls { display: grid; grid-template-columns: auto minmax(0, 1fr); width: 100%; }
   .race-stage { height: 27rem; min-height: 360px; }
   .participant-row { grid-template-columns: auto minmax(0, 1fr) auto; }
   .participant-row .avatar-field { grid-column: 2 / 3; }
