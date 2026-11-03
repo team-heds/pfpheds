@@ -1,10 +1,10 @@
 <template>
   <div class="page-wrapper">
     <Navbar />
-    <div :style="{ '--house-color': houseColor, 'max-width': '1400px', 'margin': '0 auto', 'padding': '2rem' }">
+    <div class="quests-shell" :style="{ '--house-color': houseColor, '--house-foreground': houseTextColor }">
       
       <!-- Loading State avec Skeleton -->
-      <div v-if="loading">
+      <div v-if="loading" role="status" aria-label="Chargement des quêtes" aria-busy="true">
         <!-- Header Skeleton -->
         <div class="surface-card border-round-3xl p-5 mb-5 shadow-3">
           <div class="flex justify-content-between align-items-center">
@@ -42,182 +42,106 @@
         </div>
       </div>
 
+      <section v-else-if="!authStore.user?.id" class="quest-load-error" role="status">
+        <div><h2>Connexion requise</h2><p>Connectez-vous pour retrouver vos quêtes.</p></div>
+        <Button label="Se connecter" icon="pi pi-sign-in" @click="router.push('/home')" />
+      </section>
+
       <!-- Main Content -->
       <div v-else>
         
         <!-- Page Header -->
-        <div class="surface-card border-round-3xl p-5 mb-5 shadow-3" :style="{ borderLeft: `6px solid ${houseColor}` }">
-          <div class="flex justify-content-between align-items-center flex-wrap gap-4">
-            <div class="flex align-items-center gap-4 flex-1">
-              <div class="flex align-items-center justify-content-center border-round-2xl p-3" 
-                   :style="{ background: `${houseColor}15` }">
-                <i class="pi pi-flag text-3xl" :style="{ color: houseColor }"></i>
-              </div>
-              <div>
-                <h1 class="m-0 text-4xl font-bold text-900">Journal de Quêtes</h1>
-                <p class="m-0 mt-2 text-600 font-medium">
-                  Progressez dans votre aventure et débloquez des récompenses
-                </p>
-              </div>
-            </div>
-            <Button 
-              @click="goBack" 
-              icon="pi pi-arrow-left"
-              label="Retour"
-              outlined
-              class="font-semibold border-round-xl"
-              :style="{ borderColor: houseColor, color: houseColor }"
-            />
-          </div>
-        </div>
+        <GamificationPageHeader
+          title="Journal de quêtes"
+          description="Choisissez un objectif, suivez votre progression et débloquez vos prochaines récompenses."
+          eyebrow="Objectifs personnels"
+          icon="pi pi-flag"
+          @back="goBack"
+        >
+          <template #actions>
+            <Button icon="pi pi-refresh" label="Actualiser" aria-label="Actualiser les quêtes" :disabled="loading" @click="loadQuestsData" />
+          </template>
+        </GamificationPageHeader>
+
+        <section v-if="loadError" class="quest-load-error" role="alert">
+          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+          <div><h2>Les quêtes n’ont pas pu être chargées</h2><p>{{ loadError }}</p></div>
+          <Button label="Réessayer" icon="pi pi-refresh" @click="loadQuestsData" :disabled="loading" />
+        </section>
+
+        <template v-else>
 
         <!-- Statistics Overview -->
-        <div class="grid mb-5">
-          <div class="col-12 md:col-4">
-            <div class="surface-card border-round-xl p-4 shadow-2 hover:shadow-4 transition-all transition-duration-300 cursor-pointer" 
-                 :style="{ borderTop: `4px solid ${houseColor}` }">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center border-round-xl" 
-                     :style="{ width: '64px', height: '64px', background: `${houseColor}10` }">
-                  <span class="text-4xl">🏆</span>
-                </div>
-                <div class="flex-1">
-                  <div class="text-3xl font-bold mb-1" :style="{ color: houseColor }">
-                    {{ questStats.completedQuests }}/{{ questStats.totalQuests }}
-                  </div>
-                  <div class="text-xs text-600 font-semibold uppercase letter-spacing-1">Quêtes Complétées</div>
-                  <ProgressBar :value="completionRate" :showValue="false" class="mt-2" 
-                               :style="{ height: '8px', background: '#e5e7eb' }" 
-                               :pt="{ value: { style: { background: houseColor } } }" />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="col-12 md:col-4">
-            <div class="surface-card border-round-xl p-4 shadow-2 hover:shadow-4 transition-all transition-duration-300 cursor-pointer" 
-                 :style="{ borderTop: `4px solid #f59e0b` }">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center border-round-xl" 
-                     style="width: 64px; height: 64px; background: rgba(245, 158, 11, 0.1);">
-                  <span class="text-4xl">⭐</span>
-                </div>
-                <div class="flex-1">
-                  <div class="text-3xl font-bold text-900 mb-1">
-                    {{ formatNumber(questStats.totalXPFromQuests) }}
-                  </div>
-                  <div class="text-xs text-600 font-semibold uppercase letter-spacing-1">XP des Quêtes</div>
-                  <div class="mt-2 text-sm" style="color: #f59e0b;">
-                    <i class="pi pi-arrow-up text-xs"></i> Points accumulés
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="col-12 md:col-4">
-            <div class="surface-card border-round-xl p-4 shadow-2 hover:shadow-4 transition-all transition-duration-300 cursor-pointer" 
-                 :style="{ borderTop: `4px solid #3b82f6` }">
-              <div class="flex align-items-center gap-3">
-                <div class="flex align-items-center justify-content-center border-round-xl" 
-                     style="width: 64px; height: 64px; background: rgba(59, 130, 246, 0.1);">
-                  <span class="text-4xl">📊</span>
-                </div>
-                <div class="flex-1">
-                  <div class="text-3xl font-bold text-900 mb-1">{{ questStats.averageProgress }}%</div>
-                  <div class="text-xs text-600 font-semibold uppercase letter-spacing-1">Progression Moyenne</div>
-                  <div class="mt-2 text-sm" style="color: #3b82f6;">
-                    <i class="pi pi-chart-line text-xs"></i> Performance globale
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="quest-stats mb-5">
+          <GamificationStatCard icon="pi pi-check-circle" :value="`${questStats.completedQuests}/${questStats.totalQuests}`" label="Quêtes complétées" :progress="completionRate" />
+          <GamificationStatCard icon="pi pi-star-fill" :value="formatNumber(questStats.totalXPFromQuests)" label="XP gagnés avec les quêtes" />
+          <GamificationStatCard icon="pi pi-chart-line" :value="`${questStats.averageProgress}%`" label="Progression moyenne" :progress="questStats.averageProgress" />
         </div>
-    </div>
 
     <!-- Onglets Navigation -->
     <div class="mb-4">
-      <TabView v-model:activeIndex="activeTabIndex" @tab-change="onTabChange">
-        <TabPanel>
-          <template #header>
-            <div class="flex align-items-center gap-3 font-semibold">
-              <i class="pi pi-compass"></i>
-              <span>Mes Quêtes</span>
-              <span class="px-3 py-1 border-round-xl text-xs font-bold text-center" 
-                    style="background: rgba(0, 0, 0, 0.15); min-width: 28px;">
-                {{ activeQuestsCount }}
-              </span>
-            </div>
-          </template>
-        </TabPanel>
-        
-        <TabPanel>
-          <template #header>
-            <div class="flex align-items-center gap-3 font-semibold">
-              <i class="pi pi-check-circle"></i>
-              <span>Historique</span>
-              <span class="px-3 py-1 border-round-xl text-xs font-bold text-center" 
-                    style="background: rgba(16, 185, 129, 0.15); color: #10b981; min-width: 28px;">
-                {{ completedQuestsCount }}
-              </span>
-            </div>
-          </template>
-        </TabPanel>
-        
-        <TabPanel>
-          <template #header>
-            <div class="flex align-items-center gap-3 font-semibold">
-              <i class="pi pi-list"></i>
-              <span>Toutes</span>
-              <span class="px-3 py-1 border-round-xl text-xs font-bold text-center" 
-                    style="background: rgba(0, 0, 0, 0.15); min-width: 28px;">
-                {{ questStats.totalQuests || 0 }}
-              </span>
-            </div>
-          </template>
-        </TabPanel>
-      </TabView>
+      <div class="quest-tabs" role="tablist" aria-label="Filtrer les quêtes">
+        <button
+          v-for="tab in questTabs"
+          :key="tab.value"
+          type="button"
+          role="tab"
+          class="quest-tab"
+          :class="{ 'quest-tab--active': activeTab === tab.value }"
+          :aria-selected="activeTab === tab.value"
+          :style="activeTab === tab.value ? { backgroundColor: houseColor, borderColor: houseColor, color: houseTextColor } : null"
+          @click="selectActiveTab(tab.value)"
+        >
+          <i :class="tab.icon" aria-hidden="true"></i>
+          <span>{{ tab.label }}</span>
+          <span class="quest-tab__count">{{ tab.count }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- Filtres et recherche -->
     <div class="surface-card border-round-xl p-4 mb-5 shadow-2">
       <div class="mb-3">
-        <h3 class="text-lg font-bold text-900 m-0 mb-1">
+        <h2 class="text-lg font-bold text-900 m-0 mb-1">
           <i class="pi pi-filter-fill mr-2" :style="{ color: houseColor }"></i>
           Recherche et Filtres
-        </h3>
+        </h2>
         <p class="text-sm text-600 m-0">Affinez vos résultats pour trouver les quêtes parfaites</p>
       </div>
       
       <div class="grid">
         <!-- Recherche -->
         <div class="col-12 md:col-6">
-          <label class="block text-sm font-semibold text-900 mb-2">
+          <label for="quest-search" class="block text-sm font-semibold text-900 mb-2">
             <i class="pi pi-search mr-1"></i> Rechercher
           </label>
           <span class="p-input-icon-left w-full" :class="{ 'p-input-icon-right': searchQuery }">
             <i class="pi pi-search"></i>
             <InputText 
+              id="quest-search"
               v-model="searchQuery" 
               placeholder="Rechercher une quête..."
               class="w-full"
             />
-            <i 
+            <button
               v-if="searchQuery" 
-              class="pi pi-times cursor-pointer text-400 hover:text-900 transition-colors transition-duration-200"
+              type="button"
+              class="quest-search-clear"
+              aria-label="Effacer la recherche"
               @click="searchQuery = ''"
-              style="right: 0.75rem;"
-            ></i>
+            >
+              <i class="pi pi-times" aria-hidden="true"></i>
+            </button>
           </span>
         </div>
         
         <!-- Difficulté -->
         <div class="col-12 md:col-2">
-          <label class="block text-sm font-semibold text-900 mb-2">
+          <label for="quest-difficulty" class="block text-sm font-semibold text-900 mb-2">
             <i class="pi pi-star-fill mr-1"></i> Difficulté
           </label>
           <Dropdown 
+            inputId="quest-difficulty"
             v-model="selectedDifficulty" 
             :options="difficultyOptions" 
             optionLabel="label" 
@@ -229,10 +153,11 @@
         
         <!-- Type -->
         <div class="col-12 md:col-2">
-          <label class="block text-sm font-semibold text-900 mb-2">
+          <label for="quest-type" class="block text-sm font-semibold text-900 mb-2">
             <i class="pi pi-tag mr-1"></i> Type
           </label>
           <Dropdown 
+            inputId="quest-type"
             v-model="selectedType" 
             :options="typeOptions" 
             optionLabel="label" 
@@ -244,10 +169,11 @@
         
         <!-- Tri -->
         <div class="col-12 md:col-2">
-          <label class="block text-sm font-semibold text-900 mb-2">
+          <label for="quest-sort" class="block text-sm font-semibold text-900 mb-2">
             <i class="pi pi-sort-alt mr-1"></i> Tri
           </label>
           <Dropdown 
+            inputId="quest-sort"
             v-model="sortBy" 
             :options="sortOptions" 
             optionLabel="label" 
@@ -261,8 +187,8 @@
       <!-- Résumé des filtres actifs -->
       <div v-if="hasFilters" class="mt-3 flex align-items-center gap-2 flex-wrap">
         <span class="text-sm font-semibold text-600">Filtres actifs:</span>
-        <Chip v-if="selectedDifficulty" :label="`Difficulté: ${selectedDifficulty}`" removable @remove="selectedDifficulty = null" />
-        <Chip v-if="selectedType" :label="`Type: ${selectedType}`" removable @remove="selectedType = null" />
+        <Chip v-if="difficultyFilter" :label="`Difficulté : ${difficultyFilter.label}`" removable @remove="selectedDifficulty = 'all'" />
+        <Chip v-if="typeFilter" :label="`Type : ${typeFilter.label}`" removable @remove="selectedType = 'all'" />
         <Button label="Tout effacer" size="small" text @click="clearFilters" class="p-0 text-sm" :style="{ color: houseColor }" />
       </div>
     </div>
@@ -282,18 +208,20 @@
           <span class="text-sm text-600 mr-2 hidden md:inline">Affichage:</span>
           <Button 
             icon="pi pi-th-large" 
+            aria-label="Afficher les quêtes en grille"
             :outlined="viewMode !== 'grid'"
             @click="viewMode = 'grid'" 
             size="small"
-            :style="viewMode === 'grid' ? { backgroundColor: houseColor, borderColor: houseColor } : { color: houseColor, borderColor: houseColor }"
+            :style="viewMode === 'grid' ? { backgroundColor: houseColor, borderColor: houseColor, color: houseTextColor } : { color: houseColor, borderColor: houseColor }"
             class="view-toggle-btn"
           />
           <Button 
             icon="pi pi-list" 
+            aria-label="Afficher les quêtes en liste"
             :outlined="viewMode !== 'list'"
             @click="viewMode = 'list'" 
             size="small"
-            :style="viewMode === 'list' ? { backgroundColor: houseColor, borderColor: houseColor } : { color: houseColor, borderColor: houseColor }"
+            :style="viewMode === 'list' ? { backgroundColor: houseColor, borderColor: houseColor, color: houseTextColor } : { color: houseColor, borderColor: houseColor }"
             class="view-toggle-btn"
           />
           <Divider layout="vertical" class="hidden md:inline-flex" />
@@ -337,7 +265,7 @@
            :style="{ width: '140px', height: '140px', background: `${houseColor}15` }">
         <span class="text-7xl">{{ getEmptyStateIcon() }}</span>
       </div>
-      <h3 class="text-3xl font-bold text-900 mb-3">{{ getEmptyStateTitle() }}</h3>
+      <h2 class="text-3xl font-bold text-900 mb-3">{{ getEmptyStateTitle() }}</h2>
       <p class="text-600 text-lg mb-4 mx-auto line-height-3" style="max-width: 550px;">
         {{ getEmptyStateMessage() }}
       </p>
@@ -348,19 +276,19 @@
           icon="pi pi-filter-slash"
           label="Effacer les filtres"
           size="large"
-          :style="{ backgroundColor: houseColor, borderColor: houseColor }"
+          :style="{ backgroundColor: houseColor, borderColor: houseColor, color: houseTextColor }"
         />
         <Button 
           v-else-if="activeTab !== 'active'"
-          @click="() => activeTabIndex = 0"
+          @click="selectActiveTab('active')"
           icon="pi pi-compass"
           label="Voir mes quêtes actives"
           size="large"
-          :style="{ backgroundColor: houseColor, borderColor: houseColor }"
+          :style="{ backgroundColor: houseColor, borderColor: houseColor, color: houseTextColor }"
         />
         <Button 
           v-else
-          @click="() => activeTabIndex = 2"
+          @click="selectActiveTab('all')"
           icon="pi pi-list"
           label="Parcourir toutes les quêtes"
           size="large"
@@ -399,17 +327,14 @@
         />
       </div>
     </Dialog>
-
-    <!-- Notification de quête démarrée -->
-    <Toast ref="toast" />
+        </template>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
+import { ref, computed, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import Navbar from '../common/utils/Navbar.vue'
@@ -417,15 +342,16 @@ import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
-import ProgressBar from 'primevue/progressbar'
 import Paginator from 'primevue/paginator'
-import Toast from 'primevue/toast'
 import Chip from 'primevue/chip'
 import Skeleton from 'primevue/skeleton'
 import Divider from 'primevue/divider'
 import QuestCard from './QuestCard.vue'
+import GamificationPageHeader from './GamificationPageHeader.vue'
+import GamificationStatCard from './GamificationStatCard.vue'
 import userQuestsService from '../../service/userQuestsService'
 import { useAuthStore } from '@/stores/authStore'
+import { getReadableTextColor } from '@/utils/colorContrast'
 
 // Services
 const router = useRouter()
@@ -434,6 +360,10 @@ const authStore = useAuthStore()
 
 // État réactif
 const loading = ref(true)
+const loadError = ref('')
+let loadGeneration = 0
+let accountGeneration = 0
+let disposed = false
 const viewMode = ref('grid') // 'grid' ou 'list'
 
 // House configuration (identique à GamificationProfilePage)
@@ -463,6 +393,7 @@ const houseColor = computed(() => {
   if (!h) return '#6B7280'
   return houseConfig[h]?.color || '#6B7280'
 })
+const houseTextColor = computed(() => getReadableTextColor(houseColor.value))
 const userQuests = ref([])
 const questStats = ref({})
 const searchQuery = ref('')
@@ -474,7 +405,6 @@ const questsPerPage = 12
 const showModal = ref(false)
 const selectedQuest = ref(null)
 const activeTab = ref('active') // 'active', 'completed', 'all'
-const activeTabIndex = ref(0) // Index pour PrimeVue TabView
 
 // Options pour les filtres
 const difficultyOptions = [
@@ -504,6 +434,9 @@ const sortOptions = [
   { label: 'Nom (Z-A)', value: 'name_desc' }
 ]
 
+const difficultyFilter = computed(() => difficultyOptions.find(option => option.value !== 'all' && option.value === selectedDifficulty.value))
+const typeFilter = computed(() => typeOptions.find(option => option.value !== 'all' && option.value === selectedType.value))
+
 // Computed properties
 const questsArray = computed(() => userQuests.value || [])
 
@@ -517,6 +450,12 @@ const completedQuestsCount = computed(() => {
   return questsArray.value.filter(q => q.userProgress?.status === 'completed').length
 })
 
+const questTabs = computed(() => [
+  { value: 'active', label: 'Mes Quêtes', icon: 'pi pi-compass', count: activeQuestsCount.value },
+  { value: 'completed', label: 'Historique', icon: 'pi pi-check-circle', count: completedQuestsCount.value },
+  { value: 'all', label: 'Toutes', icon: 'pi pi-list', count: questStats.value.totalQuests || 0 }
+])
+
 const tabFilteredQuests = computed(() => {
   if (activeTab.value === 'active') {
     return questsArray.value.filter(q => 
@@ -529,24 +468,24 @@ const tabFilteredQuests = computed(() => {
 })
 
 const filteredQuests = computed(() => {
-  let filtered = tabFilteredQuests.value
+  let filtered = [...tabFilteredQuests.value]
 
   // Recherche
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(quest => 
-      quest.title.toLowerCase().includes(query) ||
-      quest.description.toLowerCase().includes(query)
+      String(quest.title ?? '').toLowerCase().includes(query) ||
+      String(quest.description ?? '').toLowerCase().includes(query)
     )
   }
 
   // Filtres
-  if (selectedDifficulty.value !== 'all') {
-    filtered = filtered.filter(quest => quest.difficulty === selectedDifficulty.value)
+  if (difficultyFilter.value) {
+    filtered = filtered.filter(quest => quest.difficulty === difficultyFilter.value.value)
   }
 
-  if (selectedType.value !== 'all') {
-    filtered = filtered.filter(quest => quest.type === selectedType.value)
+  if (typeFilter.value) {
+    filtered = filtered.filter(quest => quest.type === typeFilter.value.value)
   }
 
   // Tri
@@ -561,9 +500,9 @@ const filteredQuests = computed(() => {
       case 'difficulty_desc':
         return getDifficultyOrder(b.difficulty) - getDifficultyOrder(a.difficulty)
       case 'name_asc':
-        return a.title.localeCompare(b.title)
+        return String(a.title ?? '').localeCompare(String(b.title ?? ''))
       case 'name_desc':
-        return b.title.localeCompare(a.title)
+        return String(b.title ?? '').localeCompare(String(a.title ?? ''))
       default:
         return 0
     }
@@ -586,39 +525,40 @@ const completionRate = computed(() => {
 })
 
 const hasFilters = computed(() => {
-  return searchQuery.value || 
-         selectedDifficulty.value !== 'all' || 
-         selectedType.value !== 'all'
+  return Boolean(searchQuery.value || difficultyFilter.value || typeFilter.value)
 })
 
 // Méthodes
 const loadQuestsData = async () => {
+  const generation = ++loadGeneration
+  const userId = authStore.user?.id
+  const isCurrent = () => !disposed && generation === loadGeneration && authStore.user?.id === userId
   try {
     loading.value = true
+    loadError.value = ''
     
-    // Utiliser authStore qui supporte Firebase ET Supabase
-    const user = authStore.user
-    if (!user) {
+    if (!userId) {
       router.push('/home')
       return
     }
-    
-    // ID utilisateur selon le provider
-    const userId = authStore.isFirebaseUser ? user.uid : user.id
 
     // Charger les quêtes utilisateur depuis Supabase
-    const quests = await userQuestsService.getUserQuests(userId)
+    const [quests, stats] = await Promise.all([
+      userQuestsService.getUserQuests(userId),
+      userQuestsService.getQuestStats(userId, { strict: true })
+    ])
+    if (!isCurrent()) return
     userQuests.value = quests
+    questStats.value = stats
     
     console.log(`✅ ${quests.length} quêtes chargées depuis Supabase`)
 
-    // Charger les statistiques
-    questStats.value = await userQuestsService.getQuestStats(userId)
-    
     console.log('📊 Stats quêtes:', questStats.value)
     
   } catch (error) {
+    if (!isCurrent()) return
     console.error('Erreur lors du chargement des quêtes:', error)
+    loadError.value = 'Vérifiez votre connexion puis réessayez. Vos filtres sont conservés.'
     toast.add({
       severity: 'error',
       summary: 'Erreur',
@@ -626,21 +566,22 @@ const loadQuestsData = async () => {
       life: 3000
     })
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
 const startQuest = async (questId) => {
+  const userId = authStore.user?.id
+  const generation = accountGeneration
+  const isCurrent = () => !disposed && generation === accountGeneration && authStore.user?.id === userId
+  if (!userId || !questsArray.value.some(quest => quest.id === questId)) return
   try {
-    const user = authStore.user
-    if (!user) return
-    const userId = authStore.isFirebaseUser ? user.uid : user.id
-    if (!userId) return
-
     await userQuestsService.startQuest(userId, questId)
+    if (!isCurrent()) return
     
     // Recharger les données
     await loadQuestsData()
+    if (!isCurrent()) return
     
     toast.add({
       severity: 'success',
@@ -649,6 +590,7 @@ const startQuest = async (questId) => {
       life: 3000
     })
   } catch (error) {
+    if (!isCurrent()) return
     console.error('❌ Erreur lors du démarrage de la quête:', error)
     toast.add({
       severity: 'error',
@@ -665,14 +607,14 @@ const startQuestFromModal = async (questId) => {
 }
 
 const showQuestDetails = (quest) => {
-  selectedQuest.value = quest
+  const currentQuest = questsArray.value.find(item => item.id === quest?.id)
+  if (!currentQuest) return
+  selectedQuest.value = currentQuest
   showModal.value = true
 }
 
-const onTabChange = (event) => {
-  const tabs = ['active', 'completed', 'all']
-  activeTab.value = tabs[event.index]
-  activeTabIndex.value = event.index
+const selectActiveTab = (tab) => {
+  activeTab.value = tab
   currentPage.value = 0
 }
 
@@ -689,13 +631,11 @@ const onPageChange = (event) => {
 }
 
 const getDifficultyColor = (difficulty) => {
-  const diff = QUEST_DIFFICULTIES[difficulty]
-  return diff ? diff.color : '#666'
+  return houseColor.value
 }
 
 const getDifficultyName = (difficulty) => {
-  const diff = QUEST_DIFFICULTIES[difficulty]
-  return diff ? diff.name : 'Inconnu'
+  return difficultyOptions.find(option => option.value === difficulty)?.label || 'Inconnu'
 }
 
 const getDifficultyOrder = (difficulty) => {
@@ -752,19 +692,88 @@ const goBack = () => {
 }
 
 // Watchers
-watch([searchQuery, selectedDifficulty, selectedType], () => {
+watch([searchQuery, selectedDifficulty, selectedType, sortBy], () => {
   currentPage.value = 0
 })
 
-// Lifecycle
-onMounted(() => {
-  loadQuestsData()
+// Account changes must hide the previous actor's data before any new read settles.
+watch(() => authStore.user?.id || null, () => {
+  accountGeneration += 1
+  userQuests.value = []
+  questStats.value = {}
+  showModal.value = false
+  selectedQuest.value = null
+  activeTab.value = 'active'
+  clearFilters()
+  void loadQuestsData()
+}, { immediate: true, flush: 'sync' })
+
+onBeforeUnmount(() => {
+  disposed = true
+  loadGeneration += 1
+  accountGeneration += 1
 })
 </script>
 
 <style scoped>
 .page-wrapper {
   min-height: 100vh;
+}
+
+.quests-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.quest-load-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+}
+.quest-load-error > i { color: var(--primary-color); font-size: 1.5rem; }
+.quest-load-error > div { flex: 1 1 16rem; min-width: 0; }
+.quest-load-error h2 { margin: 0 0 .5rem; font-size: 1.25rem; color: var(--text-color); }
+.quest-load-error p { margin: 0; color: var(--text-color-secondary); line-height: 1.5; }
+
+.quest-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.quest-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 0.125rem;
+  width: 44px;
+  height: 44px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+}
+
+.quest-search-clear:hover,
+.quest-search-clear:focus-visible {
+  color: var(--text-color);
+  background: var(--surface-hover);
+}
+
+.quest-search-clear:focus-visible {
+  outline: 2px solid var(--house-color);
+  outline-offset: -2px;
+}
+
+:deep(.p-input-icon-right .p-inputtext) {
+  padding-right: 3rem;
 }
 
 /* Animations entrée */
@@ -794,16 +803,61 @@ onMounted(() => {
   }
 }
 
-/* Onglet actif avec couleur de maison */
-:deep(.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-  background: var(--house-color) !important;
-  color: white !important;
+.quest-tabs {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  overflow-x: auto;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* Badge dans onglet actif */
-:deep(.p-tabview .p-tabview-nav li.p-highlight span[style*="background"]) {
-  background: rgba(255, 255, 255, 0.25) !important;
-  color: white !important;
+.quest-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 44px;
+  padding: 0.7rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--text-color-secondary);
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.quest-tab:hover,
+.quest-tab:focus-visible {
+  color: var(--text-color);
+  background: var(--surface-hover);
+}
+
+.quest-tab:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--house-color), transparent 65%);
+  outline-offset: 2px;
+}
+
+.quest-tab--active,
+.quest-tab--active:hover {
+  color: white;
+}
+
+.quest-tab__count {
+  min-width: 1.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.quest-tab--active .quest-tab__count {
+  background: rgba(255, 255, 255, 0.24);
 }
 
 /* Quests container */
@@ -833,7 +887,7 @@ onMounted(() => {
 :deep(.p-paginator .p-paginator-page.p-highlight) {
   background: var(--house-color) !important;
   border-color: var(--house-color) !important;
-  color: white;
+  color: var(--house-foreground) !important;
 }
 
 /* Hover effects améliorés */
@@ -875,16 +929,13 @@ onMounted(() => {
 }
 
 .empty-state-icon {
-  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  animation: empty-state-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes bounce-in {
+@keyframes empty-state-enter {
   0% {
     transform: scale(0);
     opacity: 0;
-  }
-  50% {
-    transform: scale(1.1);
   }
   100% {
     transform: scale(1);
@@ -894,8 +945,43 @@ onMounted(() => {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .quests-shell {
+    padding: 1rem;
+  }
+
+  .quest-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .quest-page-header {
+    padding: 1.25rem !important;
+  }
+
+  .quest-page-heading {
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+
+  .quest-page-title {
+    font-size: 1.75rem !important;
+    line-height: 1.12;
+  }
+
   .quest-card-wrapper {
     animation-delay: 0s !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quest-card-wrapper,
+  .quests-container,
+  .empty-state-card,
+  .empty-state-icon,
+  .view-toggle-btn,
+  :deep(.surface-card),
+  :deep(.p-skeleton) {
+    animation: none !important;
+    transition: none !important;
   }
 }
 </style>

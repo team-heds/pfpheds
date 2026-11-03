@@ -1,7 +1,7 @@
 <template>
   <div class="page-wrapper">
     <Navbar />
-    <div class="challenges-page" :style="{ '--house-color': houseColor }">
+    <div class="challenges-page" :style="{ '--house-color': houseColor, '--house-foreground': houseTextColor }">
       
       <!-- Loading State -->
       <div v-if="loading" class="loading-container">
@@ -23,24 +23,19 @@
       <div v-else class="challenges-content">
         
         <!-- Page Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <div class="title-section">
-              <h1><i class="pi pi-flag"></i> Défis Hebdomadaires</h1>
-              <p>Relevez les défis de cette semaine et gagnez des récompenses exclusives</p>
-            </div>
-            <Button @click="goBack" class="back-btn">
-              <i class="pi pi-arrow-left"></i>
-              Retour
-            </Button>
-          </div>
-        </div>
+        <GamificationPageHeader
+          title="Défis hebdomadaires"
+          description="Avancez à votre rythme, suivez votre série et remportez les récompenses de la semaine."
+          eyebrow="Progression de la semaine"
+          icon="pi pi-bolt"
+          @back="goBack"
+        />
 
         <!-- Week Info -->
         <div class="week-info">
           <div class="week-card">
             <div class="week-header">
-              <h3>Semaine {{ currentWeek }}</h3>
+              <h2>Semaine {{ currentWeek }}</h2>
               <div class="week-dates">{{ weekDates }}</div>
             </div>
             <div class="week-progress">
@@ -55,7 +50,7 @@
           </div>
           
           <div class="time-remaining-card">
-            <div class="time-icon">⏰</div>
+            <div class="time-icon" aria-hidden="true"><i class="pi pi-clock"></i></div>
             <div class="time-info">
               <div class="time-label">Temps restant</div>
               <div class="time-value">{{ timeUntilReset }}</div>
@@ -65,29 +60,9 @@
 
         <!-- Statistics Overview -->
         <div class="stats-overview">
-          <div class="stat-card">
-            <div class="stat-icon">🏆</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ challengeStats.totalCompleted }}</div>
-              <div class="stat-label">Défis Complétés</div>
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-icon">⭐</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ formatNumber(challengeStats.totalXPFromChallenges) }}</div>
-              <div class="stat-label">XP des Défis</div>
-            </div>
-          </div>
-          
-          <div class="stat-card">
-            <div class="stat-icon">📈</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ challengeStats.streakWeeks }}</div>
-              <div class="stat-label">Semaines Consécutives</div>
-            </div>
-          </div>
+          <GamificationStatCard icon="pi pi-check-circle" :value="challengeStats.totalCompleted" label="Défis complétés" />
+          <GamificationStatCard icon="pi pi-star-fill" :value="formatNumber(challengeStats.totalXPFromChallenges)" label="XP gagnés avec les défis" />
+          <GamificationStatCard icon="pi pi-chart-line" :value="challengeStats.streakWeeks" label="Semaines consécutives" />
         </div>
 
         <!-- Active Challenges -->
@@ -120,7 +95,7 @@
               :key="historyItem.challengeId + historyItem.completedAt"
               class="history-item"
             >
-              <div class="history-icon">✅</div>
+              <div class="history-icon" aria-hidden="true"><i class="pi pi-check"></i></div>
               <div class="history-content">
                 <div class="history-name">{{ historyItem.challengeName }}</div>
                 <div class="history-date">{{ formatHistoryDate(historyItem.completedAt) }}</div>
@@ -179,7 +154,7 @@
               </div>
               <div class="reward-item" v-if="selectedChallenge.reward.badge">
                 <i class="pi pi-trophy"></i>
-                <span>Badge Spécial</span>
+                <span>{{ selectedChallenge.reward.badgeName || 'Badge associé' }}</span>
               </div>
               <div class="reward-item" v-if="selectedChallenge.reward.title">
                 <i class="pi pi-crown"></i>
@@ -194,14 +169,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import challengesService from '@/service/challengesService'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
+import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
+import GamificationStatCard from '@/components/gamification/GamificationStatCard.vue'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
+import { getReadableTextColor } from '@/utils/colorContrast'
 
 // Router and auth
 const router = useRouter()
@@ -217,6 +195,8 @@ const showModal = ref(false)
 const selectedChallenge = ref(null)
 const showAllHistory = ref(false)
 const currentWeek = ref(0)
+let loadGeneration = 0
+let disposed = false
 
 // House configuration (identique aux autres pages)
 const houseConfig = {
@@ -242,6 +222,7 @@ const houseColor = computed(() => {
   if (!h) return '#6B7280'
   return houseConfig[h]?.color || '#6B7280'
 })
+const houseTextColor = computed(() => getReadableTextColor(houseColor.value))
 
 // Computed properties
 const completedChallenges = computed(() => 
@@ -340,33 +321,34 @@ const goBack = () => {
 }
 
 const loadData = async () => {
+  if (disposed) return
+  const userId = authStore.user?.id || null
+  const generation = ++loadGeneration
+  const isCurrent = () => !disposed && generation === loadGeneration && authStore.user?.id === userId
+  loading.value = Boolean(userId)
+  loadError.value = ''
+  if (!userId) {
+    loadError.value = 'Connectez-vous pour retrouver vos défis.'
+    return
+  }
   try {
-    loading.value = true
-    loadError.value = ''
-    
-    if (!authStore.user?.id) {
-      throw new Error('Utilisateur non connecté')
-    }
-    
-    const userId = authStore.user.id
-    
-    // Load active challenges
-    activeChallenges.value = await challengesService.getUserActiveChallenges(userId)
-    
-    // Load challenge history
-    challengeHistory.value = await challengesService.getUserChallengeHistory(userId, 20)
-    
-    // Load challenge stats
-    challengeStats.value = await challengesService.getUserChallengeStats(userId)
-    
-    // Set current week
+    const [active, history, stats] = await Promise.all([
+      challengesService.getUserActiveChallenges(userId),
+      challengesService.getUserChallengeHistory(userId, 20),
+      challengesService.getUserChallengeStats(userId),
+    ])
+    if (!isCurrent()) return
+    activeChallenges.value = active
+    challengeHistory.value = history
+    challengeStats.value = stats
     currentWeek.value = getCurrentWeekNumber()
     
   } catch (error) {
+    if (!isCurrent()) return
     console.error('Erreur lors du chargement des données:', error)
     loadError.value = 'Les défis ne peuvent pas être chargés pour le moment.'
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
@@ -379,8 +361,20 @@ const getCurrentWeekNumber = () => {
 }
 
 // Lifecycle
-onMounted(() => {
-  loadData()
+watch(() => authStore.user?.id || null, () => {
+  activeChallenges.value = []
+  challengeHistory.value = []
+  challengeStats.value = { totalCompleted: 0, totalXPFromChallenges: 0, streakWeeks: 0 }
+  currentWeek.value = 0
+  showModal.value = false
+  selectedChallenge.value = null
+  showAllHistory.value = false
+  void loadData()
+}, { immediate: true, flush: 'sync' })
+
+onBeforeUnmount(() => {
+  disposed = true
+  loadGeneration += 1
 })
 </script>
 
@@ -394,7 +388,8 @@ onMounted(() => {
 
 .challenges-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: #0b213f;
+  padding-top: 2rem;
   padding-bottom: 4rem;
 }
 
@@ -451,7 +446,7 @@ onMounted(() => {
 
 .back-btn {
   background: var(--house-color);
-  color: white;
+  color: var(--house-foreground);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -459,6 +454,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .week-progress-fill,
+  .progress-fill-large {
+    transition: none;
+  }
 }
 
 /* Week Info */
@@ -472,19 +474,20 @@ onMounted(() => {
 }
 
 .week-card, .time-remaining-card {
-  background: white;
-  border-radius: 12px;
+  background: #071426;
+  border: 1px solid #243a58;
+  border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
-.week-header h3 {
+.week-header h2 {
   margin: 0 0 0.5rem 0;
-  color: #1f2937;
+  color: #f8fafc;
 }
 
 .week-dates {
-  color: #6b7280;
+  color: #b8c3d1;
   font-size: 0.875rem;
 }
 
@@ -514,7 +517,6 @@ onMounted(() => {
 .week-progress-fill {
   height: 100%;
   background: var(--house-color);
-  transition: width 0.6s ease;
 }
 
 .time-remaining-card {
@@ -524,18 +526,24 @@ onMounted(() => {
 }
 
 .time-icon {
-  font-size: 2rem;
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  color: #071426;
+  background: #f3c300;
+  border-radius: 0.8rem;
 }
 
 .time-label {
-  color: #6b7280;
+  color: #b8c3d1;
   font-size: 0.875rem;
 }
 
 .time-value {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #f8fafc;
 }
 
 /* Statistics Overview */
@@ -635,7 +643,13 @@ onMounted(() => {
 }
 
 .history-icon {
-  font-size: 1.5rem;
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  color: var(--house-foreground);
+  background: var(--house-color);
+  border-radius: 0.7rem;
 }
 
 .history-content {
@@ -747,7 +761,6 @@ onMounted(() => {
 .progress-fill-large {
   height: 100%;
   background: var(--house-color);
-  transition: width 0.6s ease;
 }
 
 .reward-list {

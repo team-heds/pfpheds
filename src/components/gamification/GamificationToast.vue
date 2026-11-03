@@ -1,6 +1,6 @@
 <template>
   <Transition name="toast">
-    <div v-if="visible" class="gamification-toast" :class="`toast-${type}`">
+    <div v-if="visible" class="gamification-toast" :class="`toast-${type}`" :role="type === 'error' ? 'alert' : 'status'" aria-live="polite">
       <div class="toast-icon">
         <i :class="iconClass"></i>
       </div>
@@ -12,7 +12,7 @@
           <span>+{{ xp }} XP</span>
         </div>
       </div>
-      <button class="toast-close" @click="close">
+      <button type="button" class="toast-close" aria-label="Fermer la notification" @click="close">
         <i class="pi pi-times"></i>
       </button>
     </div>
