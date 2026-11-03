@@ -76,3 +76,27 @@ La publication serveur est vérifiée (1 365 fichiers, gateway et réponse HTTP)
 - 448 assets ajoutés, aucun asset existant supprimé ou écrasé. Empreintes du frontend de production identiques avant/après. Aucun backend déployé.
 
 Preuves : [recette](/Users/antoinequarroz/Lab/projets/pfpheds/artifacts/gamification-play-comfort-2026-11-03/browser-evidence.json), [pause bureau](/Users/antoinequarroz/Lab/projets/pfpheds/artifacts/gamification-play-comfort-2026-11-03/ventriglisse-pause-desktop.png), [pause mobile et thème clair](/Users/antoinequarroz/Lab/projets/pfpheds/artifacts/gamification-play-comfort-2026-11-03/ventriglisse-mobile-clair.png). La suite reste la recette humaine du pilote fermé, puis les contrôles sur appareils physiques avant une ouverture plus large.
+
+## Vérification publique authentifiée — 3 novembre
+
+**La vérification du jeu sur le site public est maintenant terminée avec le compte administrateur fictif de TEST.** Le refus réseau précédent a disparu et la connexion a été effectuée par l’interface normale. La session de démonstration reste ouverte sur [Ventriglisse](https://test.hedsvs.ch/ventriglisse3d).
+
+Cette recette a révélé un défaut réel de livraison audio : les quatre URL relatives de `<audio>` n’étaient pas transformées par le compilateur Vue, et aucun son n’était émis dans le build. De plus, `slide.mp3` et `finish.mp3` ne contenaient qu’un octet. Les quatre sources utilisent maintenant des imports explicites `?url`. Les WAV de décompte et de départ existants sont conservés ; deux effets de glissade et d’arrivée sont synthétisés localement sans échantillon externe. Les anciens MP3 vides ne sont plus référencés. Le décor, les avatars et le moteur des scores restent inchangés.
+
+Le build vérifie la présence des quatre WAV, leurs signatures RIFF/WAVE, leur correspondance exacte avec les fichiers source et leurs références dans le module du jeu. Les 19 tests montés du jeu passent dans la branche ; les 23 tests de Ventriglisse passent dans le projet principal, moteur local inclus. Le correctif de code est `a3020731`, sur `codex/gamification-play-comfort`, après `fd07f434`. Les quatre fichiers concernés sont reportés dans le projet principal après contrôle des empreintes et sauvegarde.
+
+Contrôles sur **la nouvelle version publique** :
+
+- Entrée `/assets/index-oeo_ZMvC.js`, compte admin connecté, vraie scène 3D et quatre avatars chargés sans mode de secours ni avertissement.
+- Les quatre sons ont `readyState=4`, aucun échec de décodage ; décompte, départ et glissade en lecture observés. Désactiver le son arrête tous les médias ; la réactivation reste opérationnelle. Les médias sont arrêtés en fin de manche.
+- Pause pendant le décompte : le chiffre reste à 3 jusqu’à la reprise. Espace reprend ; P met en pause pendant la course. Les distances restent identiques pendant l’arrêt.
+- Deux manches complètes : scores 4/3/2/1 puis 8/6/4/2, soit 20 points cumulés. Aucun second comptage de la même manche ; nouvelle manche disponible.
+- Le commutateur de caméra fixe fonctionne et le retour au cadrage normal est vérifié. Aucune erreur console nouvelle observée pendant cette recette.
+
+La sélection d’un autre onglet dans le navigateur de contrôle n’a pas modifié `document.visibilityState` : aucune validation physique de ce cas n’est revendiquée, sa couverture reste celle des tests montés. Le tactile physique et VoiceOver restent également à contrôler.
+
+Publication TEST seule : 1 369 fichiers vérifiés, 449 assets ajoutés, aucun asset existant supprimé ou écrasé. HTML `4adbd96b8f9c83999a323624f2491691ebe8ba3b453a7c4f78f6a47a05ef66a6`, service worker `d482dff8797f1f3df354fb83981e0715106a60a93bd37f34a35ddd96b6cea86a`. Sauvegarde : `/opt/pfpheds-staging/backups/frontend-dist-before-apple-navigation-20261103T115506Z-YJI240m0.tar.gz`, SHA256 `91e8888e41c3fedceb99c7a523946070ed534132e2c848f64ba86e0c1489bf23`. Les empreintes du frontend de production sont inchangées ; aucun backend déployé, aucun barème ou public de récompenses modifié.
+
+La première tentative a été refusée avant activation faute d’espace disque. Seuls les dossiers temporaires identifiés de nos déploiements ont été nettoyés, après vérification de leurs manifestes ; les sauvegardes sont conservées. Le dossier temporaire de la publication réussie est également nettoyé après contrôle de la sauvegarde et des points d’entrée.
+
+Preuves : [vérification publique](/Users/antoinequarroz/Lab/projets/pfpheds/artifacts/gamification-play-comfort-2026-11-03/public-verification.json), [capture publique](/Users/antoinequarroz/Lab/projets/pfpheds/artifacts/gamification-play-comfort-2026-11-03/ventriglisse-public-verifie.png). La limitation d’accès public du paragraphe précédent est levée pour cette recette.
