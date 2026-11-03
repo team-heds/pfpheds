@@ -8,6 +8,18 @@ select set_config(
     select au.id::text
     from auth.users au
     join public.user_profiles up on up.user_id = au.id
+    where lower(coalesce(up.role, '')) not in (
+      'admin', 'super.all', 'adminphysio', 'adminsoins'
+    )
+      and not (coalesce(up.permissions, '{}'::jsonb) ?| array['admin', 'super.all', 'editor'])
+      and not exists (
+        select 1
+        from public.user_track_roles utr
+        where utr.user_id = au.id
+          and utr.is_active = true
+          and utr.role::text in ('SUPER_ADMIN', 'ADMIN', 'SECRETARIAT', 'RF', 'RM')
+          and (utr.expires_at is null or utr.expires_at > now())
+      )
     order by au.created_at
     limit 1
   ),
@@ -76,6 +88,7 @@ declare
   retry_result jsonb;
   profile_first_result jsonb;
   profile_retry_result jsonb;
+  rejected_result jsonb;
   xp_total integer;
   history_count integer;
   changed_other integer;
@@ -131,19 +144,12 @@ begin
     raise exception 'Expected one history event, got %', history_count;
   end if;
 
-  forbidden := false;
-  begin
-    perform public.record_my_gamification_action(
-      'PROFILE_UPDATE',
-      null,
-      '{}'::jsonb
-    );
-  exception when others then
-    forbidden := true;
-  end;
-
-  if not forbidden then
-    raise exception 'A stale profile must not receive profile-update XP';
+  rejected_result := public.record_my_gamification_action(
+    'PROFILE_UPDATE', null, '{}'::jsonb
+  );
+  if coalesce((rejected_result ->> 'awarded')::boolean, true)
+     or rejected_result ->> 'reason' <> 'verification_failed' then
+    raise exception 'A stale profile must be rejected: %', rejected_result;
   end if;
 
   update public.user_profiles
@@ -191,33 +197,20 @@ begin
     raise exception 'Direct owner XP update expected 0 rows, got %', changed_other;
   end if;
 
-  begin
-    perform public.record_my_gamification_action(
-      'POST',
-      '10000000-0000-0000-0000-000000000002',
-      '{}'::jsonb
-    );
-  exception when others then
-    forbidden := true;
-  end;
-
-  if not forbidden then
-    raise exception 'A user must not reward an action owned by another user';
+  rejected_result := public.record_my_gamification_action(
+    'POST', '10000000-0000-0000-0000-000000000002', '{}'::jsonb
+  );
+  if coalesce((rejected_result ->> 'awarded')::boolean, true)
+     or rejected_result ->> 'reason' <> 'verification_failed' then
+    raise exception 'A cross-user action must be rejected: %', rejected_result;
   end if;
 
-  forbidden := false;
-  begin
-    perform public.record_my_gamification_action(
-      'POST',
-      '10000000-0000-0000-0000-000000000003',
-      '{}'::jsonb
-    );
-  exception when others then
-    forbidden := true;
-  end;
-
-  if not forbidden then
-    raise exception 'Historical posts must not be replayed for XP';
+  rejected_result := public.record_my_gamification_action(
+    'POST', '10000000-0000-0000-0000-000000000003', '{}'::jsonb
+  );
+  if coalesce((rejected_result ->> 'awarded')::boolean, true)
+     or rejected_result ->> 'reason' <> 'verification_failed' then
+    raise exception 'A historical post must be rejected: %', rejected_result;
   end if;
 
   with changed as (
