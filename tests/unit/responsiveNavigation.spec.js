@@ -25,7 +25,7 @@ const DialogStub = {
 const ButtonStub = { props: ['label'], template: '<button><slot />{{ label }}</button>' }
 
 function makeRouter() {
-  const paths = ['/feed', '/institution', '/institution/:id', '/votation', '/votation_pfp1b', '/map', '/admin', '/admin/dashboard-rm', '/admin/settings', '/profile/:id', '/mobile-outils', '/mobile-search', '/communities', '/home']
+  const paths = ['/feed', '/institution', '/institution/:id', '/votation', '/votation_pfp1b', '/map', '/admin', '/admin/dashboard-rm', '/admin/settings', '/events', '/settings', '/gamification-profile', '/profile/:id', '/mobile-outils', '/mobile-search', '/communities', '/home']
   return createRouter({
     history: createMemoryHistory(),
     routes: paths.map(path => ({ path, component: { template: '<main><h1>Page de test</h1></main>' } })),
@@ -72,8 +72,9 @@ describe('responsive navigation contract', () => {
     await mountNavbar()
     const navigation = wrapper.get('nav[aria-label="Navigation principale"]')
     const primaryLinks = navigation.findAll('.center-menu a')
-    expect(primaryLinks.map(link => link.attributes('aria-label'))).toEqual(['Accueil', 'Institutions', 'Votation', 'Carte'])
-    expect(primaryLinks.map(link => link.attributes('href'))).toEqual(['/feed', '/institution', '/votation_pfp1b', '/map'])
+    // Le nom accessible vient du libellé visible.
+    expect(primaryLinks.map(link => link.text())).toEqual(['Accueil', 'Institutions', 'Votation', 'Carte', 'Événements'])
+    expect(primaryLinks.map(link => link.attributes('href'))).toEqual(['/feed', '/institution', '/votation_pfp1b', '/map', '/events'])
     expect(navigation.get('a[href="/feed"]').attributes('aria-current')).toBe('page')
     expect(navigation.get('a[href="/votation_pfp1b"]').attributes('aria-current')).toBeUndefined()
 
@@ -89,7 +90,7 @@ describe('responsive navigation contract', () => {
 
     stores.user.profile.pfp_cohort = 'PFP1A'
     await nextTick()
-    expect(navigation.get('a[aria-label="Votation"]').attributes('href')).toBe('/votation')
+    expect(primaryLinks.find(link => link.text() === 'Votation').attributes('href')).toBe('/votation')
   })
 
   it('opens the named settings action without rendering an inoperative notification control', async () => {
@@ -99,8 +100,10 @@ describe('responsive navigation contract', () => {
     expect(wrapper.get('button[aria-label="Rechercher"]').exists()).toBe(true)
     await wrapper.get('button[aria-label="Ouvrir les paramètres"]').trigger('click')
     const dialog = wrapper.get('[role="dialog"][aria-label="Paramètres"]')
-    expect(dialog.text()).toContain('Profil')
+    expect(dialog.text()).toContain('Mon profil')
+    expect(dialog.text()).toContain('Paramètres du compte')
     expect(dialog.text()).toContain('Se déconnecter')
+    expect(dialog.text()).not.toContain('Copyright')
   })
 
   it('preserves administrative and restricted academic destinations as identity permissions change', async () => {
@@ -108,7 +111,7 @@ describe('responsive navigation contract', () => {
     expect(wrapper.find('.center-menu a[href="/admin"]').exists()).toBe(false)
     stores.user.profile.role = 'admin'
     await flushPromises()
-    expect(wrapper.get('.center-menu a[href="/admin"]').attributes('aria-label')).toBe('Admin')
+    expect(wrapper.get('.center-menu a[href="/admin"]').text()).toBe('Administration')
 
     stores.user.profile.permissions = ['academic.restricted']
     await flushPromises()

@@ -674,8 +674,8 @@
         <VotationPlaceCards class="mobile-place-cards" :places="filteredAvailablePlaces" :selected-places="selectedPlaces" :votes-aggregation="votesAggregation" :admin-preview="isAdminPreview" @select="selectPlaceForRank" />
       </div>
       <div v-else class="empty-state">
-        <i class="pi pi-inbox empty-icon"></i>
-        <h3>Aucune place proposée pour cette session</h3>
+        <i class="pi pi-inbox empty-icon" aria-hidden="true"></i>
+        <h2>Aucune place proposée pour cette session</h2>
         <p class="text-600" v-if="isAdminPreview">
           La campagne {{ targetPFP }} — {{ selectedYear }} est ouverte, mais son aperçu ne contient actuellement aucune capacité proposée.
         </p>
@@ -692,7 +692,7 @@
       >
         <div class="recap-header">
           <i class="pi pi-list-check"></i>
-          <h3>Récapitulatif de vos choix</h3>
+          <h2>Récapitulatif de vos choix</h2>
         </div>
         <DataTable :value="selectedPlacesForRecap" class="recap-table" :rowHover="true">
           <Column header="Rang" :style="{ width: '80px', textAlign: 'center' }">
@@ -2850,9 +2850,10 @@ export default {
   margin-bottom: 1rem;
 }
 
-.empty-state h3 {
+.empty-state h2 {
   color: var(--text-color);
   margin: 1rem 0 0.5rem 0;
+  font-size: 1.25rem;
 }
 
 /* Section récapitulatif */
@@ -2879,7 +2880,7 @@ export default {
   color: var(--primary-color);
 }
 
-.recap-header h3 {
+.recap-header h2 {
   margin: 0;
   color: var(--text-color);
   font-size: 1.25rem;

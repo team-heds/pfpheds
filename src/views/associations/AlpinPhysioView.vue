@@ -218,7 +218,8 @@ onUnmounted(() => scrollRoot?.removeEventListener?.('scroll', updateNavigation))
   --paper: #ffffff;
   --mist: #eef7f6;
   --aqua: #64d0d8;
-  --aqua-dark: #147e88;
+  /* Nuance de texte du turquoise historique : ≥ 4,5:1 sur blanc et sur --mist. */
+  --aqua-dark: #11737c;
   width: 100%;
   min-height: 100%;
   color: var(--ink);
@@ -228,6 +229,13 @@ onUnmounted(() => scrollRoot?.removeEventListener?.('scroll', updateNavigation))
 
 .section {
   width: min(1240px, calc(100% - 4rem));
+}
+
+/* Sur les sections foncées, le turquoise clair garde le contraste (7,8:1 sur --ink). */
+.alpin-page .services,
+.alpin-page .contact,
+.alpin-page .gallery-main {
+  --aqua-dark: var(--aqua);
 }
 
 .header {

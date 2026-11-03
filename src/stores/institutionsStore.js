@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase'
+import { SUPABASE_REST_URL } from '@/config/supabaseRest'
 
 /**
  * ===========================
@@ -7,11 +8,8 @@ import { supabase } from '@/supabase'
  * ===========================
  */
 
-// Base REST Supabase : adapte si besoin via .env
-const REST_BASE = import.meta.env.VITE_SUPABASE_REST_URL
-  // Exemple d’URL: https://api2.hedsvs.ch/rest/v1
-  // Si non défini, on tombe sur prod api2 (modifie si nécessaire)
-  || 'https://api2.hedsvs.ch/rest/v1'
+// Base REST Supabase de l'environnement courant (VITE_SUPABASE_REST_URL ou VITE_SUPABASE_URL)
+const REST_BASE = SUPABASE_REST_URL
 
 const ANON_KEY = import.meta.env.VITE_SUPABASE_KEY // <-- ton anon key
 
@@ -19,7 +17,7 @@ if (!ANON_KEY) {
   console.error('[InstitutionsStore] VITE_SUPABASE_KEY manquant dans .env')
 }
 if (!REST_BASE) {
-  console.error('[InstitutionsStore] VITE_SUPABASE_REST_URL manquant (fallback utilisé)')
+  console.error('[InstitutionsStore] VITE_SUPABASE_URL ou VITE_SUPABASE_REST_URL manquant')
 }
 
 // En-têtes communs pour PostgREST
