@@ -14,7 +14,7 @@
   "dependencies": {
     "@google/genai": "^1.30.0",
     "@supabase/supabase-js": "^2.52.0",
-    "basic-ftp": "^5.0.5",
+    "basic-ftp": "^6.2.5",
     "cors": "^2.8.5",
     "dotenv": "^17.1.0",
     "express": "^5.1.0",
