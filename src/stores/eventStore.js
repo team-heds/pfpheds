@@ -186,7 +186,11 @@ export const useEventStore = defineStore('event', () => {
         type: event.type || 'public',
         role: event.type === 'private' ? (event.role || null) : null,
         admin_uid: event.admin,  // ✅ Utilise admin_uid (contrainte NOT NULL)
-        image_url: imageUrl
+        image_url: imageUrl,
+        // La colonne status vaut 'draft' par défaut (hub AlpinPhysio) : un événement
+        // créé ici doit être publié pour être visible et ouvert aux inscriptions.
+        status: 'published',
+        published_at: new Date().toISOString()
       };
 
       const { data, error: insertError } = await supabase

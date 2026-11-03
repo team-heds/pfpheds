@@ -313,16 +313,15 @@ async function updateEventFromForm(eventData) {
   }
 }
 
+// La confirmation est déjà demandée par EventDetail avant d'émettre `delete`.
 async function deleteEvent(event) {
-  if (confirm(`Voulez-vous vraiment supprimer l'événement "${event.title}" ?`)) {
-    try {
-      await eventStore.deleteEvent(event.id);
-      showDetailDialog.value = false;
-      console.log('Événement supprimé avec succès');
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
-      alert('Erreur lors de la suppression de l\'événement');
-    }
+  try {
+    await eventStore.deleteEvent(event.id);
+    showDetailDialog.value = false;
+    console.log('Événement supprimé avec succès');
+  } catch (error) {
+    console.error('Erreur lors de la suppression:', error);
+    alert('Erreur lors de la suppression de l\'événement');
   }
 }
 

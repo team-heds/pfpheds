@@ -122,6 +122,32 @@ describe('eventStore', () => {
     })
   })
 
+  // ==================== ADD EVENT ====================
+  describe('addEvent', () => {
+    it('publishes the event instead of relying on the draft default', async () => {
+      const insert = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { id: 'evt1' }, error: null }),
+        }),
+      })
+      mockFrom.mockImplementation((table) => table === 'events'
+        ? { insert }
+        : { select: vi.fn().mockReturnThis(), order: vi.fn().mockResolvedValue({ data: [], error: null }) })
+
+      await store.addEvent({
+        title: 'Soirée',
+        startDate: '2026-11-20T13:00:00Z',
+        endDate: '2026-11-20T16:00:00Z',
+        type: 'public',
+        admin: 'user1',
+      })
+
+      expect(insert).toHaveBeenCalledWith([
+        expect.objectContaining({ status: 'published', published_at: expect.any(String), admin_uid: 'user1' }),
+      ])
+    })
+  })
+
   // ==================== DELETE EVENT ====================
   describe('deleteEvent', () => {
     it('deletes event and its image from storage', async () => {
