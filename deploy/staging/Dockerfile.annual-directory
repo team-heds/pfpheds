@@ -1,0 +1,3 @@
+FROM pfpheds-staging-backend:before-annual-directory-20260916
+COPY backend/domain/studentDirectoryYear.mjs /app/domain/studentDirectoryYear.mjs
+COPY backend/supabase/audienceDirectoryBackend.js /app/supabase/audienceDirectoryBackend.js
