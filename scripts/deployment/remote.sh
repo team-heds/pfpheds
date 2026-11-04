@@ -61,7 +61,12 @@ sudo docker exec pfpheds-backend node -e \
 # Keep the previous asset hashes available to browsers with an older index.html.
 sudo cp -a "$source_dir/frontend/." "$app/"
 sudo chown -R www-data:www-data "$app"
-sudo docker cp "$app/." "$caddy:$app/"
+# Caddy monte $app en lecture seule : les fichiers sont déjà visibles, une copie échouerait.
+if sudo docker inspect "$caddy" --format '{{range .Mounts}}{{.Destination}}{{"\n"}}{{end}}' | grep -qxF "$app"; then
+  echo "Caddy lit $app directement (montage) : copie inutile."
+else
+  sudo docker cp "$app/." "$caddy:$app/"
+fi
 sudo docker exec "$caddy" caddy reload --config /etc/caddy/Caddyfile
 sudo docker ps --format 'table {{.Names}}\t{{.Status}}'
 sudo rm -rf "$source_dir"
