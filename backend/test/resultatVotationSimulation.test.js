@@ -157,3 +157,42 @@ test('weighted choices keep existing assignments and never reuse their place', a
     queryData = []
   }
 })
+
+test('PFP1/PFP2 follow weighted choices while PFP3/PFP4 keep the v5 criteria logic', async () => {
+  queryError = null
+  writes = 0
+  queryData = []
+  const run = (pfpType) => listen(async baseUrl => {
+    const response = await fetch(`${baseUrl}/run-algorithm`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        pfpType,
+        year: '2027',
+        seed: 5,
+        students: [{ userId: 's', choices: ['P1'], missingCriteria: ['MSQ'], donePlaceIds: [] }],
+        places: [
+          { PlaceId: 'P1', NomPlace: 'Choisie', Capacity: 1, criteria: {} },
+          { PlaceId: 'P2', NomPlace: 'Critère MSQ', Capacity: 1, criteria: { MSQ: true } }
+        ]
+      })
+    })
+    const body = await response.json()
+    assert.equal(response.status, 200)
+    run.result = body.results.find(r => r.user_id === 's')
+  })
+
+  for (const pfpType of ['PFP1A', 'PFP1B', 'PFP2']) {
+    await run(pfpType)
+    assert.equal(run.result.assigned_place_id, 'P1', pfpType)
+    assert.equal(run.result.assigned_rank, 1, pfpType)
+    assert.match(run.result.notes, /v6\.0/)
+  }
+  for (const pfpType of ['PFP3', 'PFP4']) {
+    await run(pfpType)
+    assert.equal(run.result.assigned_place_id, 'P2', pfpType)
+    assert.equal(run.result.assigned_rank, 99, pfpType)
+    assert.match(run.result.notes, /v5\.0/)
+  }
+  assert.equal(writes, 0)
+})

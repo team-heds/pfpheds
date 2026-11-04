@@ -66,6 +66,8 @@ Le score est calculé en fusionnant **2 sources** pour avoir la vue la plus comp
 
 Code : `backend/domain/weightedChoiceAssignment.js`, appelé par `POST /api/resultat-votation/run-algorithm`.
 
+> **Périmètre : PFP1A, PFP1B et PFP2.** PFP3 et PFP4 gardent pour l'instant la logique v5.0 (place couvrant le plus de critères manquants), à revoir séparément ; seule la colonne `assigned_rank` y suit aussi le sens « rang du choix ».
+
 L'attribution est calculée **pour toute la volée en une fois** (affectation optimale, méthode hongroise sur les créneaux de capacité), et non étudiant par étudiant. Règles, dans cet ordre strict :
 
 | Priorité | Règle | Détail |
@@ -113,4 +115,4 @@ Le résultat de l'aperçu est enregistré avec le statut `assigned` (affiché «
 | v1.0 | Fév 2026 | `Math.random() * 100` — Score entièrement aléatoire |
 | v2.0 | 9 mars 2026 | Score basé sur critères métier (critères manquants, DE/SYSINT bonus, SAE, cas particulier, pondération PFP). Fusion pfp_valided + student_result_vote. Tiebreaker réduit à 0-1 pt. |
 | v5.0 | sept. 2026 | Attribution par critères manquants ; les choix ne servaient plus qu'à mesurer la popularité (régression). |
-| v6.0 | 4 nov. 2026 | Choix pondérés, lésés minimisés pour toute la volée, SAE prioritaires, tirage seedé. `assigned_rank` = rang du choix. |
+| v6.0 | 4 nov. 2026 | PFP1A/PFP1B/PFP2 : choix pondérés, lésés minimisés pour toute la volée, SAE prioritaires, tirage seedé. `assigned_rank` = rang du choix. |
