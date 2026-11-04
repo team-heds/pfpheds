@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" role="img" aria-label="Photo de l'institution non disponible">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3f1ff"/>
+      <stop offset="1" stop-color="#e2ddff"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#bg)"/>
+  <g fill="none" stroke="#7a52ff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" opacity="0.55">
+    <path d="M220 290V150l80-46 80 46v140"/>
+    <path d="M190 290h220"/>
+    <path d="M300 118v34M283 135h34"/>
+    <rect x="248" y="178" width="30" height="30" rx="4"/>
+    <rect x="322" y="178" width="30" height="30" rx="4"/>
+    <path d="M282 290v-46h36v46"/>
+  </g>
+</svg>

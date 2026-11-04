@@ -38,7 +38,7 @@
           <div class="row g-4">
             <div class="col-sm-6 col-xl-4" v-for="place in paginatedPlaces" :key="place.id">
               <button type="button" class="card place-card-button shadow h-100" @click="goToDetails(place.id)">
-                <img src="https://eduport.webestica.com/assets/images/courses/4by3/21.jpg" class="card-img-top img-cards" :alt="`Illustration de la place ${place.Sector || ''}`">
+                <img :src="placePlaceholder" class="card-img-top img-cards" :alt="`Illustration de la place ${place.Sector || ''}`">
                 <div class="card-body pb-0">
                   <div class="d-flex justify-content-between mb-2">
 
@@ -141,12 +141,14 @@
 import { db } from '../../../firebase';
 import { ref, onValue } from "firebase/database";
 import EmptyState from '@/components/common/states/EmptyState.vue';
+import { INSTITUTION_PLACEHOLDER } from '@/utils/institutionImage';
 
 export default {
   name: 'Place',
   components: { EmptyState },
   data() {
     return {
+      placePlaceholder: INSTITUTION_PLACEHOLDER,
       allPlaces: [],
       places: [],
       currentPage: 1,

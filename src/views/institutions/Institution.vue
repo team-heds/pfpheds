@@ -48,7 +48,7 @@
                   >
                     <template #header>
                       <div class="card-header">
-                        <img :src="getInstitutionImage(institution)" :alt="`Illustration de ${institution.Name}`" class="card-image" />
+                        <img :src="getInstitutionImage(institution)" :alt="`Illustration de ${institution.Name}`" class="card-image" @error="showInstitutionPlaceholder" />
                         <Tag class="card-tag">{{ institution.Canton }}</Tag>
                       </div>
                       <p ref="institutionName" class="card-title">{{ institution.Name }}</p>
@@ -122,6 +122,7 @@ import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import EmptyState from '@/components/common/states/EmptyState.vue'
 import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 import { filterInstitutions, getAvailableCantons } from '@/service/institutionFiltersService'
+import { institutionImageOf, showInstitutionPlaceholder } from '@/utils/institutionImage'
 
 export default {
   name: 'InstitutionPage',
@@ -170,13 +171,9 @@ export default {
   },
   methods: {
     getInstitutionImage(institution) {
-      // Le store normalise ImageURL en array, on prend le premier élément
-      if (Array.isArray(institution.ImageURL) && institution.ImageURL.length > 0) {
-        return institution.ImageURL[0];
-      }
-      // Image par défaut si pas d'image disponible
-      return 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg';
+      return institutionImageOf(institution);
     },
+    showInstitutionPlaceholder,
     truncateText(text, length) {
       if (text && text.length > length) {
         return text.substring(0, length) + '...';

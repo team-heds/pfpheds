@@ -9,7 +9,7 @@
               <div class="col-md-8 col-xl-12">
                 <div class="card shadow">
                   <div class="rounded-3">
-                    <img :src="primaryImage" class="card-img-top" alt="institution image">
+                    <img :src="primaryImage" class="card-img-top" alt="institution image" @error="showInstitutionPlaceholder">
                   </div>
                 </div>
               </div>
@@ -72,6 +72,7 @@
 </template>
 
 <script setup>
+import { institutionImageOf, showInstitutionPlaceholder } from '@/utils/institutionImage'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
@@ -89,17 +90,7 @@ const isLoading = ref(true)
 
 const institutionId = computed(() => route.params.id)
 
-const primaryImage = computed(() => {
-  if (!institutionDetails.value?.ImageURL) {
-    return 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'
-  }
-  
-  const imageURL = institutionDetails.value.ImageURL
-  if (Array.isArray(imageURL)) {
-    return imageURL[0] || 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'
-  }
-  return imageURL
-})
+const primaryImage = computed(() => institutionImageOf(institutionDetails.value))
 
 onMounted(async () => {
   await fetchInstitutionDetails()

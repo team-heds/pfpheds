@@ -8,7 +8,7 @@
     <div class="iv">
     <!-- ====== HERO ====== -->
     <section class="iv-hero">
-      <img :src="primaryImage" alt="" class="iv-hero__bg" />
+      <img :src="primaryImage" alt="" class="iv-hero__bg" @error="showInstitutionPlaceholder" />
       <div class="iv-hero__fade"></div>
 
       <!-- floating glass card in hero -->
@@ -201,6 +201,7 @@
 </template>
 
 <script setup>
+import { institutionImageOf, showInstitutionPlaceholder } from '@/utils/institutionImage'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ref as firebaseDbRef, onValue, off } from 'firebase/database'
@@ -249,12 +250,7 @@ let unsubscribeAuth = null
 
 const institutionId = computed(() => route.params.id)
 
-const primaryImage = computed(() => {
-  const images = institutionDetails.value?.ImageURL
-  if (Array.isArray(images) && images.length > 0) return images[0]
-  if (typeof images === 'string' && images.trim().length > 0) return images
-  return 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'
-})
+const primaryImage = computed(() => institutionImageOf(institutionDetails.value))
 
 const formatUrl = (url) => {
   if (!url) return '#'
