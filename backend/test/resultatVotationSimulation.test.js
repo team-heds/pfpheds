@@ -5,6 +5,12 @@ const express = require('express')
 process.env.SUPABASE_URL ||= 'http://127.0.0.1:54321'
 process.env.SUPABASE_KEY ||= 'test-anon-key'
 
+// L'algorithme journalise ses statistiques à chaque appel. Sous Node 22, ce volume
+// sur stdout corrompt par intermittence le canal du lanceur de tests
+// (« Unable to deserialize cloned data ») : on le coupe dans ce fichier.
+test.mock.method(console, 'log', () => {})
+test.mock.method(console, 'warn', () => {})
+
 const supabasePath = require.resolve('../supabaseClient')
 const authPath = require.resolve('../middleware/auth')
 const routerPath = require.resolve('../supabase/resultatVotationStoreBackend')
