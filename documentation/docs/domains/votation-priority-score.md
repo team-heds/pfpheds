@@ -1,10 +1,10 @@
 ---
-title: Algorithme de tirage au sort — Priority Score v2.0
+title: Algorithme de tirage au sort — choix pondérés (v6.0)
 ---
 
-# Algorithme de Tirage au Sort — Priority Score v2.0
+# Algorithme de Tirage au Sort — choix pondérés (v6.0)
 
-> Dernière mise à jour : 9 mars 2026
+> Dernière mise à jour : 4 novembre 2026
 
 ## Vue d'ensemble
 
@@ -62,36 +62,48 @@ Le score est calculé en fusionnant **2 sources** pour avoir la vue la plus comp
 
 ---
 
-## Algorithme d'attribution (Backend)
+## Algorithme d'attribution (Backend) — v6.0 choix pondérés
 
-### Étape 0 — Charger les assignations existantes
-- Les étudiants déjà assignés (manuellement, par votation prioritaire) sont **exclus**
-- La capacité des places est **réduite** par les assignations existantes
+Code : `backend/domain/weightedChoiceAssignment.js`, appelé par `POST /api/resultat-votation/run-algorithm`.
 
-### Étape 1 — Calculer la popularité de chaque place
-- Compter combien de fois chaque place apparaît dans les choix des étudiants
+> **Périmètre : PFP1A, PFP1B et PFP2.** PFP3 et PFP4 gardent pour l'instant la logique v5.0 (place couvrant le plus de critères manquants), à revoir séparément ; seule la colonne `assigned_rank` y suit aussi le sens « rang du choix ».
 
-### Étape 2 — Attribution par place (moins populaires → plus populaires)
-Pour chaque place (en commençant par les moins demandées) :
-1. Trouver tous les candidats qui ont choisi cette place
-2. **Trier** :
-   - Par **rang de choix** (1er choix d'abord)
-   - À rang égal, par **priorityScore** (descendant — plus élevé = plus prioritaire)
-   - À score égal, **aléatoire**
-3. Assigner jusqu'à la capacité restante
+L'attribution est calculée **pour toute la volée en une fois** (affectation optimale, méthode hongroise sur les créneaux de capacité), et non étudiant par étudiant. Règles, dans cet ordre strict :
 
-### Étape 3 — Attribution aléatoire des restants
-- Étudiants non assignés → places avec capacité restante (ordre aléatoire)
-- `assigned_rank = 99` pour identifier les attributions aléatoires
+| Priorité | Règle | Détail |
+|---|---|---|
+| 1 | **Le moins de lésés possible** | Un « lésé » n'obtient aucun de ses 5 choix. Ce nombre est minimisé avant tout le reste. |
+| 2 | **Pondération des choix** | Coût : choix 1 → 0, choix 2 → 1, choix 3 → 3, choix 4 → 6, choix 5 → 10. La somme est minimisée pour la volée : on évite de donner un 5e choix à quelqu'un pour offrir un 1er choix à un autre. |
+| 3 | **SAE et cas particuliers** | Coût de rang ×2 (SAE) ou ×1,5 (cas particulier) : à égalité, ils obtiennent la place disputée et évitent d'être lésés. |
+| 4 | **Hors choix** | La place restante qui couvre le plus de critères manquants (allemand d'abord pour un étudiant qui n'a qu'un stage et à qui il manque DE). |
+| 5 | **Tirage au sort** | Ne départage que les vrais ex aequo. La graine est renvoyée dans `stats.seed` et notée sur chaque attribution : le tirage est rejouable à l'identique (paramètre `seed`). |
 
----
+Contraintes toujours respectées :
+- les attributions existantes (manuelles, votation prioritaire) sont **conservées** et leur capacité est retirée des places disponibles ;
+- une place déjà effectuée par l'étudiant ne lui est **jamais** attribuée ;
+- aucune place ne dépasse sa capacité `pfpX_proposition[année]`.
+
+### Sens de `assigned_rank`
+
+| Valeur | Signification |
+|---|---|
+| 1 à 5 | Rang du choix obtenu |
+| 99 | Hors choix (lésé) |
+| 0 | Attribution directe (manuelle, prioritaire) |
+
+Le résultat de l'aperçu est enregistré avec le statut `assigned` (affiché « Attribué » dans *Places assignées*), puis publié vers le profil étudiant depuis cette page.
+
+### Exemple réel — BA25 PFP2 2026-2027
+
+58 étudiants à placer pour 58 places. L'ancienne v5.0 (qui n'utilisait les choix que comme indicateur de popularité) aurait laissé 43 étudiants hors de leurs choix. La v6.0 en laisse 8, ce qui est le minimum possible : 6 places restantes n'avaient été choisies par personne.
 
 ## Fichiers impliqués
 
 | Fichier | Rôle |
 |---|---|
 | `src/views/admin/formation-pratique/VotationPFPViewPHYFP.vue` | Frontend : UI votation, calcul priorityScore, appel API |
-| `backend/supabase/resultatVotationStoreBackend.js` | Backend : algo d'attribution, batch upsert résultats |
+| `backend/domain/weightedChoiceAssignment.js` | Backend : affectation optimale par choix pondérés (v6.0) |
+| `backend/supabase/resultatVotationStoreBackend.js` | Backend : route `run-algorithm`, conservation des existants, statistiques, upsert |
 | `src/stores/resultatVotationService.js` | Service frontend : appel `POST /api/resultat-votation/run-algorithm` |
 
 ---
@@ -102,3 +114,5 @@ Pour chaque place (en commençant par les moins demandées) :
 |---|---|---|
 | v1.0 | Fév 2026 | `Math.random() * 100` — Score entièrement aléatoire |
 | v2.0 | 9 mars 2026 | Score basé sur critères métier (critères manquants, DE/SYSINT bonus, SAE, cas particulier, pondération PFP). Fusion pfp_valided + student_result_vote. Tiebreaker réduit à 0-1 pt. |
+| v5.0 | sept. 2026 | Attribution par critères manquants ; les choix ne servaient plus qu'à mesurer la popularité (régression). |
+| v6.0 | 4 nov. 2026 | PFP1A/PFP1B/PFP2 : choix pondérés, lésés minimisés pour toute la volée, SAE prioritaires, tirage seedé. `assigned_rank` = rang du choix. |
