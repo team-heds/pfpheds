@@ -1389,6 +1389,7 @@ const placesWithStats = ref([])
 const validatedPlaces = ref([])
 const placesFullMap = ref(new Map())
 const excludedAssignedStudentsCount = ref(0)
+const alreadyAssignedUserIds = ref(new Set())
 
 const {
   excludedStudentIds, excludeSearchValue, excludeFilteredSuggestions,
@@ -1691,7 +1692,14 @@ const filteredVotationsTableList = computed(() => {
   return filtered
 })
 
-const studentsToPlaceCount = computed(() => filteredVotationsList.value.length)
+// Les étudiants déjà placés (manuel, prioritaire) sont conservés par l'algorithme : ils ne
+// consomment pas la capacité restante, même s'ils ont voté.
+const studentsToPlaceCount = computed(() => {
+  const excluded = new Set((excludedStudentIds.value || []).map(String))
+  return filteredVotationsList.value.filter(row =>
+    !alreadyAssignedUserIds.value.has(String(row.userId)) && !excluded.has(String(row.userId))
+  ).length
+})
 const totalValidatedCapacity = computed(() => computedValidatedPlaces.value.reduce((sum, place) => sum + (place.Capacity || 0), 0))
 const hasInsufficientCapacity = computed(() => studentsToPlaceCount.value > totalValidatedCapacity.value)
 const missingCapacityCount = computed(() => Math.max(0, studentsToPlaceCount.value - totalValidatedCapacity.value))
@@ -2101,6 +2109,7 @@ const loadData = async () => {
     const eligibleStudents = allStudents.value
     const assignedSnapshot = await loadAssignedSnapshot(filterPFP.value, filterYear.value)
     excludedAssignedStudentsCount.value = assignedSnapshot.userIds.size
+    alreadyAssignedUserIds.value = new Set([...assignedSnapshot.userIds].map(String))
     console.log(`✅ ${allStudents.value.length} étudiants ${targetClass} chargés (${eligibleStudents.length} inclus, ${assignedSnapshot.userIds.size} déjà assignés existants ignorés pour le recalcul)`)
     
     await placesStore.fetchPlaces()

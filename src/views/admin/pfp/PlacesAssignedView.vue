@@ -236,7 +236,7 @@
 
           <Column
             field="rank_label"
-            header="Critères"
+            header="Choix obtenu"
             sortable
             :style="{ width: '150px', textAlign: 'center' }"
           >
@@ -249,13 +249,13 @@
               />
               <Tag
                 v-else-if="data.assigned_rank >= 1"
-                :value="`${data.assigned_rank} crit. couvert${data.assigned_rank > 1 ? 's' : ''}`"
-                :severity="getCritSeverity(data.assigned_rank)"
+                :value="`Choix ${data.assigned_rank}`"
+                :severity="getChoiceSeverity(data.assigned_rank)"
                 icon="pi pi-check-circle"
               />
               <Tag
                 v-else-if="data.assigned_rank === 0 && data.assigned_place_id"
-                value="0 critère"
+                value="Attribution directe"
                 severity="warning"
                 icon="pi pi-exclamation-circle"
               />
@@ -274,6 +274,12 @@
               <Tag
                 v-else-if="data.status === 'draft'"
                 value="Brouillon"
+                severity="warning"
+                icon="pi pi-clock"
+              />
+              <Tag
+                v-else-if="data.status === 'assigned'"
+                value="Attribué"
                 severity="warning"
                 icon="pi pi-clock"
               />
@@ -507,6 +513,7 @@ const sourceOptions = [
 const statusOptions = [
   { label: 'Publié', value: 'published' },
   { label: 'Brouillon', value: 'draft' },
+  { label: 'Attribué (à publier)', value: 'assigned' },
   { label: 'Non assigné', value: 'unassigned' }
 ]
 
@@ -571,11 +578,11 @@ const getPraticienFullName = (p) => {
   return `${prenom} ${nom}`.trim()
 }
 
-const getCritSeverity = (count) => {
-  if (count >= 3) return 'success'
-  if (count >= 2) return 'info'
-  if (count >= 1) return 'warning'
-  return 'danger'
+// assigned_rank = rang du choix obtenu (1 à 5), 99 = hors choix, 0 = attribution directe.
+const getChoiceSeverity = (rank) => {
+  if (rank === 1) return 'success'
+  if (rank === 2) return 'info'
+  return 'warning'
 }
 
 const rowClass = (data) => {
@@ -757,7 +764,7 @@ const enrichedRows = computed(() => {
         a.assigned_rank === 99
           ? 'Hors choix'
           : a.assigned_rank >= 0 && a.assigned_place_id
-            ? `${a.assigned_rank} crit.`
+            ? a.assigned_rank === 0 ? 'Directe' : `Choix ${a.assigned_rank}`
             : '',
       status: a.status || 'draft',
       source_label: displaySource.label,
