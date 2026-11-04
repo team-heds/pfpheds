@@ -231,6 +231,8 @@ export function useVotationAlgorithm(toast) {
           donePlaceIds: donePlaces ? [...donePlaces] : [],
           completedStageCount: donePlaces ? donePlaces.size : 0,
           priorityScore: score,
+          sae: !!profile?.sae,
+          casParticulier: !!profile?.casParticulier,
           _debug: profile ? {
             missing,
             validated: CRITERIA_KEYS.filter(c => profile.criteria[c] > 0),
