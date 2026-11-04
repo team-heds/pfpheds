@@ -72,6 +72,7 @@
                   :src="selectedInstitutionImage"
                   :alt="selectedInstitution ? `Illustration de ${selectedInstitution.Name}` : ''"
                   class="w-full institution-image shadow"
+                  @error="showInstitutionPlaceholder"
                 />
               </div>
               <div class="col-12 md:col-8">
@@ -130,6 +131,7 @@
 </template>
 
 <script setup>
+import { institutionImageOf, showInstitutionPlaceholder } from '@/utils/institutionImage'
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
@@ -195,12 +197,7 @@ const filteredInstitutions = computed(() => {
 });
 
 const mappableInstitutions = computed(() => filteredInstitutions.value.filter(hasValidInstitutionCoordinates))
-const selectedInstitutionImage = computed(() => {
-  const image = selectedInstitution.value?.ImageURL
-  if (Array.isArray(image) && image.length) return image[0]
-  if (typeof image === 'string' && image) return image
-  return 'https://eduport.webestica.com/assets/images/courses/4by3/21.jpg'
-})
+const selectedInstitutionImage = computed(() => institutionImageOf(selectedInstitution.value))
 
 // Initialisation de la carte Leaflet
 const initMap = () => {

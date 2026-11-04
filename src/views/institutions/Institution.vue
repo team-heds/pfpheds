@@ -48,8 +48,7 @@
                   >
                     <template #header>
                       <div class="card-header">
-                        <img v-if="getInstitutionImage(institution) && !failedImages[getInstitutionImage(institution)]" :src="getInstitutionImage(institution)" :alt="`Illustration de ${institution.Name}`" class="card-image" @error="failedImages[getInstitutionImage(institution)] = true" />
-                        <div v-else class="card-image card-image-placeholder" role="img" :aria-label="`Photo indisponible pour ${institution.Name}`"><i class="pi pi-building" aria-hidden="true"></i><span>Photo indisponible</span></div>
+                        <img :src="getInstitutionImage(institution)" :alt="`Illustration de ${institution.Name}`" class="card-image" @error="showInstitutionPlaceholder" />
                         <Tag class="card-tag">{{ institution.Canton }}</Tag>
                       </div>
                       <p ref="institutionName" class="card-title">{{ institution.Name }}</p>
@@ -125,6 +124,7 @@ import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import EmptyState from '@/components/common/states/EmptyState.vue'
 import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 import { filterInstitutions, getAvailableCantons } from '@/service/institutionFiltersService'
+import { institutionImageOf, showInstitutionPlaceholder } from '@/utils/institutionImage'
 
 export default {
   name: 'InstitutionPage',
@@ -142,7 +142,6 @@ export default {
   data() {
     return {
       descriptionClass: 'description',
-      failedImages: {},
       cantonsList: [], // Liste dynamique des cantons
       isMobile: window.innerWidth < 768,
     };
@@ -170,13 +169,9 @@ export default {
   },
   methods: {
     getInstitutionImage(institution) {
-      // Le store normalise ImageURL en array, on prend le premier élément
-      if (Array.isArray(institution.ImageURL) && institution.ImageURL.length > 0) {
-        return institution.ImageURL[0];
-      }
-      // Image par défaut si pas d'image disponible
-      return null;
+      return institutionImageOf(institution);
     },
+    showInstitutionPlaceholder,
     truncateText(text, length) {
       if (text && text.length > length) {
         return text.substring(0, length) + '...';
@@ -308,17 +303,6 @@ export default {
   max-width: 20rem;
   height: 100%;
 }
-.card-image-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: .75rem;
-  background: var(--surface-ground);
-  color: var(--text-color-secondary);
-  font-size: .9rem;
-}
-.card-image-placeholder .pi { font-size: 2rem; color: var(--primary-color); }
 .card-image {
   width: 100%;
   height: 13rem;
