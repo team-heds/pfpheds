@@ -1,6 +1,6 @@
 # Release #237 — mise en production
 
-> Préparé le 4 novembre 2026. Rien de ce plan n'a encore été exécuté en production.
+> Préparé le 4 novembre 2026. Répétition faite sur une copie ; rien n'a encore été appliqué en production.
 
 ## État de départ
 
@@ -10,6 +10,16 @@
   - 3 migrations déjà présentes : `20260923124000` (langue et canton du profil), `20260930141639` et `20261103085335` (récursion RLS de `user_track_roles`) ;
   - **21 migrations à appliquer** ;
   - TEST : 24/24 présentes.
+
+## Répétition du 4 novembre 2026
+
+Copie de la base prod (`pg_dump`, 9 Mo) restaurée dans une base temporaire `rehearsal_237` du même conteneur, sans erreur de restauration :
+- **les 21 migrations s'appliquent sans erreur** sur les données réelles, chacune dans sa transaction ;
+- marqueurs : **24/24** après application ;
+- données inchangées par rapport à la prod : 369 attributions (empreinte identique), répartition des maisons, XP total (131 939), 11 badges ;
+- copie supprimée ensuite ; prod inchangée (simulation : toujours 21 à appliquer).
+
+L'étape 1 du déroulé est donc faite. À refaire seulement si des migrations changent ou si la base évolue fortement avant la release.
 
 ## Pourquoi le code et la base doivent passer ensemble
 
