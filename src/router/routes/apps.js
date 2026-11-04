@@ -23,7 +23,7 @@ export default [
   { path: '/chatbot', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotView', meta: { requiresAuth: true } },
   { path: '/tournois', component: () => import('@/views/apps/tools/TournoisView.vue'), name: 'TournoisView', beforeEnter: featureGuard('tournaments'), meta: { requiresAuth: true } },
   { path: '/tournois/:id', component: () => import('@/views/apps/tools/TournoiDetailsView.vue'), name: 'TournoiDetailsView', beforeEnter: featureGuard('tournaments'), meta: { requiresAuth: true } },
-  { path: '/mobile-tools', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsView', meta: { requiresAuth: true } },
+  { path: '/mobile-tools', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsLegacy', meta: { requiresAuth: true, title: 'Mon espace' } },
   { path: '/mobile-lang-apps', component: () => import('@/views/apps/tools/MobileLangAppsView.vue'), name: 'MobileLangApps', meta: { mobileOnly: true } },
   { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
   { path: '/care-convers', component: () => import('@/views/pages/CareConvers.vue'), name: 'CareConvers', meta: { requiresAuth: true } },
@@ -43,7 +43,7 @@ export default [
 
   // Mobile spécifique
   { path: '/create', component: () => import('@/components/social/library/CreateContentMobile.vue'), name: 'CreateContentMobile', meta: { mobileOnly: true } },
-  { path: '/mobile-outils', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsView', meta: { mobileOnly: true } },
+  { path: '/mobile-outils', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsView', meta: { requiresAuth: true, mobileOnly: true, title: 'Mon espace' } },
   { path: '/list', component: () => import('@/components/media/audio/ListComponent.vue'), name: 'ListComponent', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
 
   // Routes spéciales

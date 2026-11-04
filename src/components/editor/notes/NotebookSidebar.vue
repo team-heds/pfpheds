@@ -2,9 +2,9 @@
   <Panel header="Mes classeurs" class="notebook-sidebar-panel notebook-sidebar">
     <ul class="notebook-list" v-if="notebooks && notebooks.length > 0">
       <li v-for="notebook in notebooks" :key="notebook.id" :class="{active: selectedNotebookId === notebook.id}">
-        <span @click="$emit('select', notebook)">{{ notebook.name }}</span>
-        <Button icon="pi pi-pencil" class="p-button-text p-button-sm" @click.stop="$emit('edit-notebook', notebook)" />
-        <Button icon="pi pi-trash" class="p-button-text p-button-sm" severity="danger" @click.stop="$emit('delete-notebook', notebook)" />
+        <button type="button" class="notebook-name" :aria-current="selectedNotebookId === notebook.id ? 'page' : undefined" @click="$emit('select', notebook)">{{ notebook.name }}</button>
+        <Button icon="pi pi-pencil" class="p-button-text p-button-sm" :aria-label="`Modifier le classeur ${notebook.name}`" @click.stop="$emit('edit-notebook', notebook)" />
+        <Button icon="pi pi-trash" class="p-button-text p-button-sm" severity="danger" :aria-label="`Supprimer le classeur ${notebook.name}`" @click.stop="$emit('delete-notebook', notebook)" />
       </li>
     </ul>
     <div v-else class="empty-state">
@@ -25,9 +25,12 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  selectedNotebookId: {
+    type: [String, Number],
+    default: null
+  },
 })
 const emit = defineEmits(['select', 'create-notebook', 'edit-notebook', 'delete-notebook'])
-const selectedNotebookId = null // la sélection est gérée dans la vue principale
 </script>
 
 <style scoped>
@@ -61,16 +64,31 @@ const selectedNotebookId = null // la sélection est gérée dans la vue princip
   gap: 0.5rem;
   cursor: pointer;
 }
-.notebook-list li.active > span {
-  font-weight: bold;
-  color: var(--primary-color, #2196f3);
-}
 .notebook-list li.active {
   background: var(--primary-color);
-  color: white;
+  color: #071426;
+  border-radius: 4px;
 }
-.notebook-list li span {
+.notebook-list li.active .notebook-name {
+  font-weight: 700;
+}
+.notebook-list li.active :deep(.p-button) {
+  color: #071426;
+}
+.notebook-name {
   flex: 1;
+  min-height: 2.5rem;
+  padding: .5rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.notebook-name:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 .empty-state {
   text-align: center;

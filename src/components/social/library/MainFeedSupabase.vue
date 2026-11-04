@@ -7,7 +7,6 @@
           <HeaderIcons />
         </div>
       </transition>
-      <StoriesBar />
       <div v-if="refreshWarning" class="feed-warning" role="status">{{ refreshWarning }}</div>
       <LoadingState
         v-if="initialLoading && filteredPosts.length === 0"
@@ -56,7 +55,6 @@
           @media-selected="handleFileSelection"
           @remove-media="removeMedia"
         />
-        <StoriesBar />
         <div v-if="refreshWarning" class="feed-warning" role="status">{{ refreshWarning }}</div>
         <LoadingState
           v-if="initialLoading && filteredPosts.length === 0"
@@ -88,7 +86,7 @@ import FilterComponent from '@/components/social/library/FilterComponent.vue'
 import CreatePostDialog from '@/components/social/library/CreatePostDialog.vue'
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 import gamificationIntegration from '@/service/gamificationIntegration'
-import StoriesBar from './StoriesBar.vue'
+import { runtimeFeatures } from '@/config/runtimeFeatures'
 import LoadingState from '@/components/common/states/LoadingState.vue'
 import {
   buildFeedScopeKey,
@@ -108,7 +106,6 @@ export default {
   },
   components: {
     HeaderIcons,
-    StoriesBar,
     InfinityScroll,
     PostItem,
     Toast,
@@ -589,7 +586,7 @@ export default {
       if (!isMobile.value) postsContainerRef.value?.addEventListener('scroll', handleScroll)
 
       // Supabase Realtime: nouveaux posts
-      if (!postsChannel) {
+      if (runtimeFeatures.supabaseRealtime && !postsChannel) {
         postsChannel = supabase
           .channel('realtime-posts-feed')
           .on(

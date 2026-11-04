@@ -65,12 +65,25 @@ describe('resultatVotationService', () => {
           year: '2026',
           students: [{ id: 's1' }],
           places: [{ id: 'p1' }],
+          persist: false,
         }),
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer tok-123' })
         })
       )
       expect(result).toEqual(response.data)
+    })
+
+    it('ne persiste que lorsque le client le demande explicitement', async () => {
+      mockAxiosPost.mockResolvedValue({ data: { ok: true, persisted: true } })
+
+      await resultatVotationService.runAlgorithm('PFP2', '2026-2027', [], [], { persist: true })
+
+      expect(mockAxiosPost).toHaveBeenCalledWith(
+        expect.stringContaining('/api/resultat-votation/run-algorithm'),
+        expect.objectContaining({ year: '2027', persist: true }),
+        expect.any(Object)
+      )
     })
 
     it('lance une erreur si le backend retourne ok=false', async () => {

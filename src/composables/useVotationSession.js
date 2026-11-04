@@ -2,11 +2,7 @@ import { ref, computed } from 'vue'
 import { supabase } from '@/supabase'
 import votationSessionService from '@/service/votationSessionService'
 
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 
 export function useVotationSession(toast, userStore) {
   const currentSession = ref(null)

@@ -8,6 +8,7 @@
                 <button 
                     v-if="code" 
                     class="p-button p-button-text p-button-rounded p-button-plain"
+                    aria-label="Copier le code"
                     @click="copyCode"
                     type="button"
                 >

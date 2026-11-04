@@ -1,3 +1,5 @@
+import { inspectPfpProgression, pfpLevel } from '../../backend/domain/pfpProgression.mjs'
+
 export const PROFILE_CRITERIA_KEYS = ['MSQ', 'SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'FR', 'DE']
 
 const LEGACY_CRITERIA_KEY_MAP = {
@@ -304,4 +306,76 @@ export const computeAggregatedCriteriaFromSources = ({
   })
 
   return result
+}
+
+// Read-only profile projection. Keep legacy voting/criteria readers unchanged until
+// the server-side progression model and historical reconciliation are delivered.
+export function parseProfileAttemptEntries(value) {
+  let parsed = value
+  if (typeof value === 'string') {
+    try { parsed = JSON.parse(value) } catch { return [] }
+  }
+  if (!parsed || typeof parsed !== 'object') return []
+  const entries = Array.isArray(parsed) ? parsed :
+    resolvePlaceId(parsed) || parsed.pfp_type || parsed.pfp_number ? [parsed] : Object.values(parsed)
+  return entries.filter(entry => entry && typeof entry === 'object' && !Array.isArray(entry))
+}
+
+export function buildProgressionProfileStages({ studentResultVotes = [], physioStages = [], placesById = new Map(), resolveInstitutionName = () => '' } = {}) {
+  const rows = []
+  const append = (entry, source, index) => {
+    const placeId = resolvePlaceId(entry)
+    const place = getPlaceByIdFromMap(placesById, placeId)
+    const period = entry.campaign_type || entry.pfp_type || entry.type_pfp || entry.PfpType || null
+    const explicitLevel = entry.individual_pfp_type ?? entry.training_level ?? entry.pfp_number ?? entry.fp_number ?? entry.formation_number
+    const level = pfpLevel(explicitLevel ?? period)
+    const identity = entry.assignment_id || entry.student_result_vote_id || (source === 'vote' ? entry.id : null)
+    const id = identity ? `assignment:${identity}` : entry.attempt_id ? `attempt:${entry.attempt_id}` : entry.id ? `legacy:${entry.id}` : null
+    const outcomes = [entry.pfp_validee, entry.pfp_echec, entry.pfp_arret].map(parseBooleanFlag)
+    const statusMap = { validee: 'passed', 'validée': 'passed', echec: 'failed', 'échec': 'failed', arret: 'stopped', 'arrêt': 'stopped', en_attente: 'pending' }
+    const rawStatus = String(entry.status || entry.Status || '').trim().toLowerCase()
+    let outcome = source === 'vote'
+      ? outcomes.filter(Boolean).length > 1 ? 'invalid' : ['passed', 'failed', 'stopped'][outcomes.indexOf(true)] || 'pending'
+      : statusMap[rawStatus] || 'invalid'
+    if (source !== 'vote' && outcomes.some(Boolean)) {
+      const flagged = outcomes.filter(Boolean).length > 1 ? 'invalid' : ['passed', 'failed', 'stopped'][outcomes.indexOf(true)]
+      outcome = rawStatus && statusMap[rawStatus] !== flagged ? 'invalid' : flagged
+    }
+    const startDate = entry.start_date || entry.date_debut || null
+    const endDate = entry.end_date || entry.date_fin || null
+    const year = getYearSortValue(entry.year)
+    const dateOrder = startDate ? Date.parse(startDate) : NaN
+    const order = Number.isFinite(dateOrder) ? dateOrder : year > 0 ? Date.UTC(year, 0, 1) : null
+    rows.push({
+      id, level, period, outcome, order,
+      _key: `${source}_${index}`, _source: source,
+      IDPlace: placeId, InstitutionId: entry.InstitutionId || entry.Institution_id || entry.institution_id || place?.InstitutionId || null,
+      NomPlace: entry.assigned_place_name || entry.NomPlace || entry.nom_pfp || entry.Nom_PFP || place?.NomPlace || place?.name || '',
+      Institutionname: entry.assigned_institution_name || entry.InstitutionName || entry.institution_name || entry.Institution || place?.InstitutionName || place?.Institution || resolveInstitutionName(place?.InstitutionId) || '',
+      pfp_type: level ? `PFP${level}` : null, _fpNumber: level,
+      status: { passed: 'validee', failed: 'echec', stopped: 'arret', pending: 'en_attente' }[outcome] || 'a_verifier',
+      commentaire_arret: entry.commentaire_arret || entry.commentaireArret || entry.CommentaireArret || null,
+      assigned_praticien_id: entry.assigned_praticien_id || null,
+      year: entry.year || null, startDate, endDate,
+      ...Object.fromEntries(PROFILE_CRITERIA_KEYS.map(key => [key, source === 'vote'
+        ? parseBooleanFlag(place?.[key])
+        : parseBooleanFlag(entry[key]) || parseBooleanFlag(entry[key.toLowerCase()]) || parseBooleanFlag(place?.[key])]))
+    })
+  }
+  studentResultVotes.filter(Boolean).forEach((entry, index) => append(entry, 'vote', index))
+  physioStages.filter(Boolean).forEach((entry, index) => append(entry, 'legacy', index))
+  const { attempts } = inspectPfpProgression(rows)
+  return attempts.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity) || (a.level ?? 99) - (b.level ?? 99))
+    .map(row => ({ ...row,
+      _key: row.id && attempts.filter(other => other.id === row.id).length === 1 ? row.id : row._key,
+      _pfpLabel: row.label, _progressionNeedsReview: row.needsReview }))
+}
+
+// Existing document storage is indexed by legacy display position, not attempt ID.
+// Only retain an unambiguous pre-existing link; never move files to a repeat.
+export function getProfileDocumentSlot(stage, stages, legacyStages) {
+  if (stage._progressionNeedsReview || !stage._fpNumber || stages.filter(row => row._fpNumber === stage._fpNumber).length !== 1) return null
+  const matches = legacyStages.filter(row => row._fpNumber === stage._fpNumber &&
+    String(row.IDPlace) === String(stage.IDPlace) && String(row.year ?? '') === String(stage.year ?? ''))
+  return matches.length === 1 ? matches[0]._displayFpNumber : null
 }

@@ -1,3 +1,5 @@
+import { getAcademicYearKeys, normalizeAcademicYear, readAcademicCapacity } from '@/domain/pfp/academicPeriod'
+
 export const ASSIGNMENT_REVIEW_STATUS = Object.freeze({
   READY: 'ready',
   WARNING: 'warning',
@@ -8,11 +10,7 @@ const normalizeText = (value) => String(value ?? '').trim()
 const normalizeUpper = (value) => normalizeText(value).toUpperCase()
 
 export function getAssignmentAcademicYearKeys(year) {
-  const normalized = normalizeText(year)
-  if (!normalized) return []
-  const numericYear = Number(normalized)
-  if (!Number.isFinite(numericYear)) return normalized ? [normalized] : []
-  return [String(numericYear), `${numericYear - 1}-${numericYear}`]
+  return getAcademicYearKeys(year)
 }
 
 function getStudentId(student) {
@@ -36,13 +34,7 @@ export function getPlaceAssignmentCapacity(place, pfp, year) {
   const source = place?.[normalizeUpper(pfp)]
   if (!source || typeof source !== 'object' || Array.isArray(source)) return 0
 
-  for (const yearKey of getAssignmentAcademicYearKeys(year)) {
-    if (!Object.prototype.hasOwnProperty.call(source, yearKey)) continue
-    const capacity = Number(source[yearKey])
-    return Number.isFinite(capacity) && capacity > 0 ? capacity : 0
-  }
-
-  return 0
+  return readAcademicCapacity(source, year).value
 }
 
 function buildConflictKeys(assignments) {
@@ -51,7 +43,7 @@ function buildConflictKeys(assignments) {
   for (const assignment of assignments) {
     const userId = normalizeText(assignment?.user_id)
     const pfp = normalizeUpper(assignment?.pfp_type)
-    const year = normalizeText(assignment?.year)
+    const year = normalizeAcademicYear(assignment?.year) || normalizeText(assignment?.year)
     if (!userId || !pfp || !year) continue
 
     const key = `${userId}|${pfp}|${year}`
@@ -78,7 +70,7 @@ export function buildPlaceAssignmentReview({ assignments = [], places = [], stud
     const userId = normalizeText(assignment?.user_id)
     const placeId = normalizeText(assignment?.assigned_place_id)
     const pfp = normalizeUpper(assignment?.pfp_type)
-    const year = normalizeText(assignment?.year)
+    const year = normalizeAcademicYear(assignment?.year) || normalizeText(assignment?.year)
     const place = placeById.get(placeId)
     const student = studentById.get(userId)
     const issues = []
@@ -94,6 +86,9 @@ export function buildPlaceAssignmentReview({ assignments = [], places = [], stud
     }
 
     const capacity = place ? getPlaceAssignmentCapacity(place, pfp, year) : 0
+    if (place && readAcademicCapacity(place[pfp], year).error) {
+      issues.push({ code: 'conflicting_capacity', severity: 'blocked', label: 'Capacité invalide ou années contradictoires' })
+    }
     if (place && capacity === 0) {
       issues.push({ code: 'missing_capacity', severity: 'warning', label: `Aucune offre ${pfp} pour ${year}` })
     }

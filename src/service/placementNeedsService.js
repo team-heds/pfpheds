@@ -12,12 +12,8 @@ export function normalizeClassCode(value) {
   return match ? `BA${match[1]}` : normalized
 }
 
-export function getTargetClass(year, pfp) {
-  const numericYear = Number(year)
-  if (!Number.isInteger(numericYear)) return ''
-  const offset = pfp === 'PFP1A' || pfp === 'PFP1B' ? 1 : pfp === 'PFP2' ? 2 : 3
-  return `BA${String((numericYear - offset) % 100).padStart(2, '0')}`
-}
+import { getTargetClass } from '@/domain/pfp/academicPeriod'
+export { getTargetClass } from '@/domain/pfp/academicPeriod'
 
 function readCapacity(place, pfp, year) {
   const source = place?.[pfp]

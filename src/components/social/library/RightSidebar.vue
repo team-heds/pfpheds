@@ -72,11 +72,10 @@ import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 import VotationBanner from '@/components/social/library/VotationBanner.vue';
-import { onValue, ref as dbRef, get } from "firebase/database";
-import { db } from "../../../../firebase.js";
 import { useAuthStore } from '@/stores/authStore';
 import { useEventStore } from '@/stores/eventStore'
 import { supabase } from '@/supabase.js';
+import { runtimeFeatures } from '@/config/runtimeFeatures';
 import gamificationService from '@/service/gamificationServiceSupabase'
 import userQuestsService from '@/service/userQuestsService'
 
@@ -109,6 +108,10 @@ export default {
     },
     async fetchCommunityDetails(communityId) {
       try {
+        const [{ ref: dbRef, get }, { db }] = await Promise.all([
+          import('firebase/database'),
+          import('../../../../firebase.js'),
+        ])
         const communityRef = dbRef(db, `Communities/${communityId}`);
         const snapshot = await get(communityRef);
         if (snapshot.exists()) {
@@ -142,6 +145,10 @@ export default {
     },
     async loadFirebaseCommunities(user) {
       try {
+        const [{ onValue, ref: dbRef, get }, { db }] = await Promise.all([
+          import('firebase/database'),
+          import('../../../../firebase.js'),
+        ])
         // Référence à la liste des communautés de l'utilisateur Firebase
         const userCommunitiesRef = dbRef(db, `Users/${user.uid}/communities`);
 
@@ -220,12 +227,14 @@ export default {
       // Pour les utilisateurs Supabase, on utilise la logique Supabase
       else if (this.authStore.isSupabaseUser) {
         await this.loadSupabaseCommunities(user);
-        const channel = supabase
-          .channel(`user-communities-${user.id}`)
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'user_communities', filter: `user_id=eq.${user.id}` }, () => this.loadSupabaseCommunities(user))
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'communities' }, () => this.loadSupabaseCommunities(user))
-          .subscribe();
-        this.supabaseChannel = channel;
+        if (runtimeFeatures.supabaseRealtime) {
+          const channel = supabase
+            .channel(`user-communities-${user.id}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'user_communities', filter: `user_id=eq.${user.id}` }, () => this.loadSupabaseCommunities(user))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'communities' }, () => this.loadSupabaseCommunities(user))
+            .subscribe();
+          this.supabaseChannel = channel;
+        }
         this.isLoadingCommunities = false;
       }
     } else {

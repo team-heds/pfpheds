@@ -72,10 +72,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-
-// Props
-const props = defineProps({
+defineProps({
   userCreationStats: {
     type: Object,
     default: () => ({
@@ -86,13 +83,6 @@ const props = defineProps({
   }
 })
 
-// Reactive data
-const loading = ref(false)
-
-// Lifecycle
-onMounted(() => {
-  // Composant prêt
-})
 </script>
 
 <style scoped>
@@ -101,16 +91,16 @@ onMounted(() => {
 }
 
 .card {
-  background: white;
+  background: var(--surface-card);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--surface-border);
   overflow: hidden;
 }
 
 .card-header {
   padding: 1.5rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--surface-border);
 }
 
 .creation-tools-grid {
@@ -131,13 +121,13 @@ onMounted(() => {
   align-items: start;
   gap: 1rem;
   padding: 1rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .creation-tool-item:hover {
-  border-color: #d1d5db;
+  border-color: color-mix(in srgb, var(--primary-color) 45%, var(--surface-border));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
@@ -169,13 +159,13 @@ onMounted(() => {
 .tool-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-color);
   margin: 0 0 0.5rem 0;
 }
 
 .tool-description {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--text-color-secondary);
   line-height: 1.4;
   margin: 0 0 1rem 0;
 }
@@ -216,8 +206,8 @@ onMounted(() => {
 
 .creation-stats {
   padding: 1.5rem;
-  background: #f9fafb;
-  border-top: 1px solid #f3f4f6;
+  background: var(--surface-ground);
+  border-top: 1px solid var(--surface-border);
 }
 
 .stats-grid {
@@ -234,14 +224,14 @@ onMounted(() => {
   display: block;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-color);
   line-height: 1;
 }
 
 .stat-label {
   display: block;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-color-secondary);
   margin-top: 0.25rem;
 }
 

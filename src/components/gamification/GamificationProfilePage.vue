@@ -1,2587 +1,594 @@
 <template>
   <Navbar />
-  
-  <div class="min-h-screen flex relative lg:static">
-    <div class="min-h-screen flex flex-column relative flex-auto profile-center-scrollable">
-      <div class="gamification-profile-page" :style="{ '--house-color': houseColor }">
-    
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-container">
-      <div class="loading-spinner">
-        <i class="pi pi-spin pi-spinner"></i>
-        <p>Chargement de votre profil...</p>
-      </div>
-    </div>
+  <main class="gamification-profile-page" data-page-scroll :style="{ '--house-color': houseColor, '--house-foreground': houseTextColor, '--house-image': houseBackgroundImage ? `url(${houseBackgroundImage})` : 'none' }">
+    <div class="profile-shell">
+      <GamificationPageHeader
+        :title="isViewingOtherUser ? 'Progression du profil' : 'Ma progression'"
+        :description="isViewingOtherUser ? 'Consultation administrative en lecture seule de la progression de cet étudiant.' : 'Votre maison, vos réussites et la prochaine étape de votre parcours.'"
+        icon="pi pi-compass"
+        @back="goBack"
+      />
 
-    <!-- Error State -->
-    <div v-else-if="error" class="error-container">
-      <div class="error-message">
-        <i class="pi pi-exclamation-triangle"></i>
-        <h3>Erreur de chargement</h3>
-        <p>{{ error }}</p>
-        <Button @click="loadUserStats" class="retry-btn">
-          <i class="pi pi-refresh"></i>
-          Réessayer
-        </Button>
-      </div>
-    </div>
+      <section v-if="loading" class="state-panel loading-state" aria-live="polite" aria-busy="true">
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <div><h2>Chargement du profil</h2><p>Les informations de progression sont en cours de récupération.</p></div>
+      </section>
 
-    <!-- Main Content -->
-    <div v-else-if="userStats" class="profile-content">
-      
-      <!-- Profile Header -->
-      <div class="profile-header">
-        <div class="profile-banner-wrapper">
-          <div class="profile-banner" :style="{ backgroundImage: `url(${houseBackgroundImage})` }">
-            <div class="profile-info">
-
-            
-            <!-- Nom avec effet brillant -->
-            <div class="user-name-container">
-              <h1 class="user-name-fancy">{{ userStats.displayName || userStats.nom || userStats.prenom || 'Utilisateur' }}</h1>
-              <div class="name-shine"></div>
-            </div>
-            
-            <!-- Cartes d'informations flottantes -->
-            <div class="info-cards">
-              <div class="info-card house-card" v-if="userStats.maison">
-                <div class="card-icon">
-                  <i class="pi pi-home"></i>
-                </div>
-                <div class="card-content">
-                  <span class="card-label">Maison</span>
-                  <span class="card-value">{{ userStats.maison }}</span>
-                </div>
-              </div>
-              
-              <div class="info-card level-card">
-                <div class="card-icon">
-                  <i class="pi pi-star"></i>
-                </div>
-                <div class="card-content">
-                  <span class="card-label">Niveau</span>
-                  <span class="card-value">{{ userStats.niveau || 1 }}</span>
-                </div>
-              </div>
-              
-              <div class="info-card xp-card">
-                <div class="card-icon">
-                  <i class="pi pi-bolt"></i>
-                </div>
-                <div class="card-content">
-                  <span class="card-label">XP Total</span>
-                  <span class="card-value">{{ formatNumber(userStats.xp || userStats.totalXP || 0) }}</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Particules décoratives -->
-            <div class="floating-particles">
-              <div class="particle" v-for="i in 6" :key="i" :style="{ '--delay': i * 0.5 + 's' }"></div>
-            </div>
-            
-            <!-- Quick Stats -->
-            
-          </div>
+      <section v-else-if="error" class="state-panel error-state" role="alert">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+        <div>
+          <h2>Le profil n’a pas pu être chargé</h2><p>{{ error }}</p>
+          <button class="primary-button" type="button" @click="loadUserStats"><i class="pi pi-refresh" aria-hidden="true"></i> Réessayer</button>
         </div>
-      </div>
-      </div>
+      </section>
 
-      <!-- Page header aligned with HouseStatsPage -->
-      <div class="page-header">
-        <div class="header-content">
-          <button class="back-btn" @click="goBack">
-            <i class="pi pi-arrow-left"></i>
+      <template v-else-if="userStats">
+        <section class="profile-summary" aria-labelledby="profile-name">
+          <div class="identity-panel">
+            <div class="identity-copy">
+              <h2 id="profile-name">{{ userStats.displayName }}</h2>
+              <p class="level-name">{{ currentLevelInfo.name }} · niveau {{ currentLevel }}</p>
+            </div>
+            <div class="house-summary">
+              <span class="house-icon" aria-hidden="true"><i :class="houseIdentity?.icon || 'pi pi-home'"></i></span>
+              <div><span class="summary-label">Maison</span><strong>{{ normalizedHouse || 'Aucune maison attribuée' }}</strong></div>
+            </div>
+            <p v-if="houseIdentity" class="house-motto">{{ houseIdentity.motto }}</p>
+            <button v-if="!normalizedHouse && !isViewingOtherUser && houseQuizEnabled" class="secondary-button" type="button" @click="goTo('/hes-house-quiz')">
+              Découvrir ma maison <i class="pi pi-arrow-right" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="progress-panel">
+            <div class="progress-heading">
+              <div><span class="summary-label">Expérience</span><strong>{{ formatNumber(totalXP) }} XP</strong></div>
+              <span class="level-chip">Niveau {{ currentLevel }}</span>
+            </div>
+            <div class="level-progress" role="progressbar" aria-label="Progression vers le prochain niveau" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="Math.round(xpProgress)">
+              <span :style="{ transform: `scaleX(${xpProgress / 100})` }"></span>
+            </div>
+            <p v-if="isMaximumLevel" class="progress-copy">Niveau maximal atteint.</p>
+            <p v-else class="progress-copy">{{ formatNumber(xpToNextLevel) }} XP avant le niveau {{ currentLevel + 1 }}</p>
+          </div>
+        </section>
+
+        <section class="quick-stats" aria-label="Résumé de l’activité">
+          <div><span>{{ sectionLoading.quests || sectionErrors.quests ? '—' : activeQuests.length }}</span><p>Quêtes actives</p></div>
+          <div><span>{{ sectionLoading.quests || sectionErrors.quests ? '—' : questStats.completedQuests || 0 }}</span><p>Quêtes terminées</p></div>
+          <div v-if="collectionsEnabled"><span>{{ sectionLoading.challenges || sectionErrors.challenges ? '—' : challengeStats.totalCompleted || 0 }}</span><p>Défis réussis</p></div>
+          <div v-if="collectionsEnabled"><span>{{ sectionLoading.badges || sectionErrors.badges ? '—' : userBadges.length }}</span><p>Badges obtenus</p></div>
+        </section>
+
+        <section v-if="!isViewingOtherUser" class="next-step" aria-labelledby="next-step-title">
+          <div class="next-step__heading"><h2 id="next-step-title">Votre prochaine étape</h2><i class="pi pi-compass" aria-hidden="true"></i></div>
+          <div v-if="sectionLoading.quests" class="next-step__loading" role="status">Recherche de vos objectifs en cours…</div>
+          <template v-else-if="featuredQuest && !sectionErrors.quests">
+            <div class="next-step__body">
+              <div><h3>{{ featuredQuest.title }}</h3><p>{{ featuredQuest.description || 'Retrouvez les étapes de cet objectif et poursuivez votre progression.' }}</p></div>
+              <RouterLink class="primary-button" to="/quests">{{ questProgress(featuredQuest) > 0 ? 'Poursuivre ma quête' : 'Voir ma quête' }} <i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
+            </div>
+            <div class="next-step__progress">
+              <div role="progressbar" :aria-label="`Progression de la quête ${featuredQuest.title}`" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="questProgress(featuredQuest)"><span :style="{ transform: `scaleX(${questProgress(featuredQuest) / 100})` }"></span></div>
+              <span>{{ Math.round(questProgress(featuredQuest)) }} %</span>
+              <strong v-if="Number(featuredQuest.xp_reward || featuredQuest.points) > 0">{{ formatNumber(featuredQuest.xp_reward || featuredQuest.points) }} XP à gagner</strong>
+            </div>
+          </template>
+          <div v-else-if="!normalizedHouse && houseQuizEnabled" class="next-step__body">
+            <div><h3>Découvrez votre maison</h3><p>Répondez au questionnaire pour découvrir Harmonis, Elaris, Doloris ou Solencia et rejoindre votre maison.</p></div>
+            <RouterLink class="primary-button" to="/hes-house-quiz">Découvrir ma maison <i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
+          </div>
+          <div v-else class="next-step__body">
+            <div><h3>Choisissez votre prochain objectif</h3><p>Retrouvez les quêtes qui vous sont attribuées et leurs conditions. Chaque réussite fait partie de votre parcours.</p></div>
+            <RouterLink class="primary-button" to="/quests">Explorer mes quêtes <i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
+          </div>
+        </section>
+
+        <section v-if="!isViewingOtherUser" class="explore-section" aria-labelledby="explore-title">
+          <div class="section-heading explore-heading">
+            <div><h2 id="explore-title">Explorer</h2><p>Accédez directement aux activités et au classement des maisons.</p></div>
+          </div>
+          <nav class="gamification-navigation" aria-label="Explorer la gamification">
+            <RouterLink to="/quests"><i class="pi pi-compass" aria-hidden="true"></i><span><strong>Quêtes</strong><small>Vos objectifs et leurs étapes</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
+            <RouterLink v-if="collectionsEnabled" to="/challenges"><i class="pi pi-flag" aria-hidden="true"></i><span><strong>Défis</strong><small>Les activités proposées</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
+            <RouterLink v-if="collectionsEnabled" to="/achievements"><i class="pi pi-shield" aria-hidden="true"></i><span><strong>Badges</strong><small>Vos réussites à collectionner</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
+            <RouterLink to="/houses/ranking"><i class="pi pi-chart-line" aria-hidden="true"></i><span><strong>Maisons</strong><small>Le classement collectif</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
+            <RouterLink v-if="gamesEnabled" to="/game"><i class="pi pi-play" aria-hidden="true"></i><span><strong>Jeux</strong><small>Une pause à partager</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
+          </nav>
+        </section>
+
+        <details class="activity-section history-section">
+          <summary class="history-summary">
+            <div>
+              <h2 id="history-title">Historique de vos points</h2>
+              <p v-if="isViewingOtherUser">Historique consulté dans le cadre du support administratif.</p>
+              <p v-else>Chaque gain indique son origine et le total atteint.</p>
+            </div>
+            <span v-if="historyTotal" class="history-total">{{ historyTotal }} mouvement{{ historyTotal > 1 ? 's' : '' }}</span>
+            <i class="pi pi-chevron-down" aria-hidden="true"></i>
+          </summary>
+
+          <div v-if="historyLoading && !historyItems.length" class="history-loading" aria-live="polite" aria-busy="true">
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i><span>Chargement de l’historique…</span>
+          </div>
+          <div v-else-if="historyError && !historyItems.length" class="history-error" role="alert">
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            <div><strong>Historique indisponible</strong><p>{{ historyError }}</p></div>
+            <button class="text-button" type="button" @click="loadHistory(true)">Réessayer</button>
+          </div>
+          <ol v-else-if="historyItems.length" class="history-list">
+            <li v-for="item in historyItems" :key="item.id">
+              <span class="history-icon" aria-hidden="true"><i :class="item.icon"></i></span>
+              <div class="history-copy">
+                <div class="history-line"><strong>{{ item.label }}</strong><time :datetime="item.occurredAt">{{ formatHistoryDate(item.occurredAt) }}</time></div>
+                <p>{{ item.detail }}</p>
+                <span v-if="item.linkedObject" class="linked-object">{{ item.linkedObject.type }} · {{ item.linkedObject.name }}</span>
+              </div>
+              <div class="history-points"><strong>+{{ formatNumber(item.points) }} XP</strong><small v-if="item.totalAfter !== null">Total {{ formatNumber(item.totalAfter) }}</small></div>
+            </li>
+          </ol>
+          <div v-else class="empty-state">
+            <i class="pi pi-star" aria-hidden="true"></i>
+            <div><h3>Aucun gain pour le moment</h3><p>Une connexion quotidienne, une mise à jour du profil ou une activité récompensée apparaîtra ici.</p></div>
+          </div>
+
+          <button v-if="historyHasMore" class="history-more" type="button" :disabled="historyLoading" @click="loadHistory(false)">
+            <i :class="historyLoading ? 'pi pi-spin pi-spinner' : 'pi pi-plus'" aria-hidden="true"></i>
+            {{ historyLoading ? 'Chargement…' : 'Afficher 10 mouvements supplémentaires' }}
           </button>
-          <div class="header-title-container">
-            <h2 class="page-title">Mon Profil Gamification</h2>
-          </div>
-        </div>
-      </div>
+          <p v-if="historyError && historyItems.length" class="history-inline-error" role="alert">{{ historyError }}</p>
+        </details>
 
-      <!-- Section principale, calquée sur HouseStatsPage -->
-      <div class="stats-container">
-        <!-- Carte niveau/progression (style house-level-card) -->
-        <div class="house-level-card">
-          <div class="level-info">
-            <div class="level-badge" :style="{ backgroundColor: houseColor }">
-              Niveau {{ userStats.niveau || 1 }}
-            </div>
-            <h2 class="level-name">Progression du Niveau</h2>
-            <div class="xp-progress">
-              <div class="xp-bar">
-                <div 
-                  class="xp-fill" 
-                  :style="{ 
-                    width: `${xpProgress}%`, 
-                    backgroundColor: houseColor 
-                  }"
-                ></div>
-              </div>
-              <div class="xp-text">
-                <span>{{ formatNumber(userStats.xp || 0) }} / {{ formatNumber(getNextLevelXP(userStats.niveau || 1)) }} XP</span>
-                <span>{{ formatNumber(calculateXPToNext(userStats.niveau || 1, userStats.xp || 0)) }} XP pour le niveau suivant</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <section class="activity-section" aria-labelledby="quests-title">
+          <div class="section-heading"><div><h2 id="quests-title">Quêtes en cours</h2><p>Les prochains objectifs de ce profil.</p></div><RouterLink v-if="!isViewingOtherUser" class="text-button" to="/quests">Toutes les quêtes <i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink></div>
+          <p v-if="sectionLoading.quests" role="status">Chargement des quêtes…</p>
+          <div v-else-if="sectionErrors.quests" class="section-error" role="alert"><p>{{ sectionErrors.quests }}</p><button class="text-button" type="button" @click="loadQuestsData()">Réessayer les quêtes</button></div>
+          <ul v-else-if="activeQuests.length" class="quest-preview-list">
+            <li v-for="quest in displayedQuests" :key="quest.id">
+              <span class="preview-icon" aria-hidden="true"><i class="pi pi-compass"></i></span>
+              <div><strong>{{ quest.title }}</strong><small>{{ quest.description || 'Objectif en cours' }}</small></div>
+              <span class="quest-reward">{{ formatNumber(quest.xp_reward || quest.points || 0) }} XP</span>
+            </li>
+          </ul>
+          <div v-else class="empty-state"><i class="pi pi-compass" aria-hidden="true"></i><div><h3>Aucune quête active</h3><p>Les quêtes disponibles restent accessibles depuis la page dédiée.</p></div></div>
+        </section>
 
-        <!-- Statistiques générales (grille 3 colonnes) -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon" :style="{ backgroundColor: houseColor }">
-              <i class="pi pi-star"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ formatNumber(userStats.xp || 0) }}</h3>
-              <p>XP Total</p>
-            </div>
-          </div>
+        <section v-if="collectionsEnabled" class="activity-section" aria-labelledby="challenges-title">
+          <div class="section-heading"><div><h2 id="challenges-title">Défis actifs</h2><p>Un aperçu des défis actuellement proposés.</p></div><RouterLink v-if="!isViewingOtherUser" class="text-button" to="/challenges">Tous les défis <i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink></div>
+          <p v-if="sectionLoading.challenges" role="status">Chargement des défis…</p>
+          <div v-else-if="sectionErrors.challenges" class="section-error" role="alert"><p>{{ sectionErrors.challenges }}</p><button class="text-button" type="button" @click="loadChallengesData()">Réessayer les défis</button></div>
+          <div v-else-if="activeChallenges.length" class="activity-grid"><ChallengeCard v-for="challenge in displayedChallenges" :key="challenge.id" :challenge="challenge" :house-color="houseColor" @click="showChallengeDetails" /></div>
+          <div v-else class="empty-state"><i class="pi pi-flag" aria-hidden="true"></i><div><h3>Aucun défi actif</h3><p>Cette section affichera les prochains défis dès leur publication.</p></div></div>
+        </section>
 
-          <div class="stat-card">
-            <div class="stat-icon" :style="{ backgroundColor: houseColor }">
-              <i class="pi pi-bolt"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ userStats.streak || 0 }}</h3>
-              <p>Série Actuelle</p>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon" :style="{ backgroundColor: houseColor }">
-              <i class="pi pi-fire"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ userStats.streakMax || 0 }}</h3>
-              <p>Meilleure Série</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Outils de création
-        <CreationToolsCard :userCreationStats="userCreationStats" />
-
-        -->
-
-        <!-- Prochaines quêtes / défis
-        <div class="members-ranking">
-          <div class="card-header">
-            <h3><i class="pi pi-flag"></i> Prochaines Quêtes & Défis</h3>
-            <span class="count-chip">{{ upcomingLimited.length }}</span>
-          </div>
-          <div class="table-container" v-if="upcomingLimited.length">
-            <table class="data-table">
-              <thead>
-              <tr>
-                <th>Défi</th>
-                <th>Objectif</th>
-                <th>Récompense</th>
-                <th>Échéance</th>
-                <th>Statut</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="(q, i) in upcomingLimited" :key="q.id || i">
-                <td>{{ q.title || q.name }}</td>
-                <td>{{ q.goal || q.description || '-' }}</td>
-                <td>{{ q.reward ? `${formatNumber(q.reward)} XP` : '-' }}</td>
-                <td>{{ q.deadline ? new Date(q.deadline).toLocaleDateString() : '-' }}</td>
-                <td>
-                  <span class="status-pill"
-                        :class="{
-                          completed: challengeStatus(q) === 'validé',
-                          missed: challengeStatus(q) === 'loupé',
-                          inprogress: challengeStatus(q) === 'en cours'
-                        }">
-                    <i class="pi" :class="challengeStatus(q) === 'validé' ? 'pi-check-circle' : (challengeStatus(q) === 'loupé' ? 'pi-times-circle' : 'pi-clock')"></i>
-                    {{ challengeStatus(q) }}
-                  </span>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="empty-state">
-            <i class="pi pi-info-circle"></i>
-            <p>Aucun défi planifié pour le moment.</p>
-          </div>
-        </div>
-
-        -->
-
-        <!-- 1. QUÊTES DYNAMIQUES EN PREMIER -->
-        <div class="members-ranking">
-          <div class="card-header">
-            <h3><i class="pi pi-compass"></i> Mes Quêtes</h3>
-            <div class="quest-stats">
-              <span class="count-chip">{{ completedQuestsCount }}/{{ activeQuests.length }}</span>
-              <span class="completion-chip" :style="{ backgroundColor: houseColor }">
-                {{ questCompletionRate }}% complété
-              </span>
-            </div>
-          </div>
-          
-          <!-- Quest Statistics -->
-          <div class="quest-summary" v-if="questStats.totalCompleted > 0">
-            <div class="quest-overview-stats">
-              <div class="stat-item">
-                <i class="pi pi-check-circle"></i>
-                <span>{{ questStats.totalCompleted }} quêtes complétées</span>
-              </div>
-              <div class="stat-item">
-                <i class="pi pi-star-fill"></i>
-                <span>{{ formatNumber(totalXPFromQuests) }} XP des quêtes</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Quests Grid -->
-          <div v-if="activeQuests.length > 0" class="modern-quest-grid">
-            <QuestCard
-              v-for="quest in displayedQuests"
-              :key="quest.id"
-              :quest="quest"
-              :house-color="houseColor"
-              @click="showQuestDetails(quest)"
-            />
-          </div>
-          
-          <!-- Show More Button -->
-          <div v-if="activeQuests.length > questDisplayLimit" class="show-more-section">
-            <Button 
-              @click="showAllQuests = !showAllQuests" 
-              class="show-more-btn"
-              :style="{ backgroundColor: houseColor }"
-            >
-              <i class="pi" :class="showAllQuests ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-              {{ showAllQuests ? 'Voir moins' : `Voir toutes les quêtes (${activeQuests.length})` }}
-            </Button>
-          </div>
-          
-          <!-- Empty State -->
-          <div v-if="activeQuests.length === 0" class="empty-badge-state">
-            <div class="empty-badge-icon">🗺️</div>
-            <h4>Aucune quête active</h4>
-            <p>Explorez de nouvelles aventures et débloquez des quêtes !</p>
-            <Button 
-              @click="router.push('/quests')" 
-              class="check-quests-btn"
-              :style="{ backgroundColor: houseColor }"
-            >
-              <i class="pi pi-external-link"></i>
-              Voir toutes les quêtes
-            </Button>
-          </div>
-        </div>
-
-        <!-- 2. DÉFIS DE LA SEMAINE EN DEUXIÈME -->
-        <div v-if="collectionsEnabled" class="members-ranking">
-          <div class="card-header">
-            <h3><i class="pi pi-flag"></i> Défis de la Semaine</h3>
-            <div class="challenge-stats">
-              <span class="count-chip">{{ completedChallengesCount }}/{{ activeChallenges.length }}</span>
-              <span class="completion-chip" :style="{ backgroundColor: houseColor }">
-                {{ challengeCompletionRate }}% complété
-              </span>
-            </div>
-          </div>
-          
-          <!-- Challenge Statistics -->
-          <div class="challenge-summary" v-if="challengeStats.totalCompleted > 0">
-            <div class="challenge-overview-stats">
-              <div class="stat-item">
-                <i class="pi pi-trophy"></i>
-                <span>{{ challengeStats.totalCompleted }} défis complétés</span>
-              </div>
-              <div class="stat-item">
-                <i class="pi pi-star-fill"></i>
-                <span>{{ formatNumber(challengeStats.totalXPFromChallenges) }} XP des défis</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Challenges Grid -->
-          <div v-if="activeChallenges.length > 0" class="modern-challenge-grid">
-            <ChallengeCard
-              v-for="challenge in displayedChallenges"
-              :key="challenge.id"
-              :challenge="challenge"
-              :house-color="houseColor"
-              @click="showChallengeDetails(challenge)"
-            />
-          </div>
-          
-          <!-- Show More Button -->
-          <div v-if="activeChallenges.length > challengeDisplayLimit" class="show-more-section">
-            <Button 
-              @click="showAllChallenges = !showAllChallenges" 
-              class="show-more-btn"
-              :style="{ backgroundColor: houseColor }"
-            >
-              <i class="pi" :class="showAllChallenges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-              {{ showAllChallenges ? 'Voir moins' : `Voir tous les défis (${activeChallenges.length})` }}
-            </Button>
-          </div>
-          
-          <!-- Empty State -->
-          <div v-if="activeChallenges.length === 0" class="empty-badge-state">
-            <div class="empty-badge-icon">🎯</div>
-            <h4>Aucun défi actif</h4>
-            <p>Les nouveaux défis arrivent chaque lundi !</p>
-            <Button 
-              @click="router.push('/challenges')" 
-              class="check-challenges-btn"
-              :style="{ backgroundColor: houseColor }"
-            >
-              <i class="pi pi-external-link"></i>
-              Voir tous les défis
-            </Button>
-          </div>
-        </div>
-
-        <!-- 3. BADGES EN DERNIER -->
-        <div v-if="collectionsEnabled" class="members-ranking">
-          <div class="card-header">
-            <h3><i class="pi pi-shield"></i> Mes Badges</h3>
-            <div class="badge-stats">
-              <span class="count-chip">{{ userBadges.length }}/{{ totalBadges }}</span>
-              <span class="completion-chip" :style="{ backgroundColor: houseColor }">
-                {{ badgeCompletionPercentage }}% complété
-              </span>
-            </div>
-          </div>
-          <!-- Badge Statistics -->
-          <div class="badge-summary" v-if="userBadges.length > 0">
-            <div class="badge-rarity-stats">
-              <div v-for="(count, rarity) in badgesByRarity" :key="rarity" 
-                   class="rarity-stat" :class="`rarity-${rarity}`">
-                <span class="rarity-count">{{ count }}</span>
-                <span class="rarity-label">{{ getRarityName(rarity) }}</span>
-              </div>
-            </div>
-            <div class="total-xp-from-badges">
-              <i class="pi pi-star-fill"></i>
-              <span>{{ formatNumber(totalXPFromBadges) }} XP des badges</span>
-            </div>
-          </div>
-          
-          <!-- Badges Grid -->
-          <div v-if="userBadges.length > 0" class="modern-badge-grid">
-            <BadgeCard
-              v-for="badge in displayedBadges"
-              :key="badge.id"
-              :badge="badge"
-              :is-unlocked="true"
-              :is-newly-unlocked="isNewlyUnlocked(badge)"
-              @click="showBadgeDetails(badge)"
-            />
-          </div>
-          
-          <!-- Show More Button -->
-          <div v-if="userBadges.length > displayLimit" class="show-more-section">
-            <Button 
-              @click="showAllBadges = !showAllBadges" 
-              class="show-more-btn"
-              :style="{ backgroundColor: houseColor }"
-            >
-              <i class="pi" :class="showAllBadges ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
-              {{ showAllBadges ? 'Voir moins' : `Voir tous (${userBadges.length - displayLimit} de plus)` }}
-            </Button>
-          </div>
-          <div v-else class="empty-state">
-            <i class="pi pi-info-circle"></i>
-            <p>Aucun badge pour l’instant.</p>
-          </div>
-        </div>
-
-        <!-- Achievements / Hauts faits
-        <div class="members-ranking">
-          <div class="card-header">
-            <h3><i class="pi pi-trophy"></i> Mes Hauts Faits</h3>
-            <span class="count-chip">{{ achievementsLimited.length }}</span>
-          </div>
-          <div class="table-container" v-if="achievementsLimited.length">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Haut fait</th>
-                  <th>Statut</th>
-                  <th>XP</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(a, i) in achievementsLimited" :key="a.id || i">
-                  <td>{{ a.title || a.name }}</td>
-                  <td>
-                    <span class="status-pill" :class="a.completed ? 'completed' : 'inprogress'">
-                      {{ a.completed ? 'Complété' : 'En cours' }}
-                    </span>
-                  </td>
-                  <td>{{ a.xp ? formatNumber(a.xp) : '-' }}</td>
-                  <td>{{ a.date ? new Date(a.date).toLocaleDateString() : '-' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="empty-state">
-            <i class="pi pi-info-circle"></i>
-            <p>Aucun haut fait enregistré.</p>
-          </div>
-        </div>
-        -->
-      </div>
-
-
-      
+        <section v-if="collectionsEnabled" class="activity-section" aria-labelledby="badges-title">
+          <div class="section-heading"><div><h2 id="badges-title">Derniers badges</h2><p v-if="!sectionErrors.badges && !sectionLoading.badges">{{ userBadges.length }} badge{{ userBadges.length > 1 ? 's' : '' }} obtenu{{ userBadges.length > 1 ? 's' : '' }} sur {{ allBadges.length }}.</p></div><RouterLink v-if="!isViewingOtherUser" class="text-button" to="/achievements">Tous les badges <i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink></div>
+          <p v-if="sectionLoading.badges" role="status">Chargement des badges…</p>
+          <div v-else-if="sectionErrors.badges" class="section-error" role="alert"><p>{{ sectionErrors.badges }}</p><button class="text-button" type="button" @click="loadBadgesData()">Réessayer les badges</button></div>
+          <div v-else-if="userBadges.length" class="activity-grid badge-grid"><BadgeCard v-for="badge in displayedBadges" :key="badge.id" :badge="badge" :is-unlocked="true" @click="showBadgeDetails" /></div>
+          <div v-else class="empty-state"><i class="pi pi-shield" aria-hidden="true"></i><div><h3>Aucun badge obtenu</h3><p>Les conditions de déblocage sont visibles sur la page des badges.</p></div></div>
+        </section>
+      </template>
     </div>
-    
-    <!-- Section de test pour forcer le scroll -->
-    <div class="test-scroll-section" v-if="userStats">
-      <div class="scroll-spacer"></div>
-    </div>
-    
-      </div>
-    </div>
-  </div>
+  </main>
 
-  <!-- Achievement Notification -->
-  <AchievementNotification
-    v-if="showNotification && currentNotification"
-    :badge="currentNotification"
-    @close="onNotificationClose"
-  />
-
-  <!-- Detail Modal -->
-  <DetailModal
-    v-model="showDetailModal"
-    :type="modalType"
-    :item="modalItem"
-    @start="handleStart"
-  />
-
-  <!-- Toast Notification -->
-  <GamificationToast
-    v-model="showToast"
-    :type="toastData.type"
-    :title="toastData.title"
-    :message="toastData.message"
-    :xp="toastData.xp"
-  />
+  <DetailModal v-model="showDetailModal" :type="modalType" :item="modalItem" />
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
-import TabView from 'primevue/tabview'
-import TabPanel from 'primevue/tabpanel'
-import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
-import Paginator from 'primevue/paginator'
-import Toast from 'primevue/toast'
-import Chip from 'primevue/chip'
-import Skeleton from 'primevue/skeleton'
-import Divider from 'primevue/divider'
-import ProgressBar from 'primevue/progressbar'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase.js'
-import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
+import gamificationServiceSupabase, { HES_HOUSES } from '@/service/gamificationServiceSupabase'
+import { getGamificationHistory } from '@/service/gamificationHistoryService'
 import badgesService from '@/service/badgesService'
 import challengesService from '@/service/challengesService'
+import userQuestsService from '@/service/userQuestsService'
 import { gamificationFeatures } from '@/config/gamificationFeatures'
 import levelsConfig from '@/config/levelsConfig'
-import userQuestsService from '@/service/userQuestsService'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
 import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
-import QuestCard from '@/components/gamification/QuestCard.vue'
-import AchievementNotification from '@/components/gamification/AchievementNotification.vue'
-import CreationToolsCard from '@/components/gamification/CreationToolsCard.vue'
 import DetailModal from '@/components/gamification/DetailModal.vue'
-import GamificationToast from '@/components/gamification/GamificationToast.vue'
-import Button from 'primevue/button'
-import Dialog from 'primevue/dialog'
-// Background images per house (align with HouseStatsPage)
+import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
+import { getReadableTextColor } from '@/utils/colorContrast'
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
 import FondDoloris from '@/assets/maisons/FondDoloris.png'
 import FondSolencia from '@/assets/maisons/FondSolencia.png'
 import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
 
-// Props - Receive optional user ID from route params
-const props = defineProps({
-  id: {
-    type: String,
-    default: null
-  }
-})
-
-// Router and auth
+const props = defineProps({ id: { type: String, default: null } })
 const router = useRouter()
-const toast = useToast()
 const authStore = useAuthStore()
 const collectionsEnabled = gamificationFeatures.userJourney && gamificationFeatures.badgesChallenges
-
-// Computed: ID de l'utilisateur à afficher (prop.id ou utilisateur connecté)
+const gamesEnabled = gamificationFeatures.gamesHub
+const houseQuizEnabled = gamificationFeatures.userJourney && gamificationFeatures.houseQuiz
 const displayUserId = computed(() => props.id || authStore.user?.id)
-const isViewingOtherUser = computed(() => !!props.id && props.id !== authStore.user?.id)
+const isViewingOtherUser = computed(() => Boolean(props.id && props.id !== authStore.user?.id))
 
-// Reactive state
 const loading = ref(true)
 const error = ref(null)
 const userStats = ref(null)
-let unsubscribeDefis = null
-
-// Badge system state
 const userBadges = ref([])
 const allBadges = ref([])
-const showAllBadges = ref(false)
-const displayLimit = ref(6)
-const newlyUnlockedBadges = ref(new Set())
-const showNotification = ref(false)
-const currentNotification = ref(null)
-
-// Challenge system state
 const activeChallenges = ref([])
-const challengeStats = ref({})
-const showAllChallenges = ref(false)
-const challengeDisplayLimit = ref(3)
-
-// Quest system state (ENRICHI depuis QuestsPage)
-const activeQuests = ref([])
-const questStats = ref({
-  totalQuests: 0,
-  completedQuests: 0,
-  totalXPFromQuests: 0,
-  averageProgress: 0
-})
-const showAllQuests = ref(false)
-const questDisplayLimit = ref(3)
-
-// NOUVEAU: Filtres et recherche des quêtes (depuis QuestsPage)
-const userQuests = ref([])
-const searchQuery = ref('')
-const selectedDifficulty = ref('all')
-const selectedType = ref('all')
-const sortBy = ref('progress_desc')
-const currentPage = ref(0)
-const questsPerPage = 12
-const showQuestModal = ref(false)
-const selectedQuestDetail = ref(null)
-const activeQuestTab = ref('active') // 'active', 'completed', 'all'
-const activeQuestTabIndex = ref(0)
-const viewMode = ref('grid') // 'grid' ou 'list'
-
-// Creation tools stats
-const userCreationStats = ref({
-  questsCreated: 0,
-  challengesCreated: 0,
-  totalEngagement: 0
-})
-
-// NOUVEAU: Constantes pour les filtres et options (depuis QuestsPage)
-const QUEST_DIFFICULTIES = {
-  EASY: { name: 'Facile', color: '#10b981', order: 1 },
-  MEDIUM: { name: 'Moyen', color: '#f59e0b', order: 2 },
-  HARD: { name: 'Difficile', color: '#ef4444', order: 3 },
-  EPIC: { name: 'Épique', color: '#8b5cf6', order: 4 },
-  LEGENDARY: { name: 'Légendaire', color: '#f97316', order: 5 }
-}
-
-const difficultyOptions = [
-  { label: 'Toutes', value: 'all' },
-  { label: 'Facile', value: 'EASY' },
-  { label: 'Moyen', value: 'MEDIUM' },
-  { label: 'Difficile', value: 'HARD' },
-  { label: 'Épique', value: 'EPIC' },
-  { label: 'Légendaire', value: 'LEGENDARY' }
-]
-
-const typeOptions = [
-  { label: 'Tous', value: 'all' },
-  { label: 'Multi-étapes', value: 'multi_step' },
-  { label: 'Quotidienne', value: 'daily' },
-  { label: 'Hebdomadaire', value: 'weekly' },
-  { label: 'Achievement', value: 'achievement' }
-]
-
-const sortOptions = [
-  { label: 'Progression (desc)', value: 'progress_desc' },
-  { label: 'Progression (asc)', value: 'progress_asc' },
-  { label: 'Difficulté (asc)', value: 'difficulty_asc' },
-  { label: 'Difficulté (desc)', value: 'difficulty_desc' },
-  { label: 'Nom (A-Z)', value: 'name_asc' },
-  { label: 'Nom (Z-A)', value: 'name_desc' }
-]
-
-// House configuration
-const houseConfig = {
-  'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert - "L'équilibre soigne"
-  'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge - "Clarifier, guider, apaiser"
-  'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or - "Comprendre la douleur, c'est soigner"
-  'Solencia': { name: 'Solencia', color: '#4169E1' }, // Bleu - "Apaiser pour mieux guérir"
-  'Gamemaster': { name: 'Gamemaster', color: '#9333ea' } // Violet - "Voir tout, gérer tout"
-}
-
-// Computed properties
-const normalizeHouse = (val) => {
-  if (!val) return null
-  const s = String(val).trim().toLowerCase()
-  if (s.startsWith('harm')) return 'Harmonis'
-  if (s.startsWith('ela')) return 'Elaris'
-  if (s.startsWith('dol')) return 'Doloris'
-  if (s.startsWith('sol')) return 'Solencia'
-  if (s.startsWith('game') || s.startsWith('maitre')) return 'Gamemaster'
-  return null
-}
-
-const houseColor = computed(() => {
-  const h = normalizeHouse(userStats.value?.maison)
-  if (!h) return '#6B7280' // Gris par défaut si pas de maison
-  return houseConfig[h]?.color || '#9333ea' // Violet par défaut pour Game Master
-})
-
-// Calcul automatique du niveau basé sur l'XP (nouveau système 20 niveaux)
-const calculateLevel = (totalXP) => {
-  return levelsConfig.getLevelFromXP(totalXP)
-}
-
-const calculateXPToNext = (currentLevel, currentXP) => {
-  return levelsConfig.getXPToNextLevel(currentLevel, currentXP)
-}
-
-const getLevelProgress = (currentLevel, currentXP) => {
-  return levelsConfig.getLevelProgress(currentLevel, currentXP)
-}
-
-const getLevelInfo = (level) => {
-  return levelsConfig.getLevelInfo(level)
-}
-
-const updateLevelFromXP = async (newTotalXP) => {
-  if (!userStats.value) return
-  
-  const newLevel = calculateLevel(newTotalXP)
-  const oldLevel = userStats.value.niveau
-  const levelInfo = getLevelInfo(newLevel)
-  
-  // Si niveau a changé, mettre à jour la base de données
-  if (newLevel !== oldLevel) {
-    console.log(`🎉 NIVEAU UP ! ${oldLevel} (${getLevelInfo(oldLevel).name}) → ${newLevel} (${levelInfo.name})`)
-    
-    try {
-      // Mettre à jour dans Supabase
-      const { error } = await supabase
-        .from('gamification_data')
-        .update({ 
-          current_level: newLevel,
-          total_xp: newTotalXP
-        })
-        .eq('user_id', authStore.user.id)
-      
-      if (error) {
-        console.error('Erreur mise à jour niveau:', error)
-      } else {
-        // Mettre à jour localement
-        userStats.value.niveau = newLevel
-        userStats.value.xp = newTotalXP
-        userStats.value.xpToNext = calculateXPToNext(newLevel, newTotalXP)
-        
-        // Vérifier si c'est un palier (5, 10, 15, 20)
-        const isPalierLevel = levelsConfig.isPalier(newLevel)
-        
-        // Afficher notification
-        showToast.value = true
-        toastData.value = {
-          type: 'levelup',
-          title: isPalierLevel ? `🎊 PALIER ${newLevel} ATTEINT !` : 'Niveau Supérieur !',
-          message: `Tu es maintenant ${levelInfo.name} (niveau ${newLevel}) !`,
-          xp: isPalierLevel ? levelInfo.palierBonus : 0
-        }
-        
-        // Si c'est un palier, ajouter les points à la maison
-        if (isPalierLevel && levelInfo.palierBonus && userStats.value.maison) {
-          await addHousePoints(userStats.value.maison, levelInfo.palierBonus)
-          console.log(`✨ +${levelInfo.palierBonus} points pour ${userStats.value.maison} !`)
-        }
-      }
-    } catch (err) {
-      console.error('Erreur:', err)
-    }
-  }
-}
-
-const addHousePoints = async (houseName, points) => {
-  try {
-    // Récupérer la maison
-    const { data: house, error: fetchError } = await supabase
-      .from('houses')
-      .select('*')
-      .eq('name', houseName)
-      .single()
-    
-    if (fetchError || !house) {
-      console.error('Erreur récupération maison:', fetchError)
-      return
-    }
-    
-    const newTotalXP = (house.total_xp || 0) + points
-    const oldLevel = house.level || 1
-    const newLevel = Math.max(1, Math.floor(Math.sqrt(newTotalXP / 10000)) + 1)
-    
-    // Ajouter les points XP (le trigger mettra à jour le niveau automatiquement)
-    const { error: updateError } = await supabase
-      .from('houses')
-      .update({ 
-        total_xp: newTotalXP
-      })
-      .eq('name', houseName)
-    
-    if (updateError) {
-      console.error('Erreur ajout XP maison:', updateError)
-    } else {
-      console.log(`✅ +${points} XP ajoutés à ${houseName} (Total: ${newTotalXP} XP)`)
-      
-      // Si la maison a changé de niveau
-      if (newLevel > oldLevel) {
-        console.log(`🏆 ${houseName} est passée au niveau ${newLevel} !`)
-        
-        // Notification optionnelle pour toute la maison
-        showToast.value = true
-        toastData.value = {
-          type: 'success',
-          title: `🏆 ${houseName} niveau ${newLevel} !`,
-          message: `Votre maison progresse grâce à vous !`,
-          xp: 0
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Erreur addHousePoints:', err)
-  }
-}
-
-// Map background image by normalized house
-const houseImages = {
-  harmonis: FondHarmonis,
-  elaris: FondElaris,
-  doloris: FondDoloris,
-  solencia: FondSolencia,
-  gamemaster: MaitreDuJeuFond
-}
-
-const houseBackgroundImage = computed(() => {
-  const h = normalizeHouse(userStats.value?.maison)
-  const key = (h || 'Harmonis').toLowerCase()
-  return houseImages[key] || FondHarmonis
-})
-
-const xpProgress = computed(() => {
-  if (!userStats.value) return 0
-  const currentLevel = userStats.value.niveau || 1
-  const totalXP = userStats.value.xp || 0
-  return getLevelProgress(currentLevel, totalXP)
-})
-
-// Collections (safe fallbacks)
-const badges = computed(() => userStats.value?.badges || [])
-const achievements = computed(() => userStats.value?.achievements || [])
-const upcoming = computed(() => userStats.value?.upcomingChallenges || userStats.value?.upcoming || [])
-
-// Limited views (10 max)
-const badgesLimited = computed(() => {
-  const arr = [...badges.value]
-  arr.sort((a, b) => new Date(b.date || b.earnedAt || b.createdAt || 0) - new Date(a.date || a.earnedAt || a.createdAt || 0))
-  return arr.slice(0, 10)
-})
-
-const achievementsLimited = computed(() => {
-  const arr = [...achievements.value]
-  arr.sort((a, b) => new Date(b.date || b.completedAt || b.createdAt || 0) - new Date(a.date || a.completedAt || a.createdAt || 0))
-  return arr.slice(0, 10)
-})
-
-const upcomingLimited = computed(() => {
-  const arr = [...upcoming.value]
-  arr.sort((a, b) => new Date(a.deadline || Infinity) - new Date(b.deadline || Infinity))
-  return arr.slice(0, 10)
-})
-
-// Badge system computed properties
-const totalBadges = computed(() => allBadges.value.length)
-
-const badgeCompletionPercentage = computed(() => {
-  if (totalBadges.value === 0) return 0
-  return Math.round((userBadges.value.length / totalBadges.value) * 100)
-})
-
-const badgesByRarity = computed(() => {
-  const rarityCount = { common: 0, rare: 0, epic: 0, legendary: 0 }
-  userBadges.value.forEach(badge => {
-    if (rarityCount.hasOwnProperty(badge.rarity)) {
-      rarityCount[badge.rarity]++
-    }
-  })
-  return rarityCount
-})
-
-const totalXPFromBadges = computed(() => {
-  return userBadges.value.reduce((total, badge) => total + (badge.xpBonus || 0), 0)
-})
-
-const displayedBadges = computed(() => {
-  if (showAllBadges.value) return userBadges.value
-  return userBadges.value.slice(0, displayLimit.value)
-})
-
-const lockedBadges = computed(() => {
-  const unlockedIds = new Set(userBadges.value.map(b => b.id))
-  return allBadges.value.filter(badge => !unlockedIds.has(badge.id))
-})
-
-// Challenge system computed properties
-const displayedChallenges = computed(() => {
-  if (showAllChallenges.value) return activeChallenges.value
-  return activeChallenges.value.slice(0, challengeDisplayLimit.value)
-})
-
-const completedChallengesCount = computed(() => {
-  return activeChallenges.value.filter(c => c.completed).length
-})
-
-const challengeCompletionRate = computed(() => {
-  if (activeChallenges.value.length === 0) return 0
-  return Math.round((completedChallengesCount.value / activeChallenges.value.length) * 100)
-})
-
-// Quest system computed properties
-const displayedQuests = computed(() => {
-  if (showAllQuests.value) return activeQuests.value
-  return activeQuests.value.slice(0, questDisplayLimit.value)
-})
-
-const completedQuestsCount = computed(() => {
-  return activeQuests.value.filter(q => q.status === 'completed').length
-})
-
-const questCompletionRate = computed(() => {
-  if (activeQuests.value.length === 0) return 0
-  return Math.round((completedQuestsCount.value / activeQuests.value.length) * 100)
-})
-
-const totalXPFromQuests = computed(() => {
-  return questStats.value.totalXPFromQuests || 0
-})
-
-// NOUVEAU: Computed properties avancées pour filtrage des quêtes (depuis QuestsPage)
-const questsArray = computed(() => userQuests.value || [])
-
-const activeQuestsCount = computed(() => {
-  return questsArray.value.filter(q => 
-    q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
-  ).length
-})
-
-const tabFilteredQuests = computed(() => {
-  if (activeQuestTab.value === 'active') {
-    return questsArray.value.filter(q => 
-      q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
-    )
-  } else if (activeQuestTab.value === 'completed') {
-    return questsArray.value.filter(q => q.userProgress?.status === 'completed')
-  }
-  return questsArray.value // 'all'
-})
-
-const filteredQuests = computed(() => {
-  let filtered = tabFilteredQuests.value
-
-  // Recherche
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(quest => 
-      quest.title.toLowerCase().includes(query) ||
-      quest.description.toLowerCase().includes(query)
-    )
-  }
-
-  // Filtres
-  if (selectedDifficulty.value !== 'all') {
-    filtered = filtered.filter(quest => quest.difficulty === selectedDifficulty.value)
-  }
-
-  if (selectedType.value !== 'all') {
-    filtered = filtered.filter(quest => quest.type === selectedType.value)
-  }
-
-  // Tri
-  filtered.sort((a, b) => {
-    switch (sortBy.value) {
-      case 'progress_desc':
-        return (b.progress || 0) - (a.progress || 0)
-      case 'progress_asc':
-        return (a.progress || 0) - (b.progress || 0)
-      case 'difficulty_asc':
-        return getDifficultyOrder(a.difficulty) - getDifficultyOrder(b.difficulty)
-      case 'difficulty_desc':
-        return getDifficultyOrder(b.difficulty) - getDifficultyOrder(a.difficulty)
-      case 'name_asc':
-        return a.title.localeCompare(b.title)
-      case 'name_desc':
-        return b.title.localeCompare(a.title)
-      default:
-        return 0
-    }
-  })
-
-  return filtered
-})
-
-const paginatedQuests = computed(() => {
-  const start = currentPage.value
-  const end = start + questsPerPage
-  return filteredQuests.value.slice(start, end)
-})
-
-const totalQuestPages = computed(() => Math.ceil(filteredQuests.value.length / questsPerPage))
-
-const completionRate = computed(() => {
-  if (questStats.value.totalQuests === 0) return 0
-  return Math.round((questStats.value.completedQuests / questStats.value.totalQuests) * 100)
-})
-
-const hasFilters = computed(() => {
-  return searchQuery.value || 
-         selectedDifficulty.value !== 'all' || 
-         selectedType.value !== 'all'
-})
-
-// Helper: status for a challenge
-const challengeStatus = (q) => {
-  if (q?.completed || q?.status === 'completed') return 'validé'
-  const now = new Date()
-  const deadline = q?.deadline ? new Date(q.deadline) : null
-  if (q?.failed || q?.status === 'failed' || (deadline && deadline < now)) return 'loupé'
-  return 'en cours'
-}
-
-// Utility functions
-const formatNumber = (num) => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'k'
-  return num.toString()
-}
-
-const getCurrentLevelXP = (level) => {
-  const levelInfo = getLevelInfo(level)
-  return levelInfo.xpRequired
-}
-
-const getNextLevelXP = (level) => {
-  if (level >= 20) return 0 // Niveau maximum
-  const nextLevelInfo = getLevelInfo(level + 1)
-  return nextLevelInfo.xpRequired
-}
-
-const getDaysSinceJoined = () => {
-  if (!userStats.value?.joinedAt) return 0
-  const joinDate = new Date(userStats.value.joinedAt)
-  const today = new Date()
-  const diffTime = Math.abs(today - joinDate)
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-}
-
-// Badge system methods
-const getRarityName = (rarity) => {
-  const names = {
-    common: 'Commun',
-    rare: 'Rare',
-    epic: 'Épique',
-    legendary: 'Légendaire'
-  }
-  return names[rarity] || rarity
-}
-
-const isNewlyUnlocked = (badge) => {
-  return newlyUnlockedBadges.value.has(badge.id)
-}
-
-// Modal and Toast states
+const challengeStats = ref({ totalCompleted: 0, totalXPFromChallenges: 0 })
+const assignedQuests = ref([])
+const questStats = ref({ totalQuests: 0, completedQuests: 0, totalXPFromQuests: 0, averageProgress: 0 })
 const showDetailModal = ref(false)
 const modalType = ref('badge')
 const modalItem = ref(null)
-const showToast = ref(false)
-const toastData = ref({
-  type: 'info',
-  title: '',
-  message: '',
-  xp: 0
-})
+const historyItems = ref([])
+const historyPage = ref(0)
+const historyTotal = ref(0)
+const historyHasMore = ref(false)
+const historyLoading = ref(false)
+const historyError = ref(null)
+const sectionErrors = ref({ quests: null, badges: null, challenges: null })
+const sectionLoading = ref({ quests: false, badges: false, challenges: false })
+const currentTime = ref(Date.now())
+let profileGeneration = 0
+let historyGeneration = 0
+let clock = null
+const isCurrent = (userId, generation) => userId === displayUserId.value && generation === profileGeneration
 
-const showBadgeDetails = (badge) => {
-  modalType.value = 'badge'
-  modalItem.value = badge
-  showDetailModal.value = true
+const houseConfig = {
+  Harmonis: { color: HES_HOUSES.harmonis.color, image: FondHarmonis },
+  Elaris: { color: HES_HOUSES.elaris.color, image: FondElaris },
+  Doloris: { color: HES_HOUSES.doloris.color, image: FondDoloris },
+  Solencia: { color: HES_HOUSES.solencia.color, image: FondSolencia },
+  Gamemaster: { color: '#9333ea', image: MaitreDuJeuFond }
 }
 
-const getBadgeProgressHint = (badge) => {
-  // TODO: Calculer le progrès vers le déblocage du badge
+const normalizeHouse = (value) => {
+  if (!value) return null
+  const house = String(value).trim().toLowerCase()
+  if (house.startsWith('harm')) return 'Harmonis'
+  if (house.startsWith('ela')) return 'Elaris'
+  if (house.startsWith('dol')) return 'Doloris'
+  if (house.startsWith('sol')) return 'Solencia'
+  if (house.startsWith('game') || house.startsWith('maitre')) return 'Gamemaster'
   return null
 }
 
-const checkForNewBadges = async () => {
-  if (!authStore.user?.id) return
-  
+const normalizedHouse = computed(() => normalizeHouse(userStats.value?.maison))
+const houseIdentity = computed(() => HES_HOUSES[normalizedHouse.value?.toLowerCase()] || null)
+const houseColor = computed(() => houseConfig[normalizedHouse.value]?.color || '#70819b')
+const houseTextColor = computed(() => getReadableTextColor(houseColor.value))
+const houseBackgroundImage = computed(() => houseConfig[normalizedHouse.value]?.image || null)
+const currentLevel = computed(() => Math.min(20, Math.max(1, Number(userStats.value?.niveau) || 1)))
+const totalXP = computed(() => Number(userStats.value?.xp || userStats.value?.totalXP || 0))
+const currentLevelInfo = computed(() => levelsConfig.getLevelInfo(currentLevel.value))
+const isMaximumLevel = computed(() => currentLevel.value >= 20)
+const xpProgress = computed(() => isMaximumLevel.value ? 100 : levelsConfig.getLevelProgress(currentLevel.value, totalXP.value))
+const xpToNextLevel = computed(() => isMaximumLevel.value ? 0 : levelsConfig.getXPToNextLevel(currentLevel.value, totalXP.value))
+const activeQuests = computed(() => assignedQuests.value.filter(quest => {
+  if (!['not_started', 'in_progress'].includes(quest.status || quest.userProgress?.status)) return false
+  const deadline = quest.end_date || quest.endDate
+  if (!deadline) return true
+  const timestamp = new Date(deadline).getTime()
+  return !Number.isFinite(timestamp) || timestamp > currentTime.value
+}))
+const questProgress = quest => Math.min(100, Math.max(0, Number(quest?.progress ?? quest?.userProgress?.progress) || 0))
+const featuredQuest = computed(() => [...activeQuests.value].sort((a, b) => questProgress(b) - questProgress(a))[0] || null)
+const displayedQuests = computed(() => activeQuests.value.slice(0, 3))
+const displayedChallenges = computed(() => activeChallenges.value.slice(0, 3))
+const displayedBadges = computed(() => userBadges.value.slice(0, 6))
+const formatNumber = (number) => new Intl.NumberFormat('fr-CH').format(Number(number) || 0)
+const historyDateFormatter = new Intl.DateTimeFormat('fr-CH', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Europe/Zurich',
+})
+const formatHistoryDate = (value) => {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Date inconnue' : historyDateFormatter.format(date)
+}
+
+const loadHistory = async (reset = false, generation = profileGeneration) => {
+  const userId = displayUserId.value
+  if (!userId || (historyLoading.value && !reset)) return
+  const request = ++historyGeneration
+  if (reset) {
+    historyItems.value = []
+    historyPage.value = 0
+    historyTotal.value = 0
+    historyHasMore.value = false
+  }
+
+  historyLoading.value = true
+  historyError.value = null
   try {
-    console.log('🔍 Vérification des nouveaux badges...')
-    // TODO: Implémenter la vérification automatique des badges
-    console.log('✅ Vérification badges terminée (système à implémenter)')
-  } catch (error) {
-    console.error('❌ Erreur lors de la vérification des badges:', error)
+    const nextPage = historyPage.value + 1
+    const result = await getGamificationHistory(userId, { page: nextPage, pageSize: 10 })
+    if (!isCurrent(userId, generation) || request !== historyGeneration) return
+    historyItems.value = reset ? result.items : [...historyItems.value, ...result.items]
+    historyPage.value = result.page
+    historyTotal.value = result.total
+    historyHasMore.value = result.hasMore
+  } catch (loadError) {
+    if (!isCurrent(userId, generation) || request !== historyGeneration) return
+    console.error('Erreur lors du chargement de l’historique gamification:', loadError)
+    historyError.value = 'Vérifiez votre connexion puis réessayez.'
+  } finally {
+    if (isCurrent(userId, generation) && request === historyGeneration) historyLoading.value = false
   }
 }
 
-const loadBadgesData = async () => {
+const profileDisplayName = (profile, gamificationData) => {
+  if (profile?.display_name?.trim()) return profile.display_name.trim()
+  const fullName = [profile?.family_name, profile?.forname].filter(Boolean).join(' ').trim()
+  if (fullName) return fullName
+  const email = profile?.email || gamificationData?.email || (!isViewingOtherUser.value ? authStore.user?.email : null)
+  return email?.split('@')[0] || 'Profil étudiant'
+}
+
+const loadBadgesData = async (userId = displayUserId.value, generation = profileGeneration) => {
   if (!collectionsEnabled) return
-  const userId = displayUserId.value
-  if (!userId) return
-  
+  if (!userId || sectionLoading.value.badges) return
+  sectionLoading.value.badges = true
+  sectionErrors.value.badges = null
   try {
-    console.log('🏆 Chargement des badges depuis Supabase pour:', userId)
-    
-    const [availableBadges, earnedBadges] = await Promise.all([
-      badgesService.getAllBadges(),
-      badgesService.getUserBadges(userId),
-    ])
-    allBadges.value = availableBadges
-    userBadges.value = earnedBadges
-    
-    console.log(`✅ ${userBadges.value.length} badges débloqués sur ${allBadges.value.length}`)
-    
-  } catch (error) {
-    console.error('❌ Erreur lors du chargement des badges:', error)
-    allBadges.value = []
-    userBadges.value = []
+    const [available, earned] = await Promise.all([badgesService.getAllBadges(), badgesService.getUserBadges(userId)])
+    if (!isCurrent(userId, generation)) return
+    allBadges.value = available
+    userBadges.value = earned
+  } catch (loadError) {
+    if (!isCurrent(userId, generation)) return
+    console.error('Erreur lors du chargement des badges:', loadError)
+    sectionErrors.value.badges = 'Les badges n’ont pas pu être chargés. Réessayez pour retrouver votre collection.'
+  } finally {
+    if (isCurrent(userId, generation)) sectionLoading.value.badges = false
   }
 }
 
-const onNotificationClose = () => {
-  showNotification.value = false
-  currentNotification.value = null
-}
-
-// Challenge system methods
-const loadChallengesData = async () => {
+const loadChallengesData = async (userId = displayUserId.value, generation = profileGeneration) => {
   if (!collectionsEnabled) return
-  const userId = displayUserId.value
-  if (!userId) return
-  
+  if (!userId || sectionLoading.value.challenges) return
+  sectionLoading.value.challenges = true
+  sectionErrors.value.challenges = null
   try {
-    console.log('🎯 Chargement des défis depuis Supabase pour:', userId)
-    
-    const [challenges, stats] = await Promise.all([
-      challengesService.getUserActiveChallenges(userId),
-      challengesService.getUserChallengeStats(userId),
-    ])
+    const [challenges, stats] = await Promise.all([challengesService.getUserActiveChallenges(userId), challengesService.getUserChallengeStats(userId)])
+    if (!isCurrent(userId, generation)) return
     activeChallenges.value = challenges
     challengeStats.value = stats
-    const completed = challenges.filter(c => c.completed)
-    
-    console.log(`✅ ${activeChallenges.value.length} défis chargés (${completed.length} complétés)`)
-    
-  } catch (error) {
-    console.error('❌ Erreur lors du chargement des défis:', error)
-    activeChallenges.value = []
-    challengeStats.value = { totalCompleted: 0, totalXPFromChallenges: 0 }
+  } catch (loadError) {
+    if (!isCurrent(userId, generation)) return
+    console.error('Erreur lors du chargement des défis:', loadError)
+    sectionErrors.value.challenges = 'Les défis n’ont pas pu être chargés. Votre progression sera visible après une nouvelle tentative.'
+  } finally {
+    if (isCurrent(userId, generation)) sectionLoading.value.challenges = false
   }
 }
 
-const showChallengeDetails = (challenge) => {
-  modalType.value = 'challenge'
-  modalItem.value = challenge
-  showDetailModal.value = true
-}
-
-const handleStart = ({ type, item }) => {
-  showToast.value = true
-  toastData.value = {
-    type: type,
-    title: `${type === 'challenge' ? 'Défi' : 'Quête'} commencé !`,
-    message: `Tu as commencé : ${item.title}`,
-    xp: 0
-  }
-}
-
-// Quest system methods (ENRICHI depuis QuestsPage)
-const loadQuestsData = async () => {
-  const userId = displayUserId.value
-  if (!userId) return
-  
+const loadQuestsData = async (userId = displayUserId.value, generation = profileGeneration) => {
+  if (!userId || sectionLoading.value.quests) return
+  sectionLoading.value.quests = true
+  sectionErrors.value.quests = null
   try {
-    console.log('🗺️ Chargement des quêtes avec userQuestsService pour:', userId)
-    
-    // Charger les quêtes utilisateur depuis Supabase via le service
-    const quests = await userQuestsService.getUserQuests(userId)
-    userQuests.value = quests
-    activeQuests.value = quests.filter(q => 
-      q.userProgress?.status === 'not_started' || q.userProgress?.status === 'in_progress'
-    )
-    
-    console.log(`✅ ${quests.length} quêtes chargées depuis Supabase`)
-
-    // Charger les statistiques
-    questStats.value = await userQuestsService.getQuestStats(userId)
-    
-    console.log('📊 Stats quêtes:', questStats.value)
-    
-  } catch (error) {
-    console.error('❌ Erreur lors du chargement des quêtes:', error)
-    userQuests.value = []
-    activeQuests.value = []
-    questStats.value = {
-      totalQuests: 0,
-      completedQuests: 0,
-      totalXPFromQuests: 0,
-      averageProgress: 0
-    }
+    const [quests, stats] = await Promise.all([userQuestsService.getUserQuests(userId), userQuestsService.getQuestStats(userId, { strict: true })])
+    if (!isCurrent(userId, generation)) return
+    assignedQuests.value = quests
+    questStats.value = stats
+  } catch (loadError) {
+    if (!isCurrent(userId, generation)) return
+    console.error('Erreur lors du chargement des quêtes:', loadError)
+    sectionErrors.value.quests = 'Les objectifs n’ont pas pu être chargés. Réessayez pour retrouver vos quêtes.'
+  } finally {
+    if (isCurrent(userId, generation)) sectionLoading.value.quests = false
   }
 }
 
-const showQuestDetails = (quest) => {
-  selectedQuestDetail.value = quest
-  showQuestModal.value = true
-}
-
-const startQuest = async (questId) => {
-  try {
-    const user = authStore.user
-    if (!user) return
-    const userId = authStore.isFirebaseUser ? user.uid : user.id
-    if (!userId) return
-
-    await userQuestsService.startQuest(userId, questId)
-    
-    // Recharger les données
-    await loadQuestsData()
-    
-    toast.add({
-      severity: 'success',
-      summary: 'Quête démarrée!',
-      detail: 'Votre aventure commence maintenant 🎯',
-      life: 3000
-    })
-  } catch (error) {
-    console.error('❌ Erreur lors du démarrage de la quête:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de démarrer la quête',
-      life: 3000
-    })
-  }
-}
-
-const startQuestFromModal = async (questId) => {
-  showQuestModal.value = false
-  await startQuest(questId)
-}
-
-const onTabChange = (event) => {
-  const tabs = ['active', 'completed', 'all']
-  activeQuestTab.value = tabs[event.index]
-  activeQuestTabIndex.value = event.index
-  currentPage.value = 0
-}
-
-const clearFilters = () => {
-  searchQuery.value = ''
-  selectedDifficulty.value = 'all'
-  selectedType.value = 'all'
-  sortBy.value = 'progress_desc'
-  currentPage.value = 0
-}
-
-const onPageChange = (event) => {
-  currentPage.value = event.first
-}
-
-const getDifficultyOrder = (difficulty) => {
-  const order = { EASY: 1, MEDIUM: 2, HARD: 3, EPIC: 4, LEGENDARY: 5 }
-  return order[difficulty] || 0
-}
-
-// Data loading - Connexion Supabase comme CardNameProfile
 const loadUserStats = async () => {
+  const generation = ++profileGeneration
+  historyGeneration++
+  loading.value = true
+  error.value = null
+  userStats.value = null
+  assignedQuests.value = []
+  userBadges.value = []
+  allBadges.value = []
+  activeChallenges.value = []
+  questStats.value = {}
+  challengeStats.value = {}
+  historyItems.value = []
+  historyPage.value = 0
+  historyTotal.value = 0
+  historyHasMore.value = false
+  historyLoading.value = false
+  historyError.value = null
+  showDetailModal.value = false
+  modalItem.value = null
+  sectionErrors.value = { quests: null, badges: null, challenges: null }
+  sectionLoading.value = { quests: false, badges: false, challenges: false }
+  const userId = displayUserId.value
+  if (!userId) {
+    error.value = 'Aucun utilisateur n’est disponible pour cette consultation.'
+    loading.value = false
+    return
+  }
   try {
-    loading.value = true
-    error.value = null
-    
-    // Utiliser displayUserId (prop.id ou user connecté)
-    const userId = displayUserId.value
-    
-    if (!userId) {
-      throw new Error('Aucun ID utilisateur disponible')
-    }
-    
-    console.log('🔍 Chargement des stats gamification Supabase pour:', userId)
-    console.log('👀 Mode consultation:', isViewingOtherUser.value ? 'Autre utilisateur' : 'Mon profil')
-    
-    // Récupérer les données de gamification depuis Supabase
-    const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId)
-    
-    if (!gamificationData) {
-      console.warn('⚠️ Aucune donnée gamification trouvée, création de données par défaut')
-      userStats.value = {
-        uid: userId,
-        displayName: authStore.user.email?.split('@')[0] || 'Utilisateur',
-        niveau: 1,
-        xp: 0,
-        maison: null,
-        streak: 0,
-        streakMax: 0
-      }
-      loading.value = false
-      return
-    }
-    
-    console.log('✅ Données gamification Supabase chargées:', gamificationData)
-    
-    // Récupérer les infos du profil utilisateur depuis user_profiles
-    const { data: profileData, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('display_name, forname, family_name, email')
-      .eq('user_id', userId)
-      .maybeSingle() // Utiliser maybeSingle() au lieu de single() pour éviter l'erreur si pas de résultat
-    
-    if (profileError && profileError.code !== 'PGRST116') {
-      console.warn('⚠️ Erreur chargement profil utilisateur:', profileError)
-    }
-    
-    console.log('👤 Données profil utilisateur:', profileData)
-    
-    // Formater le nom d'affichage (priorité: display_name, puis family_name + forname, puis email)
-    let displayName = profileData?.display_name
-    if (!displayName && profileData?.family_name && profileData?.forname) {
-      // Format: Nom Prénom (comme dans CardNameProfile)
-      displayName = `${profileData.family_name} ${profileData.forname}`
-    }
-    if (!displayName && profileData?.email) {
-      displayName = profileData.email.split('@')[0]
-    }
-    if (!displayName && gamificationData.email) {
-      displayName = gamificationData.email.split('@')[0]
-    }
-    displayName = displayName || 'Utilisateur'
-    
-    console.log('✅ Nom formaté:', displayName)
-    
-    // Adapter les données Supabase au format du composant
+    const [gamificationData, profileResult] = await Promise.all([
+      gamificationServiceSupabase.getUserGamificationData(userId, { strict: true, refresh: true }),
+      supabase.from('user_profiles').select('display_name, forname, family_name, email').eq('user_id', userId).maybeSingle()
+    ])
+    if (!isCurrent(userId, generation)) return
+    if (profileResult.error && profileResult.error.code !== 'PGRST116') throw profileResult.error
     userStats.value = {
       uid: userId,
-      displayName: displayName,
-      niveau: gamificationData.current_level || gamificationData.niveau || 1,
-      xp: gamificationData.total_xp || gamificationData.xp || 0,
-      xpToNext: gamificationData.xpToNext || gamificationData.xp_to_next || 100,
-      maison: gamificationData.house_name || gamificationData.maison || null,
-      loginStreak: gamificationData.loginStreak || gamificationData.login_streak || 0,
-      streak: gamificationData.loginStreak || gamificationData.login_streak || 0,
-      streakMax: gamificationData.streakMax || gamificationData.streak_max || 0,
-      totalXP: gamificationData.totalXP || gamificationData.total_xp || 0,
-      lastXPGain: gamificationData.lastXPGain || gamificationData.last_xp_gain || null,
-      lastLogin: gamificationData.lastLogin || gamificationData.last_login || null,
-      createdAt: gamificationData.created_at || gamificationData.createdAt || null
+      displayName: profileDisplayName(profileResult.data, gamificationData),
+      niveau: gamificationData?.current_level || gamificationData?.niveau || 1,
+      xp: gamificationData?.total_xp ?? gamificationData?.xp ?? 0,
+      maison: gamificationData?.house_name || gamificationData?.maison || null
     }
-    
-    // Charger les données supplémentaires (badges, défis, quêtes)
-    await Promise.all([
-      loadBadgesData(),
-      loadChallengesData(),
-      loadQuestsData()
-    ])
-    
-    console.log('✅ Toutes les données gamification chargées avec succès')
-    
-  } catch (err) {
-    console.error('❌ Erreur lors du chargement des stats gamification:', err)
-    error.value = err.message || 'Erreur lors du chargement des données de gamification'
-  } finally {
     loading.value = false
+    await Promise.all([loadQuestsData(userId, generation), loadBadgesData(userId, generation), loadChallengesData(userId, generation), loadHistory(true, generation)])
+  } catch (loadError) {
+    if (!isCurrent(userId, generation)) return
+    console.error('Erreur lors du chargement du profil gamification:', loadError)
+    error.value = 'Vérifiez votre connexion puis réessayez.'
+  } finally {
+    if (isCurrent(userId, generation)) loading.value = false
   }
 }
 
-const goBack = () => {
-  router.go(-1)
-}
+const showBadgeDetails = (badge) => { modalType.value = 'badge'; modalItem.value = badge; showDetailModal.value = true }
+const showChallengeDetails = (challenge) => { modalType.value = 'challenge'; modalItem.value = challenge; showDetailModal.value = true }
+const goBack = () => router.back()
+const goTo = (path) => router.push(path)
 
-// Watcher pour recalculer le niveau automatiquement quand l'XP change
-watch(
-  () => userStats.value?.xp,
-  (newXP, oldXP) => {
-    if (newXP !== undefined && newXP !== oldXP && userStats.value) {
-      const expectedLevel = calculateLevel(newXP)
-      if (expectedLevel !== userStats.value.niveau) {
-        console.log(`🔄 XP changé: ${oldXP} → ${newXP}, recalcul du niveau...`)
-        updateLevelFromXP(newXP)
-      }
-    }
-  }
-)
-
-// NOUVEAU: Watchers pour les filtres de quêtes (depuis QuestsPage)
-watch([searchQuery, selectedDifficulty, selectedType], () => {
-  currentPage.value = 0 // Réinitialiser la pagination quand les filtres changent
-})
-
-// Initialization
+watch([displayUserId, () => authStore.user?.id], () => loadUserStats(), { flush: 'sync' })
 onMounted(() => {
   loadUserStats()
+  clock = setInterval(() => { currentTime.value = Date.now() }, 60000)
 })
-
 onBeforeUnmount(() => {
-  if (unsubscribeDefis) {
-    try { unsubscribeDefis() } catch {}
-    unsubscribeDefis = null
-  }
+  profileGeneration++
+  historyGeneration++
+  clearInterval(clock)
 })
 </script>
 
 <style scoped>
-/* ProfileView.vue structure CSS */
-.profile-center-scrollable {
-  height: 100vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.gamification-profile-page {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  position: relative;
-  padding: 2rem;
-}
-
-/* Responsive Mobile Styles */
-@media (max-width: 1200px) {
-  .gamification-profile-page {
-    padding: 1.5rem;
-  }
-}
-
-@media (max-width: 991px) {
-  .sidebar-left, .sidebar-right {
-    display: none !important;
-  }
-  .min-h-screen.flex.relative.lg\:static {
-    flex-direction: column !important;
-    padding: 0;
-    min-height: 0;
-  }
-  .min-h-screen.flex.flex-column.relative.flex-auto {
-    min-height: 0;
-    width: 100%;
-    padding: 0;
-  }
-  .gamification-profile-page {
-    padding: 1rem;
-  }
-  .flex.flex-column.flex-auto {
-    width: 100% !important;
-    min-width: 0;
-  }
-}
-
-@media (max-width: 600px) {
-  .gamification-profile-page {
-    padding: 0.75rem;
-  }
-}
-
-/* Loading and Error States */
-.loading-container, .error-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 60vh;
-}
-
-.loading-spinner, .error-message {
-  text-align: center;
-  padding: 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.loading-spinner i {
-  font-size: 2rem;
-  color: #3B82F6;
-  margin-bottom: 1rem;
-}
-
-.error-message i {
-  font-size: 2rem;
-  color: #EF4444;
-  margin-bottom: 1rem;
-}
-
-.retry-btn {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  background: var(--house-color);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Profile Header */
-.profile-header {
-  margin-bottom: 1.5rem;
-}
-
-.profile-banner-wrapper {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-.profile-banner {
-  color: white;
-  padding: 4rem 0;
-  border-radius: 0 0 20px 20px;
-  position: relative;
-  overflow: hidden;
-  background-size: cover;
-  background-position: center;
-  min-height: 280px;
-  display: flex;
-  align-items: center;
-}
-
-.profile-banner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 100%);
-  /* subtle tint from house color */
-  box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--house-color, #6B7280) 12%, transparent);
-}
-
-.profile-info {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 1.5rem;
-  width: 100%;
-}
-
-/* Avatar avec effet de halo */
-.avatar-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-halo {
-  position: absolute;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--house-color, #6B7280) 0%, transparent 70%);
-  opacity: 0.3;
-  animation: pulse-halo 3s ease-in-out infinite;
-  z-index: 1;
-}
-
-.user-avatar {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 
-    0 0 30px rgba(0,0,0,0.3),
-    0 0 60px var(--house-color, #6B7280);
-  z-index: 3;
-  transition: all 0.3s ease;
-}
-
-.user-avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 
-    0 0 40px rgba(0,0,0,0.4),
-    0 0 80px var(--house-color, #6B7280);
-}
-
-.avatar-ring {
-  position: absolute;
-  width: 160px;
-  height: 160px;
-  border: 2px solid var(--house-color, #6B7280);
-  border-radius: 50%;
-  opacity: 0.6;
-  animation: rotate-ring 10s linear infinite;
-  z-index: 2;
-}
-
-@keyframes pulse-halo {
-  0%, 100% { transform: scale(1); opacity: 0.3; }
-  50% { transform: scale(1.1); opacity: 0.5; }
-}
-
-@keyframes rotate-ring {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-}
-
-.user-details {
-  flex: 1;
-}
-
-/* Nom avec effet brillant */
-.user-name-container {
-  position: relative;
-  margin: 1rem 0;
-}
-
-.user-name-fancy {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: white;
-  text-shadow: 
-    0 0 20px var(--house-color, #6B7280),
-    0 4px 8px rgba(0,0,0,0.3);
-  margin: 0;
-  position: relative;
-  z-index: 2;
-  background: linear-gradient(45deg, white, rgba(255,255,255,0.8));
-  background-clip: text;
-  -webkit-background-clip: text;
-  animation: name-glow 2s ease-in-out infinite alternate;
-}
-
-.name-shine {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: shine-effect 3s ease-in-out infinite;
-  z-index: 3;
-}
-
-@keyframes name-glow {
-  0% { text-shadow: 0 0 20px var(--house-color, #6B7280), 0 4px 8px rgba(0,0,0,0.3); }
-  100% { text-shadow: 0 0 30px var(--house-color, #6B7280), 0 4px 12px rgba(0,0,0,0.4); }
-}
-
-@keyframes shine-effect {
-  0% { left: -100%; }
-  50% { left: 100%; }
-  100% { left: 100%; }
-}
-
-.user-name {
-  font-size: 2rem;
-  font-weight: bold;
-  margin: 0 0 0.5rem 0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.35);
-}
-
-/* Cartes d'informations flottantes */
-.info-cards {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.info-card {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 1rem 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  min-width: 120px;
-}
-
-.info-card:hover {
-  transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.card-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--house-color, #6B7280);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.card-icon i {
-  color: white;
-  font-size: 1.2rem;
-}
-
-.card-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.card-label {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
-}
-
-.card-value {
-  font-size: 1.1rem;
-  color: white;
-  font-weight: 700;
-}
-
-/* Particules décoratives */
-.floating-particles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.particle {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  animation: float-particle 6s ease-in-out infinite;
-}
-
-.particle:nth-child(1) {
-  left: 10%;
-  animation-delay: 0s;
-  animation-duration: 6s;
-}
-
-.particle:nth-child(2) {
-  left: 20%;
-  animation-delay: 1s;
-  animation-duration: 8s;
-}
-
-.particle:nth-child(3) {
-  left: 30%;
-  animation-delay: 2s;
-  animation-duration: 7s;
-}
-
-.particle:nth-child(4) {
-  left: 70%;
-  animation-delay: 3s;
-  animation-duration: 9s;
-}
-
-.particle:nth-child(5) {
-  left: 80%;
-  animation-delay: 4s;
-  animation-duration: 6s;
-}
-
-.particle:nth-child(6) {
-  left: 90%;
-  animation-delay: 5s;
-  animation-duration: 8s;
-}
-
-@keyframes float-particle {
-  0% {
-    transform: translateY(100vh) scale(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100px) scale(1);
-    opacity: 0;
-  }
-}
-
-.user-house {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  opacity: 0.9;
-}
-
-.user-level {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.level-badge {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-weight: bold;
-  border: 2px solid rgba(255,255,255,0.3);
-  backdrop-filter: blur(6px);
-}
-
-.quick-stats {
-  display: flex;
-  gap: 2rem;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.25rem;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.25);
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  opacity: 0.8;
-}
-
-/* Section Content */
-.section-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
-.section-content h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  color: #1f2937;
-}
-
-/* Progress Card */
-.progress-card {
-  background: var(--surface-card);
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  margin-bottom: 2rem;
-}
-
-.progress-card h3 {
-  margin-bottom: 1rem;
-  color: white;
-}
-
-.xp-progress {
-  margin-bottom: 1rem;
-}
-
-.xp-bar {
-  width: 100%;
-  height: 12px;
-  background: #e9ecef;
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.xp-fill {
-  height: 100%;
-  border-radius: 6px;
-  transition: width 0.8s ease;
-}
-
-.xp-text {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  color: white;
-}
-
-/* Supprimé - remplacé par les nouveaux styles */
-
-/* Page Header (harmonized with HouseStatsPage) */
-.page-header {
-  padding: 1.5rem 1rem;
-}
-
-.header-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  justify-content: flex-start;
-}
-
-.back-btn {
-  background: var(--surface-card);
-  border: none;
-  color: var(--text-color);
-  padding: 0.75rem;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.back-btn:hover {
-  background: var(--surface-hover);
-  transform: translateX(-2px);
-}
-
-.header-title-container {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  margin-right: 3rem;
-}
-
-.page-title {
-  font-size: 2rem;
-  margin: 0;
-  font-weight: bold;
-  color: var(--text-color);
-  text-align: center;
-}
-
-/* Stats container */
-.stats-container {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.level-info {
-  color: white;
-}
-
-.level-badge {
-  display: inline-block;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: bold;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-}
-
-.level-name {
-  font-size: 2rem;
-  margin: 0 0 1.5rem 0;
-  color: white;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.stat-card {
-  background: var(--surface-card);
-  border-radius: 12px;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  transition: transform 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.2rem;
-}
-
-.stat-content h3 {
-  font-size: 1.8rem;
-  margin: 0;
-  color: white;
-}
-
-.stat-content p {
-  margin: 0;
-  color: white;
-  font-size: 0.9rem;
-}
-
-/* Unified Card Styles */
-.members-ranking,
-.house-level-card {
-  background: var(--surface-card);
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-  height: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.members-ranking .empty-badge-state,
-.members-ranking .empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 250px;
-  padding: 2rem;
-}
-
-/* Adaptive responsiveness for cards */
-@media (max-width: 768px) {
-  .members-ranking,
-  .house-level-card {
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-  }
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 2px solid rgba(255,255,255,0.08);
-  padding-bottom: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.members-ranking h2, .members-ranking h3 {
-  margin: 0 0 1.5rem 0;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.card-header h3 {
-  margin: 0;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.count-chip {
-  background: rgba(255,255,255,0.12);
-  color: white;
-  padding: 0.25rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-}
-
-/* Badges */
-.badge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
-}
-
-.badge-item {
-  background: var(--surface-hover);
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.badge-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid var(--house-color, #6B7280);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255,255,255,0.06);
-}
-
-.badge-title { color: white; font-weight: 600; }
-.badge-desc { color: white; opacity: 0.8; font-size: 0.85rem; }
-.badge-xp { color: white; font-weight: 600; }
-
-/* Tables */
-.table-container {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table thead th {
-  text-align: left;
-  font-weight: 600;
-  color: white;
-  padding: 0.75rem 0.75rem;
-  border-bottom: 2px solid rgba(255,255,255,0.08);
-}
-
-.data-table tbody td {
-  padding: 0.75rem 0.75rem;
-  color: white;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.data-table tbody tr:hover {
-  background: var(--surface-hover);
-}
-
-.status-pill {
-  padding: 0.2rem 0.6rem;
-  border-radius: 9999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.status-pill.completed { 
-  background: color-mix(in srgb, var(--house-color) 20%, transparent);
-  color: var(--house-color);
-  border: 1px solid color-mix(in srgb, var(--house-color) 40%, transparent);
-}
-.status-pill.inprogress { 
-  background: color-mix(in srgb, var(--house-color) 10%, transparent);
-  color: var(--house-color);
-  border: 1px solid color-mix(in srgb, var(--house-color) 30%, transparent);
-}
-.status-pill.missed { 
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.empty-state {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: white;
-  opacity: 0.9;
-}
-
-.test-scroll-section {
-  width: 100%;
-}
-
-.scroll-spacer {
-  height: 50vh;
-  background: transparent;
-}
-
-/* Membres ranking style - même que HouseStatsPage */
-.card-section h2, .card-section h3 {
-  margin: 0 0 1.5rem 0;
-  color: white;
-}
-
-.card-section .data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.card-section .data-table thead th {
-  text-align: left;
-  font-weight: 600;
-  color: white;
-  padding: 0.75rem;
-  border-bottom: 2px solid rgba(255,255,255,0.08);
-}
-
-.card-section .data-table tbody td {
-  padding: 0.75rem;
-  color: white;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-
-.card-section .data-table tbody tr:hover {
-  background: var(--surface-hover);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .profile-info {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-
-  .quick-stats {
-    justify-content: center;
-  }
-
-  .detailed-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .badge-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Badge System Styles */
-.badge-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.completion-chip {
-  background: var(--house-color);
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.badge-summary {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.badge-rarity-stats {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.rarity-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.5rem;
-  border-radius: 6px;
-  min-width: 60px;
-}
-
-.rarity-stat.rarity-common {
-  background: rgba(156, 163, 175, 0.1);
-  color: #6B7280;
-}
-
-.rarity-stat.rarity-rare {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
-}
-
-.rarity-stat.rarity-epic {
-  background: rgba(147, 51, 234, 0.1);
-  color: #9333EA;
-}
-
-.rarity-stat.rarity-legendary {
-  background: rgba(245, 158, 11, 0.1);
-  color: #F59E0B;
-}
-
-.rarity-count {
-  font-size: 1.25rem;
-  font-weight: 700;
-}
-
-.rarity-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.total-xp-from-badges {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--house-color);
-  font-weight: 600;
-}
-
-.modern-badge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.show-more-section {
-  text-align: center;
-  margin: 1.5rem 0;
-}
-
-.show-more-btn {
-  background: var(--house-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.show-more-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.empty-badge-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.empty-state h4 {
-  color: #374151;
-  margin-bottom: 0.5rem;
-}
-
-.check-badges-btn {
-  background: var(--house-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  margin-top: 1rem;
-  transition: all 0.2s ease;
-}
-
-.check-badges-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.locked-badges-section {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.locked-badges-section h4 {
-  color: #6B7280;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.locked-badges-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
-}
-
-/* Responsive adjustments for badges */
-@media (max-width: 768px) {
-  .badge-rarity-stats {
-    justify-content: center;
-  }
-  
-  .modern-badge-grid,
-  .locked-badges-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  }
-  
-  .badge-stats {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-}
-
-/* Styles pour les défis */
-.challenge-stats {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.challenge-summary {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.challenge-overview-stats {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-color-secondary);
-  font-size: 0.9rem;
-}
-
-.stat-item i {
-  color: var(--primary-color);
-}
-
-.modern-challenge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.check-challenges-btn {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  border: none;
-  color: white;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.check-challenges-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Quest system styles */
-.quest-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.quest-summary {
-  background: rgba(0, 0, 0, 0.02);
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-}
-
-.quest-overview-stats {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
-}
-
-.modern-quest-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.check-quests-btn {
-  background: var(--house-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  margin-top: 1rem;
-  transition: all 0.2s ease;
-}
-
-.check-quests-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Responsive pour défis et quêtes */
-@media (max-width: 768px) {
-  .modern-challenge-grid,
-  .modern-quest-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .challenge-stats,
-  .quest-stats {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .challenge-overview-stats {
-    justify-content: center;
-  }
-}
-
-/* ===== ANIMATIONS ===== */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
-}
-
-/* Appliquer les animations aux cards */
-.members-ranking,
-.house-level-card {
-  animation: fadeIn 0.6s ease-out;
-  animation-fill-mode: both;
-}
-
-.members-ranking:nth-child(1) { animation-delay: 0.1s; }
-.members-ranking:nth-child(2) { animation-delay: 0.2s; }
-.members-ranking:nth-child(3) { animation-delay: 0.3s; }
-.members-ranking:nth-child(4) { animation-delay: 0.4s; }
-.members-ranking:nth-child(5) { animation-delay: 0.5s; }
-
-/* Hover effects améliorés */
-.members-ranking:hover,
-.house-level-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Transitions fluides */
-.members-ranking,
-.house-level-card,
-.stat-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Animation pour les badges */
-.modern-badge-grid > *,
-.modern-challenge-grid > *,
-.modern-quest-grid > * {
-  animation: slideInUp 0.5s ease-out;
-  animation-fill-mode: both;
-}
-
-.modern-badge-grid > *:nth-child(1) { animation-delay: 0.05s; }
-.modern-badge-grid > *:nth-child(2) { animation-delay: 0.1s; }
-.modern-badge-grid > *:nth-child(3) { animation-delay: 0.15s; }
-.modern-badge-grid > *:nth-child(4) { animation-delay: 0.2s; }
-.modern-badge-grid > *:nth-child(5) { animation-delay: 0.25s; }
-.modern-badge-grid > *:nth-child(6) { animation-delay: 0.3s; }
-
-/* Loading shimmer effect */
-.loading-spinner {
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-/* Smooth scroll behavior */
-.profile-center-scrollable {
-  scroll-behavior: smooth;
+.gamification-profile-page { box-sizing: border-box; width: 100%; min-height: 100%; padding: 1rem 1rem 6rem; color: var(--text-color, #f8fafc); background: radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--house-color) 18%, transparent), transparent 34rem), var(--surface-ground, #040d1a); }
+.profile-shell { width: min(100%, 1240px); margin: 0 auto; }
+.identity-copy h2, .identity-copy p, .section-heading h2, .section-heading p, .empty-state h3, .empty-state p, .quick-stats p, .state-panel h2, .state-panel p { margin: 0; }
+.section-heading p, .progress-copy, .empty-state p, .state-panel p { color: var(--text-color-secondary, #b7c2d4); line-height: 1.55; }
+.primary-button, .secondary-button, .text-button, .gamification-navigation a { min-height: 44px; font: inherit; cursor: pointer; text-decoration: none; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--text-color); outline-offset: 3px; }
+.state-panel { display: flex; align-items: flex-start; gap: 1rem; min-height: 180px; padding: 1.5rem; border-radius: 16px; background: var(--surface-card, #071426); box-shadow: 0 16px 40px rgba(0,0,0,.18); }
+.state-panel > i { margin-top: .2rem; color: var(--house-color); font-size: 1.5rem; }
+.state-panel h2 { margin-bottom: .45rem; font-size: 1.2rem; }
+.error-state > i { color: #fca5a5; }
+.primary-button, .secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; margin-top: 1rem; padding: .65rem 1rem; border: 0; border-radius: 12px; font-weight: 700; }
+.primary-button { color: #071426; background: #f3c300; }
+.secondary-button { border: 1px solid #465c78; color: #f8fafc; background: rgba(7,20,38,.72); }
+.profile-summary { display: grid; overflow: hidden; border-radius: 16px; background: var(--surface-card, #071426); box-shadow: 0 18px 48px rgba(0,0,0,.22); }
+.identity-panel, .progress-panel { padding: 1.35rem; }
+.identity-panel { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; color: #f8fafc; background: linear-gradient(110deg, rgba(7,20,38,.96), rgba(7,20,38,.68)), var(--house-image) center / cover; }
+.context-label, .summary-label { display: block; margin: 0 0 .35rem; color: var(--text-color-secondary); font-size: .78rem; font-weight: 700; letter-spacing: .055em; text-transform: uppercase; }
+.identity-panel .summary-label { color: #c7d2e3; }
+.identity-copy h2 { max-width: 24ch; color: #f8fafc; overflow-wrap: anywhere; font-size: clamp(1.65rem, 4vw, 2.5rem); line-height: 1.12; letter-spacing: -.025em; }
+.level-name { margin-top: .65rem !important; color: #e2e8f0; }
+.house-summary { display: flex; align-items: center; gap: .8rem; margin-top: 2rem; }
+.house-summary strong { display: block; font-size: 1.1rem; }
+.house-motto { margin: .8rem 0 0; color: #d9e4ef; font-size: 1rem; line-height: 1.55; }
+.house-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; border-radius: 12px; color: var(--house-foreground); background: var(--house-color); }
+:deep(h1[tabindex="-1"]:focus-visible) { outline: 2px solid var(--primary-color); outline-offset: .3rem; }
+.progress-panel { display: flex; flex-direction: column; justify-content: center; min-height: 180px; background: color-mix(in srgb, var(--surface-card, #071426) 88%, var(--house-color)); }
+.progress-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.progress-heading strong { display: block; font-size: clamp(1.8rem, 8vw, 3rem); line-height: 1; white-space: nowrap; }
+.level-chip { flex: 0 0 auto; padding: .45rem .7rem; border-radius: 999px; color: var(--house-foreground); background: var(--house-color); font-size: .82rem; font-weight: 800; }
+.level-progress { overflow: hidden; height: 12px; margin: 1.5rem 0 .75rem; border-radius: 999px; background: rgba(255,255,255,.14); }
+.level-progress span { display: block; width: 100%; height: 100%; border-radius: inherit; background: var(--house-color); transform-origin: left center; transition: transform 500ms cubic-bezier(.16,1,.3,1); }
+.quick-stats { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); margin: 1rem 0 1.5rem; border-radius: 14px; background: var(--surface-card, #071426); }
+.quick-stats div { padding: 1rem; }
+.quick-stats div:nth-child(odd) { border-right: 1px solid var(--surface-border, #26364d); }
+.quick-stats div:nth-child(-n+2) { border-bottom: 1px solid var(--surface-border, #26364d); }
+.quick-stats span { display: block; font-size: 1.65rem; font-weight: 800; }
+.quick-stats p { margin-top: .2rem; color: var(--text-color-secondary); font-size: .86rem; }
+.next-step { margin: 1.5rem 0; padding: clamp(1.15rem, 3vw, 2rem); border: 1px solid var(--surface-border); border-radius: 16px; background: var(--surface-card); }
+.next-step__heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.next-step__heading h2 { margin: 0; font-size: 1.1rem; }
+.next-step__heading > i { color: var(--primary-color, #f3c300); font-size: 1.5rem; }
+.next-step__body { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.25rem; }
+.next-step__body > div { flex: 1 1 24rem; min-width: 0; }
+.next-step__body h3 { margin: 0 0 .55rem; font-size: clamp(1.3rem, 2.4vw, 1.75rem); line-height: 1.2; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.next-step__body p { max-width: 65ch; margin: 0; color: var(--text-color-secondary); line-height: 1.6; overflow-wrap: anywhere; }
+.next-step__body .primary-button { margin: 0; flex: 0 0 auto; }
+.next-step__progress { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-top: 1.4rem; font-size: .86rem; color: var(--text-color-secondary); }
+.next-step__progress > div { height: 8px; flex: 1 1 140px; overflow: hidden; border-radius: 8px; background: var(--surface-border); }
+.next-step__progress > div > span { display: block; width: 100%; height: 100%; transform-origin: left; background: var(--house-color); transition: transform 300ms ease-out; }
+.next-step__progress strong { margin-inline-start: auto; color: var(--text-color); }
+.next-step__loading { min-height: 44px; color: var(--text-color-secondary); }
+.section-error { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem 1.5rem; }
+.section-error p { flex: 1 1 220px; margin: 0; line-height: 1.55; color: var(--text-color-secondary); }
+.explore-section { margin: 0 0 1.5rem; padding: 1.15rem; border: 1px solid color-mix(in srgb, var(--surface-border, #26364d) 82%, transparent); border-radius: 16px; background: var(--surface-card, #071426); }
+.explore-heading { margin-bottom: 1rem; }
+.gamification-navigation { display: grid; gap: .65rem; }
+.gamification-navigation a { display: grid; grid-template-columns: 30px minmax(0,1fr) 20px; align-items: center; gap: .75rem; width: 100%; padding: .9rem .5rem; border-bottom: 1px solid var(--surface-border); color: inherit; text-align: left; background: transparent; transition: background-color 160ms ease-out; }
+.gamification-navigation a:hover { background: var(--surface-hover); }
+.gamification-navigation a > i:first-child { color: var(--house-color); font-size: 1.2rem; }
+.gamification-navigation span { min-width: 0; }
+.gamification-navigation strong, .gamification-navigation small { display: block; }
+.gamification-navigation small { margin-top: .2rem; color: var(--text-color-secondary); line-height: 1.35; }
+.activity-section { margin-top: 1.25rem; padding: 1.15rem; border-radius: 16px; background: var(--surface-card, #071426); }
+.section-heading { display: flex; flex-direction: column; align-items: flex-start; gap: .85rem; margin-bottom: 1.15rem; }
+.section-heading h2 { font-size: 1.25rem; }
+.section-heading p { margin-top: .3rem; }
+.text-button { display: inline-flex; align-items: center; gap: .45rem; padding: .5rem 0; border: 0; color: var(--text-color); font-weight: 700; background: transparent; text-decoration: underline; text-underline-offset: .2em; }
+.activity-grid { display: grid; gap: 1rem; }
+.quest-preview-list { display: grid; gap: .65rem; margin: 0; padding: 0; list-style: none; }
+.quest-preview-list li { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; align-items: center; gap: .8rem; min-height: 68px; padding: .7rem .8rem; border-radius: 12px; background: color-mix(in srgb, var(--surface-card, #071426) 88%, white); }
+.quest-preview-list strong, .quest-preview-list small { display: block; }
+.quest-preview-list strong { overflow-wrap: anywhere; }
+.quest-preview-list small { display: -webkit-box; overflow: hidden; margin-top: .2rem; color: var(--text-color-secondary); line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.preview-icon { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; color: var(--house-foreground); background: var(--house-color); }
+.quest-reward { color: var(--text-color); font-size: .82rem; font-weight: 800; white-space: nowrap; }
+.history-total { flex: 0 0 auto; padding: .4rem .65rem; border-radius: 999px; color: var(--house-foreground); background: var(--house-color); font-size: .78rem; font-weight: 800; }
+.history-summary { display: flex; align-items: center; gap: 1rem; min-height: 44px; cursor: pointer; list-style: none; }
+.history-summary::-webkit-details-marker { display: none; }
+.history-summary > div { flex: 1; min-width: 0; }
+.history-summary h2 { margin: 0; font-size: 1.25rem; }
+.history-summary p { margin: .3rem 0 0; color: var(--text-color-secondary); line-height: 1.55; }
+.history-summary:focus-visible { outline: 3px solid var(--text-color); outline-offset: 3px; }
+.history-summary > i { flex: 0 0 auto; transition: transform 150ms ease-out; }
+.history-section[open] .history-summary { margin-bottom: 1.15rem; }
+.history-section[open] .history-summary > i { transform: rotate(180deg); }
+.history-loading, .history-error { display: flex; align-items: center; gap: .75rem; min-height: 76px; padding: .85rem; border-radius: 12px; color: var(--text-color-secondary); background: color-mix(in srgb, var(--surface-card, #071426) 88%, white); }
+.history-error { color: var(--text-color); }
+.history-error p { margin: .2rem 0 0; }
+.history-error .text-button { margin-left: auto; }
+.history-list { display: grid; gap: .55rem; margin: 0; padding: 0; list-style: none; }
+.history-list li { display: grid; grid-template-columns: 44px minmax(0,1fr) auto; align-items: center; gap: .8rem; min-height: 74px; padding: .75rem .8rem; border: 1px solid color-mix(in srgb, var(--surface-border, #26364d) 82%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--surface-card, #071426) 92%, white); }
+.history-icon { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 12px; color: var(--house-foreground); background: var(--house-color); }
+.history-copy { min-width: 0; }
+.history-line { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
+.history-line strong { overflow-wrap: anywhere; }
+.history-line time { flex: 0 0 auto; color: var(--text-color-secondary); font-size: .76rem; }
+.history-copy p { margin: .18rem 0 0; color: var(--text-color-secondary); font-size: .82rem; line-height: 1.4; }
+.linked-object { display: inline-flex; margin-top: .4rem; padding: .22rem .45rem; border-radius: 7px; color: var(--text-color); background: var(--surface-hover); font-size: .72rem; font-weight: 700; }
+.history-points { min-width: 96px; text-align: right; }
+.history-points strong, .history-points small { display: block; }
+.history-points strong { color: var(--text-color); }
+.history-points small { margin-top: .2rem; color: var(--text-color-secondary); font-size: .72rem; }
+.history-more { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: .5rem; width: 100%; margin-top: .8rem; padding: .65rem 1rem; border: 1px solid var(--surface-border, #26364d); border-radius: 12px; color: inherit; background: transparent; font: inherit; font-weight: 700; cursor: pointer; }
+.history-more:disabled { cursor: wait; opacity: .65; }
+.history-inline-error { margin: .7rem 0 0; color: var(--text-color); font-size: .82rem; }
+.empty-state { display: flex; align-items: flex-start; gap: .9rem; padding: 1rem 0; }
+.empty-state > i { margin-top: .2rem; color: var(--house-color); font-size: 1.35rem; }
+.empty-state h3 { margin-bottom: .25rem; font-size: 1rem; }
+@media (min-width: 700px) {
+  .gamification-profile-page { padding: 1.5rem 1.5rem 7rem; }
+  .profile-summary { grid-template-columns: minmax(0,1.35fr) minmax(280px,.75fr); }
+  .identity-panel, .progress-panel { padding: 2rem; }
+  .quick-stats { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .quick-stats div { border-right: 1px solid var(--surface-border, #26364d) !important; border-bottom: 0 !important; }
+  .quick-stats div:last-child { border-right: 0 !important; }
+  .gamification-navigation { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .section-heading { flex-direction: row; align-items: center; justify-content: space-between; }
+  .activity-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .quest-preview-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+@media (max-width: 699px) {
+  .history-list li { grid-template-columns: 44px minmax(0,1fr); align-items: start; }
+  .history-line { align-items: flex-start; flex-direction: column; gap: .2rem; }
+  .history-points { grid-column: 2; min-width: 0; text-align: left; }
+  .history-points strong, .history-points small { display: inline; }
+  .history-points small { margin-left: .5rem; }
+}
+@media (min-width: 1100px) {
+  .gamification-profile-page { padding: 2rem 2rem 4rem; }
+  .gamification-navigation { grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); }
+  .gamification-navigation a { min-height: 82px; }
+  .explore-section { padding: 1.5rem; }
+  .activity-section { padding: 1.5rem; }
+  .activity-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .quest-preview-list { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 </style>

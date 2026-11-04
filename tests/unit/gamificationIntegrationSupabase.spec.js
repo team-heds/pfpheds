@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const addUserXP = vi.fn()
 
@@ -14,12 +14,14 @@ describe('gamificationIntegration Supabase contract', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
+  afterEach(() => vi.restoreAllMocks())
 
   it('records a post through the Supabase engine once', async () => {
+    const dispatchEvent = vi.spyOn(window, 'dispatchEvent')
     addUserXP.mockResolvedValue({
       xp_gained: 25,
       duplicate: false,
-      badges_unlocked: [{ id: 'badge-1' }],
+      badges_unlocked: [{ id: 'badge-1', name: 'Premier post', xp_bonus: 10 }],
     })
 
     const result = await gamificationIntegration.onSocialInteraction('browser-user-id', {
@@ -38,8 +40,18 @@ describe('gamificationIntegration Supabase contract', () => {
       success: true,
       xpGained: 25,
       duplicate: false,
-      badgesUnlocked: [{ id: 'badge-1' }],
+      badgesUnlocked: [{ id: 'badge-1', name: 'Premier post', xp_bonus: 10 }],
     })
+    expect(dispatchEvent).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'gamification:notification',
+      detail: expect.objectContaining({
+        type: 'badge',
+        message: 'Premier post',
+        xpGain: 10,
+        badgeId: 'badge-1',
+        dedupeKey: 'badge:badge-1',
+      }),
+    }))
   })
 
   it('does not call a legacy reward engine for unverifiable UI-only actions', async () => {
@@ -51,6 +63,23 @@ describe('gamificationIntegration Supabase contract', () => {
     expect(addUserXP).not.toHaveBeenCalled()
     expect(result).toMatchObject({ success: true, xpGained: 0 })
     expect(result.rewardSupported).toBe(false)
+  })
+
+  it('scopes a fresh badge notification to the account whose action completed', async () => {
+    const dispatch = vi.spyOn(window, 'dispatchEvent')
+    addUserXP.mockResolvedValue({ xp_gained: 25, duplicate: false, badges_unlocked: [{ id: 'new-badge', name: 'Première réussite' }] })
+    await gamificationIntegration.processUserAction('student-a', 'POST')
+    expect(dispatch).toHaveBeenCalledTimes(1)
+    expect(dispatch.mock.calls[0][0].type).toBe('gamification:notification')
+    expect(dispatch.mock.calls[0][0].detail).toMatchObject({ userId: 'student-a', type: 'badge', badgeId: 'new-badge', dedupeKey: 'badge:new-badge' })
+  })
+
+  it('does not replay badge celebrations when an idempotent response repeats old badges', async () => {
+    const dispatch = vi.spyOn(window, 'dispatchEvent')
+    addUserXP.mockResolvedValue({ xp_gained: 0, duplicate: true, badges_unlocked: [{ id: 'old-badge' }] })
+    const result = await gamificationIntegration.processUserAction('student-a', 'LOGIN')
+    expect(result).toMatchObject({ success: true, duplicate: true, xpGained: 0, badgesUnlocked: [] })
+    expect(dispatch).not.toHaveBeenCalled()
   })
 
   it('does not import a Firebase gamification service', () => {

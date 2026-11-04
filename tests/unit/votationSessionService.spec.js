@@ -37,6 +37,18 @@ function createChain(finalResult) {
 }
 
 describe('votationSessionService', () => {
+  it('rejects invalid years before closing or creating a session', async () => {
+    mockFrom.mockClear()
+    await expect(votationSessionService.openSession('PFP2', '2026-2028', 'BA25', 'admin')).rejects.toThrow('Année académique invalide')
+    expect(mockFrom).not.toHaveBeenCalled()
+  })
+
+  it('writes the end year when opening with an academic label', async () => {
+    const chain = createChain({ data: { year: '2027' }, error: null })
+    mockFrom.mockReturnValue(chain)
+    await votationSessionService.openSession('PFP2', '2026-2027', 'BA25', 'admin')
+    expect(chain.insert).toHaveBeenCalledWith(expect.objectContaining({ year: '2027', pfp_type: 'PFP2' }))
+  })
   beforeEach(() => {
     vi.clearAllMocks()
   })

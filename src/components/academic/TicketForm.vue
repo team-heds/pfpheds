@@ -10,15 +10,17 @@
             :key="type.value"
             class="col-12 md:col-6"
           >
-            <div 
+            <button
+              type="button"
               class="type-card"
               :class="{ 'selected': formData.type === type.value }"
+              :aria-pressed="formData.type === type.value"
               @click="selectType(type.value)"
             >
-              <i :class="type.icon" class="text-2xl"></i>
+              <i :class="type.icon" class="text-2xl" aria-hidden="true"></i>
               <span class="font-semibold">{{ type.label }}</span>
               <p class="text-sm text-600">{{ type.description }}</p>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -46,17 +48,21 @@
         <!-- Boutons de formatage Markdown -->
         <div class="markdown-toolbar">
           <Button 
-            icon="pi pi-bold" 
+            label="B"
+            class="markdown-text-button markdown-text-button-bold"
             @click="insertMarkdown('**', '**', 'texte en gras')"
             text
             size="small"
+            aria-label="Mettre en gras"
             v-tooltip="'Gras'"
           />
           <Button 
-            icon="pi pi-italic" 
+            label="I"
+            class="markdown-text-button markdown-text-button-italic"
             @click="insertMarkdown('_', '_', 'texte en italique')"
             text
             size="small"
+            aria-label="Mettre en italique"
             v-tooltip="'Italique'"
           />
           <Button 
@@ -64,6 +70,7 @@
             @click="insertMarkdown('- ', '', 'élément de liste')"
             text
             size="small"
+            aria-label="Insérer une liste"
             v-tooltip="'Liste'"
           />
           <Button 
@@ -71,6 +78,7 @@
             @click="insertMarkdown('## ', '', 'Titre')"
             text
             size="small"
+            aria-label="Insérer un titre"
             v-tooltip="'Titre'"
           />
           <Button 
@@ -78,6 +86,7 @@
             @click="insertMarkdown('[', '](url)', 'texte du lien')"
             text
             size="small"
+            aria-label="Insérer un lien"
             v-tooltip="'Lien'"
           />
           <Button 
@@ -85,6 +94,7 @@
             @click="insertMarkdown('`', '`', 'code')"
             text
             size="small"
+            aria-label="Insérer du code"
             v-tooltip="'Code inline'"
           />
         </div>
@@ -119,6 +129,7 @@ Vous pouvez utiliser le Markdown :
       <div class="col-12 md:col-6">
         <label for="module" class="block mb-2 font-semibold">Module associé</label>
         <Dropdown
+          inputId="module"
           v-model="formData.module_id"
           :options="modules"
           optionLabel="title"
@@ -137,6 +148,7 @@ Vous pouvez utiliser le Markdown :
           <i class="pi pi-user mr-2"></i>Assigné à
         </label>
         <Dropdown
+          inputId="assigned_to"
           v-model="formData.assigned_to"
           :options="users"
           optionLabel="full_name"
@@ -197,6 +209,7 @@ Vous pouvez utiliser le Markdown :
       <div class="col-12 md:col-6">
         <label for="priority" class="block mb-2 font-semibold">Priorité</label>
         <Dropdown
+          inputId="priority"
           v-model="formData.priority"
           :options="priorityOptions"
           optionLabel="label"
@@ -210,6 +223,7 @@ Vous pouvez utiliser le Markdown :
       <div class="col-12 md:col-6">
         <label for="status" class="block mb-2 font-semibold">Statut initial</label>
         <Dropdown
+          inputId="status"
           v-model="formData.status"
           :options="statusOptions"
           optionLabel="label"
@@ -255,6 +269,7 @@ Vous pouvez utiliser le Markdown :
         <div class="col-12 md:col-6">
           <label for="modality" class="block mb-2 font-semibold">Modalité de production</label>
           <Dropdown
+            inputId="modality"
             v-model="formData.metadata.modality"
             :options="modalityOptions"
             optionLabel="label"
@@ -312,6 +327,7 @@ Vous pouvez utiliser le Markdown :
         <div class="col-12 md:col-6">
           <label for="dev_type" class="block mb-2 font-semibold">Type de développement</label>
           <Dropdown
+            inputId="dev_type"
             v-model="formData.metadata.dev_type"
             :options="devTypeOptions"
             optionLabel="label"
@@ -354,6 +370,7 @@ Vous pouvez utiliser le Markdown :
         <div class="col-12 md:col-6">
           <label for="sim_type" class="block mb-2 font-semibold">Type de simulation</label>
           <Dropdown
+            inputId="sim_type"
             v-model="formData.metadata.sim_type"
             :options="simTypeOptions"
             optionLabel="label"
@@ -442,6 +459,10 @@ const props = defineProps({
   modules: {
     type: Array,
     default: () => []
+  },
+  users: {
+    type: Array,
+    default: null
   }
 })
 
@@ -450,7 +471,7 @@ const emit = defineEmits(['save', 'cancel'])
 const saving = ref(false)
 const errors = ref({})
 const descriptionTextarea = ref(null)
-const users = ref([])
+const users = ref(Array.isArray(props.users) ? [...props.users] : [])
 
 // Charger la liste des utilisateurs
 async function loadUsers() {
@@ -485,7 +506,9 @@ function getInitials(name) {
 }
 
 // Charger les utilisateurs au montage
-loadUsers()
+if (!Array.isArray(props.users)) {
+  loadUsers()
+}
 
 // Configuration Markdown
 marked.setOptions({
@@ -730,6 +753,19 @@ async function submit() {
   flex-wrap: wrap;
 }
 
+.markdown-text-button {
+  font-family: Georgia, serif;
+  font-size: 1rem;
+}
+
+.markdown-text-button-bold {
+  font-weight: 800;
+}
+
+.markdown-text-button-italic {
+  font-style: italic;
+}
+
 .markdown-editor {
   border-radius: 0 0 8px 8px !important;
 }
@@ -852,6 +888,7 @@ async function submit() {
 }
 
 .type-card {
+  width: 100%;
   padding: 1.5rem;
   border: 2px solid var(--surface-border);
   border-radius: 12px;
@@ -862,6 +899,9 @@ async function submit() {
   flex-direction: column;
   gap: 0.5rem;
   height: 100%;
+  color: inherit;
+  font: inherit;
+  background: var(--surface-card);
 }
 
 .type-card:hover {
@@ -874,6 +914,11 @@ async function submit() {
   border: 1px solid var(--primary-color);
   background: var(--surface-card);
   box-shadow: 0 0 0 1px var(--primary-50);
+}
+
+.type-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary-color) 35%, transparent);
+  outline-offset: 2px;
 }
 
 .type-card i {

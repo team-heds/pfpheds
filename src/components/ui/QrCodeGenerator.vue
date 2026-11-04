@@ -1,103 +1,125 @@
 <template>
   <div class="qr-page-wrapper">
-    <Navbar v-if="navbarAvailable" />
-    <div class="landing-bg">
-      <div class="landing-container">
-        <h1 class="p-text-center">Générateur de QR Code</h1>
-        <p class="p-text-center p-mb-4">Créez facilement des QR codes personnalisés et téléchargez-les en un clic.</p>
-        <div class="p-grid p-justify-center">
-          <div class="p-col-12 p-md-6 p-lg-4">
-            <div class="qr-card p-card">
-              <canvas ref="canvas" :width="size" :height="size"></canvas>
-            </div>
+    <Navbar v-if="showNavbar" />
+    <main class="qr-workspace">
+      <header class="qr-header">
+        <h1>Générateur de QR code</h1>
+        <p>Créez un QR code personnalisé et téléchargez-le au format PNG.</p>
+      </header>
+
+      <div class="qr-layout">
+        <section class="qr-preview" aria-label="Aperçu du QR code">
+          <canvas ref="canvas" :width="size" :height="size"></canvas>
+          <p v-if="renderError" class="qr-error" role="alert">{{ renderError }}</p>
+          <p v-else class="qr-preview-help">Aperçu actualisé automatiquement</p>
+        </section>
+
+        <form class="qr-form" @submit.prevent="downloadPng">
+          <div class="field">
+            <label for="qr-url">Lien à encoder</label>
+            <InputText id="qr-url" v-model="url" type="url" placeholder="https://…" class="w-full" />
           </div>
-          <div class="p-col-12 p-md-6 p-lg-4">
-            <div class="p-fluid p-formgrid p-grid form-card">
-            <div class="p-field p-col-12">
-              <label for="url">Lien à encoder</label>
-              <InputText id="url" v-model="url" placeholder="https://..." class="p-inputtext-lg" />
-            </div>
-            <div class="p-field p-col-6 color-field">
-              <label for="fgColor">Couleur du QR</label>
+
+          <div class="color-grid">
+            <div class="field color-field">
+              <label for="qr-fg-color">Couleur du QR</label>
               <div class="color-picker-wrapper">
-                <ColorPicker id="fgColor" v-model="fgColor" format="hex" class="pretty-color-picker" />
-                <InputText v-model="fgColor" maxlength="7" class="hex-input" />
+                <ColorPicker inputId="qr-fg-color" v-model="fgColor" format="hex" />
+                <InputText v-model="fgColor" aria-label="Couleur du QR en hexadécimal" maxlength="7" class="hex-input" />
               </div>
             </div>
-            <div class="p-field p-col-6 color-field">
-              <label for="bgColor">Fond</label>
+            <div class="field color-field">
+              <label for="qr-bg-color">Couleur du fond</label>
               <div class="color-picker-wrapper">
-                <ColorPicker id="bgColor" v-model="bgColor" format="hex" class="pretty-color-picker" />
-                <InputText v-model="bgColor" maxlength="7" class="hex-input" />
+                <ColorPicker inputId="qr-bg-color" v-model="bgColor" format="hex" :disabled="transparentBg" />
+                <InputText v-model="bgColor" aria-label="Couleur du fond en hexadécimal" maxlength="7" class="hex-input" :disabled="transparentBg" />
               </div>
             </div>
-            <div class="p-field-checkbox p-col-12">
-              <Checkbox inputId="transparentBg" v-model="transparentBg" :binary="true" />
-              <label for="transparentBg">Fond transparent</label>
-            </div>
-            <br>
-            <div class="p-field p-col-12">
-              <label for="size">Taille (px)</label>
-              <InputNumber id="size" v-model="size" :min="10" :max="1000" class="p-inputtext-lg" />
-            </div>
-            <div class="p-field p-col-12">
-              <Button label="Télécharger en PNG" class="p-button-primary p-button-lg" @click="downloadPng" :disabled="!url" icon="pi pi-download" />
-            </div>
           </div>
-        </div>
+
+          <div class="transparent-field">
+            <Checkbox inputId="qr-transparent" v-model="transparentBg" :binary="true" />
+            <label for="qr-transparent">Fond transparent</label>
+          </div>
+
+          <div class="field">
+            <label for="qr-size">Taille du fichier</label>
+            <InputNumber inputId="qr-size" v-model="size" :min="120" :max="1000" suffix=" px" class="w-full" />
+            <small>Entre 120 et 1 000 pixels.</small>
+          </div>
+
+          <Button type="submit" label="Télécharger en PNG" icon="pi pi-download" :disabled="!url || Boolean(renderError)" />
+        </form>
       </div>
-    </div>
-  </div>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import QRCode from 'qrcode'
-import InputText from 'primevue/inputtext'
-import ColorPicker from 'primevue/colorpicker'
-import Checkbox from 'primevue/checkbox'
-import InputNumber from 'primevue/inputnumber'
 import Button from 'primevue/button'
-import Navbar from '@/components/common/utils/Navbar.vue';
+import Checkbox from 'primevue/checkbox'
+import ColorPicker from 'primevue/colorpicker'
+import InputNumber from 'primevue/inputnumber'
+import InputText from 'primevue/inputtext'
+import Navbar from '@/components/common/utils/Navbar.vue'
 
-// Variables réactives
-const url = ref('https://example.com')
-const size = ref(240)
+const props = defineProps({
+  showNavbar: { type: Boolean, default: true },
+  initialUrl: { type: String, default: 'https://www.hevs.ch/fr/hautes-ecoles/haute-ecole-de-sante/' },
+  initialSize: { type: Number, default: 240 },
+  initialForeground: { type: String, default: '#071426' },
+  initialBackground: { type: String, default: '#ffffff' },
+  initialTransparent: { type: Boolean, default: false },
+})
+
+const url = ref(props.initialUrl)
+const size = ref(props.initialSize)
 const canvas = ref(null)
-const fgColor = ref('#000000')
-const bgColor = ref('#ffffff')
-const transparentBg = ref(false)
-const navbarAvailable = ref(true)
+const fgColor = ref(props.initialForeground)
+const bgColor = ref(props.initialBackground)
+const transparentBg = ref(props.initialTransparent)
+const renderError = ref('')
+
+const normalizeHex = (value) => {
+  if (!value) return null
+  const normalized = value.startsWith('#') ? value : `#${value}`
+  return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized : null
+}
 
 const renderQr = async () => {
-  if (!canvas.value) return
-  await QRCode.toCanvas(canvas.value, url.value, {
-    width: size.value,
-    margin: 0,
-    errorCorrectionLevel: 'H',
-    color: {
-      dark: fgColor.value,
-      light: transparentBg.value ? '#00000000' : bgColor.value,
-    }
-  })
+  if (!canvas.value || !url.value) return
+  const dark = normalizeHex(fgColor.value)
+  const light = normalizeHex(bgColor.value)
+  if (!dark || (!transparentBg.value && !light)) {
+    renderError.value = 'Utilisez une couleur hexadécimale à six caractères, par exemple #071426.'
+    return
+  }
+
+  try {
+    renderError.value = ''
+    await QRCode.toCanvas(canvas.value, url.value, {
+      width: size.value,
+      margin: 2,
+      errorCorrectionLevel: 'H',
+      color: { dark, light: transparentBg.value ? '#00000000' : light },
+    })
+  } catch {
+    renderError.value = 'Le QR code ne peut pas être généré avec ces informations.'
+  }
 }
 
 watch([url, size, fgColor, bgColor, transparentBg], renderQr)
 onMounted(renderQr)
 
-function downloadPng() {
-  if (!canvas.value) {
-    alert('QR code non généré !')
-    return
-  }
-  renderQr()
-  setTimeout(() => {
-    const link = document.createElement('a')
-    link.download = 'qr-code.png'
-    link.href = canvas.value.toDataURL('image/png')
-    link.click()
-  }, 120)
+async function downloadPng() {
+  if (!canvas.value || renderError.value) return
+  await renderQr()
+  const link = document.createElement('a')
+  link.download = 'qr-code.png'
+  link.href = canvas.value.toDataURL('image/png')
+  link.click()
 }
 </script>
 
@@ -107,124 +129,103 @@ function downloadPng() {
   width: 100%;
 }
 
-.landing-bg {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
+.qr-workspace {
+  width: min(100% - 2rem, 64rem);
+  margin-inline: auto;
+  padding-block: clamp(2rem, 6vw, 5rem);
 }
 
-.landing-container {
-  background: var(--surface-card, #232946);
-  border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  padding: 2.5rem 2rem;
-  max-width: 900px;
-  width: 100%;
-  color: var(--text-color, #ffffff);
+.qr-header { margin-bottom: 2rem; }
+
+.qr-header h1 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  letter-spacing: -.03em;
 }
 
-.landing-container h1 {
-  color: var(--text-color, #ffffff);
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
+.qr-header p {
+  max-width: 58ch;
+  margin: .65rem 0 0;
+  color: var(--text-color-secondary);
+  line-height: 1.6;
 }
 
-.landing-container p {
-  color: var(--text-color-secondary, #cbd5e1);
-  font-size: 1rem;
+.qr-layout {
+  display: grid;
+  grid-template-columns: minmax(18rem, .85fr) minmax(20rem, 1.15fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
 }
-.qr-card {
-  background: var(--surface-overlay, #2a2f4f);
-  border-radius: 12px;
+
+.qr-preview {
+  display: grid;
+  place-items: center;
+  gap: 1rem;
+  min-height: 24rem;
   padding: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 320px;
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
+  background: var(--surface-card);
 }
 
 canvas {
-  background: #ffffff;
-  width: 240px;
-  height: 240px;
-  max-width: 100%;
-  border-radius: 8px;
+  width: min(100%, 15rem);
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: .5rem;
 }
 
-.form-card {
-  background: var(--surface-card, #232946);
-  border-radius: 12px;
-  padding: 2rem 1rem 1rem 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  margin-top: 1rem;
-}
-.p-field {
-  margin-bottom: 1.5rem;
+.qr-preview-help,
+.qr-error {
+  margin: 0;
+  color: var(--text-color-secondary);
+  font-size: .875rem;
+  text-align: center;
 }
 
-.p-field label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-color, #ffffff);
-  font-weight: 500;
-  font-size: 0.95rem;
+.qr-error { color: #f87171; }
+
+.qr-form {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--surface-border);
+  border-bottom: 1px solid var(--surface-border);
 }
 
-.color-field label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-color, #ffffff);
-  font-weight: 500;
+.field { display: grid; gap: .5rem; }
+
+.field label,
+.transparent-field label {
+  color: var(--text-color);
+  font-weight: 600;
 }
-.color-picker-wrapper {
+
+.field small { color: var(--text-color-secondary); }
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.color-picker-wrapper,
+.transparent-field {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-}
-.pretty-color-picker {
-  border-radius: 8px;
-  box-shadow: 0 0 0 2px var(--primary-color, #2196F3)33;
-  overflow: hidden;
-}
-.hex-input {
-  width: 90px;
-  font-size: 1rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  background: var(--surface-overlay, #2a2f4f);
-  color: #fff;
+  gap: .75rem;
 }
 
-.p-field-checkbox label {
-  color: var(--text-color, #ffffff);
-  margin-left: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
+.hex-input { min-width: 0; width: 8rem; }
+
+@media (max-width: 44rem) {
+  .qr-layout { grid-template-columns: 1fr; }
+  .qr-preview { min-height: 19rem; padding: 1.25rem; }
+  .qr-form { padding-inline: 0; }
 }
-.p-button-lg {
-  font-size: 1.15rem;
-  padding: 0.75rem 2rem;
-}
-@media (max-width: 600px) {
-  .landing-container {
-    padding: 1rem 0.5rem;
-  }
-  .qr-card {
-    padding: 1rem;
-    min-height: 180px;
-  }
-  canvas {
-    width: 160px;
-    height: 160px;
-  }
-  .form-card {
-    padding: 1rem 0.5rem;
-  }
+
+@media (max-width: 28rem) {
+  .color-grid { grid-template-columns: 1fr; }
 }
 </style>

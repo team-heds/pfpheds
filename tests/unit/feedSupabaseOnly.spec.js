@@ -26,4 +26,15 @@ describe('FeedView Supabase', () => {
     expect(source).toContain("postsContainerRef.value?.addEventListener('scroll', handleScroll)")
     expect(source).toContain('scroll-target="window"')
   })
+
+  it('récompense aussi une publication Supabase créée depuis le parcours mobile', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/components/social/library/CreateContentMobile.vue'),
+      'utf8'
+    )
+
+    expect(source).toContain("import gamificationIntegration from '@/service/gamificationIntegration'")
+    expect(source).toContain('gamificationIntegration.onSocialInteraction(user.id')
+    expect(source).toContain('targetId: inserted.id')
+  })
 })

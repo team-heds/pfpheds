@@ -1,6 +1,7 @@
 <template>
-  <div class="mini-chart-wrapper">
+  <div class="mini-chart-wrapper" :role="chartData ? 'img' : 'status'" :aria-label="accessibleLabel">
     <Line v-if="chartData" :data="chartData" :options="chartOptions" />
+    <span v-else class="chart-empty">Aucune donnée</span>
   </div>
 </template>
 
@@ -31,7 +32,8 @@ const props = defineProps({
   height: {
     type: [Number, String],
     default: 40
-  }
+  },
+  accessibleLabel: { type: String, default: 'Évolution de l’indicateur' }
 })
 
 const chartData = computed(() => {
@@ -98,5 +100,12 @@ const chartOptions = computed(() => ({
   width: 100%;
   height: v-bind('height + "px"');
   margin-top: 0.5rem;
+}
+.chart-empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--text-color-secondary);
+  font-size: .875rem;
 }
 </style>

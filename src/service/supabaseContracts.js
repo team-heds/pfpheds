@@ -38,6 +38,9 @@ export const CRITICAL_SUPABASE_CONTRACTS = Object.freeze({
     'display_name',
     'forname',
     'family_name',
+    'city',
+    'preferred_language',
+    'canton_of_origin',
     'pfp_cohort',
     'role',
     'is_active'

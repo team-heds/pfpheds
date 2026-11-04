@@ -1,13 +1,13 @@
 <template>
   <div class="page-wrapper">
     <Navbar />
-    <div class="achievements-page" :style="{ '--house-color': houseColor }">
+    <div class="achievements-page" :style="{ '--house-color': houseColor, '--house-foreground': houseTextColor }">
       
       <!-- Loading State -->
       <div v-if="loading" class="loading-container">
         <div class="loading-spinner">
           <i class="pi pi-spin pi-spinner"></i>
-          <p>Chargement des achievements...</p>
+          <p>Chargement des badges...</p>
         </div>
       </div>
 
@@ -23,54 +23,28 @@
       <div v-else class="achievements-content">
         
         <!-- Page Header -->
-        <div class="page-header">
-          <div class="header-content">
-            <div class="title-section">
-              <h1><i class="pi pi-trophy"></i> Mes Achievements</h1>
-              <p>Découvrez tous les badges disponibles et votre progression</p>
-            </div>
-            <Button @click="goBack" class="back-btn">
-              <i class="pi pi-arrow-left"></i>
-              Retour
-            </Button>
-          </div>
-        </div>
+        <GamificationPageHeader
+          title="Mes badges"
+          description="Visualisez les badges obtenus, les prochains objectifs et votre progression globale."
+          eyebrow="Collection et progression"
+          icon="pi pi-verified"
+          @back="goBack"
+        />
 
         <!-- Statistics Overview -->
         <div class="stats-overview">
-          <div class="stat-card completion">
-            <div class="stat-icon">🏆</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ userBadges.length }}/{{ totalBadges }}</div>
-              <div class="stat-label">Badges Débloqués</div>
-              <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: completionPercentage + '%' }"></div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="stat-card xp">
-            <div class="stat-icon">⭐</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ formatNumber(totalXPFromBadges) }}</div>
-              <div class="stat-label">XP des Badges</div>
-            </div>
-          </div>
-          
-          <div class="stat-card rarity">
-            <div class="stat-icon">💎</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ rareBadgesCount }}</div>
-              <div class="stat-label">Badges Rares+</div>
-            </div>
-          </div>
+          <GamificationStatCard icon="pi pi-verified" :value="`${userBadges.length}/${totalBadges}`" label="Badges débloqués" :progress="completionPercentage" />
+          <GamificationStatCard icon="pi pi-star-fill" :value="formatNumber(totalXPFromBadges)" label="XP gagnés avec les badges" />
+          <GamificationStatCard icon="pi pi-star" :value="rareBadgesCount" label="Badges rares ou supérieurs" />
         </div>
 
         <!-- Filters and Search -->
         <div class="filters-section">
           <div class="search-bar">
             <i class="pi pi-search"></i>
+            <label class="sr-only" for="badge-search">Rechercher un badge</label>
             <input 
+              id="badge-search"
               v-model="searchQuery" 
               type="text" 
               placeholder="Rechercher un badge..."
@@ -78,19 +52,22 @@
             />
           </div>
           
-          <div class="filter-buttons">
+          <div class="filter-buttons" role="group" aria-label="Filtrer les badges">
             <Button 
               v-for="filter in filters" 
               :key="filter.key"
               @click="activeFilter = filter.key"
               :class="['filter-btn', { active: activeFilter === filter.key }]"
+              :aria-pressed="activeFilter === filter.key"
             >
               {{ filter.label }}
             </Button>
           </div>
           
           <div class="sort-dropdown">
+            <label class="sr-only" for="badge-sort">Trier les badges</label>
             <Dropdown 
+              inputId="badge-sort"
               v-model="sortBy" 
               :options="sortOptions" 
               optionLabel="label" 
@@ -101,6 +78,7 @@
         </div>
 
         <!-- Badges Grid -->
+        <h2 class="sr-only">Badges disponibles</h2>
         <div class="badges-grid">
           <BadgeCard
             v-for="badge in filteredAndSortedBadges"
@@ -109,6 +87,8 @@
             :is-unlocked="isUnlocked(badge.id)"
             :progress-hint="getProgressHint(badge)"
             :show-progress="true"
+            :progress-value="badge.currentValue"
+            :progress-max="badge.targetValue"
             @click="showBadgeModal(badge)"
             class="achievement-badge"
           />
@@ -116,7 +96,7 @@
 
         <!-- Empty State -->
         <div v-if="filteredAndSortedBadges.length === 0" class="empty-state">
-          <div class="empty-icon">🔍</div>
+          <div class="empty-icon" aria-hidden="true"><i class="pi pi-search"></i></div>
           <h3>Aucun badge trouvé</h3>
           <p>Essayez de modifier vos filtres ou votre recherche</p>
         </div>
@@ -155,27 +135,23 @@
         </div>
       </Dialog>
 
-      <!-- Achievement Notification -->
-      <AchievementNotification
-        v-if="showNotification && currentNotification"
-        :badge="currentNotification"
-        @close="onNotificationClose"
-      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import badgesService from '@/service/badgesService'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import BadgeCard from '@/components/gamification/BadgeCard.vue'
-import AchievementNotification from '@/components/gamification/AchievementNotification.vue'
+import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
+import GamificationStatCard from '@/components/gamification/GamificationStatCard.vue'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Dropdown from 'primevue/dropdown'
+import { getReadableTextColor } from '@/utils/colorContrast'
 
 // Router and auth
 const router = useRouter()
@@ -191,8 +167,8 @@ const activeFilter = ref('all')
 const sortBy = ref('rarity')
 const showModal = ref(false)
 const selectedBadge = ref(null)
-const showNotification = ref(false)
-const currentNotification = ref(null)
+let loadGeneration = 0
+let disposed = false
 
 // House configuration
 const houseConfig = {
@@ -200,6 +176,15 @@ const houseConfig = {
   'Elaris': { name: 'Elaris', color: '#DC143C' },
   'Doloris': { name: 'Doloris', color: '#FFD700' },
   'Solencia': { name: 'Solencia', color: '#4169E1' }
+}
+
+const normalizeHouse = (value) => {
+  const normalized = String(value || '').trim().toLowerCase()
+  if (normalized.startsWith('harm')) return 'Harmonis'
+  if (normalized.startsWith('ela')) return 'Elaris'
+  if (normalized.startsWith('dol')) return 'Doloris'
+  if (normalized.startsWith('sol')) return 'Solencia'
+  return null
 }
 
 // Filters and sort options
@@ -222,9 +207,10 @@ const sortOptions = [
 
 // Computed properties
 const houseColor = computed(() => {
-  // TODO: Get user house from auth/store
-  return '#2E8B57' // Default Harmonis color
+  const house = normalizeHouse(authStore.user?.maison || authStore.user?.user_metadata?.maison || authStore.user?.user_metadata?.house)
+  return houseConfig[house]?.color || '#2E8B57'
 })
+const houseTextColor = computed(() => getReadableTextColor(houseColor.value))
 
 const totalBadges = computed(() => allBadges.value.length)
 
@@ -307,9 +293,7 @@ const isUnlocked = (badgeId) => {
 }
 
 const getProgressHint = (badge) => {
-  // TODO: Implement progress calculation based on badge conditions
-  if (isUnlocked(badge.id)) return null
-  return "Progression à implémenter"
+  return badge.progressHint || null
 }
 
 const showBadgeModal = (badge) => {
@@ -317,41 +301,52 @@ const showBadgeModal = (badge) => {
   showModal.value = true
 }
 
-const onNotificationClose = () => {
-  showNotification.value = false
-  currentNotification.value = null
-}
-
 const goBack = () => {
   router.go(-1)
 }
 
 const loadData = async () => {
+  if (disposed) return
+  const userId = authStore.user?.id || null
+  const generation = ++loadGeneration
+  const isCurrent = () => !disposed && generation === loadGeneration && authStore.user?.id === userId
+  loading.value = Boolean(userId)
+  loadError.value = ''
+  if (!userId) {
+    loadError.value = 'Connectez-vous pour retrouver vos badges.'
+    return
+  }
   try {
-    loading.value = true
-    loadError.value = ''
-    
-    if (!authStore.user?.id) {
-      throw new Error('Utilisateur non connecté')
-    }
-    
-    // Load all badges
-    allBadges.value = await badgesService.getAllBadges()
-    
-    // Load user badges
-    userBadges.value = await badgesService.getUserBadges(authStore.user.id)
+    const badges = await badgesService.getMyBadgeProgress()
+    if (!isCurrent()) return
+    const unlocked = badges.filter((badge) => badge.isUnlocked)
+    allBadges.value = badges
+    userBadges.value = unlocked
     
   } catch (error) {
+    if (!isCurrent()) return
     console.error('Erreur lors du chargement des données:', error)
     loadError.value = 'Les badges ne peuvent pas être chargés pour le moment.'
   } finally {
-    loading.value = false
+    if (isCurrent()) loading.value = false
   }
 }
 
 // Lifecycle
-onMounted(() => {
-  loadData()
+watch(() => authStore.user?.id || null, () => {
+  allBadges.value = []
+  userBadges.value = []
+  showModal.value = false
+  selectedBadge.value = null
+  searchQuery.value = ''
+  activeFilter.value = 'all'
+  sortBy.value = 'rarity'
+  void loadData()
+}, { immediate: true, flush: 'sync' })
+
+onBeforeUnmount(() => {
+  disposed = true
+  loadGeneration += 1
 })
 </script>
 
@@ -365,7 +360,8 @@ onMounted(() => {
 
 .achievements-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: #0b213f;
+  padding-top: 2rem;
   padding-bottom: 4rem;
 }
 
@@ -422,7 +418,7 @@ onMounted(() => {
 
 .back-btn {
   background: var(--house-color);
-  color: white;
+  color: var(--house-foreground);
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -491,18 +487,21 @@ onMounted(() => {
 .progress-fill {
   height: 100%;
   background: var(--house-color);
-  transition: width 0.3s ease;
 }
 
 /* Filters Section */
 .filters-section {
   max-width: 1200px;
   margin: 2rem auto;
-  padding: 0 2rem;
+  padding: 1rem;
   display: flex;
   gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
+  background: #071426;
+  border: 1px solid #243a58;
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .search-bar {
@@ -521,9 +520,10 @@ onMounted(() => {
 
 .search-input {
   width: 100%;
+  min-height: 44px;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.875rem;
 }
 
@@ -534,11 +534,12 @@ onMounted(() => {
 }
 
 .filter-btn {
+  min-height: 44px;
   padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #6b7280;
-  border-radius: 6px;
+  border: 1px solid #465c78;
+  background: #101d31;
+  color: #e5eaf0;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 0.875rem;
   transition: all 0.2s ease;
@@ -546,8 +547,17 @@ onMounted(() => {
 
 .filter-btn.active {
   background: var(--house-color);
-  color: white;
+  color: var(--house-foreground);
   border-color: var(--house-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill,
+  .filter-btn,
+  .achievement-badge {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* Badges Grid */
@@ -577,8 +587,14 @@ onMounted(() => {
 }
 
 .empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 1rem;
+  place-items: center;
+  color: var(--house-foreground);
+  background: var(--house-color);
+  border-radius: 1rem;
 }
 
 .empty-state h3 {

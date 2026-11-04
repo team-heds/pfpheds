@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase.js'
+import { runtimeFeatures } from '@/config/runtimeFeatures'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -143,6 +144,7 @@ export const useUserStore = defineStore('user', {
     },
 
     subscribeProfile() {
+      if (!runtimeFeatures.supabaseRealtime) return
       if (!this.user || this.profileChannel) return
 
       try {

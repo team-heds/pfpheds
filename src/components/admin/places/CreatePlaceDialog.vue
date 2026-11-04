@@ -452,8 +452,7 @@ import { usePlacesStore } from '@/stores/placesStore'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePraticiensStore } from '@/stores/praticiensStore'
 import { useDataRefresh } from '@/composables/useDataRefresh'
-import { storage } from '@/firebase'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { uploadPfpDocument } from '@/service/pfpDocumentMediaService'
 
 const props = defineProps({
   visible: {
@@ -605,6 +604,9 @@ function generatePlaceId() {
   return `-N${timestamp}${random}`
 }
 
+const pendingPlaceId = ref(generatePlaceId())
+const uploadedFileName = ref('')
+
 // Créer la place
 async function onCreate() {
   submitted.value = true
@@ -620,7 +622,7 @@ async function onCreate() {
     // Si un fichier est sélectionné mais pas encore uploadé, l'uploader automatiquement
     if (selectedFile.value && !formData.value.fileURL) {
       console.log('📤 Upload automatique du fichier avant création...')
-      await uploadFile()
+      if (!await uploadFile()) return
       console.log('✅ Fichier uploadé automatiquement, URL:', formData.value.fileURL)
     }
 
@@ -683,7 +685,7 @@ async function onCreate() {
 
     // Données de la nouvelle place (UNIQUEMENT les colonnes de la table places)
     const newPlaceData = {
-      PlaceId: generatePlaceId(),
+      PlaceId: pendingPlaceId.value,
       NomPlace: formData.value.NomPlace,
       InstitutionId: formData.value.InstitutionId,
       // NOTE: fileURL n'existe pas dans la table places - le PDF est géré ailleurs
@@ -726,7 +728,7 @@ async function onCreate() {
       console.log('📄 Mise à jour du PDF pour la place:', placeId)
       await placesStore.updatePlace(placeId, {
         fileurl: formData.value.fileURL,
-        filename: selectedFile.value?.name || 'document.pdf'
+        filename: uploadedFileName.value || selectedFile.value?.name || 'document.pdf'
       })
       console.log('✅ PDF enregistré')
     }
@@ -805,52 +807,25 @@ function formatFileSize(bytes) {
 }
 
 async function uploadFile() {
-  if (!selectedFile.value) return
-
-  // Générer un ID temporaire pour le path si pas encore de PlaceId
-  const tempPlaceId = generatePlaceId()
+  if (!selectedFile.value) return false
   
   uploading.value = true
 
   try {
-    console.log('📤 Upload du fichier:', selectedFile.value.name)
-
-    // Créer un nom de fichier unique avec timestamp
-    const timestamp = Date.now()
-    const fileName = `${timestamp}_${selectedFile.value.name}`
-    const filePath = `places/${tempPlaceId}/${fileName}`
-
-    console.log('📁 Upload vers Firebase Storage:', filePath)
-
-    // Créer la référence Firebase Storage
-    const fileRef = storageRef(storage, filePath)
-
-    // Upload le fichier vers Firebase Storage
-    const snapshot = await uploadBytes(fileRef, selectedFile.value, {
-      contentType: 'application/pdf',
-      customMetadata: {
-        uploadedAt: new Date().toISOString()
-      }
-    })
-
-    console.log('✅ Fichier uploadé:', snapshot.metadata.fullPath)
-
-    // Obtenir l'URL de téléchargement avec token
-    const downloadURL = await getDownloadURL(fileRef)
-
-    console.log('🔗 URL du fichier:', downloadURL)
-
-    // Mettre à jour le champ fileURL du formulaire
-    formData.value.fileURL = downloadURL
+    const uploaded = await uploadPfpDocument('places', pendingPlaceId.value, selectedFile.value)
+    formData.value.fileURL = uploaded.url
+    uploadedFileName.value = uploaded.name
 
     alert('✅ Fichier uploadé avec succès !')
     
     // Nettoyer
     clearFile()
+    return true
 
   } catch (error) {
     console.error('❌ Erreur lors de l\'upload:', error)
     alert('Erreur lors de l\'upload du fichier: ' + error.message)
+    return false
   } finally {
     uploading.value = false
   }
@@ -858,6 +833,8 @@ async function uploadFile() {
 
 // Fermer le dialog
 function onClose() {
+  pendingPlaceId.value = generatePlaceId()
+  uploadedFileName.value = ''
   isVisible.value = false
   submitted.value = false
   // Nettoyer le fichier sélectionné

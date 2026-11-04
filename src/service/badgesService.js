@@ -21,6 +21,49 @@ const normalizeBadge = (badge, earnedAt = null) => {
   return { ...badge, category, color: conditions.color || BADGE_RARITY[badge.rarity]?.color || BADGE_CATEGORIES[category]?.color || '#64748B', xpBonus: Number(badge.xp_bonus || 0), unlockedAt: earnedAt, unlocked_at: earnedAt }
 }
 
+const conditionLabels = {
+  total_xp: 'XP cumulés',
+  level: 'Niveau atteint',
+  action_count: 'Actions validées'
+}
+
+export const formatBadgeProgress = (badge) => {
+  const current = Number(badge.currentValue || 0)
+  const target = Number(badge.targetValue || 0)
+  const label = conditionLabels[badge.conditionKind] || 'Progression'
+  const actionLabels = {
+    LOGIN: 'Connexions quotidiennes',
+    PROFILE_UPDATE: 'Mises à jour du profil',
+    POST: 'Publications créées'
+  }
+  const condition = badge.conditionKind === 'action_count'
+    ? (actionLabels[badge.actionType] || label)
+    : label
+  return `${condition} : ${Math.min(current, target)}/${target}`
+}
+
+export const getMyBadgeProgress = async () => {
+  const { data, error } = await supabase.rpc('get_my_badge_progress')
+  if (error) throw error
+  return (Array.isArray(data) ? data : []).map((badge) => {
+    const normalized = normalizeBadge(badge, badge.earned_at || null)
+    return {
+      ...normalized,
+      conditionKind: badge.condition_kind,
+      actionType: badge.action_type || null,
+      currentValue: Number(badge.current_value || 0),
+      targetValue: Number(badge.target_value || 0),
+      isUnlocked: Boolean(badge.earned_at),
+      progressHint: formatBadgeProgress({
+        conditionKind: badge.condition_kind,
+        actionType: badge.action_type,
+        currentValue: badge.current_value,
+        targetValue: badge.target_value
+      })
+    }
+  })
+}
+
 export const getAllBadges = async () => {
   const { data, error } = await supabase.from('badges').select('id,name,description,icon,rarity,xp_bonus,conditions,is_active,created_at').eq('is_active', true).order('created_at', { ascending: true })
   if (error) throw error
@@ -52,4 +95,4 @@ export const unlockBadge = serverManagedOnly
 export const autoCheckAndUnlockBadges = serverManagedOnly
 export const checkAndUnlockActionBadges = serverManagedOnly
 
-export default { BADGE_CATEGORIES, BADGE_RARITY, getAllBadges, getUserBadges, getUserBadgeHistory, calculateBadgeStats, checkUnlockedBadges, unlockBadge, autoCheckAndUnlockBadges, checkAndUnlockActionBadges }
+export default { BADGE_CATEGORIES, BADGE_RARITY, getAllBadges, getUserBadges, getUserBadgeHistory, getMyBadgeProgress, formatBadgeProgress, calculateBadgeStats, checkUnlockedBadges, unlockBadge, autoCheckAndUnlockBadges, checkAndUnlockActionBadges }

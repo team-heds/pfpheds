@@ -1,34 +1,16 @@
 <template>
-  <div class="p-4">
-    <!-- Header simplifié -->
-    <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border">
-      <div class="flex align-items-center gap-3">
-        <div class="bg-green-50 w-3rem h-3rem border-circle flex align-items-center justify-content-center">
-          <i class="pi pi-users text-green-500 text-xl"></i>
-        </div>
-        <div>
-          <h2 class="text-2xl font-bold text-900 m-0">Gestion des Utilisateurs</h2>
-          <p class="text-600 m-0">Gérez les utilisateurs et leurs maisons</p>
-        </div>
-      </div>
-      <Button 
-        @click="showPointsDialog = true; resetPointsForm()"
-        icon="pi pi-plus-circle"
-        label="Ajouter Points"
-        class="p-button-success"
-      />
-    </div>
-
+  <div class="user-manager p-4">
     <!-- Filtres et contrôles de vue -->
     <div class="mb-4">
-      <div class="flex flex-wrap gap-3 align-items-center justify-content-between">
-        <div class="flex flex-wrap gap-3 align-items-center">
-          <div class="p-inputgroup" style="min-width: 300px">
+      <div class="user-manager-toolbar flex flex-wrap gap-3 align-items-center justify-content-between">
+        <div class="user-manager-filters flex flex-wrap gap-3 align-items-center">
+          <div class="p-inputgroup user-search">
             <span class="p-inputgroup-addon">
               <i class="pi pi-search"></i>
             </span>
-            <InputText 
-              v-model="searchQuery" 
+            <InputText
+              v-model="searchQuery"
+              aria-label="Rechercher un utilisateur"
               placeholder="Rechercher un utilisateur..."
               @input="filterUsers"
             />
@@ -36,6 +18,7 @@
           
           <Dropdown 
             v-model="selectedHouse" 
+            aria-label="Filtrer les utilisateurs par maison"
             :options="houseOptions" 
             optionLabel="label" 
             optionValue="value"
@@ -49,6 +32,7 @@
         <div class="flex align-items-center gap-2">
           <Button 
             icon="pi pi-th-large"
+            aria-label="Afficher les utilisateurs en cartes"
             :class="viewMode === 'cards' ? 'p-button-success' : 'p-button-outlined'"
             @click="viewMode = 'cards'"
             v-tooltip.top="'Vue en cartes'"
@@ -56,6 +40,7 @@
           />
           <Button 
             icon="pi pi-list"
+            aria-label="Afficher les utilisateurs en tableau"
             :class="viewMode === 'table' ? 'p-button-success' : 'p-button-outlined'"
             @click="viewMode = 'table'"
             v-tooltip.top="'Vue en tableau'"
@@ -155,22 +140,26 @@
               
               <div class="flex gap-2 justify-content-center">
                 <Button 
+                  v-if="canManageUsers"
                   @click="addPointsToUser(user)"
                   icon="pi pi-plus-circle"
                   class="p-button-success p-button-sm flex-1"
-                  label="Points"
+                  label="Ajouter des XP"
+                />
+                <Button
+                  v-if="canManageUsers"
+                  @click="editUserHouse(user)"
+                  icon="pi pi-home"
+                  class="p-button-outlined p-button-sm"
+                  :aria-label="`Changer la maison de ${user.displayName}`"
+                  v-tooltip="'Changer de maison'"
                 />
                 <Button 
                   @click="viewUserProfile(user)"
                   icon="pi pi-eye"
                   class="p-button-info p-button-sm"
+                  :aria-label="`Voir le profil gamification de ${user.displayName}`"
                   v-tooltip="'Voir profil'"
-                />
-                <Button 
-                  @click="resetUserProgress(user)"
-                  icon="pi pi-refresh"
-                  class="p-button-warning p-button-sm"
-                  v-tooltip="'Réinitialiser'"
                 />
               </div>
             </div>
@@ -263,22 +252,27 @@
             <template #body="{ data }">
               <div class="flex gap-1 justify-content-center">
                 <Button 
+                  v-if="canManageUsers"
                   @click="addPointsToUser(data)"
                   icon="pi pi-plus-circle"
+                  :aria-label="`Ajouter des XP à ${data.displayName}`"
                   class="p-button-text p-button-success p-button-sm"
                   v-tooltip="'Ajouter des points'"
+                />
+                <Button
+                  v-if="canManageUsers"
+                  @click="editUserHouse(data)"
+                  icon="pi pi-home"
+                  :aria-label="`Changer la maison de ${data.displayName}`"
+                  class="p-button-text p-button-secondary p-button-sm"
+                  v-tooltip="'Changer de maison'"
                 />
                 <Button 
                   @click="viewUserProfile(data)"
                   icon="pi pi-eye"
+                  :aria-label="`Voir le profil gamification de ${data.displayName}`"
                   class="p-button-text p-button-info p-button-sm"
                   v-tooltip="'Voir profil'"
-                />
-                <Button 
-                  @click="resetUserProgress(data)"
-                  icon="pi pi-refresh"
-                  class="p-button-text p-button-warning p-button-sm"
-                  v-tooltip="'Réinitialiser progression'"
                 />
               </div>
             </template>
@@ -290,32 +284,36 @@
     <!-- Dialog de modification de maison -->
     <Dialog 
       v-model:visible="showHouseDialog" 
-      header="Modifier la Maison"
+      header="Changer la maison"
       :modal="true"
       :closable="true"
-      :style="{ width: '500px' }"
+      :style="{ width: 'min(540px, calc(100vw - 2rem))', maxHeight: 'calc(100vh - 2rem)' }"
+      class="user-action-dialog"
+      @hide="resetHouseForm"
     >
       <div class="flex flex-column gap-4">
-        <div class="field">
-          <label for="userSelect" class="font-semibold text-900">Utilisateur *</label>
-          <Dropdown 
-            id="userSelect"
-            v-model="houseForm.userId" 
-            :options="allUsers" 
-            optionLabel="displayName" 
-            optionValue="id"
-            placeholder="Sélectionner un utilisateur"
-            :class="{ 'p-invalid': errors.userId }"
-            filter
-            class="w-full"
+        <div class="selected-user-summary">
+          <Avatar
+            v-if="houseForm.userPhoto"
+            :image="houseForm.userPhoto"
+            size="normal"
+            shape="circle"
           />
-          <small v-if="errors.userId" class="p-error">{{ errors.userId }}</small>
+          <Avatar v-else icon="pi pi-user" size="normal" shape="circle" />
+          <div class="min-w-0">
+            <div class="font-semibold text-900 overflow-wrap-anywhere">{{ houseForm.userName }}</div>
+            <div class="text-600 text-sm overflow-wrap-anywhere">{{ houseForm.userEmail }}</div>
+          </div>
         </div>
+        <p class="action-explanation m-0">
+          La maison sera mise à jour dans le profil et dans la progression gamification. Cette action est journalisée.
+        </p>
         
         <div class="field">
-          <label for="houseSelect" class="font-semibold text-900">Maison *</label>
+          <label for="user-house-select" class="font-semibold text-900">Nouvelle maison *</label>
           <Dropdown 
-            id="houseSelect"
+            inputId="user-house-select"
+            aria-label="Nouvelle maison de l’utilisateur"
             v-model="houseForm.house" 
             :options="houseOptions.filter(h => h.value)" 
             optionLabel="label" 
@@ -336,8 +334,9 @@
         />
         <Button 
           @click="assignHouse" 
-          label="Modifier"
+          label="Enregistrer la maison"
           :loading="assigning"
+          :disabled="!houseSelectionChanged"
           class="p-button-success"
         />
       </template>
@@ -346,15 +345,17 @@
     <!-- Dialog d'ajout de points -->
     <Dialog 
       v-model:visible="showPointsDialog" 
-      header="Ajouter des Points XP"
+      header="Ajouter des XP"
       :modal="true"
       :closable="true"
-      :style="{ width: '500px' }"
+      :style="{ width: 'min(540px, calc(100vw - 2rem))', maxHeight: 'calc(100vh - 2rem)' }"
+      class="user-action-dialog"
+      @hide="resetPointsForm"
     >
       <div class="flex flex-column gap-4">
         <div class="field">
-          <label class="font-semibold text-900">Utilisateur sélectionné</label>
-          <div class="p-3 surface-100 border-round flex align-items-center gap-2">
+          <span class="font-semibold text-900">Utilisateur sélectionné</span>
+          <div class="selected-user-summary mt-2">
             <Avatar 
               v-if="pointsForm.userPhoto" 
               :image="pointsForm.userPhoto" 
@@ -373,12 +374,17 @@
               <div class="text-600 text-sm">{{ pointsForm.userEmail }}</div>
             </div>
           </div>
+          <small v-if="pointsErrors.userId" class="p-error">{{ pointsErrors.userId }}</small>
         </div>
+        <p class="action-explanation m-0">
+          L’ajout crée une écriture d’audit dans l’historique XP et recalcule automatiquement le niveau et les points de maison.
+        </p>
         
         <div class="field">
-          <label for="pointsInput" class="font-semibold text-900">Points à ajouter *</label>
+          <label for="user-xp-amount" class="font-semibold text-900">XP à ajouter *</label>
           <InputNumber 
-            id="pointsInput"
+            inputId="user-xp-amount"
+            aria-label="Nombre de points XP à ajouter"
             v-model="pointsForm.points" 
             :min="1"
             :max="1000"
@@ -392,9 +398,9 @@
         </div>
         
         <div class="field">
-          <label for="reasonInput" class="font-semibold text-900">Raison *</label>
+          <label for="user-xp-reason" class="font-semibold text-900">Raison *</label>
           <Textarea 
-            id="reasonInput"
+            id="user-xp-reason"
             v-model="pointsForm.reason" 
             placeholder="Pourquoi attribuer ces points ? (ex: Participation exceptionnelle, projet réussi...)"
             :class="{ 'p-invalid': pointsErrors.reason }"
@@ -415,7 +421,7 @@
         />
         <Button 
           @click="addPoints" 
-          label="Ajouter Points"
+          label="Confirmer l’ajout d’XP"
           :loading="assigning"
           class="p-button-success"
           icon="pi pi-plus-circle"
@@ -426,34 +432,45 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
-import Tag from 'primevue/tag'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Avatar from 'primevue/avatar'
-import ToggleButton from 'primevue/togglebutton'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
 
 const toast = useToast()
 const router = useRouter()
-const authStore = useAuthStore()
+const route = useRoute()
+
+const resolveStorageUrl = (value) => {
+  if (!value || typeof value !== 'string') return value
+
+  try {
+    const url = new URL(value)
+    if (!url.pathname.startsWith('/storage/v1/')) return value
+
+    const storageOrigin = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/+$/, '')
+    return storageOrigin ? `${storageOrigin}${url.pathname}${url.search}${url.hash}` : value
+  } catch {
+    return value
+  }
+}
 
 // État réactif
 const users = ref([])
-const allUsers = ref([])
 const filteredUsers = ref([])
 const loading = ref(true)
 const assigning = ref(false)
+const canManageUsers = ref(false)
 
 // Filtres
 const searchQuery = ref('')
@@ -469,13 +486,19 @@ const showPointsDialog = ref(false)
 // Formulaire d'attribution de maison
 const houseForm = reactive({
   userId: '',
-  house: ''
+  userName: '',
+  userEmail: '',
+  userPhoto: '',
+  house: '',
+  originalHouse: ''
 })
 
 // Formulaire d'ajout de points
 const pointsForm = reactive({
   userId: '',
   userName: '',
+  userEmail: '',
+  userPhoto: '',
   points: 0,
   reason: ''
 })
@@ -492,6 +515,20 @@ const houseOptions = [
   { label: 'Doloris', value: 'doloris' },
   { label: 'Solencia', value: 'solencia' }
 ]
+const validHouseFilters = new Set(houseOptions.map(option => option.value).filter(Boolean))
+
+const applyHouseQuery = (value) => {
+  const normalized = String(value || '').trim().toLowerCase()
+  selectedHouse.value = validHouseFilters.has(normalized) ? normalized : null
+  filterUsers()
+}
+
+watch(() => route.query.house, applyHouseQuery)
+
+const loadManagementPermission = async () => {
+  const { data, error } = await supabase.rpc('app_is_privileged')
+  canManageUsers.value = !error && data === true
+}
 
 // Système de rôles temporairement désactivé - accès libre pour le développement
 
@@ -525,7 +562,7 @@ const loadUsers = async () => {
     // Charger les infos utilisateur depuis user_profiles
     const { data: profilesData } = await supabase
       .from('user_profiles')
-      .select('user_id, display_name, forname, family_name, avatar_url, profile_picture_url, last_login')
+      .select('user_id, display_name, forname, family_name, avatar_url, last_login')
     
     // Créer un map des profils pour accès rapide
     const profilesMap = {}
@@ -557,8 +594,10 @@ const loadUsers = async () => {
           id: gamif.user_id,
           displayName: profile?.display_name || (profile?.forname && profile?.family_name ? `${profile.forname} ${profile.family_name}` : null) || gamif.email?.split('@')[0] || 'Utilisateur',
           email: gamif.email,
-          photoURL: profile?.avatar_url || profile?.profile_picture_url,
-          house: house?.name || null,
+          // Cloned staging rows may still contain the production Storage origin.
+          // Keep the object path but always use the Supabase origin of this build.
+          photoURL: resolveStorageUrl(profile?.avatar_url),
+          house: house?.name?.toLowerCase() || null,
           houseId: gamif.house_id,
           houseColor: house?.color,
           totalPoints: gamif.total_xp || 0,
@@ -575,7 +614,6 @@ const loadUsers = async () => {
     )
     
     users.value = usersWithStats
-    allUsers.value = usersWithStats
     filterUsers()
     
     console.log(`✅ ${usersWithStats.length} utilisateurs chargés depuis gamification_data`)
@@ -627,6 +665,11 @@ const validateHouseForm = () => {
   return Object.keys(errors.value).length === 0
 }
 
+const houseSelectionChanged = computed(() => (
+  Boolean(houseForm.house)
+  && houseForm.house !== houseForm.originalHouse
+))
+
 const assignHouse = async () => {
   if (!validateHouseForm()) return
   
@@ -637,19 +680,15 @@ const assignHouse = async () => {
     const { data: houseData, error: houseError } = await supabase
       .from('houses')
       .select('id, name')
-      .eq('name', houseForm.house)
+      .ilike('name', houseForm.house)
       .single()
     
     if (houseError) throw houseError
     
-    // Mettre à jour la maison dans gamification_data
-    const { error } = await supabase
-      .from('gamification_data')
-      .update({ 
-        house_id: houseData.id,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', houseForm.userId)
+    const { data: assignment, error } = await supabase.rpc('admin_assign_user_gamification_house', {
+      p_user_id: houseForm.userId,
+      p_house_id: houseData.id
+    })
     
     if (error) throw error
     
@@ -657,14 +696,16 @@ const assignHouse = async () => {
     const houseName = getHouseLabel(houseForm.house)
     
     toast.add({
-      severity: 'success',
-      summary: 'Maison modifiée !',
-      detail: `${user?.displayName || 'L\'utilisateur'} a été assigné à ${houseName}`,
+      severity: assignment?.changed ? 'success' : 'info',
+      summary: assignment?.changed ? 'Maison modifiée' : 'Aucune modification',
+      detail: assignment?.changed
+        ? `${user?.displayName || 'L\'utilisateur'} a été assigné à ${houseName}.`
+        : `${user?.displayName || 'L\'utilisateur'} appartient déjà à ${houseName}.`,
       life: 3000
     })
     
     showHouseDialog.value = false
-    Object.assign(houseForm, { userId: '', house: '' })
+    resetHouseForm()
     await loadUsers()
     
   } catch (error) {
@@ -681,8 +722,14 @@ const assignHouse = async () => {
 }
 
 const editUserHouse = (user) => {
-  houseForm.userId = user.id
-  houseForm.house = user.house || ''
+  Object.assign(houseForm, {
+    userId: user.id,
+    userName: user.displayName || 'Utilisateur',
+    userEmail: user.email || '',
+    userPhoto: user.photoURL || '',
+    house: user.house || '',
+    originalHouse: user.house || ''
+  })
   showHouseDialog.value = true
 }
 
@@ -715,11 +762,6 @@ const viewUserProfile = (user) => {
   router.push(`/gamification-profile/${user.id}`)
 }
 
-// Méthodes utilitaires pour l'affichage
-const getHouseClass = (house) => {
-  return `house-${house}`
-}
-
 const getHouseLabel = (house) => {
   const houseLabels = {
     harmonis: 'Harmonis',
@@ -730,28 +772,15 @@ const getHouseLabel = (house) => {
   return houseLabels[house] || house
 }
 
-const getHouseSeverity = (house) => {
-  const severities = {
-    harmonis: 'success',    // Vert pour Harmonis
-    elaris: 'danger',       // Rouge pour Elaris
-    doloris: 'warning',     // Jaune pour Doloris
-    solencia: 'info'        // Bleu pour Solencia
-  }
-  return severities[house] || 'secondary'
-}
-
-const getHouseGradientClass = (house) => {
-  const gradients = {
-    harmonis: 'bg-green-500',
-    elaris: 'bg-red-500', 
-    doloris: 'bg-yellow-500',
-    solencia: 'bg-blue-500'
-  }
-  return gradients[house] || 'bg-gray-500'
-}
-
-const resetForm = () => {
-  Object.assign(houseForm, { userId: '', house: '' })
+const resetHouseForm = () => {
+  Object.assign(houseForm, {
+    userId: '',
+    userName: '',
+    userEmail: '',
+    userPhoto: '',
+    house: '',
+    originalHouse: ''
+  })
   errors.value = {}
 }
 
@@ -769,6 +798,10 @@ const resetPointsForm = () => {
 
 const validatePointsForm = () => {
   pointsErrors.value = {}
+
+  if (!pointsForm.userId) {
+    pointsErrors.value.userId = 'Sélectionnez un utilisateur depuis la liste.'
+  }
   
   if (!pointsForm.points || pointsForm.points < 1) {
     pointsErrors.value.points = 'Veuillez saisir un nombre de points valide (minimum 1)'
@@ -790,82 +823,23 @@ const addPoints = async () => {
   
   try {
     assigning.value = true
-    
-    console.log('💫 Ajout de points pour user_id:', pointsForm.userId)
-    console.log('📊 Points à ajouter:', pointsForm.points)
-    
-    // Récupérer les points actuels de l'utilisateur depuis gamification_data
-    const { data: currentGamif, error: fetchError } = await supabase
-      .from('gamification_data')
-      .select('total_xp, current_level')
-      .eq('user_id', pointsForm.userId)
-      .single()
-    
-    console.log('🔍 Données actuelles:', currentGamif)
-    
-    if (fetchError) {
-      console.error('❌ Erreur lors de la récupération:', fetchError)
-      throw fetchError
-    }
-    
-    const currentXP = currentGamif.total_xp || 0
-    const newTotalXP = currentXP + pointsForm.points
-    
-    console.log(`📈 XP: ${currentXP} → ${newTotalXP}`)
-    
-    // Calculer le nouveau niveau basé sur les XP (ex: 100 XP par niveau)
-    const newLevel = Math.floor(newTotalXP / 100) + 1
-    
-    console.log('🎯 Niveau:', newLevel)
-    
-    // Mettre à jour les points XP dans gamification_data
-    const { data: updateData, error: updateError } = await supabase
-      .from('gamification_data')
-      .update({ 
-        total_xp: newTotalXP,
-        current_level: newLevel,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', pointsForm.userId)
-      .select()
-    
-    console.log('✅ Mise à jour effectuée:', updateData)
-    
-    if (updateError) {
-      console.error('❌ Erreur lors de la mise à jour:', updateError)
-      throw updateError
-    }
-    
-    // Vérifier que la mise à jour a bien été effectuée
-    if (!updateData || updateData.length === 0) {
-      console.warn('⚠️ Aucune ligne mise à jour - Vérifier que user_id existe dans gamification_data')
-      throw new Error('Utilisateur non trouvé dans gamification_data')
-    }
-    
-    // Log l'action dans l'historique (optionnel - créer une table xp_history si nécessaire)
-    try {
-      await supabase
-        .from('xp_history')
-        .insert({
-          user_id: pointsForm.userId,
-          xp_gained: pointsForm.points,
-          reason: pointsForm.reason,
-          admin_id: authStore.user?.id,
-          created_at: new Date().toISOString()
-        })
-      console.log('📝 Action loggée dans xp_history')
-    } catch (historyError) {
-      console.warn('⚠️ Impossible de logger dans l\'historique XP:', historyError.message)
-      // Ne pas bloquer si la table n'existe pas encore
-    }
-    
-    const levelUp = newLevel > (currentGamif.current_level || 1)
+
+    const { data, error } = await supabase.rpc('admin_adjust_user_gamification_xp', {
+      p_user_id: pointsForm.userId,
+      p_amount: pointsForm.points,
+      p_reason: pointsForm.reason.trim(),
+      p_adjustment_id: crypto.randomUUID()
+    })
+
+    if (error) throw error
+
+    const levelChanged = Boolean(data?.level_changed)
     
     toast.add({
       severity: 'success',
-      summary: levelUp ? '🎉 Points ajoutés et Niveau augmenté !' : 'Points ajoutés !',
-      detail: levelUp 
-        ? `${pointsForm.points} XP attribués à ${pointsForm.userName} - Nouveau niveau: ${newLevel}` 
+      summary: levelChanged ? 'Points ajoutés et niveau recalculé' : 'Points ajoutés',
+      detail: levelChanged
+        ? `${pointsForm.points} XP attribués à ${pointsForm.userName} — niveau ${data.current_level}`
         : `${pointsForm.points} XP attribués à ${pointsForm.userName}`,
       life: 4000
     })
@@ -892,9 +866,6 @@ const closePointsDialog = () => {
   resetPointsForm()
 }
 
-// Permissions simplifiées - accès libre pour le développement
-const canManageUsers = computed(() => true)
-
 const formatLastActive = (timestamp) => {
   const now = Date.now()
   const diff = now - timestamp
@@ -906,48 +877,15 @@ const formatLastActive = (timestamp) => {
   return 'Actif maintenant'
 }
 
-const getSelectedUserName = () => {
-  const user = users.value.find(u => u.id === houseForm.userId)
-  return user ? user.displayName : ''
-}
-
-const openHouseDialog = () => {
-  showHouseDialog.value = true
-}
-
 const closeHouseDialog = () => {
   showHouseDialog.value = false
-  Object.assign(houseForm, { userId: '', house: '' })
-  errors.value = {}
-}
-
-const resetUserProgress = async (user) => {
-  try {
-    // Réinitialiser la progression de l'utilisateur (fonctionnalité désactivée)
-    console.log('Réinitialiser progression de:', user)
-    
-    toast.add({
-      severity: 'info',
-      summary: 'Information',
-      detail: 'Fonctionnalité temporairement désactivée',
-      life: 3000
-    })
-    
-    await loadUsers()
-  } catch (error) {
-    console.error('Erreur lors de la réinitialisation:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Erreur lors de la réinitialisation',
-      life: 3000
-    })
-  }
+  resetHouseForm()
 }
 
 // Initialisation
-onMounted(() => {
-  loadUsers()
+onMounted(async () => {
+  applyHouseQuery(route.query.house)
+  await Promise.all([loadManagementPermission(), loadUsers()])
 })
 
 // Utilitaires de rôles supprimés - système désactivé
@@ -972,5 +910,65 @@ const formatDate = (timestamp) => {
 </script>
 
 <style scoped>
-/* Styles personnalisés supprimés - utilisation exclusive de PrimeVue et classes utilitaires */
+.selected-user-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.875rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  background: var(--surface-100);
+}
+
+.action-explanation {
+  max-width: 65ch;
+  color: var(--text-color-secondary);
+  line-height: 1.5;
+}
+
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .user-manager {
+    padding: 0.75rem !important;
+  }
+
+  .user-manager-toolbar,
+  .user-manager-filters {
+    align-items: stretch !important;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .user-search,
+  .user-manager-filters :deep(.p-dropdown) {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  :deep(.user-action-dialog .p-dialog-header),
+  :deep(.user-action-dialog .p-dialog-content),
+  :deep(.user-action-dialog .p-dialog-footer) {
+    padding-inline: 1rem;
+  }
+
+  :deep(.user-action-dialog .p-dialog-footer) {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  :deep(.user-action-dialog .p-dialog-footer .p-button) {
+    width: 100%;
+    justify-content: center;
+    margin: 0;
+  }
+}
+
+.user-search {
+  min-width: min(300px, 100%);
+}
 </style>

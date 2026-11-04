@@ -519,11 +519,7 @@ const statusOptions = [
 
 // ── Helpers ──
 const dbPfpTypes = (pfp) => (pfp === 'PFP1' ? ['PFP1A', 'PFP1B'] : [pfp])
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 
 const getPropositionFieldsForPfp = (pfp) => {
   if (pfp === 'PFP1') return ['pfp1a_proposition', 'pfp1b_proposition']

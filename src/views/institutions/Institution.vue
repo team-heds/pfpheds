@@ -110,6 +110,8 @@
 </template>
 
 <script>
+import { ref } from 'vue'
+import { usePageListContext } from '@/composables/usePageListContext'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
@@ -140,13 +142,6 @@ export default {
   data() {
     return {
       descriptionClass: 'description',
-      searchTerm: '',
-      activeFilters: {
-        cantons: [],
-        criter: [],
-        pfp: [],
-        languages: []
-      },
       cantonsList: [], // Liste dynamique des cantons
       isMobile: window.innerWidth < 768,
     };
@@ -154,7 +149,10 @@ export default {
   setup() {
     const institutionsStore = useInstitutionsStore();
     const placesStore = usePlacesStore();
-    return { institutionsStore, placesStore };
+    const searchTerm = ref('');
+    const activeFilters = ref({ cantons: [], criter: [], pfp: [], languages: [] });
+    usePageListContext('institutions', { searchTerm, activeFilters });
+    return { institutionsStore, placesStore, searchTerm, activeFilters };
   },
   computed: {
     allInstitutions() {

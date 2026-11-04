@@ -3,22 +3,12 @@
   <div class="page-wrapper">
     <div class="house-management-page">
       
-      <!-- Header de la page -->
       <div class="page-header">
-        <div class="header-content">
-          <div class="breadcrumb-section">
-            <router-link to="/admin" class="text-600 no-underline hover:text-primary transition-colors">
-              <i class="pi pi-home mr-1"></i>
-              Dashboard
-            </router-link>
-            <i class="pi pi-angle-right text-300 mx-2"></i>
-            <span class="text-900 font-medium">Gestion des Maisons</span>
-          </div>
-          <div class="title-section">
-            <h1><i class="pi pi-home mr-3"></i>Gestion des Maisons HES</h1>
-            <p>Gérez les maisons HES, attribuez des points et suivez les classements.</p>
-          </div>
-        </div>
+        <AdminGamificationPageHeader
+          title="Gestion des maisons HES"
+          description="Consultez les membres, les points calculés et le classement de chaque maison."
+          icon="pi pi-home"
+        />
       </div>
 
       <!-- Composant de gestion -->
@@ -33,8 +23,8 @@
 
 <script setup>
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
-// import Navbar from '@/components/common/utils/Navbar.vue'
 import HouseManagement from '@/components/admin/HouseManagement.vue'
+import AdminGamificationPageHeader from '@/components/admin/common/AdminGamificationPageHeader.vue'
 // Permissions gérées par le router - pas besoin de vérification supplémentaire ici
 </script>
 
@@ -61,33 +51,9 @@ import HouseManagement from '@/components/admin/HouseManagement.vue'
 }
 
 .page-header {
-  padding: 2rem 1rem;
-  border-bottom: 1px solid var(--surface-border);
-}
-
-.header-content {
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.breadcrumb-section {
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-}
-
-.title-section h1 {
-  font-size: 2.5rem;
-  margin: 0;
-  font-weight: bold;
-  color: var(--text-color);
-  display: flex;
-  align-items: center;
-}
-
-.title-section p {
-  margin: 0.5rem 0 0 0;
-  color: var(--text-color-secondary);
-  font-size: 1.1rem;
+  padding: 1rem;
 }
 
 .content-container {
@@ -97,12 +63,8 @@ import HouseManagement from '@/components/admin/HouseManagement.vue'
 }
 
 @media (max-width: 768px) {
-  .title-section h1 {
-    font-size: 2rem;
-  }
-  
   .page-header {
-    padding: 1.5rem 1rem;
+    padding: 0.5rem;
   }
 }
 </style>

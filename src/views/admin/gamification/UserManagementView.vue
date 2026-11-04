@@ -1,48 +1,32 @@
 <template>
-  <AdminLayout>
-  <div class="page-wrapper">
-    <div class="user-management-page">
-      <!-- Header de la page -->
-      <div class="col-12">
-        <div class="card">
-          <div class="flex align-items-center gap-2 mb-3 text-sm text-600">
-            <router-link to="/admin" class="text-600 no-underline hover:text-primary transition-colors">
-              <i class="pi pi-home mr-1"></i>
-              Dashboard
-            </router-link>
-            <i class="pi pi-angle-right text-300"></i>
-            <span class="text-900 font-medium">Gestion des Utilisateurs</span>
-          </div>
-          <h1 class="text-3xl font-bold text-900 m-0 mb-2 flex align-items-center gap-3">
-            <i class="pi pi-users text-green-500 text-3xl"></i>
-            Gestion des Utilisateurs
-          </h1>
-          <p class="text-600 text-lg line-height-3 m-0">
-            Gérez les utilisateurs, attribuez des rôles et suivez leur progression dans le système de gamification.
-          </p>
+  <AdminLayout :wide="true">
+    <div class="page-wrapper">
+      <div class="user-management-page">
+        <AdminGamificationPageHeader
+          title="Gestion des utilisateurs"
+          description="Consultez leur progression et réalisez des ajustements administratifs sécurisés."
+          icon="pi pi-users"
+        />
+
+        <div class="content-container">
+          <UserManagement />
         </div>
       </div>
-
-      <!-- Composant de gestion -->
-      <div class="col-12">
-        <UserManagement />
-      </div>
     </div>
-  </div>
   </AdminLayout>
 </template>
 
 <script setup>
 import UserManagement from '@/components/admin/UserManagement.vue'
-import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
-// import Navbar from '@/components/common/utils/Navbar.vue'
-// Permissions gérées par le router - pas besoin de vérification supplémentaire ici
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
+import AdminGamificationPageHeader from '@/components/admin/common/AdminGamificationPageHeader.vue'
 </script>
 
 <style scoped>
 .page-wrapper {
   width: 100%;
-  height: 100vh;
+  min-width: 0;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none;
@@ -60,13 +44,17 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue';
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
-  max-width: 1200px;
+  max-width: 1440px;
   margin: 0 auto;
+}
+
+.content-container {
+  min-width: 0;
 }
 
 @media (max-width: 768px) {
   .user-management-page {
-    padding: 0.5rem;
+    padding: 0;
     padding-bottom: 6rem;
     gap: 1rem;
   }

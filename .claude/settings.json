@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"$CLAUDE_PROJECT_DIR/.agents/skills/impeccable/scripts/hook.mjs\" ] || node \"$CLAUDE_PROJECT_DIR/.agents/skills/impeccable/scripts/hook.mjs\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"$CLAUDE_PROJECT_DIR/.agents/skills/impeccable/scripts/hook.mjs\" ] || node \"$CLAUDE_PROJECT_DIR/.agents/skills/impeccable/scripts/hook.mjs\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

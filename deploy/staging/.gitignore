@@ -1,0 +1,13 @@
+.env
+frontend.env
+frontend-dist/
+test-accounts.json
+gamification-pilot-accounts.json
+si-uat-accounts.json
+Caddyfile.public.candidate
+web-access.json
+real-test-access.json
+clone-verification.json
+studio-access.json
+studio-private.caddy
+votation-test-private.json

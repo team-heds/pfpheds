@@ -1,4 +1,5 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
+import { createMemoryHistory, createRouter } from 'vue-router'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/components/common/utils/Navbar.vue', () => ({
@@ -17,20 +18,56 @@ const layoutStubs = {
   AdminSidebar: { template: '<div class="admin-sidebar-stub" />' },
 }
 
+async function makeRouter() {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/admin', component: { template: '<div />' } },
+      { path: '/admin/other', component: { template: '<div />' } },
+    ],
+  })
+  await router.push('/admin')
+  await router.isReady()
+  return router
+}
+
 describe('admin dashboard layout', () => {
-  it('applies the wide layout only when explicitly requested', () => {
+  it('applies the wide layout only when explicitly requested', async () => {
+    const router = await makeRouter()
     const wide = mount(AdminLayout, {
       props: { wide: true },
       slots: { default: '<p>Dashboard</p>' },
-      global: { stubs: layoutStubs },
+      global: { plugins: [router], stubs: layoutStubs },
     })
     const standard = mount(AdminLayout, {
       slots: { default: '<p>Administration</p>' },
-      global: { stubs: layoutStubs },
+      global: { plugins: [router], stubs: layoutStubs },
     })
 
     expect(wide.get('.admin-layout').classes()).toContain('is-wide')
     expect(standard.get('.admin-layout').classes()).not.toContain('is-wide')
+    wide.unmount()
+    standard.unmount()
+  })
+
+  it('keeps focus in a filter when only the query changes and focuses the next page title', async () => {
+    const router = await makeRouter()
+    const wrapper = mount(AdminLayout, {
+      attachTo: document.body,
+      slots: { default: '<h1>Planning</h1><input aria-label="Classe" />' },
+      global: { plugins: [router], stubs: layoutStubs },
+    })
+    await flushPromises()
+    const filter = wrapper.get('input').element
+    filter.focus()
+    await router.push('/admin?classe=BA25')
+    await flushPromises()
+    expect(document.activeElement).toBe(filter)
+
+    await router.push('/admin/other')
+    await flushPromises()
+    expect(document.activeElement).toBe(wrapper.get('h1').element)
+    wrapper.unmount()
   })
 
   it('announces and renders the loading state of a quick statistic', () => {

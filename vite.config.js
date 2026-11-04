@@ -8,6 +8,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 import Components from 'unplugin-vue-components/vite'
 import { PrimeVueResolver } from 'unplugin-vue-components/resolvers'
 
+const stagingProxyTarget = process.env.VITE_STAGING_PROXY_TARGET || null
+
 function presentationDevAssets() {
   return {
     name: 'presentation-dev-assets',
@@ -92,10 +94,23 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'https://api2.hedsvs.ch',
+        target: stagingProxyTarget || 'https://api2.hedsvs.ch',
         changeOrigin: true,
-        secure: true,
+        secure: !stagingProxyTarget,
       },
+      ...(stagingProxyTarget
+        ? Object.fromEntries(
+            ['/auth', '/rest', '/storage', '/functions', '/realtime'].map(prefix => [
+              prefix,
+              {
+                target: stagingProxyTarget,
+                changeOrigin: true,
+                secure: false,
+                ws: prefix === '/realtime',
+              },
+            ]),
+          )
+        : {}),
     },
   },
   plugins: [

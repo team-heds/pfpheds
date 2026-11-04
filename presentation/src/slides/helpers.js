@@ -11,7 +11,7 @@ const chapterHighlights = {
 
 export function chapter(id, number, title, body, children = '') {
   const highlights = chapterHighlights[number]
-  const hasVisualSummary = /class="(stack-grid|architecture-map|tech-grid|metric-grid|timeline|risk-grid)/.test(body)
+  const hasVisualSummary = /class="(stack-grid|architecture-map|tech-grid|metric-grid|timeline|risk-grid|si-chapter-lead)/.test(body)
   const summary = highlights && !hasVisualSummary ? keyPoints(highlights) : ''
 
   return `<section data-chapter="${number}">

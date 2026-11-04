@@ -9,22 +9,25 @@ export const CHALLENGE_DIFFICULTY = {
 const difficultyFor = (target) => target >= 1000 ? 'LEGENDARY' : target >= 100 ? 'HARD' : target >= 10 ? 'MEDIUM' : 'EASY'
 const icons = { xp_gain: '⭐', login_streak: '📅', quiz_complete: '📚', badge_unlock: '🏅', social_interaction: '🤝', exploration: '🗺️' }
 const categories = { xp_gain: 'progression', login_streak: 'engagement', quiz_complete: 'apprentissage', badge_unlock: 'collection', social_interaction: 'social', exploration: 'exploration' }
+const inclusiveEndDate = (value) => (
+  /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? `${value}T23:59:59.999` : value
+)
 
 const normalizeChallenge = (challenge, progress = null) => {
   if (!challenge) return null
   const target = Number(challenge.target_value || 0)
-  return { ...challenge, challengeId: challenge.id, challengeName: challenge.name, type: challenge.action_type, difficulty: difficultyFor(target), target, reward: { xp: Number(challenge.xp_reward || 0), badge: challenge.badge_reward || null, title: null }, icon: icons[challenge.action_type] || '🎯', category: categories[challenge.action_type] || 'progression', weekNumber: challenge.week_number, startDate: challenge.start_date, endDate: challenge.end_date, progress: Number(progress?.current_value || 0), completed: Boolean(progress?.completed), completedAt: progress?.completed_at || null, completed_at: progress?.completed_at || null }
+  return { ...challenge, challengeId: challenge.id, challengeName: challenge.name, type: challenge.action_type, difficulty: difficultyFor(target), target, reward: { xp: Number(challenge.xp_reward || 0), badge: challenge.badge_reward || null, badgeName: challenge.reward_badge?.name || null, title: null }, icon: icons[challenge.action_type] || '🎯', category: categories[challenge.action_type] || 'progression', weekNumber: challenge.week_number, startDate: challenge.start_date, endDate: inclusiveEndDate(challenge.end_date), progress: Number(progress?.current_value || 0), completed: Boolean(progress?.completed), completedAt: progress?.completed_at || null, completed_at: progress?.completed_at || null }
 }
 
 const getActiveChallenges = async () => {
   const today = new Date().toISOString().slice(0, 10)
-  const { data, error } = await supabase.from('challenges').select('id,name,description,target_value,action_type,xp_reward,badge_reward,week_number,year,start_date,end_date,is_active,created_at').eq('is_active', true).or(`start_date.is.null,start_date.lte.${today}`).or(`end_date.is.null,end_date.gte.${today}`).order('start_date', { ascending: true })
+  const { data, error } = await supabase.from('challenges').select('id,name,description,target_value,action_type,xp_reward,badge_reward,week_number,year,start_date,end_date,is_active,status,created_at,reward_badge:badges(id,name,is_active)').eq('is_active', true).eq('status', 'active').or(`start_date.is.null,start_date.lte.${today}`).or(`end_date.is.null,end_date.gte.${today}`).order('start_date', { ascending: true })
   if (error) throw error
   return data || []
 }
 
 const getUserProgress = async (userId, completed = null) => {
-  let query = supabase.from('user_challenge_progress').select('challenge_id,current_value,completed,completed_at,challenge:challenges(id,name,description,target_value,action_type,xp_reward,badge_reward,week_number,year,start_date,end_date,is_active,created_at)').eq('user_id', userId)
+  let query = supabase.from('user_challenge_progress').select('challenge_id,current_value,completed,completed_at,challenge:challenges(id,name,description,target_value,action_type,xp_reward,badge_reward,week_number,year,start_date,end_date,is_active,status,created_at,reward_badge:badges(id,name,is_active))').eq('user_id', userId)
   if (completed !== null) query = query.eq('completed', completed)
   const { data, error } = await query.order('completed_at', { ascending: false, nullsFirst: false })
   if (error) throw error

@@ -74,6 +74,8 @@ test('the admin user list never creates or transmits an initial password', () =>
   )
   assert.doesNotMatch(source, /generatePassword|newUserPassword|newUser\.password|Math\.random/)
   assert.match(source, /sendInitialAccess\(user\.id\)/)
+  assert.match(source, /sendAdminPasswordRecovery\(user\.id\)/)
+  assert.doesNotMatch(source, /sendAdminPasswordRecovery\([^)]*(email|Mail|redirect|password)/i)
 })
 
 test('the role manager exposes the BA26 physio cohort permission', () => {
@@ -120,6 +122,14 @@ test('password recovery is the only explicit public business route before JWT au
   assert.ok(publicRecovery > 0, 'the password recovery endpoint must be mounted')
   assert.ok(publicRecovery < authIndex, 'password recovery must be callable without a JWT')
   assert.match(source, /createPasswordRecoveryRequestRouter/)
+})
+
+test('admin-triggered password recovery stays behind the admin middleware', () => {
+  const source = fs.readFileSync(path.resolve(__dirname, '..', 'index.js'), 'utf8')
+  assert.match(
+    source,
+    /app\.use\('\/api\/admin\/users', requireAdmin, adminPasswordRecoveryRouter\)/
+  )
 })
 
 test('every admin frontend route declares authentication and a permission or redirects', () => {

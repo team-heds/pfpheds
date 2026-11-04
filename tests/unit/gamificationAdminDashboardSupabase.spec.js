@@ -35,4 +35,28 @@ describe('dashboard admin gamification Supabase', () => {
     expect(dashboardRoute).not.toContain("'house_coach'")
     expect(dashboardRoute).not.toContain("'EnseignantPhysio'")
   })
+
+  it('relie les indicateurs cliquables à leurs écrans de gestion', () => {
+    const dashboard = source('src/components/admin/AdminDashboardGamification.vue')
+
+    expect(dashboard).toContain('@action="openKpi(kpi)"')
+    expect(dashboard).toContain("challenges_active: '/admin/gamification/challenges'")
+    expect(dashboard).toContain("quests_completed: '/admin/gamification/quests'")
+    expect(dashboard).toContain("badges_total: '/admin/gamification/badges'")
+    expect(dashboard).toContain("users_active: '/admin/gamification/users'")
+  })
+
+  it('actualise uniquement les indicateurs dépendants lors du changement de période', () => {
+    const dashboard = source('src/components/admin/AdminDashboardGamification.vue')
+
+    expect(dashboard).toContain('period.value = nextPeriod; await loadKpis(true)')
+    expect(dashboard).not.toContain('period.value = nextPeriod; await refresh()')
+  })
+
+  it('évite d’imbriquer un bouton dans une carte KPI déjà interactive', () => {
+    const card = source('src/components/admin/widgets/KpiCard.vue')
+
+    expect(card).not.toContain('<Button')
+    expect(card).toContain('class="kpi-action"')
+  })
 })

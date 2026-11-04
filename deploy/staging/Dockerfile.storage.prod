@@ -1,0 +1,6 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+WORKDIR /app
+# Production overlay: preserve the current backend and its CORS configuration.
+COPY backend/supabase/filePhysioBackendStore.js backend/supabase/filePhysioMediaBackend.js backend/supabase/pfpDocumentMediaBackend.js backend/supabase/storageUrls.js backend/supabase/institutionsStoreBackend.js ./supabase/
+COPY backend/uploads/documentValidation.js ./uploads/

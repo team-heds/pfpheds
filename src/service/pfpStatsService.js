@@ -5,10 +5,11 @@
 
 import { supabase } from '@/supabase'
 import { SUPABASE_SELECTS } from '@/service/supabaseContracts'
+import { currentAcademicYear, requireAcademicYear, readAcademicCapacity } from '@/domain/pfp/academicPeriod'
 
 const PFP_STATS_CACHE_TTL_MS = 30_000
-let pfpStatsCache = null
-let pfpStatsRequest = null
+const pfpStatsCache = new Map()
+const pfpStatsRequests = new Map()
 
 function createEmptyCohortStats() {
   return { total: 0, assigned: 0, available: 0, byCantons: {}, topCantons: [] }
@@ -32,18 +33,17 @@ function parseCapacity(rawCapacity, year) {
       return 0
     }
   }
-  const count = Number.parseInt(capacity?.[year], 10)
-  return Number.isFinite(count) && count > 0 ? count : 0
+  const result = readAcademicCapacity(capacity, year)
+  if (result.error) throw new Error(`Capacité PFP incohérente pour ${year}: ${result.error}`)
+  return result.value
 }
 
 /**
  * Récupère les statistiques des places par cohorte PFP
  * @returns {Promise<Object>} Statistiques par cohorte
  */
-async function loadPfpCohortStats() {
+async function loadPfpCohortStats(currentYear) {
   try {
-    // Année courante pour le filtre - Teste avec 2025 si 2026 n'a pas de données
-    const currentYear = '2026' // Change ici selon tes données (2024, 2025, 2026...)
     
     // Récupérer toutes les places avec les colonnes PFP1A et PFP1B
     const { data: placesData, error: placesError } = await supabase
@@ -174,25 +174,28 @@ async function loadPfpCohortStats() {
 }
 
 export function clearPfpCohortStatsCache() {
-  pfpStatsCache = null
-  pfpStatsRequest = null
+  pfpStatsCache.clear()
+  pfpStatsRequests.clear()
 }
 
-export async function getPfpCohortStats({ force = false } = {}) {
-  if (!force && pfpStatsCache && Date.now() - pfpStatsCache.cachedAt < PFP_STATS_CACHE_TTL_MS) {
-    return pfpStatsCache.data
+export async function getPfpCohortStats({ force = false, year = currentAcademicYear() } = {}) {
+  const key = requireAcademicYear(year)
+  const cached = pfpStatsCache.get(key)
+  if (!force && cached && Date.now() - cached.cachedAt < PFP_STATS_CACHE_TTL_MS) {
+    return cached.data
   }
-  if (pfpStatsRequest) return pfpStatsRequest
+  if (pfpStatsRequests.has(key)) return pfpStatsRequests.get(key)
 
-  pfpStatsRequest = loadPfpCohortStats()
+  const request = loadPfpCohortStats(key)
     .then((data) => {
-      pfpStatsCache = { cachedAt: Date.now(), data }
+      if (pfpStatsRequests.get(key) === request) pfpStatsCache.set(key, { cachedAt: Date.now(), data })
       return data
     })
     .finally(() => {
-      pfpStatsRequest = null
+      if (pfpStatsRequests.get(key) === request) pfpStatsRequests.delete(key)
     })
-  return pfpStatsRequest
+  pfpStatsRequests.set(key, request)
+  return request
 }
 
 /**

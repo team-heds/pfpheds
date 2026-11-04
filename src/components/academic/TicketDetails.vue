@@ -23,6 +23,7 @@
           @click="toggleMenu"
           text
           size="small"
+          aria-label="Plus d’actions"
         />
       </div>
     </div>
@@ -109,6 +110,7 @@
                   text
                   severity="danger"
                   size="small"
+                  :aria-label="`Supprimer le lien ${link.title}`"
                 />
               </div>
             </div>
@@ -160,7 +162,7 @@
               <h4>Actions GitHub</h4>
             </div>
             <div class="action-cards">
-              <div class="action-card" @click="showCreateBranch = true">
+              <button type="button" class="action-card" @click="showCreateBranch = true">
                 <div class="action-icon">
                   <i class="pi pi-sitemap"></i>
                 </div>
@@ -169,8 +171,8 @@
                   <span class="action-description">Nouvelle branche pour ce ticket</span>
                 </div>
                 <i class="pi pi-chevron-right"></i>
-              </div>
-              <div class="action-card" @click="openRepository">
+              </button>
+              <button type="button" class="action-card" @click="openRepository">
                 <div class="action-icon">
                   <i class="pi pi-external-link"></i>
                 </div>
@@ -179,7 +181,7 @@
                   <span class="action-description">Voir sur GitHub</span>
                 </div>
                 <i class="pi pi-chevron-right"></i>
-              </div>
+              </button>
             </div>
             <div v-if="currentBranch" class="current-branch">
               <i class="pi pi-code-branch"></i>
@@ -433,6 +435,14 @@ const props = defineProps({
   ticket: {
     type: Object,
     required: true
+  },
+  creator: {
+    type: Object,
+    default: null
+  },
+  assignee: {
+    type: Object,
+    default: null
   }
 })
 
@@ -455,10 +465,10 @@ const newBranchName = ref('')
 const baseBranch = ref('prod')
 
 // Profil du créateur
-const creatorProfile = ref(null)
+const creatorProfile = ref(props.creator)
 
 // Utilisateur assigné
-const assignedUser = ref(null)
+const assignedUser = ref(props.assignee)
 
 // Rendu Markdown sécurisé de la description
 const renderedDescription = computed(() => {
@@ -534,14 +544,14 @@ function loadTicketData() {
   // Réinitialiser
   videoLinks.value = []
   currentBranch.value = ''
-  creatorProfile.value = null
-  assignedUser.value = null
+  creatorProfile.value = props.creator
+  assignedUser.value = props.assignee
   
   // Charger le profil du créateur
-  loadCreatorProfile()
+  if (!props.creator) loadCreatorProfile()
   
   // Charger l'utilisateur assigné
-  loadAssignedUser()
+  if (!props.assignee) loadAssignedUser()
   
   // Charger depuis metadata
   if (props.ticket.metadata) {
@@ -1397,6 +1407,7 @@ function handleAvatarError(event) {
 }
 
 .action-card {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 0.875rem;
@@ -1406,12 +1417,20 @@ function handleAvatarError(event) {
   border: 1px solid var(--surface-border);
   cursor: pointer;
   transition: all 0.2s ease;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 
 .action-card:hover {
   background: var(--surface-hover);
   border-color: #3b82f6;
   transform: translateX(2px);
+}
+
+.action-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary-color) 35%, transparent);
+  outline-offset: 2px;
 }
 
 .action-icon {

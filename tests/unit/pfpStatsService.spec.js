@@ -8,6 +8,27 @@ import { clearPfpCohortStatsCache, createEmptyPfpStats, getPfpCohortStats } from
 import { SUPABASE_SELECTS } from '@/service/supabaseContracts'
 
 describe('pfpStatsService PFP1B', () => {
+  it('isolates cached statistics by academic year and accepts both spellings', async () => {
+    fromMock.mockImplementation(table => ({ select: vi.fn().mockResolvedValue({
+      data: table === 'places'
+        ? [{ PlaceId: 'p', PFP1A: { 2026: 2, '2026-2027': 8 } }]
+        : [], error: null
+    }) }))
+    const first = await getPfpCohortStats({ year: '2026' })
+    const second = await getPfpCohortStats({ year: '2026-2027' })
+    const cached = await getPfpCohortStats({ year: 2027 })
+    expect(first.PFP1A.total).toBe(2)
+    expect(second.PFP1A.total).toBe(8)
+    expect(cached).toBe(second)
+    expect(fromMock).toHaveBeenCalledTimes(4)
+  })
+
+  it('does not silently choose one of two conflicting capacities', async () => {
+    fromMock.mockImplementation(table => ({ select: vi.fn().mockResolvedValue({
+      data: table === 'places' ? [{ PFP1A: { 2027: 0, '2026-2027': 4 } }] : [], error: null
+    }) }))
+    await expect(getPfpCohortStats({ year: '2027' })).rejects.toThrow('conflicting_year_values')
+  })
   beforeEach(() => {
     vi.clearAllMocks()
     clearPfpCohortStatsCache()
@@ -44,7 +65,7 @@ describe('pfpStatsService PFP1B', () => {
       })
     }))
 
-    const stats = await getPfpCohortStats()
+    const stats = await getPfpCohortStats({ year: '2026' })
 
     expect(stats.PFP1A.total).toBe(2)
     expect(stats.PFP1B.total).toBe(7)

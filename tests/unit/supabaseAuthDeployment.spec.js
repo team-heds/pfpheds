@@ -32,7 +32,10 @@ describe('Supabase Auth recovery deployment', () => {
       'GOTRUE_MAILER_TEMPLATES_RECOVERY: "https://hedsvs.ch/auth-email-templates/password-recovery.html"',
     )
     expect(override).toContain('GOTRUE_MAILER_SUBJECTS_RECOVERY:')
-    expect(template.match(/{{ \.ConfirmationURL }}/g)).toHaveLength(1)
+    expect(template).not.toContain('{{ .ConfirmationURL }}')
+    expect(template).toContain('{{ .SiteURL }}/reset-password?flow=recovery')
+    expect(template).toContain('{{ .Email }}')
+    expect(template).toContain('{{ .Token }}')
     expect(template).toContain('une heure')
     expect(template).toContain('une seule fois')
     expect(template).not.toMatch(/access_token|refresh_token|service_role|token=/i)

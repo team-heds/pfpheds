@@ -6,6 +6,7 @@ const {
 } = require('../security/userAudience')
 
 const router = Router()
+const directoryYearModule = import('../domain/studentDirectoryYear.mjs')
 const PROFILE_FIELDS = [
   'user_id',
   'firebase_id',
@@ -23,7 +24,7 @@ const PROFILE_FIELDS = [
   'created_at'
 ].join(',')
 
-function mapStudent(profile, physio) {
+function mapStudent(profile, physio, requestedYear) {
   const classe =
     physio?.class ||
     physio?.classe ||
@@ -50,6 +51,9 @@ function mapStudent(profile, physio) {
     created_at: profile.created_at || null,
     pfp_cohort: profile.pfp_cohort || null,
     repondant_hes: physio?.repondant_hes || null,
+    physio_year: physio?.year || null,
+    requested_year: requestedYear,
+    physio_year_status: physio ? 'matched' : 'missing',
     role: profile.role,
     permissions: profile.permissions,
     is_active: profile.is_active,
@@ -63,22 +67,25 @@ async function loadProfiles() {
   return data || []
 }
 
-async function loadPhysioByUserId(userIds) {
+async function loadPhysioByUserId(userIds, year) {
   if (!userIds.length) return new Map()
   const { data, error } = await supabaseAdmin
     .from('StudentsPhysio')
-    .select('user_id,class,sae,cas_particulier,repondant_hes')
+    .select('user_id,year,class,sae,cas_particulier,repondant_hes')
     .in('user_id', userIds)
 
   if (error && !['42P01', 'PGRST205'].includes(error.code)) throw error
-  return new Map((data || []).map((entry) => [entry.user_id, entry]))
+  const { selectPhysioRows } = await directoryYearModule
+  return selectPhysioRows(data || [], year)
 }
 
 router.get('/students', async (req, res) => {
   try {
+    const { directoryYear } = await directoryYearModule
+    const year = directoryYear(req.query?.year)
     const profiles = filterStudentProfiles(await loadProfiles())
-    const physioByUserId = await loadPhysioByUserId(profiles.map((profile) => profile.user_id))
-    let students = profiles.map((profile) => mapStudent(profile, physioByUserId.get(profile.user_id)))
+    const physioByUserId = await loadPhysioByUserId(profiles.map((profile) => profile.user_id), year)
+    let students = profiles.map((profile) => mapStudent(profile, physioByUserId.get(profile.user_id), year))
 
     const classe = String(req.query?.classe || '').trim()
     if (classe) students = students.filter((student) => student.Classe === classe)
@@ -86,7 +93,8 @@ router.get('/students', async (req, res) => {
     return res.json({ data: students, count: students.length })
   } catch (error) {
     console.error('[AUDIENCE] Unable to load students:', error.message)
-    return res.status(500).json({ error: 'Impossible de charger la liste des étudiants.' })
+    const status = [400, 409].includes(error.status) ? error.status : 500
+    return res.status(status).json({ error: status === 500 ? 'Impossible de charger la liste des étudiants.' : error.message })
   }
 })
 

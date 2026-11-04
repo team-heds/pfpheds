@@ -2,7 +2,7 @@
   <!-- Insertion du composant Navbar -->
   <Navbar />
 
-  <div class="documents-container scrollable-container">
+  <div class="documents-container scrollable-container" data-page-scroll>
     <div class="documents-wrapper">
       <nav class="documents-breadcrumb" aria-label="Fil d'Ariane"><RouterLink to="/home">Accueil</RouterLink><i class="pi pi-angle-right" aria-hidden="true"></i><span aria-current="page">Documents PFP</span></nav>
       <!-- Header Section -->
@@ -72,6 +72,8 @@
                       <input type="checkbox" :aria-label="`Sélectionner ${file.name}`" :checked="selectedDocumentIds.has(file.id)" @change="toggleDocumentSelection(file.id)" />
                       <a
                         :href="file.url"
+                        @click.prevent="openDocument(file)"
+                        @auxclick.middle.prevent="openDocument(file)"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="file-link-wrapper"
@@ -122,6 +124,8 @@
                   <input type="checkbox" :aria-label="`Sélectionner ${file.name}`" :checked="selectedDocumentIds.has(file.id)" @change="toggleDocumentSelection(file.id)" />
                   <a
                     :href="file.url"
+                    @click.prevent="openDocument(file)"
+                    @auxclick.middle.prevent="openDocument(file)"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="file-link-wrapper"
@@ -193,6 +197,8 @@ import { useDocumentStore } from '@/stores/documentStore'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import EditFileDocPFP from '@/components/home/EditFileDocPFP.vue'
 import AddFileDocPFP from '@/components/home/AddFileDocPFP.vue'
+import { openFilePhysioDocument } from '@/service/filePhysioMediaService'
+import { usePageListContext } from '@/composables/usePageListContext'
 
 // Stores Pinia
 const documentStore = useDocumentStore()
@@ -211,6 +217,7 @@ const editForm = ref({
 
 // Gestion de l'accordéon (dossiers ouverts/fermés)
 const openFolders = ref(new Set())
+const { restored: foldersRestored } = usePageListContext('documents-pfp', { openFolders }, { authStore })
 
 const toggleFolder = (folderId) => {
   if (openFolders.value.has(folderId)) {
@@ -241,8 +248,15 @@ const toggleDocumentSelection = (id) => {
   selectedDocumentIds.value = next
 }
 const clearDocumentSelection = () => { selectedDocumentIds.value = new Set() }
+const openDocument = async file => {
+  try {
+    await openFilePhysioDocument(file)
+  } catch (error) {
+    alert(error.message || 'Le document n’a pas pu être ouvert.')
+  }
+}
 const openSelectedDocuments = () => {
-  allDocumentFiles.value.filter(file => selectedDocumentIds.value.has(file.id)).forEach(file => window.open(file.url, '_blank', 'noopener,noreferrer'))
+  allDocumentFiles.value.filter(file => selectedDocumentIds.value.has(file.id)).forEach(openDocument)
 }
 
 // Vérification des droits admin depuis Supabase
@@ -321,7 +335,7 @@ onMounted(async () => {
     await documentStore.loadFoldersTree()
     
     // Ouvrir tous les dossiers par défaut pour que les documents soient visibles
-    if (documentStore.folders && documentStore.folders.length > 0) {
+    if (!foldersRestored.value && documentStore.folders && documentStore.folders.length > 0) {
       documentStore.folders.forEach(folder => {
         if (folder.id) openFolders.value.add(folder.id)
       })

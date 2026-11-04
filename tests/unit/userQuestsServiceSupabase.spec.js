@@ -92,4 +92,12 @@ describe('userQuestsService secure writes', () => {
       totalCompleted: 0,
     })
   })
+
+  it('lets a page distinguish a stats failure from an empty account with strict loading', async () => {
+    const failure = new Error('offline')
+    eq.mockResolvedValue({ data: null, error: failure })
+    await expect(userQuestsService.getQuestStats('user-1', { strict: true })).rejects.toBe(failure)
+    expect(eq).toHaveBeenCalledWith('user_id', 'user-1')
+    expect(rpc).not.toHaveBeenCalled()
+  })
 })

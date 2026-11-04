@@ -1,33 +1,38 @@
 <template>
-  <form class="app-form event-form" @submit.prevent="submitForm">
+  <form class="app-form event-form" novalidate @submit.prevent="submitForm">
+    <div v-if="showValidationError" class="form-validation" role="alert">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+      <span>Complétez tous les champs obligatoires avant de continuer.</span>
+    </div>
     <div class="form-group">
-      <label>Titre</label>
-      <InputText v-model="form.title" required placeholder="Titre de l'événement" class="w-full surface-card" />
+      <label for="event-title">Titre <span aria-hidden="true">*</span></label>
+      <InputText id="event-title" v-model="form.title" required aria-required="true" placeholder="Titre de l'événement" class="w-full surface-card" />
     </div>
 
     <div class="form-group">
-      <label>Description</label>
-      <Textarea v-model="form.description" required placeholder="Description" class="w-full surface-card" autoResize rows="3" />
+      <label for="event-description">Description <span aria-hidden="true">*</span></label>
+      <Textarea id="event-description" v-model="form.description" required aria-required="true" placeholder="Décrivez l’objectif et le déroulement de l’événement" class="w-full surface-card" autoResize rows="4" />
     </div>
 
     <div class="form-group">
-      <label>Date et heure de début</label>
-      <Calendar v-model="form.startDate" showTime hourFormat="24" dateFormat="dd/mm/yy" class="w-full surface-card" showIcon />
+      <label for="event-start">Date et heure de début <span aria-hidden="true">*</span></label>
+      <Calendar inputId="event-start" v-model="form.startDate" showTime hourFormat="24" dateFormat="dd/mm/yy" class="w-full surface-card" showIcon />
     </div>
 
     <div class="form-group">
-      <label>Date et heure de fin</label>
-      <Calendar v-model="form.endDate" showTime hourFormat="24" dateFormat="dd/mm/yy" class="w-full surface-card" showIcon />
+      <label for="event-end">Date et heure de fin <span aria-hidden="true">*</span></label>
+      <Calendar inputId="event-end" v-model="form.endDate" showTime hourFormat="24" dateFormat="dd/mm/yy" class="w-full surface-card" showIcon />
     </div>
 
     <div class="form-group">
-      <label>Lieu</label>
-      <InputText v-model="form.lieu" placeholder="Lieu de l'événement" class="w-full surface-card" />
+      <label for="event-location">Lieu</label>
+      <InputText id="event-location" v-model="form.lieu" placeholder="Lieu de l'événement" class="w-full surface-card" />
     </div>
 
     <div class="form-group">
-      <label>Type d'événement</label>
+      <label for="event-type">Type d'événement <span aria-hidden="true">*</span></label>
       <Dropdown
+        inputId="event-type"
         v-model="form.type"
         :options="typeOptions"
         optionLabel="label"
@@ -38,8 +43,9 @@
     </div>
 
     <div v-if="form.type === 'private'" class="form-group">
-      <label>Rôle dédié</label>
+      <label for="event-role">Rôle dédié <span aria-hidden="true">*</span></label>
       <Dropdown
+        inputId="event-role"
         v-model="form.role"
         :options="roleOptions"
         optionLabel="label"
@@ -50,7 +56,7 @@
     </div>
 
     <div class="form-group">
-      <label>Image de l'événement (optionnel)</label>
+      <span class="form-label">Image de l'événement (optionnel)</span>
 
       <div class="image-upload-container">
         <input
@@ -63,7 +69,7 @@
         />
 
         <label for="event-image" class="file-input-label">
-          <i class="pi pi-upload"></i>
+          <i class="pi pi-upload" aria-hidden="true"></i>
           {{ form.imageFile ? form.imageFile.name : 'Choisir une image' }}
         </label>
 
@@ -73,6 +79,7 @@
             icon="pi pi-times"
             class="p-button-rounded p-button-danger p-button-sm remove-image-btn"
             type="button"
+            aria-label="Retirer l’image"
             @click="removeImage"
           />
         </div>
@@ -84,15 +91,17 @@
         v-if="!editMode || canManageEvent"
         type="submit"
         :label="editMode ? 'Modifier' : 'Créer'"
-        class="p-button-primary w-full mt-2"
+        class="p-button-primary"
         :icon="editMode ? 'pi pi-check' : 'pi pi-plus-circle'"
       />
-      <Button type="button" label="Annuler" class="p-button-text w-full mt-2" icon="pi pi-times" @click="$emit('close')" />
+      <Button type="button" label="Annuler" outlined severity="secondary" icon="pi pi-times" @click="$emit('close')" />
       <Button
         v-if="canManageEvent"
         type="button"
         label="Supprimer"
-        class="p-button-danger w-full mt-2"
+        class="delete-action"
+        outlined
+        severity="danger"
         icon="pi pi-trash"
         @click="confirmDeleteEvent"
       />
@@ -117,6 +126,7 @@ const props = defineProps({
 
 const emit = defineEmits(['submit', 'close', 'delete'])
 const confirm = useConfirm()
+const submitted = ref(false)
 
 const typeOptions = [
   { label: 'Public', value: 'public' },
@@ -151,6 +161,15 @@ const form = ref(createEmptyForm())
 const canManageEvent = computed(() => {
   return props.editMode && props.event && props.userId && props.event.admin === props.userId
 })
+
+const showValidationError = computed(() => submitted.value && (
+  !form.value.title ||
+  !form.value.description ||
+  !form.value.startDate ||
+  !form.value.endDate ||
+  !form.value.type ||
+  (form.value.type === 'private' && !form.value.role)
+))
 
 const hydrateFormFromEvent = (event) => {
   if (!event) return
@@ -213,6 +232,7 @@ function confirmDeleteEvent() {
 }
 
 function submitForm() {
+  submitted.value = true
   if (
     !form.value.title ||
     !form.value.description ||
@@ -232,6 +252,7 @@ function submitForm() {
   }
 
   emit('submit', formData)
+  submitted.value = false
 
   if (!props.editMode) {
     form.value = createEmptyForm()
@@ -248,7 +269,20 @@ function submitForm() {
   gap: 1.1em;
 }
 
-.form-group label {
+.form-validation {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  padding: .85rem 1rem;
+  border: 1px solid color-mix(in srgb, #ef4444 38%, transparent);
+  border-radius: .75rem;
+  background: color-mix(in srgb, #ef4444 8%, var(--surface-card));
+  color: #f87171;
+  line-height: 1.45;
+}
+
+.form-group label,
+.form-label {
   display: block;
   margin-bottom: 0.45em;
   font-weight: 600;
@@ -262,9 +296,16 @@ function submitForm() {
 
 .form-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.5em;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .75rem;
   margin-top: 1.2em;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+.delete-action {
+  margin-right: auto;
 }
 
 .image-upload-container {
@@ -272,8 +313,9 @@ function submitForm() {
   flex-direction: column;
   align-items: center;
   padding: 1em;
-  border: 1px solid #ddd;
-  border-radius: 0.5em;
+  border: 1px dashed var(--surface-border);
+  border-radius: .75rem;
+  background: var(--surface-ground);
   cursor: pointer;
 }
 
@@ -285,8 +327,10 @@ function submitForm() {
   display: flex;
   align-items: center;
   padding: 0.5em;
-  border: 1px solid #ccc;
-  border-radius: 0.5em;
+  border: 1px solid var(--surface-border);
+  border-radius: .65rem;
+  background: var(--surface-card);
+  color: var(--text-color);
   cursor: pointer;
 }
 
@@ -299,8 +343,8 @@ function submitForm() {
   flex-direction: column;
   align-items: center;
   padding: 1em;
-  border: 1px solid #ddd;
-  border-radius: 0.5em;
+  border: 1px solid var(--surface-border);
+  border-radius: .75rem;
   margin-top: 1em;
 }
 
@@ -313,5 +357,11 @@ function submitForm() {
 
 .remove-image-btn {
   margin-top: 0.5em;
+}
+
+@media (max-width: 36rem) {
+  .form-actions { flex-direction: column; }
+  .form-actions :deep(.p-button) { flex: 1 1 100%; justify-content: center; }
+  .delete-action { margin-right: 0; }
 }
 </style>

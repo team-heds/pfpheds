@@ -14,7 +14,7 @@
     @keydown.space.prevent="$emit('click', challenge)"
   >
     <!-- Difficulty Indicator -->
-    <div class="difficulty-indicator" :style="{ backgroundColor: houseColor }">
+    <div class="difficulty-indicator" :style="{ backgroundColor: houseColor, color: houseTextColor }">
       <span class="difficulty-icon">{{ difficultyConfig.icon }}</span>
       <span class="difficulty-text">{{ difficultyConfig.name }}</span>
     </div>
@@ -26,7 +26,7 @@
       </div>
       
       <!-- Completion Checkmark -->
-      <div v-if="challenge.completed" class="completion-checkmark">
+      <div v-if="challenge.completed" class="completion-checkmark" :style="{ color: houseTextColor }">
         <i class="pi pi-check"></i>
       </div>
       
@@ -36,9 +36,9 @@
     
     <!-- Challenge Info -->
     <div class="challenge-info">
-      <h4 class="challenge-name" :class="{ 'completed-text': challenge.completed }">
+      <h3 class="challenge-name" :class="{ 'completed-text': challenge.completed }">
         {{ challenge.name }}
-      </h4>
+      </h3>
       
       <p class="challenge-description" :class="{ 'completed-text': challenge.completed }">
         {{ challenge.description }}
@@ -94,7 +94,7 @@
         
         <div class="reward-item" v-if="challenge.reward.badge">
           <i class="pi pi-trophy reward-icon"></i>
-          <span>Badge</span>
+          <span>{{ challenge.reward.badgeName || 'Badge associé' }}</span>
         </div>
         
         <div class="reward-item" v-if="challenge.reward.title">
@@ -117,7 +117,7 @@
     </div>
     
     <!-- Category Badge -->
-    <div class="category-badge" :style="{ backgroundColor: categoryColor }">
+    <div class="category-badge" :style="{ backgroundColor: categoryColor, color: houseTextColor }">
       {{ categoryName }}
     </div>
     
@@ -133,6 +133,7 @@
 <script setup>
 import { computed } from 'vue'
 import { CHALLENGE_DIFFICULTY } from '@/service/challengesService'
+import { getReadableTextColor } from '@/utils/colorContrast'
 
 const props = defineProps({
   challenge: {
@@ -151,6 +152,7 @@ defineEmits(['click'])
 const difficultyConfig = computed(() => 
   CHALLENGE_DIFFICULTY[props.challenge.difficulty] || CHALLENGE_DIFFICULTY.EASY
 )
+const houseTextColor = computed(() => getReadableTextColor(props.houseColor))
 
 
 const progressPercentage = computed(() => {
@@ -225,10 +227,13 @@ const formatCompletionDate = (dateString) => {
 
 <style scoped>
 .challenge-card {
+  --challenge-surface: #ffffff;
+  --challenge-text: #172033;
+  --challenge-text-secondary: #4b5568;
   position: relative;
   background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.95) 0%, 
-    color-mix(in srgb, var(--house-color) 15%, white) 100%
+    var(--challenge-surface) 0%,
+    color-mix(in srgb, var(--house-color) 12%, var(--challenge-surface)) 100%
   );
   border-radius: 16px;
   padding: 1.5rem;
@@ -277,7 +282,7 @@ const formatCompletionDate = (dateString) => {
 
 /* Completed State */
 .completed {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  background: linear-gradient(135deg, var(--challenge-surface) 0%, color-mix(in srgb, #22C55E 14%, var(--challenge-surface)) 100%);
   border-color: #22C55E;
 }
 
@@ -402,13 +407,13 @@ const formatCompletionDate = (dateString) => {
   font-size: 1.125rem;
   font-weight: 700;
   margin: 0;
-  color: var(--text-color);
+  color: var(--challenge-text);
   line-height: 1.3;
 }
 
 .challenge-description {
   font-size: 0.875rem;
-  color: var(--text-color-secondary);
+  color: var(--challenge-text-secondary);
   margin: 0;
   line-height: 1.4;
 }
@@ -432,11 +437,11 @@ const formatCompletionDate = (dateString) => {
 
 .progress-text {
   font-weight: 600;
-  color: var(--text-color);
+  color: var(--challenge-text);
 }
 
 .progress-percentage {
-  color: var(--text-color-secondary);
+  color: var(--challenge-text-secondary);
   font-weight: 500;
 }
 
@@ -447,7 +452,7 @@ const formatCompletionDate = (dateString) => {
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: rgba(0, 0, 0, 0.1);
+  background: color-mix(in srgb, var(--challenge-text) 14%, transparent);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -519,11 +524,11 @@ const formatCompletionDate = (dateString) => {
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.5rem;
-  background: rgba(0, 0, 0, 0.05);
+  background: color-mix(in srgb, var(--challenge-text) 8%, transparent);
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-color-secondary);
+  color: var(--challenge-text-secondary);
 }
 
 .reward-icon {
@@ -538,7 +543,7 @@ const formatCompletionDate = (dateString) => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.75rem;
-  color: var(--text-color-secondary);
+  color: var(--challenge-text-secondary);
   margin-top: auto;
 }
 
@@ -559,10 +564,24 @@ const formatCompletionDate = (dateString) => {
   padding: 0.25rem 0.75rem;
   font-size: 0.7rem;
   font-weight: 600;
-  color: white;
   border-radius: 0 8px 0 16px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .challenge-card,
+  .challenge-icon,
+  .completion-checkmark,
+  .near-completion,
+  .near-completion-glow,
+  .progress-fill,
+  .progress-shimmer,
+  .progress-pulse,
+  .particle {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* Completion Celebration */

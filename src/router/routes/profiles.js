@@ -15,7 +15,7 @@ export default [
   { path: '/hes-house-quiz', component: () => import('@/views/users/HESHouseQuizView.vue'), name: 'HESHouseQuizView', meta: { requiresAuth: true } },
   { path: '/houses/:houseName/stats', component: () => import('@/components/gamification/HouseStatsPage.vue'), name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
   { path: '/houses/ranking', component: () => import('@/components/gamification/HousesRankingPage.vue'), name: 'HousesRankingPage', meta: { requiresAuth: true } },
-  { path: '/gamification-profile', name: 'GamificationProfileSelf', redirect: { name: 'QuestsPage' }, meta: { requiresAuth: true } },
+  { path: '/gamification-profile', component: () => import('@/components/gamification/GamificationProfilePage.vue'), name: 'GamificationProfileSelf', beforeEnter: () => gamificationFeatures.userJourney ? true : { name: 'QuestsPage' }, meta: { requiresAuth: true, title: 'Ma progression' } },
   { path: '/gamification-profile/:id', component: () => import('@/components/gamification/GamificationProfilePage.vue'), name: 'GamificationProfilePage', props: true, beforeEnter: profileAccessGuard, meta: { requiresAuth: true } },
   { path: '/achievements', component: () => import('@/components/gamification/AchievementsPage.vue'), name: 'AchievementsPage', beforeEnter: badgesChallengesGuard, meta: { requiresAuth: true } },
   { path: '/challenges', component: () => import('@/components/gamification/ChallengesPage.vue'), name: 'ChallengesPage', beforeEnter: badgesChallengesGuard, meta: { requiresAuth: true } },

@@ -87,6 +87,20 @@ Pour préparer les deux PDF avant publication :
 npm run presentation:pdf:all
 ```
 
+## Présentation « Soins infirmiers »
+
+Le support métier du workflow SI est accessible séparément :
+
+```text
+http://localhost:5182/presentation/soins-infirmiers/
+```
+
+Générer son PDF avec :
+
+```bash
+npm run presentation:pdf:soins
+```
+
 ## Ajouter une slide
 
 1. Ouvrir le fichier adapté dans `src/slides/`.

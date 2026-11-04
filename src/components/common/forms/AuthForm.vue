@@ -35,7 +35,7 @@
       <ErrorInline v-if="passwordError" :id="ids.passwordError" :message="passwordErrorText" />
     </div>
 
-    <div class="flex align-items-center justify-content-between mb-4">
+    <div class="auth-options flex align-items-center justify-content-between mb-4">
       <div class="flex align-items-center">
         <Checkbox v-model="modelRemember" :inputId="ids.remember" binary class="mr-2" />
         <label :for="ids.remember" class="text-sm">Se souvenir de moi</label>
@@ -114,6 +114,7 @@ const ids = {
   font-weight: 700;
   cursor: pointer;
   padding: 0;
+  white-space: nowrap;
 }
 .link-forgot:hover { opacity: 0.85; }
 .link-forgot:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -132,5 +133,13 @@ const ids = {
 :deep(.p-inputtext:focus),
 :deep(.p-password-input:focus) {
   box-shadow: var(--focus-ring);
+}
+
+@media (max-width: 40rem) {
+  .auth-options {
+    align-items: flex-start !important;
+    flex-direction: column;
+    gap: .75rem;
+  }
 }
 </style>

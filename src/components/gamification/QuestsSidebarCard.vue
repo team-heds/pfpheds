@@ -3,7 +3,7 @@
     <!-- Header avec badge de notification -->
     <div class="flex justify-content-between align-items-center mb-3">
       <div class="header-with-badge">
-        <h4 class="m-0">🗺️ Nouvelles Quêtes</h4>
+        <h4 class="m-0"><i class="pi pi-map" aria-hidden="true"></i> Nouvelles quêtes</h4>
         <span v-if="newQuestsCount > 0" class="notification-badge" :style="{ backgroundColor: houseColor }">
           {{ newQuestsCount }}
         </span>
@@ -42,7 +42,7 @@
         <div class="quest-content">
           <div class="quest-header">
             <span class="quest-title">{{ quest.title }}</span>
-            <span v-if="quest.isNew" class="new-badge">NEW</span>
+            <span v-if="quest.isNew" class="new-badge">Nouveau</span>
           </div>
           
           <div class="quest-meta">
@@ -95,13 +95,19 @@ import Button from 'primevue/button'
 import userQuestsService from '@/service/userQuestsService'
 import { supabase } from '@/supabase'
 
+const props = defineProps({
+  previewQuests: { type: Array, default: null },
+  previewHouseColor: { type: String, default: '#2E8B57' },
+  previewLoading: { type: Boolean, default: false },
+})
+
 const router = useRouter()
 const authStore = useAuthStore()
 
 // State
 const newQuests = ref([])
-const loading = ref(false)
-const houseColor = ref('#2E8B57') // Harmonis par défaut
+const loading = ref(props.previewLoading)
+const houseColor = ref(props.previewHouseColor)
 let realtimeChannel = null
 
 // Computed
@@ -215,6 +221,11 @@ const goToQuests = () => {
 
 // Lifecycle
 onMounted(async () => {
+  if (Array.isArray(props.previewQuests)) {
+    newQuests.value = props.previewQuests
+    loading.value = props.previewLoading
+    return
+  }
   await loadUserHouseColor()
   await loadNewQuests()
   subscribeToQuestUpdates()

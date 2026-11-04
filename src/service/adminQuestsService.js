@@ -20,7 +20,9 @@ class AdminQuestsService {
             step_order,
             title,
             description,
-            required
+            required,
+            action_type,
+            target_value
           )
         `)
         .order('created_at', { ascending: false })
@@ -55,7 +57,9 @@ class AdminQuestsService {
             step_order,
             title,
             description,
-            required
+            required,
+            action_type,
+            target_value
           )
         `)
         .eq('id', questId)
@@ -81,6 +85,7 @@ class AdminQuestsService {
    */
   async createQuest(questData) {
     try {
+      const requestedStatus = questData.status || 'draft'
       // 1. Créer la quête
       const questPayload = {
         title: questData.title,
@@ -89,7 +94,7 @@ class AdminQuestsService {
         difficulty: questData.difficulty,
         points: questData.points,
         xp_reward: questData.rewards?.xp || questData.points,
-        status: questData.status || 'active'
+        status: 'draft'
       }
 
       // Ajouter les nouveaux champs seulement s'ils existent dans le schema
@@ -126,7 +131,9 @@ class AdminQuestsService {
           step_order: index + 1,
           title: step.title,
           description: step.description || null,
-          required: step.required !== false
+          required: step.required !== false,
+          action_type: step.actionType,
+          target_value: step.target || 1
         }))
         
         const { error: stepsError } = await supabase
@@ -139,9 +146,9 @@ class AdminQuestsService {
         }
       }
       
-      // 3. Si statut = active, assigner automatiquement à tous les utilisateurs
-      if (quest.status === 'active') {
-        await this.assignQuestToAllUsers(quest.id)
+      // 3. Toute publication passe par la validation et la transition serveur.
+      if (requestedStatus !== 'draft') {
+        await this.changeQuestStatus(quest.id, requestedStatus, 'Création depuis l’administration')
       }
       
       return quest
@@ -160,6 +167,7 @@ class AdminQuestsService {
    */
   async updateQuest(questId, questData) {
     try {
+      const currentQuest = await this.getQuestById(questId)
       // 1. Mettre à jour la quête
       const { data: quest, error: questError } = await supabase
         .from('quests')
@@ -170,7 +178,6 @@ class AdminQuestsService {
           difficulty: questData.difficulty,
           points: questData.points,
           xp_reward: questData.rewards?.xp || questData.points,
-          status: questData.status,
           icon: questData.icon,
           // Dates avec timezone
           start_date: questData.startDate || null,
@@ -204,7 +211,9 @@ class AdminQuestsService {
             step_order: index + 1,
             title: step.title,
             description: step.description || null,
-            required: step.required !== false
+            required: step.required !== false,
+            action_type: step.actionType,
+            target_value: step.target || 1
           }))
           
           await supabase
@@ -213,9 +222,9 @@ class AdminQuestsService {
         }
       }
       
-      // 3. Si passage à active, assigner à tous les utilisateurs
-      if (quest.status === 'active') {
-        await this.assignQuestToAllUsers(questId)
+      // 3. Le statut est modifié uniquement par la RPC auditée.
+      if (questData.status && questData.status !== currentQuest.status) {
+        await this.changeQuestStatus(questId, questData.status, 'Modification depuis l’administration')
       }
       
       return quest
@@ -233,14 +242,8 @@ class AdminQuestsService {
    */
   async deleteQuest(questId) {
     try {
-      // Les étapes et progressions seront supprimées automatiquement (CASCADE)
-      const { error } = await supabase
-        .from('quests')
-        .delete()
-        .eq('id', questId)
-      
-      if (error) throw error
-      
+      // HEDS25-620 conserve l'historique : une suppression UI archive la quête.
+      await this.changeQuestStatus(questId, 'archived', 'Archivage depuis l’administration')
       return true
       
     } catch (error) {
@@ -312,21 +315,16 @@ class AdminQuestsService {
    * @param {string} newStatus - Nouveau statut
    * @returns {Promise<Object>} Quête mise à jour
    */
-  async changeQuestStatus(questId, newStatus) {
+  async changeQuestStatus(questId, newStatus, reason = null) {
     try {
-      const { data, error } = await supabase
-        .from('quests')
-        .update({ status: newStatus })
-        .eq('id', questId)
-        .select()
-        .single()
+      const { data, error } = await supabase.rpc('transition_gamification_lifecycle', {
+        p_entity_kind: 'quest',
+        p_entity_id: questId,
+        p_next_status: newStatus,
+        p_reason: reason
+      })
       
       if (error) throw error
-      
-      // Si activation, assigner à tous les utilisateurs
-      if (newStatus === 'active') {
-        await this.assignQuestToAllUsers(questId)
-      }
       
       return data
       
@@ -334,6 +332,15 @@ class AdminQuestsService {
       console.error('❌ Erreur changement statut:', error)
       throw error
     }
+  }
+
+  async previewQuestLifecycle(questId) {
+    const { data, error } = await supabase.rpc('preview_gamification_lifecycle', {
+      p_entity_kind: 'quest',
+      p_entity_id: questId
+    })
+    if (error) throw error
+    return data
   }
   
   /**
