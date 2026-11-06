@@ -82,9 +82,9 @@ export default defineConfig({
     watch: {
       usePolling: false,
       ignored: [
-        '**/node_modules/**', 
-        '**/.git/**', 
-        '**/dist/**', 
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/dist/**',
         '**/backend/**',
         '**/.env/**',
         '**/public/**'
@@ -92,9 +92,9 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'https://api2.hedsvs.ch',
+        // target: 'http://localhost:3000', //dev
+        target: 'https://api2.hedsvs.ch', //prod
         changeOrigin: true,
-        secure: true,
       },
     },
   },

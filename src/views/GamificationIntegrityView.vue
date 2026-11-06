@@ -3,6 +3,7 @@
     <header>
       <h1>Intégrité des données gamification</h1>
       <p>Diagnostic nominatif réservé aux administrateurs. Aucune donnée n’est modifiée.</p>
+      <p>Si la requête échoue, vérifier l'URL de la route /api dans la configuration vite.config.js (nécessite localhost:3000 lorsque la plateforme est lancée en mode dev).</p>
     </header>
 
     <div class="actions">
