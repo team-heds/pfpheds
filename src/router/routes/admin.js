@@ -26,6 +26,7 @@ export default [
   { path: '/admin/dashboard-pfp', component: () => import('@/components/admin/AdminDashboardPFP.vue'), name: 'AdminDashboardPFP', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio'] } },
   { path: '/admin/dashboard-academique', component: () => import('@/components/admin/AdminDashboardAcademique.vue'), name: 'AdminDashboardAcademique', meta: { requiresAuth: true, need: ['super.all', 'admin', 'editor'] } },
   { path: '/admin/dashboard-gamification', component: () => import('@/components/admin/AdminDashboardGamification.vue'), name: 'AdminDashboardGamification', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio'] } },
+  { path: '/admin/gamification/integrity', component: () => import('@/views/GamificationIntegrityView.vue'), name: 'GamificationIntegrity', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
   { path: '/admin/alerts', component: () => import('@/views/admin/AlertsDashboard.vue'), name: 'AlertsDashboard', meta: { requiresAuth: true, need: ['super.all', 'admin', 'AdminPhysio', 'EnseignantPhysio'] } },
   { path: '/admin/settings', component: () => import('@/views/admin/SettingsView.vue'), name: 'AdminSettingsView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/admin/supabase-diagnostic', component: () => import('@/views/admin/SupabaseDiagnosticView.vue'), name: 'SupabaseDiagnosticView', meta: { requiresAuth: true, need: 'admin' } },

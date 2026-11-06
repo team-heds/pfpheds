@@ -46,6 +46,7 @@ const {
   createPasswordRecoveryRequestRouter
 } = require('./supabase/passwordRecoveryRequestBackend.js')
 const { createPfpOutcomeRouter } = require('./supabase/pfpOutcomeBackend.js')
+const { createGamificationIntegrityRouter } = require('./supabase/gamificationIntegrityBackend.js')
 const { createStudentInitialAccessRouters } = require('./supabase/studentInitialAccessBackend.js')
 
 // push
@@ -135,6 +136,7 @@ app.use('/api/resultat-votation', resultatVotationRoutes)
 app.use('/api/feedbacka', feedbackaRoutes)
 app.use('/api/push', requireAdmin, pushRoutes)
 app.use('/api/ftp', requireAdmin, ftpRoutes)
+app.use('/api/admin/gamification-integrity', requireAdmin, createGamificationIntegrityRouter({ client: supabaseAdmin, logger: console }))
 app.use('/api/admin/users', requireAdmin, adminUsersRoutes)
 app.use('/api/admin/users', requireAdmin, studentInitialAccessRouters.adminRouter)
 app.use('/api/auth', studentInitialAccessRouters.selfRouter)
