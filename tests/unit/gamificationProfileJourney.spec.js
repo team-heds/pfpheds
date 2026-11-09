@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   features: { userJourney: true, badgesChallenges: true, gamesHub: true, houseQuiz: true },
   gamification: vi.fn(), history: vi.fn(), quests: vi.fn(), questStats: vi.fn(),
   allBadges: vi.fn(), earnedBadges: vi.fn(), challenges: vi.fn(), challengeStats: vi.fn(),
-  profile: vi.fn(), from: vi.fn(), push: vi.fn(),
+  profile: vi.fn(), from: vi.fn(), push: vi.fn(), quizStatus: vi.fn(),
 }))
 vi.mock('@/stores/authStore', () => ({ useAuthStore: () => mocks.auth }))
 vi.mock('@/config/gamificationFeatures', () => ({ gamificationFeatures: mocks.features }))
@@ -15,7 +15,7 @@ vi.mock('vue-router', () => ({ useRouter: () => ({ push: mocks.push, back: vi.fn
 vi.mock('@/components/common/utils/Navbar.vue', () => ({ default: { template: '<nav />' } }))
 vi.mock('@/supabase.js', () => ({ supabase: { from: mocks.from } }))
 vi.mock('@/service/gamificationServiceSupabase', () => ({
-  default: { getUserGamificationData: mocks.gamification },
+  default: { getUserGamificationData: mocks.gamification, getMyHouseQuizStatus: mocks.quizStatus },
   HES_HOUSES: {
     harmonis: { name: 'Harmonis', color: '#2E8B57', motto: 'L’équilibre soigne', icon: 'pi pi-plus' },
     elaris: { name: 'Elaris', color: '#DC143C', motto: 'Clarifier, guider, apaiser', icon: 'pi pi-sun' },
@@ -49,6 +49,7 @@ describe('parcours du profil gamification', () => {
     Object.assign(mocks.features, { userJourney: true, badgesChallenges: true, gamesHub: true, houseQuiz: true })
     vi.spyOn(console, 'error').mockImplementation(() => {})
     mocks.gamification.mockResolvedValue({ maison: 'Doloris', niveau: 3, xp: 500 })
+    mocks.quizStatus.mockResolvedValue({ has_house: false, is_player: true, quiz_open: true })
     mocks.profile.mockImplementation(async id => ({ data: { display_name: id === 'student-b' ? 'Béatrice Test' : 'Alice Test' }, error: null }))
     mocks.from.mockImplementation(table => {
       if (table !== 'user_profiles') throw new Error(`Unexpected table ${table}`)
@@ -232,6 +233,14 @@ describe('parcours du profil gamification', () => {
     expect(wrapper.find('a[href="/game"]').exists()).toBe(enabled)
     expect(wrapper.find('a[href="/hes-house-quiz"]').exists()).toBe(enabled)
     expect(wrapper.findAll('button').some(button => button.text().includes('Découvrir ma maison'))).toBe(enabled)
+  })
+
+  it('n’invite pas au questionnaire quand le serveur le ferme (compte hors gamification)', async () => {
+    mocks.gamification.mockResolvedValue({ maison: null, niveau: 1, xp: 0 })
+    mocks.quizStatus.mockResolvedValue({ has_house: false, is_player: false, quiz_open: false })
+    await open()
+    expect(wrapper.find('a[href="/hes-house-quiz"]').exists()).toBe(false)
+    expect(wrapper.findAll('button').some(button => button.text().includes('Découvrir ma maison'))).toBe(false)
   })
 
   it('masque les collections et leurs requêtes lorsque leur fonctionnalité est désactivée', async () => {

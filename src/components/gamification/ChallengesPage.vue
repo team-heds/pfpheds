@@ -24,9 +24,9 @@
         
         <!-- Page Header -->
         <GamificationPageHeader
-          title="Défis hebdomadaires"
-          description="Avancez à votre rythme, suivez votre série et remportez les récompenses de la semaine."
-          eyebrow="Progression de la semaine"
+          title="Défis du moment"
+          description="Avancez à votre rythme et gagnez de l’XP pour vous et votre maison."
+          eyebrow="Progression des défis"
           icon="pi pi-bolt"
           @back="goBack"
         />
@@ -35,8 +35,8 @@
         <div class="week-info">
           <div class="week-card">
             <div class="week-header">
-              <h2>Semaine {{ currentWeek }}</h2>
-              <div class="week-dates">{{ weekDates }}</div>
+              <h2>Défis en cours</h2>
+              <div class="week-dates">{{ periodLabel }}</div>
             </div>
             <div class="week-progress">
               <div class="progress-stats">
@@ -62,13 +62,16 @@
         <div class="stats-overview">
           <GamificationStatCard icon="pi pi-check-circle" :value="challengeStats.totalCompleted" label="Défis complétés" />
           <GamificationStatCard icon="pi pi-star-fill" :value="formatNumber(challengeStats.totalXPFromChallenges)" label="XP gagnés avec les défis" />
-          <GamificationStatCard icon="pi pi-chart-line" :value="challengeStats.streakWeeks" label="Semaines consécutives" />
+          <GamificationStatCard icon="pi pi-flag" :value="totalChallenges" label="Défis disponibles" />
         </div>
 
         <!-- Active Challenges -->
         <div class="challenges-section">
-          <h2>Défis Actifs</h2>
-          <div class="challenges-grid">
+          <h2>Défis actifs</h2>
+          <p v-if="activeChallenges.length === 0" class="challenges-empty">
+            Aucun défi en cours pour le moment. Les prochains défis apparaîtront ici.
+          </p>
+          <div v-else class="challenges-grid">
             <ChallengeCard
               v-for="challenge in activeChallenges"
               :key="challenge.id"
@@ -180,6 +183,7 @@ import GamificationStatCard from '@/components/gamification/GamificationStatCard
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import { getReadableTextColor } from '@/utils/colorContrast'
+import { challengePeriod, formatChallengePeriod, formatTimeLeft } from '@/utils/challengePeriod'
 
 // Router and auth
 const router = useRouter()
@@ -194,7 +198,6 @@ const challengeStats = ref({ totalCompleted: 0, totalXPFromChallenges: 0, streak
 const showModal = ref(false)
 const selectedChallenge = ref(null)
 const showAllHistory = ref(false)
-const currentWeek = ref(0)
 let loadGeneration = 0
 let disposed = false
 
@@ -236,33 +239,9 @@ const completionRate = computed(() => {
   return Math.round((completedChallenges.value / totalChallenges.value) * 100)
 })
 
-const weekDates = computed(() => {
-  const now = new Date()
-  const startOfWeek = new Date(now)
-  const day = now.getDay()
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1)
-  startOfWeek.setDate(diff)
-  
-  const endOfWeek = new Date(startOfWeek)
-  endOfWeek.setDate(startOfWeek.getDate() + 6)
-  
-  return `${startOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} - ${endOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`
-})
-
-const timeUntilReset = computed(() => {
-  const now = new Date()
-  const nextMonday = new Date(now)
-  const daysUntilMonday = (8 - now.getDay()) % 7 || 7
-  nextMonday.setDate(now.getDate() + daysUntilMonday)
-  nextMonday.setHours(0, 0, 0, 0)
-  
-  const diff = nextMonday - now
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-  
-  if (days > 0) return `${days}j ${hours}h`
-  return `${hours}h`
-})
+const period = computed(() => challengePeriod(activeChallenges.value))
+const periodLabel = computed(() => formatChallengePeriod(period.value))
+const timeUntilReset = computed(() => formatTimeLeft(period.value))
 
 const displayedHistory = computed(() => {
   return showAllHistory.value ? challengeHistory.value : challengeHistory.value.slice(0, 6)
@@ -341,7 +320,6 @@ const loadData = async () => {
     activeChallenges.value = active
     challengeHistory.value = history
     challengeStats.value = stats
-    currentWeek.value = getCurrentWeekNumber()
     
   } catch (error) {
     if (!isCurrent()) return
@@ -352,20 +330,11 @@ const loadData = async () => {
   }
 }
 
-const getCurrentWeekNumber = () => {
-  const now = new Date()
-  const start = new Date(now.getFullYear(), 0, 1)
-  const diff = now - start
-  const oneWeek = 1000 * 60 * 60 * 24 * 7
-  return Math.floor(diff / oneWeek)
-}
-
 // Lifecycle
 watch(() => authStore.user?.id || null, () => {
   activeChallenges.value = []
   challengeHistory.value = []
   challengeStats.value = { totalCompleted: 0, totalXPFromChallenges: 0, streakWeeks: 0 }
-  currentWeek.value = 0
   showModal.value = false
   selectedChallenge.value = null
   showAllHistory.value = false
@@ -582,6 +551,11 @@ onBeforeUnmount(() => {
 }
 
 /* Challenges Section */
+.challenges-empty {
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+}
+
 .challenges-section {
   max-width: 1200px;
   margin: 2rem auto;
@@ -590,7 +564,7 @@ onBeforeUnmount(() => {
 
 .challenges-section h2 {
   margin-bottom: 1.5rem;
-  color: #1f2937;
+  color: #ffffff;
 }
 
 .challenges-grid {
@@ -615,7 +589,7 @@ onBeforeUnmount(() => {
 
 .section-header h2 {
   margin: 0;
-  color: #1f2937;
+  color: #ffffff;
 }
 
 .toggle-history-btn {
@@ -719,10 +693,10 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.difficulty-easy { background: rgba(34, 197, 94, 0.2); color: #22C55E; }
-.difficulty-medium { background: rgba(245, 158, 11, 0.2); color: #F59E0B; }
-.difficulty-hard { background: rgba(239, 68, 68, 0.2); color: #EF4444; }
-.difficulty-legendary { background: rgba(139, 92, 246, 0.2); color: #8B5CF6; }
+.difficulty-chip.difficulty-easy { background: rgba(34, 197, 94, 0.2); color: #22C55E; }
+.difficulty-chip.difficulty-medium { background: rgba(245, 158, 11, 0.2); color: #F59E0B; }
+.difficulty-chip.difficulty-hard { background: rgba(239, 68, 68, 0.2); color: #EF4444; }
+.difficulty-chip.difficulty-legendary { background: rgba(139, 92, 246, 0.2); color: #8B5CF6; }
 
 .category-chip {
   background: rgba(107, 114, 128, 0.2);
