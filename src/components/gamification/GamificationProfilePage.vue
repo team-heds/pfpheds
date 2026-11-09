@@ -171,7 +171,7 @@
     </div>
   </main>
 
-  <DetailModal v-model="showDetailModal" :type="modalType" :item="modalItem" />
+  <DetailModal v-model="showDetailModal" :type="modalType" :item="modalItem" :read-only="isViewingOtherUser" />
 </template>
 
 <script setup>
