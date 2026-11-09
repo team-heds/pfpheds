@@ -148,3 +148,16 @@ Prérequis : la release #237 est prête (PR #241 fusionnée, plan `docs/plans/re
 - Planifier la clôture automatique des défis à leur date de fin (la page masque déjà les défis
   échus).
 - Quiz de maison : réponses à rendre accessibles au clavier et aux lecteurs d'écran.
+
+## Mise en production effectuée (9 novembre 2026)
+
+Lancement avancé au 9 novembre à la demande : migrations appliquées à 10h35 (sauvegarde
+`before-release-237-prod-20261109-103522.dump`), #237 fusionnée et déployée (ancienne
+version : `/opt/pfpheds-releases/pfpheds-deploy-55pxHk`), script de lancement passé sans
+anomalie, post BA26 publié. Défis du 9 novembre au 6 décembre 2026.
+
+Les 3 maîtres du jeu (maison gamemaster, hors classement) ont retrouvé leur XP archivé
+(niveau 20) par une écriture `GAMEMASTER_RESTORE`. La migration
+`20261109140000_season_reset_keep_game_masters.sql` les exclut des remises à zéro
+suivantes (appliquée sur TEST et en production le 9 novembre).
+
