@@ -196,6 +196,22 @@ class UserQuestsService {
    * @param {string} questId - ID quête
    * @returns {Promise<Object>} Progression créée
    */
+  /**
+   * Quêtes programmées qui n'ont pas encore commencé (lecture seule), les plus proches d'abord.
+   * Elles seront attribuées automatiquement aux joueurs à leur date de début.
+   */
+  async getUpcomingQuests(limit = 3) {
+    const { data, error } = await supabase
+      .from('quests')
+      .select('id,title,description,icon,difficulty,xp_reward,points,start_date,end_date')
+      .eq('status', 'scheduled')
+      .gt('start_date', new Date().toISOString())
+      .order('start_date', { ascending: true })
+      .limit(limit)
+    if (error) throw error
+    return data || []
+  }
+
   async startQuest(userId, questId) {
     try {
       const { data, error } = await supabase
