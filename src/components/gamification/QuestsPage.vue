@@ -296,6 +296,21 @@
           :style="{ borderColor: houseColor, color: houseColor }"
         />
       </div>
+
+      <!-- Quêtes programmées : visibles avant leur ouverture pour qu'on puisse s'y préparer -->
+      <div v-if="!hasFilters && activeTab === 'active' && upcomingQuests.length" class="upcoming-quests">
+        <h3>Prochaines quêtes</h3>
+        <p>Elles s'ouvriront automatiquement à leur date et apparaîtront ici.</p>
+        <ul>
+          <li v-for="quest in upcomingQuests" :key="quest.id">
+            <span class="upcoming-icon" aria-hidden="true">{{ quest.icon || '🗺️' }}</span>
+            <div class="upcoming-text">
+              <strong>{{ quest.title }}</strong>
+              <span>Du {{ formatUpcomingDay(quest.start_date) }} au {{ formatUpcomingDay(quest.end_date) }} · {{ quest.xp_reward || quest.points }} XP</span>
+            </div>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <!-- Modal détails de quête -->
@@ -395,6 +410,8 @@ const houseColor = computed(() => {
 })
 const houseTextColor = computed(() => getReadableTextColor(houseColor.value))
 const userQuests = ref([])
+const upcomingQuests = ref([])
+const formatUpcomingDay = (value) => value ? new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : ''
 const questStats = ref({})
 const searchQuery = ref('')
 const selectedDifficulty = ref('all')
@@ -550,6 +567,10 @@ const loadQuestsData = async () => {
     if (!isCurrent()) return
     userQuests.value = quests
     questStats.value = stats
+    Promise.resolve()
+      .then(() => userQuestsService.getUpcomingQuests(3))
+      .then((upcoming) => { if (isCurrent()) upcomingQuests.value = upcoming })
+      .catch(() => { if (isCurrent()) upcomingQuests.value = [] })
     
     console.log(`✅ ${quests.length} quêtes chargées depuis Supabase`)
 
@@ -674,6 +695,9 @@ const getEmptyStateMessage = () => {
     return 'Essayez de modifier vos critères de recherche ou filtres.'
   }
   
+  if (activeTab.value === 'active' && upcomingQuests.value.length) {
+    return 'Aucune quête n\'est ouverte pour le moment. Les prochaines s\'ouvrent automatiquement à leur date : en attendant, les défis en cours rapportent déjà des XP.'
+  }
   if (activeTab.value === 'active') {
     return 'Vous n\'avez pas de quêtes en cours. Explorez l\'onglet "Toutes" pour découvrir de nouvelles aventures !'
   } else if (activeTab.value === 'completed') {
@@ -983,5 +1007,54 @@ onBeforeUnmount(() => {
     animation: none !important;
     transition: none !important;
   }
+}
+.upcoming-quests {
+  max-width: 560px;
+  margin: 2rem auto 0;
+  text-align: left;
+}
+
+.upcoming-quests h3 {
+  margin: 0 0 0.25rem;
+  color: var(--text-color);
+  font-size: 1.1rem;
+}
+
+.upcoming-quests p {
+  margin: 0 0 0.9rem;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+}
+
+.upcoming-quests ul {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upcoming-quests li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px dashed var(--surface-border);
+  border-radius: 12px;
+  background: var(--surface-section);
+}
+
+.upcoming-quests .upcoming-icon {
+  font-size: 1.5rem;
+}
+
+.upcoming-text strong {
+  display: block;
+  color: var(--text-color);
+}
+
+.upcoming-text span {
+  color: var(--text-color-secondary);
+  font-size: 0.85rem;
 }
 </style>

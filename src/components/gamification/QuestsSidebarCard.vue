@@ -3,7 +3,7 @@
     <!-- Header avec badge de notification -->
     <div class="flex justify-content-between align-items-center mb-3">
       <div class="header-with-badge">
-        <h4 class="m-0"><i class="pi pi-map" aria-hidden="true"></i> Nouvelles quêtes</h4>
+        <h4 class="m-0"><i class="pi pi-map" aria-hidden="true"></i> Quêtes et défis</h4>
         <span v-if="newQuestsCount > 0" class="notification-badge" :style="{ backgroundColor: houseColor }">
           {{ newQuestsCount }}
         </span>
@@ -79,10 +79,54 @@
       </Button>
     </div>
 
+    <!-- Défis en cours : suivi quand aucune quête n'est ouverte -->
+    <div v-if="!loading && newQuests.length === 0 && activeChallenges.length > 0" class="challenges-list">
+      <p class="section-label">Défis en cours</p>
+      <button
+        v-for="challenge in activeChallenges.slice(0, 3)"
+        :key="challenge.id"
+        type="button"
+        class="quest-item"
+        :aria-label="`Voir le défi ${challenge.name}, ${challenge.progress} sur ${challenge.target}`"
+        @click="goToChallenges"
+      >
+        <div class="quest-icon challenge-icon" aria-hidden="true">{{ challenge.icon }}</div>
+        <div class="quest-content">
+          <div class="quest-header">
+            <span class="quest-title">{{ challenge.name }}</span>
+            <span v-if="challenge.completed" class="done-badge">Réussi</span>
+          </div>
+          <div class="quest-meta">
+            <span class="challenge-count">{{ Math.min(challenge.progress, challenge.target) }}/{{ challenge.target }}</span>
+            <span class="xp-reward" :style="{ color: houseColor }">
+              <i class="pi pi-star-fill"></i>
+              {{ challenge.reward?.xp || 0 }} XP
+            </span>
+          </div>
+          <div class="mini-progress">
+            <div class="progress-fill" :style="{ width: challengePercent(challenge) + '%', backgroundColor: houseColor }"></div>
+          </div>
+        </div>
+        <div class="quest-arrow"><i class="pi pi-chevron-right"></i></div>
+      </button>
+    </div>
+
+    <!-- Prochaine quête programmée -->
+    <div v-if="!loading && newQuests.length === 0 && upcomingQuest" class="upcoming-quest">
+      <p class="section-label">Prochaine quête</p>
+      <div class="upcoming-body">
+        <span class="upcoming-icon" aria-hidden="true">{{ upcomingQuest.icon || '🗺️' }}</span>
+        <div>
+          <strong>{{ upcomingQuest.title }}</strong>
+          <span>Dès le {{ formatDay(upcomingQuest.start_date) }} · {{ upcomingQuest.xp_reward || upcomingQuest.points }} XP</span>
+        </div>
+      </div>
+    </div>
+
     <!-- État vide -->
-    <div v-else class="no-quests">
+    <div v-if="!loading && newQuests.length === 0 && activeChallenges.length === 0 && !upcomingQuest" class="no-quests">
       <i class="pi pi-compass text-400"></i>
-      <p class="text-500 text-sm mt-2">Aucune nouvelle quête pour le moment</p>
+      <p class="text-500 text-sm mt-2">Aucune quête ni défi pour le moment</p>
     </div>
   </div>
 </template>
@@ -93,6 +137,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import Button from 'primevue/button'
 import userQuestsService from '@/service/userQuestsService'
+import challengesService from '@/service/challengesService'
+import { gamificationFeatures } from '@/config/gamificationFeatures'
 import { supabase } from '@/supabase'
 
 const props = defineProps({
@@ -106,6 +152,8 @@ const authStore = useAuthStore()
 
 // State
 const newQuests = ref([])
+const activeChallenges = ref([])
+const upcomingQuest = ref(null)
 const loading = ref(props.previewLoading)
 const houseColor = ref(props.previewHouseColor)
 let realtimeChannel = null
@@ -125,9 +173,33 @@ const getDifficultyLabel = (difficulty) => {
     easy: 'Facile',
     medium: 'Moyen',
     hard: 'Difficile',
+    epic: 'Épique',
+    legendary: 'Légendaire',
     expert: 'Expert'
   }
-  return labels[difficulty] || difficulty
+  return labels[String(difficulty || '').toLowerCase()] || difficulty
+}
+
+const challengePercent = (challenge) => {
+  const target = Math.max(1, Number(challenge.target || 1))
+  return Math.min(100, Math.round((Number(challenge.progress || 0) / target) * 100))
+}
+
+const formatDay = (value) => new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+
+// Suivi quand aucune quête n'est ouverte : défis en cours et prochaine quête programmée.
+const loadFollowUp = async () => {
+  const userId = authStore.user?.id
+  if (!userId) return
+  const [challenges, upcoming] = await Promise.all([
+    gamificationFeatures.badgesChallenges
+      ? Promise.resolve().then(() => challengesService.getUserActiveChallenges(userId)).catch(() => [])
+      : Promise.resolve([]),
+    Promise.resolve().then(() => userQuestsService.getUpcomingQuests(1)).catch(() => [])
+  ])
+  // Défis à faire d'abord, réussis ensuite.
+  activeChallenges.value = [...challenges].sort((a, b) => Number(a.completed) - Number(b.completed))
+  upcomingQuest.value = upcoming[0] || null
 }
 
 const loadUserHouseColor = async () => {
@@ -219,6 +291,10 @@ const goToQuests = () => {
   router.push({ name: 'QuestsPage' })
 }
 
+const goToChallenges = () => {
+  router.push({ name: 'ChallengesPage' })
+}
+
 // Lifecycle
 onMounted(async () => {
   if (Array.isArray(props.previewQuests)) {
@@ -227,7 +303,7 @@ onMounted(async () => {
     return
   }
   await loadUserHouseColor()
-  await loadNewQuests()
+  await Promise.all([loadNewQuests(), loadFollowUp()])
   subscribeToQuestUpdates()
 })
 
@@ -469,6 +545,100 @@ onBeforeUnmount(() => {
   
   .quest-meta {
     flex-wrap: wrap;
+  }
+}
+.section-label {
+  margin: 0 0 0.5rem;
+  color: var(--text-color-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.challenges-list + .upcoming-quest {
+  margin-top: 1rem;
+}
+
+.challenge-icon {
+  background: var(--surface-section) !important;
+  font-size: 1.1rem;
+}
+
+.challenge-count {
+  color: var(--text-color-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.done-badge {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  color: #22c55e;
+  background: color-mix(in srgb, #22c55e 15%, transparent);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.upcoming-body {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px dashed var(--surface-border);
+  border-radius: 12px;
+}
+
+.upcoming-icon {
+  font-size: 1.4rem;
+}
+
+.upcoming-body strong {
+  display: block;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.upcoming-body span {
+  color: var(--text-color-secondary);
+  font-size: 0.78rem;
+}
+/* Colonne étroite (feed sur bureau moyen) : titres sur deux lignes, sans flèche. */
+.quests-sidebar-card {
+  container: quests-card / inline-size;
+}
+
+.challenges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.challenges-list .quest-meta {
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+}
+
+@container quests-card (max-width: 260px) {
+  .quest-title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .quest-arrow {
+    display: none;
+  }
+
+  .quest-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .quest-item {
+    gap: 0.55rem;
+    padding: 0.65rem;
   }
 }
 </style>
