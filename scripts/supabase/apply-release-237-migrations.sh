@@ -66,6 +66,8 @@ migrations=(
   20260930121711_alpinphysio_admin_hub.sql
   20260930141639_fix_user_track_roles_rls_recursion.sql
   20261103085335_fix_user_track_roles_recursive_policies.sql
+  20261109090000_gamification_season_reset.sql
+  20261109100000_balanced_house_assignment.sql
 )
 
 remote() { ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$host" "$@"; }
@@ -131,8 +133,17 @@ if [ ${#to_apply[@]} -eq 0 ]; then
   exit 0
 fi
 # Une migration absente ne doit pas précéder une migration déjà présente.
+# Exceptions : correctifs indépendants déjà appliqués en avance sur prod (colonnes de profil,
+# récursion RLS de user_track_roles). Ils ne dépendent d'aucune autre migration de la release,
+# et AlpinPhysio ne réécrit pas les règles qu'ils corrigent.
+independent=(
+  20260923124000_add_profile_language_and_canton_of_origin.sql
+  20260930141639_fix_user_track_roles_rls_recursion.sql
+  20261103085335_fix_user_track_roles_recursive_policies.sql
+)
 last_present=""
 for file in "${migrations[@]}"; do
+  [[ " ${independent[*]} " == *" $file "* ]] && continue
   if [[ ! " ${to_apply[*]} " == *" $file "* ]]; then last_present=$file; fi
 done
 if [ -n "$last_present" ] && [[ "${to_apply[0]}" < "$last_present" ]]; then

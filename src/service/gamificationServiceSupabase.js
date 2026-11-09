@@ -327,8 +327,10 @@ class GamificationServiceSupabase {
         
         // Calculer moyennes depuis gamification_data
         const averageXP = totalMembers > 0 ? Math.round(totalXP / totalMembers) : 0
-        const averageLevel = stats.members.length > 0 ? 
-          Math.round(stats.members.reduce((sum, member) => sum + member.level, 0) / stats.members.length * 10) / 10 : 1
+        // Un étudiant ne lit que sa propre ligne : sans tous les membres, la moyenne serait fausse.
+        const averageLevel = stats.members.length > 0 && stats.members.length >= totalMembers
+          ? Math.round(stats.members.reduce((sum, member) => sum + member.level, 0) / stats.members.length * 10) / 10
+          : null
 
         // Match calculate_house_level(bigint): remaining XP and the progress
         // bar use the same thresholds as the displayed house level.
@@ -576,6 +578,27 @@ class GamificationServiceSupabase {
    * @param {number} maxMembersPerHouse - Limite maximale de membres par maison (défaut: 50)
    * @returns {Promise<string>} Nom de la maison assignée
    */
+  /**
+   * État du quiz des maisons pour le compte connecté, décidé par le serveur :
+   * { has_house, house_id, is_player, quiz_open }. Le quiz n'est ouvert qu'aux
+   * joueurs de la gamification qui n'ont pas encore de maison.
+   */
+  async getMyHouseQuizStatus() {
+    const { data, error } = await supabase.rpc('get_my_house_quiz_status')
+    if (error) throw error
+    return data || { has_house: false, house_id: null, is_player: false, quiz_open: false }
+  }
+
+  /**
+   * Maison que le serveur attribuera pour la préférence du quiz (équilibrage des
+   * effectifs de joueurs entre les maisons). Aucune écriture.
+   */
+  async previewMyHouseAssignment(preferredHouseId) {
+    const { data, error } = await supabase.rpc('preview_my_house_assignment', { p_house_id: preferredHouseId })
+    if (error) throw error
+    return data
+  }
+
   async findBestAvailableHouse(quizResults, maxMembersPerHouse = 50) {
     try {
       // Obtenir le nombre actuel de membres par maison
@@ -792,10 +815,25 @@ class GamificationServiceSupabase {
       // Trier les membres par XP décroissant
       houseMembers.sort((a, b) => b.totalXP - a.totalXP)
       
+      // Totaux officiels de la maison. Un étudiant ne lit que sa propre ligne de
+      // gamification_data : dans ce cas, pas de classement nominatif ni de moyenne de niveau.
+      const { data: houseRow } = await supabase
+        .from('houses')
+        .select('total_xp, member_count')
+        .ilike('name', houseName)
+        .maybeSingle()
+      const membersHidden = Boolean(houseRow) && houseMembers.length < Number(houseRow.member_count || 0)
+      if (membersHidden) {
+        houseMembers.length = 0
+        totalXP = Number(houseRow.total_xp || 0)
+      }
+
       // Calculer les statistiques
-      const totalMembers = houseMembers.length
+      const totalMembers = membersHidden ? Number(houseRow.member_count || 0) : houseMembers.length
       const averageXP = totalMembers > 0 ? Math.round(totalXP / totalMembers) : 0
-      const averageLevel = totalMembers > 0 ? Math.round(houseMembers.reduce((sum, member) => sum + member.niveau, 0) / totalMembers) : 1
+      const averageLevel = !membersHidden && totalMembers > 0
+        ? Math.round(houseMembers.reduce((sum, member) => sum + member.niveau, 0) / totalMembers * 10) / 10
+        : null
       
       // Calculer le niveau de la maison basé sur l'XP total
       const houseLevel = this.calculateHouseLevel(totalXP)
@@ -806,6 +844,7 @@ class GamificationServiceSupabase {
         averageXP,
         averageLevel,
         members: houseMembers,
+        membersHidden,
         houseLevel
       }
       

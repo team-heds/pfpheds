@@ -92,7 +92,7 @@
                   <strong>{{ formatNumber(house.averageXP) }}</strong>
                   <span>XP Moyen</span>
                 </div>
-                <div class="stat">
+                <div v-if="house.averageLevel != null" class="stat">
                   <strong>{{ house.averageLevel }}</strong>
                   <span>Niveau Moyen</span>
                 </div>

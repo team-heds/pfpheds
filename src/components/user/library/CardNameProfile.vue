@@ -11,7 +11,7 @@
   />
 
   <!-- PROMPT QUIZ MAISON (masqué temporairement pour la présentation, ne pas supprimer) -->
-  <div v-if="SHOW_HOUSE_QUIZ && !hasValidHouse && !isGameMaster" class="house-quiz-prompt mb-4">
+  <div v-if="SHOW_HOUSE_QUIZ && !hasValidHouse && !isGameMaster && isOwnProfile && houseQuizOpen" class="house-quiz-prompt mb-4">
     <div class="quiz-prompt-card">
       <div class="quiz-prompt-content">
         <i class="pi pi-graduation-cap quiz-prompt-icon"></i>
@@ -194,6 +194,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
+import { useHouseQuizStatus } from '@/composables/useHouseQuizStatus';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
@@ -222,6 +223,7 @@ const toast = useToast();
 
 const SHOW_GAMIFICATION_UI = gamificationFeatures.userJourney;
 const SHOW_HOUSE_QUIZ = gamificationFeatures.userJourney && gamificationFeatures.houseQuiz;
+const { quizOpen: houseQuizOpen } = useHouseQuizStatus({ enabled: SHOW_HOUSE_QUIZ });
 
 // Profil consulté (celui affiché)
 const user = ref({

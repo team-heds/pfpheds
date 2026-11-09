@@ -7,8 +7,9 @@ export const CHALLENGE_DIFFICULTY = {
 }
 
 const difficultyFor = (target) => target >= 1000 ? 'LEGENDARY' : target >= 100 ? 'HARD' : target >= 10 ? 'MEDIUM' : 'EASY'
-const icons = { xp_gain: '⭐', login_streak: '📅', quiz_complete: '📚', badge_unlock: '🏅', social_interaction: '🤝', exploration: '🗺️' }
-const categories = { xp_gain: 'progression', login_streak: 'engagement', quiz_complete: 'apprentissage', badge_unlock: 'collection', social_interaction: 'social', exploration: 'exploration' }
+// Actions réellement comptées par le moteur serveur (daily_login, update_profile, create_post) et anciens types.
+const icons = { daily_login: '📅', update_profile: '👤', create_post: '✍️', xp_gain: '⭐', login_streak: '📅', quiz_complete: '📚', badge_unlock: '🏅', social_interaction: '🤝', exploration: '🗺️' }
+const categories = { daily_login: 'engagement', update_profile: 'progression', create_post: 'social', xp_gain: 'progression', login_streak: 'engagement', quiz_complete: 'apprentissage', badge_unlock: 'collection', social_interaction: 'social', exploration: 'exploration' }
 const inclusiveEndDate = (value) => (
   /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? `${value}T23:59:59.999` : value
 )
@@ -16,7 +17,7 @@ const inclusiveEndDate = (value) => (
 const normalizeChallenge = (challenge, progress = null) => {
   if (!challenge) return null
   const target = Number(challenge.target_value || 0)
-  return { ...challenge, challengeId: challenge.id, challengeName: challenge.name, type: challenge.action_type, difficulty: difficultyFor(target), target, reward: { xp: Number(challenge.xp_reward || 0), badge: challenge.badge_reward || null, badgeName: challenge.reward_badge?.name || null, title: null }, icon: icons[challenge.action_type] || '🎯', category: categories[challenge.action_type] || 'progression', weekNumber: challenge.week_number, startDate: challenge.start_date, endDate: inclusiveEndDate(challenge.end_date), progress: Number(progress?.current_value || 0), completed: Boolean(progress?.completed), completedAt: progress?.completed_at || null, completed_at: progress?.completed_at || null }
+  return { ...challenge, challengeId: challenge.id, challengeName: challenge.name, type: challenge.action_type, difficulty: difficultyFor(target), target, reward: { xp: Number(challenge.xp_reward || 0), badge: challenge.badge_reward || null, badgeName: challenge.reward_badge?.name || null, title: null }, icon: icons[String(challenge.action_type || '').toLowerCase()] || '🎯', category: categories[String(challenge.action_type || '').toLowerCase()] || 'progression', weekNumber: challenge.week_number, startDate: challenge.start_date, endDate: inclusiveEndDate(challenge.end_date), progress: Number(progress?.current_value || 0), completed: Boolean(progress?.completed), completedAt: progress?.completed_at || null, completed_at: progress?.completed_at || null }
 }
 
 const getActiveChallenges = async () => {
