@@ -46,6 +46,8 @@ import { mapState } from 'pinia';
 import { useAuthStore } from '@/stores/authStore';
 import { gamificationFeatures } from '@/config/gamificationFeatures';
 import { runtimeFeatures } from '@/config/runtimeFeatures';
+import gamificationIntegration from '@/service/gamificationIntegration';
+import { recordDailyVisit } from '@/utils/dailyVisit';
 
 export default {
   name: "App",
@@ -96,7 +98,31 @@ export default {
       return window.innerWidth <= 600 && !excluded.includes(routeName);
     }
   },
+  watch: {
+    // Connexion du jour : comptée à l'ouverture, même si la session est restée active.
+    gamificationUserId: {
+      immediate: true,
+      handler() {
+        this.recordDailyVisit();
+      },
+    },
+  },
+  methods: {
+    recordDailyVisit() {
+      if (!this.gamificationUserJourneyEnabled || !this.gamificationUserId) return;
+      recordDailyVisit({
+        userId: this.gamificationUserId,
+        onLogin: (userId, details) => gamificationIntegration.onLogin(userId, details),
+        details: { loginMethod: 'session' },
+      });
+    },
+    onVisibilityChange() {
+      // Onglet laissé ouvert d'un jour à l'autre : le retour sur la page compte le nouveau jour.
+      if (document.visibilityState === 'visible') this.recordDailyVisit();
+    },
+  },
   mounted() {
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
     // Simuler un chargement de données (par exemple, lors du démarrage de l'application)
     setTimeout(() => {
       this.isLoading = false; // Masquer le loader après 3 secondes
@@ -106,6 +132,7 @@ export default {
     this.expirationCheckInterval = questExpirationService.startPeriodicCheck(5)
   },
   beforeUnmount() {
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     // 🛑 Arrêter proprement la vérification à la fermeture de l'app
     if (this.expirationCheckInterval) {
       questExpirationService.stopPeriodicCheck(this.expirationCheckInterval)

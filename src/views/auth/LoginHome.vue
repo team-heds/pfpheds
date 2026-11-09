@@ -56,6 +56,7 @@ import { getPostLoginRedirect } from '@/config/adminRedirects'
 import Toast from 'primevue/toast'
 import AuthForm from '@/components/common/forms/AuthForm.vue'
 import gamificationIntegration from '@/service/gamificationIntegration'
+import { recordDailyVisit } from '@/utils/dailyVisit'
 import { gamificationFeatures } from '@/config/gamificationFeatures'
 
 // Variables réactives
@@ -113,9 +114,14 @@ const submitFormSupabase = async () => {
     loginLimiter.reset()
 
     if (gamificationFeatures.userJourney && authStore.user?.id) {
-      await gamificationIntegration.onLogin(authStore.user.id, {
-        loginMethod: 'supabase',
-        deviceType: window.matchMedia('(max-width: 768px)').matches ? 'mobile' : 'desktop'
+      // Même garde que l'ouverture de l'application : une seule connexion comptée par jour.
+      await recordDailyVisit({
+        userId: authStore.user.id,
+        onLogin: (userId, details) => gamificationIntegration.onLogin(userId, details),
+        details: {
+          loginMethod: 'supabase',
+          deviceType: window.matchMedia('(max-width: 768px)').matches ? 'mobile' : 'desktop'
+        }
       })
     }
     
