@@ -22,11 +22,7 @@ const resolveApiBaseUrl = () => {
 }
 
 const API_BASE_URL = resolveApiBaseUrl()
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+import { getAcademicYearKeys, requireAcademicYear } from '@/domain/pfp/academicPeriod'
 
 export const resultatVotationService = {
   /**
@@ -46,10 +42,10 @@ export const resultatVotationService = {
         `${API_BASE_URL}/api/resultat-votation/run-algorithm`,
         {
           pfpType,
-          year,
+          year: requireAcademicYear(year),
           students,
           places,
-          persist: options.persist ?? true,
+          persist: options.persist ?? false,
           ignoreExistingAssignments: options.ignoreExistingAssignments ?? false
         },
         {

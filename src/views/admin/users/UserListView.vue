@@ -167,6 +167,17 @@
           <Column header="Action" style="min-width: 12rem" class="text-center">
             <template #body="{ data }">
               <Button
+                v-if="data.is_active !== false"
+                label="Réinitialiser l’accès"
+                icon="pi pi-key"
+                class="mb-2 mr-2"
+                size="small"
+                outlined
+                :loading="Boolean(passwordRecoveryLoading[data.id])"
+                :disabled="Boolean(passwordRecoveryLoading[data.id])"
+                @click="requestPasswordRecovery(data)"
+              />
+              <Button
                 label="Modifier"
                 class="mb-2 mr-2"
                 size="small"
@@ -216,6 +227,7 @@ import {
   loadInitialAccessStates,
   sendInitialAccess
 } from '@/service/studentInitialAccessService'
+import { sendAdminPasswordRecovery } from '@/service/adminPasswordRecoveryService'
 // import Navbar from '@/components/common/utils/Navbar.vue';
 
 export default {
@@ -227,6 +239,8 @@ export default {
     DataTable,
     Column,
     InputText,
+    // PrimeVue's public component name intentionally matches the native element name.
+    // eslint-disable-next-line vue/no-reserved-component-names
     Button,
     IconField,
     InputIcon,
@@ -250,7 +264,8 @@ export default {
       selectedPermission: null,
       availableRoles: [],
       availablePermissions: [],
-      initialAccessLoading: {}
+      initialAccessLoading: {},
+      passwordRecoveryLoading: {}
     }
   },
   computed: {
@@ -460,6 +475,35 @@ export default {
         })
       } finally {
         this.initialAccessLoading[user.id] = false
+      }
+    },
+    async requestPasswordRecovery(user) {
+      const confirmed = confirm(
+        `Envoyer un nouvel accès à ${user.Forname} ${user.Name} ?\n\nUn lien et un code valables une heure seront envoyés à l’adresse vérifiée du compte. Tout email précédent deviendra inutilisable.`
+      )
+      if (!confirmed) return
+
+      this.passwordRecoveryLoading[user.id] = true
+      try {
+        await sendAdminPasswordRecovery(user.id)
+        this.toast.add({
+          severity: 'success',
+          summary: 'Email de récupération envoyé',
+          detail: 'Le compte doit utiliser uniquement le dernier email reçu.',
+          life: 5000
+        })
+      } catch (error) {
+        const rateLimited = error?.status === 429 || error?.response?.status === 429
+        this.toast.add({
+          severity: 'error',
+          summary: rateLimited ? 'Envoi trop récent' : 'Échec de l’envoi',
+          detail: rateLimited
+            ? 'Patientez une minute avant de renvoyer un email.'
+            : 'L’email de récupération n’a pas pu être envoyé.',
+          life: 5000
+        })
+      } finally {
+        this.passwordRecoveryLoading[user.id] = false
       }
     },
     goToAdminDashboard() {

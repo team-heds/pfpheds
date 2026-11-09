@@ -1,0 +1,39 @@
+{
+    auto_https off
+}
+:8025 {
+    reverse_proxy mail:8025
+}
+import /etc/caddy/studio-private.caddy
+:8080 {
+    header X-Robots-Tag "noindex, nofollow"
+    # Also blocks production Supabase/Firebase requests from the test frontend.
+    header Content-Security-Policy "connect-src 'self' blob: http://localhost:8180 ws://localhost:8180; form-action 'self'"
+    handle_path /auth/v1/* {
+        reverse_proxy auth:9999
+    }
+    handle_path /rest/v1/* {
+        reverse_proxy rest:3000
+    }
+    handle /api/* {
+        reverse_proxy backend:3000
+    }
+    handle_path /storage/v1/* {
+        reverse_proxy storage:5000
+    }
+    @pending path /realtime/*
+    handle @pending {
+        respond "Service de test en cours de préparation" 503
+    }
+    @presentations path /presentation /presentation/*
+    handle @presentations {
+        root * /srv/frontend
+        try_files {path} {path}/index.html
+        file_server
+    }
+    handle {
+        root * /srv/frontend
+        try_files {path} /index.html
+        file_server
+    }
+}

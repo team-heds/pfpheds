@@ -57,6 +57,7 @@ const allOutils = [
   { to: '/votation_lese', icon: 'pi pi-check-square', label: 'Votation' },
   { to: '/lang-apps', icon: 'pi pi-globe', label: 'Apps langues' },
   { to: '/notes', icon: 'pi pi-book', label: 'Notes' },
+  { to: '/game', icon: 'pi pi-star', label: 'Jeux' },
   { to: '/tournois', icon: 'pi pi-trophy', label: 'Tournois' },
 ]
 
@@ -86,14 +87,15 @@ const outils = computed(() => {
     ? [...allOutils, ...adminOutils]
     : allOutils
   const enabledOutils = baseOutils.filter((outil) =>
-    outil.to !== '/tournois' || gamificationFeatures.tournaments
+    (outil.to !== '/tournois' || gamificationFeatures.tournaments)
+    && (outil.to !== '/game' || gamificationFeatures.gamesHub)
   )
 
   if (!isMobile.value) {
-    return enabledOutils.filter(o => ['QR code', 'Apps langues', 'Notes', 'Tournois', 'Formations'].includes(o.label))
+    return enabledOutils.filter(o => ['QR code', 'Apps langues', 'Notes', 'Jeux', 'Tournois', 'Formations'].includes(o.label))
   }
 
-  return enabledOutils.filter(o => ['QR code', 'Apps langues', 'Tournois', 'Formations'].includes(o.label))
+  return enabledOutils.filter(o => ['QR code', 'Apps langues', 'Jeux', 'Tournois', 'Formations'].includes(o.label))
 })
 
 const showVoirPlus = computed(() => outils.value.length >= 12)

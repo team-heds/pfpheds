@@ -1,7 +1,9 @@
 const { Router } = require('express')
 const { supabaseAdmin: supabase } = require('../supabaseClient')
+const { createFilePhysioMediaRouter } = require('./filePhysioMediaBackend')
 
 const router = Router()
+router.use(createFilePhysioMediaRouter({ client: supabase }))
 
 // GET top-level folders (parent_id IS NULL)
 router.get('/folders/top', async (req, res) => {

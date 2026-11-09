@@ -9,7 +9,7 @@
       <!-- En-tête de colonne -->
       <div class="column-header">
         <div class="column-title">
-          <i :class="column.icon"></i>
+          <i :class="column.icon" aria-hidden="true"></i>
           <span>{{ column.label }}</span>
           <Tag :value="getColumnCount(column.status)" severity="secondary" class="ml-2"></Tag>
         </div>
@@ -30,9 +30,14 @@
           class="ticket-card"
           :class="`ticket-${ticket.type}`"
           draggable="true"
+          role="button"
+          tabindex="0"
+          :aria-label="`Ouvrir le ticket ${ticket.title}`"
           @dragstart="onDragStart($event, ticket)"
           @dragend="onDragEnd"
           @click="$emit('ticket-click', ticket)"
+          @keydown.enter.prevent="$emit('ticket-click', ticket)"
+          @keydown.space.prevent="$emit('ticket-click', ticket)"
         >
           <!-- Barre de priorité -->
           <div v-if="ticket.priority === 'urgent' || ticket.priority === 'high'" class="priority-bar" :class="`priority-${ticket.priority}`"></div>
@@ -54,6 +59,7 @@
               severity="secondary"
               size="small"
               class="ml-auto"
+              :aria-label="`Actions pour ${ticket.title}`"
               @click.stop="showTicketMenu($event, ticket)"
             />
           </div>
@@ -169,13 +175,17 @@ const props = defineProps({
   tickets: {
     type: Array,
     default: () => []
+  },
+  users: {
+    type: Array,
+    default: null
   }
 })
 
 const emit = defineEmits(['ticket-click', 'status-change', 'ticket-action'])
 
 // Liste des utilisateurs pour l'assignation
-const users = ref([])
+const users = ref(Array.isArray(props.users) ? [...props.users] : [])
 
 // Charger la liste des utilisateurs
 async function loadUsers() {
@@ -200,7 +210,9 @@ function getAssignedUserName(userId) {
 }
 
 // Charger au montage
-loadUsers()
+if (!Array.isArray(props.users)) {
+  loadUsers()
+}
 
 // Colonnes du Kanban
 const columns = [
@@ -543,6 +555,12 @@ function showTicketMenu(event, ticket) {
   box-shadow: 0 12px 32px rgba(0,0,0,0.15), 0 6px 12px rgba(0,0,0,0.1);
   transform: translateY(-6px);
   border-color: var(--primary-200);
+}
+
+.ticket-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--primary-color) 35%, transparent);
+  outline-offset: 3px;
+  border-color: var(--primary-color);
 }
 
 /* Barre de priorité */

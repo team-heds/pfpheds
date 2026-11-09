@@ -1,5 +1,25 @@
 <template>
   <AdminLayout :noSidebar="true">
+    <section v-if="isAdminPreview" class="admin-preview-toolbar" aria-label="Aperçu administrateur">
+      <div class="admin-preview-copy">
+        <span class="admin-preview-icon" aria-hidden="true"><i class="pi pi-eye"></i></span>
+        <div>
+          <h2>Aperçu administrateur</h2>
+          <p>Consultez les propositions de la campagne sans simuler le profil d’un étudiant.</p>
+        </div>
+      </div>
+      <div class="admin-preview-actions">
+        <label for="admin-votation-session">Campagne ouverte</label>
+        <select id="admin-votation-session" v-model="previewSessionId"
+          :disabled="sessionRefreshInFlight || !previewSessions.length" @change="refreshSessionAndData">
+          <option v-for="session in previewSessions" :key="session.id" :value="session.id">
+            {{ session.pfp_type }} — {{ session.target_class }} — {{ session.year }}{{ session.is_priority ? ' — Prioritaire' : '' }}
+          </option>
+        </select>
+        <PrimeButton label="Actualiser" icon="pi pi-refresh" :disabled="sessionRefreshInFlight" @click="refreshSessionAndData" />
+      </div>
+      <p v-if="previewError" class="admin-preview-error" role="alert">{{ previewError }}</p>
+    </section>
     <!-- Chargement de la session -->
     <div
       v-if="sessionLoading"
@@ -10,6 +30,7 @@
         <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
         <p class="text-600">Chargement de la votation...</p>
       </div>
+
     </div>
 
     <!-- Pas de session active -->
@@ -28,6 +49,39 @@
       </div>
     </div>
 
+    <div
+      v-else-if="!isAdminPreview && votingAccessBlocked"
+      class="flex align-items-center justify-content-center"
+      style="min-height: 60vh"
+    >
+      <div class="assignment-locked-card" role="status" aria-live="polite">
+        <span class="assignment-locked-icon" aria-hidden="true">
+          <i :class="assignmentCheckError ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle'"></i>
+        </span>
+        <h2>{{ assignmentCheckError ? 'Accès temporairement indisponible' : 'Une place vous est déjà attribuée' }}</h2>
+        <p v-if="assignmentCheckError">
+          Nous ne pouvons pas vérifier votre situation pour le moment. Réessayez ou contactez le secrétariat.
+        </p>
+        <template v-else>
+          <p>Vous ne devez plus participer à cette votation {{ targetPFP }}.</p>
+          <dl v-if="existingCampaignAssignment" class="assignment-locked-details">
+            <div v-if="existingCampaignAssignment.assigned_institution_name">
+              <dt>Institution</dt>
+              <dd>{{ existingCampaignAssignment.assigned_institution_name }}</dd>
+            </div>
+            <div v-if="existingCampaignAssignment.assigned_place_name">
+              <dt>Place</dt>
+              <dd>{{ existingCampaignAssignment.assigned_place_name }}</dd>
+            </div>
+          </dl>
+        </template>
+        <div class="assignment-locked-actions">
+          <PrimeButton label="Retour au profil" icon="pi pi-arrow-left" @click="goBackToProfile" />
+          <PrimeButton v-if="assignmentCheckError" label="Réessayer" icon="pi pi-refresh" outlined @click="refreshSessionAndData" />
+        </div>
+      </div>
+    </div>
+
     <!-- Votation active -->
     <div v-else class="votation-container">
       <!-- En-tête moderne -->
@@ -36,9 +90,12 @@
           <div class="header-left">
             <i class="pi pi-check-square header-icon"></i>
             <div>
-              <h1 class="header-title">Votation {{ targetPFP }}</h1>
+              <div class="header-title-row">
+                <h1 class="header-title">Votation {{ targetPFP }}</h1>
+                <span v-if="isAdminPreview" class="read-only-badge"><i class="pi pi-eye" aria-hidden="true"></i> Lecture seule</span>
+              </div>
               <p class="header-subtitle">
-                Année {{ selectedYear }} • {{ availablePlaces.length }} places disponibles
+                Année {{ selectedYear }} · {{ availablePlaces.length }} {{ isAdminPreview ? 'capacités proposées' : 'places disponibles' }}<template v-if="isAdminPreview"> · {{ adminInstitutionCount }} institutions</template>
               </p>
             </div>
           </div>
@@ -50,6 +107,51 @@
             class="back-button"
           />
         </div>
+      </div>
+
+      <section v-if="!isAdminPreview && availablePlaces.length > 0" class="choice-progress content-wrapper" aria-labelledby="choice-progress-title">
+        <div class="choice-progress-heading">
+          <div>
+            <h2 id="choice-progress-title">Votre classement</h2>
+            <p>Classez exactement cinq places, de votre préférence principale à votre cinquième choix.</p>
+          </div>
+          <strong>{{ selectionCount }}/5 choix</strong>
+        </div>
+        <div class="choice-progress-bar" role="progressbar" aria-label="Choix complétés" aria-valuemin="0" aria-valuemax="5" :aria-valuenow="selectionCount">
+          <span :style="{ width: `${selectionCount * 20}%` }"></span>
+        </div>
+        <ol class="choice-slots">
+          <li v-for="rank in 5" :key="rank" :class="{ complete: selectedPlaces[rank - 1] }">
+            <span>{{ rank }}</span>
+            <div><strong>{{ selectedPlaces[rank - 1]?.NomPlace || `Choix ${rank} à définir` }}</strong><small v-if="selectedPlaces[rank - 1]">{{ selectedPlaces[rank - 1].InstitutionName }}</small></div>
+            <button v-if="selectedPlaces[rank - 1]" type="button" :aria-label="`Retirer le choix ${rank}`" @click="removeChoice(rank - 1)"><i class="pi pi-times" aria-hidden="true"></i></button>
+          </li>
+        </ol>
+      </section>
+
+      <section v-if="isAdminPreview && availablePlaces.length > 0" class="admin-form-guide content-wrapper" aria-labelledby="admin-form-guide-title">
+        <div>
+          <h2 id="admin-form-guide-title">Formulaire de votation à cinq choix</h2>
+          <p>Voici exactement la présentation proposée aux étudiants. En aperçu administrateur, les sélections restent désactivées.</p>
+        </div>
+        <ol aria-label="Ordre des choix">
+          <li v-for="rank in 5" :key="rank"><strong>{{ rank }}</strong><span>{{ rank === 1 ? 'Priorité' : `Choix ${rank}` }}</span></li>
+        </ol>
+      </section>
+
+      <section v-if="availablePlaces.length > 0" class="place-tools content-wrapper" aria-label="Rechercher une place">
+        <label for="place-search">Rechercher une institution, une place ou un critère</label>
+        <div class="place-search-control">
+          <i class="pi pi-search" aria-hidden="true"></i>
+          <input id="place-search" v-model.trim="placeSearchQuery" type="search" placeholder="Ex. Meyriez, orthopédie, REHAB…" autocomplete="off" />
+          <span>{{ filteredAvailablePlaces.length }} résultat{{ filteredAvailablePlaces.length > 1 ? 's' : '' }}</span>
+        </div>
+      </section>
+
+      <div v-if="availablePlaces.length > 0 && filteredAvailablePlaces.length === 0" class="search-empty content-wrapper" role="status">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <div><h2>Aucune place ne correspond</h2><p>Modifiez ou effacez votre recherche pour retrouver toutes les places.</p></div>
+        <button type="button" @click="placeSearchQuery = ''">Effacer la recherche</button>
       </div>
 
       <!-- Bandeau critères manquants pour PFP4 -->
@@ -104,7 +206,7 @@
           </div>
           <DataTable
             :value="pfp4HighPlaces"
-            class="modern-votation-table pfp4-table-high"
+            class="modern-votation-table pfp4-table-high desktop-place-table"
             responsiveLayout="scroll"
             :scrollable="true"
             :rowHover="true"
@@ -168,6 +270,8 @@
               v-for="i in 5"
               :key="'hc-' + i"
               :header="'Choix ' + i"
+              headerClass="choice-column-header"
+              bodyClass="choice-column-cell"
               :style="{ textAlign: 'center', width: '75px' }"
             >
               <template #body="slotProps">
@@ -185,6 +289,8 @@
               v-for="i in 5"
               :key="'hv-' + i"
               :header="'Top ' + i"
+              headerClass="vote-column-header"
+              bodyClass="vote-column-cell"
               :style="{ textAlign: 'center', width: '60px' }"
             >
               <template #body="slotProps">
@@ -195,7 +301,7 @@
                 />
               </template>
             </Column>
-            <Column header="Total" :style="{ textAlign: 'center', width: '70px' }">
+            <Column header="Total" headerClass="vote-total-header" bodyClass="vote-total-cell" :style="{ textAlign: 'center', width: '70px' }">
               <template #body="slotProps">
                 <Tag
                   :value="getVoteCount(slotProps.data).total || 0"
@@ -206,6 +312,7 @@
               </template>
             </Column>
           </DataTable>
+          <VotationPlaceCards class="mobile-place-cards" :places="pfp4HighPlaces" :selected-places="selectedPlaces" :votes-aggregation="votesAggregation" :missing-criteria="pfp4MissingCriteria" :admin-preview="isAdminPreview" @select="selectPlaceForRank" />
         </div>
 
         <!-- SECTION MOYENNE PRIORITÉ -->
@@ -220,7 +327,7 @@
           </div>
           <DataTable
             :value="pfp4MediumPlaces"
-            class="modern-votation-table pfp4-table-medium"
+            class="modern-votation-table pfp4-table-medium desktop-place-table"
             responsiveLayout="scroll"
             :scrollable="true"
             :rowHover="true"
@@ -284,6 +391,8 @@
               v-for="i in 5"
               :key="'mc-' + i"
               :header="'Choix ' + i"
+              headerClass="choice-column-header"
+              bodyClass="choice-column-cell"
               :style="{ textAlign: 'center', width: '75px' }"
             >
               <template #body="slotProps">
@@ -301,6 +410,8 @@
               v-for="i in 5"
               :key="'mv-' + i"
               :header="'Top ' + i"
+              headerClass="vote-column-header"
+              bodyClass="vote-column-cell"
               :style="{ textAlign: 'center', width: '60px' }"
             >
               <template #body="slotProps">
@@ -311,7 +422,7 @@
                 />
               </template>
             </Column>
-            <Column header="Total" :style="{ textAlign: 'center', width: '70px' }">
+            <Column header="Total" headerClass="vote-total-header" bodyClass="vote-total-cell" :style="{ textAlign: 'center', width: '70px' }">
               <template #body="slotProps">
                 <Tag
                   :value="getVoteCount(slotProps.data).total || 0"
@@ -322,6 +433,7 @@
               </template>
             </Column>
           </DataTable>
+          <VotationPlaceCards class="mobile-place-cards" :places="pfp4MediumPlaces" :selected-places="selectedPlaces" :votes-aggregation="votesAggregation" :missing-criteria="pfp4MissingCriteria" :admin-preview="isAdminPreview" @select="selectPlaceForRank" />
         </div>
 
         <!-- SECTION AUTRES PLACES -->
@@ -338,7 +450,7 @@
           </div>
           <DataTable
             :value="pfp4OtherPlaces"
-            class="modern-votation-table pfp4-table-other"
+            class="modern-votation-table pfp4-table-other desktop-place-table"
             responsiveLayout="scroll"
             :scrollable="true"
             :rowHover="true"
@@ -385,6 +497,8 @@
               v-for="i in 5"
               :key="'oc-' + i"
               :header="'Choix ' + i"
+              headerClass="choice-column-header"
+              bodyClass="choice-column-cell"
               :style="{ textAlign: 'center', width: '75px' }"
             >
               <template #body="slotProps">
@@ -402,6 +516,8 @@
               v-for="i in 5"
               :key="'ov-' + i"
               :header="'Top ' + i"
+              headerClass="vote-column-header"
+              bodyClass="vote-column-cell"
               :style="{ textAlign: 'center', width: '60px' }"
             >
               <template #body="slotProps">
@@ -412,7 +528,7 @@
                 />
               </template>
             </Column>
-            <Column header="Total" :style="{ textAlign: 'center', width: '70px' }">
+            <Column header="Total" headerClass="vote-total-header" bodyClass="vote-total-cell" :style="{ textAlign: 'center', width: '70px' }">
               <template #body="slotProps">
                 <Tag
                   :value="getVoteCount(slotProps.data).total || 0"
@@ -423,14 +539,15 @@
               </template>
             </Column>
           </DataTable>
+          <VotationPlaceCards class="mobile-place-cards" :places="pfp4OtherPlaces" :selected-places="selectedPlaces" :votes-aggregation="votesAggregation" :admin-preview="isAdminPreview" @select="selectPlaceForRank" />
         </div>
       </div>
 
       <!-- ═══ MODE CLASSIQUE (pas de sections PFP4) ═══ -->
       <div v-else-if="availablePlaces.length > 0" class="content-wrapper">
         <DataTable
-          :value="availablePlaces"
-          class="modern-votation-table"
+          :value="filteredAvailablePlaces"
+          class="modern-votation-table desktop-place-table"
           responsiveLayout="scroll"
           :scrollable="true"
           scrollHeight="65vh"
@@ -512,6 +629,8 @@
             v-for="i in 5"
             :key="'choice-' + i"
             :header="'Choix ' + i"
+            headerClass="choice-column-header"
+            bodyClass="choice-column-cell"
             :style="{ textAlign: 'center', width: '80px' }"
           >
             <template #body="slotProps">
@@ -529,6 +648,8 @@
             v-for="i in 5"
             :key="'votes-' + i"
             :header="'Top ' + i"
+            headerClass="vote-column-header"
+            bodyClass="vote-column-cell"
             :style="{ textAlign: 'center', width: '70px' }"
           >
             <template #body="slotProps">
@@ -539,7 +660,7 @@
               />
             </template>
           </Column>
-          <Column header="Total" :style="{ textAlign: 'center', width: '80px' }">
+          <Column header="Total" headerClass="vote-total-header" bodyClass="vote-total-cell" :style="{ textAlign: 'center', width: '80px' }">
             <template #body="slotProps">
               <Tag
                 :value="getVoteCount(slotProps.data).total || 0"
@@ -550,13 +671,18 @@
             </template>
           </Column>
         </DataTable>
+        <VotationPlaceCards class="mobile-place-cards" :places="filteredAvailablePlaces" :selected-places="selectedPlaces" :votes-aggregation="votesAggregation" :admin-preview="isAdminPreview" @select="selectPlaceForRank" />
       </div>
       <div v-else class="empty-state">
         <i class="pi pi-inbox empty-icon"></i>
-        <h3>Aucune place disponible</h3>
-        <p class="text-600">
-          Aucune place n'est disponible pour {{ targetPFP }} - {{ selectedYear }}
+        <h3>Aucune place proposée pour cette session</h3>
+        <p class="text-600" v-if="isAdminPreview">
+          La campagne {{ targetPFP }} — {{ selectedYear }} est ouverte, mais son aperçu ne contient actuellement aucune capacité proposée.
         </p>
+        <p class="text-600" v-else>
+          La campagne {{ targetPFP }} — {{ selectedYear }} est ouverte, mais aucune place n’est actuellement proposée à votre profil. Actualisez la page ou contactez le secrétariat si cette situation persiste.
+        </p>
+        <PrimeButton label="Actualiser" icon="pi pi-refresh" outlined :loading="sessionRefreshInFlight" @click="refreshSessionAndData" />
       </div>
 
       <!-- Tableau récapitulatif des choix -->
@@ -625,7 +751,7 @@
       </div>
 
       <!-- Action de vote -->
-      <div class="vote-action-section" v-if="availablePlaces.length > 0">
+      <div class="vote-action-section" v-if="!isAdminPreview && availablePlaces.length > 0">
         <div class="vote-submit">
           <div class="vote-info" :class="{ 'vote-info-updated': voteAlreadyCast }">
             <i :class="voteAlreadyCast ? 'pi pi-check-circle' : 'pi pi-info-circle'"></i>
@@ -672,6 +798,7 @@
 </template>
 
 <script>
+import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import RadioButton from 'primevue/radiobutton'
@@ -679,14 +806,18 @@ import PrimeDialog from 'primevue/dialog'
 import PrimeButton from 'primevue/button'
 import Tag from 'primevue/tag'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
+import VotationPlaceCards from '@/components/votation/VotationPlaceCards.vue'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import { useUserStore } from '@/stores/userStore'
+import { useRoleStore } from '@/stores/role'
+import { canPreviewVotation, selectPreviewSession } from '@/domain/pfp/votationAdminPreview'
 import { useVotesStore } from '@/stores/votesStore'
 import { mapStores } from 'pinia'
 import votesBackendService from '@/service/votesBackendService'
 import votationSessionService from '@/service/votationSessionService'
 import resultatVotationService from '@/service/resultatVotationService'
+import { getExistingCampaignAssignment } from '@/service/votationEligibilityService'
 import { supabase } from '@/supabase'
 import {
   computeAggregatedCriteriaFromSources,
@@ -711,7 +842,8 @@ export default {
     PrimeDialog,
     PrimeButton,
     Tag,
-    AdminLayout
+    AdminLayout,
+    VotationPlaceCards
   },
   data() {
     return {
@@ -726,24 +858,63 @@ export default {
       targetPFP: null,
       isSubmitting: false,
       activeSession: null,
+      existingCampaignAssignment: null,
+      assignmentEligibilityChecked: false,
+      assignmentCheckError: '',
       sessionLoading: true,
       sessionRefreshInFlight: false,
+      previewSessions: [],
+      previewSessionId: null,
+      previewError: '',
+      refreshRequested: false,
+      previewGeneration: 0,
       pfp4ProposedPlaceIds: null,
       pfp4AssignCountByPlace: {},
       offerSeatCountByPlace: {},
       offerOccupiedSeatCountByPlace: {},
       useOfferSeatActivation: false,
       completedPlaceIds: [],
+      visitedPlaceIds: [],
       completedStageCount: 0,
       pfp4MissingCriteria: [],
-      pfp4AppliedRule: null
+      pfp4AppliedRule: null,
+      placeSearchQuery: ''
     }
   },
   computed: {
-    ...mapStores(usePlacesStore, useInstitutionsStore, useUserStore, useVotesStore),
+    ...mapStores(usePlacesStore, useInstitutionsStore, useUserStore, useVotesStore, useRoleStore),
+
+    isAdminPreview() {
+      return canPreviewVotation(this.userStore.user, this.roleStore)
+    },
+
+    votingAccessBlocked() {
+      return this.assignmentEligibilityChecked && (
+        Boolean(this.existingCampaignAssignment) || Boolean(this.assignmentCheckError)
+      )
+    },
 
     availablePlaces() {
       return this.expandedPFPData
+    },
+    filteredAvailablePlaces() {
+      const query = this.normalizeLookupValue(this.placeSearchQuery)
+      if (!query) return this.expandedPFPData
+      return this.expandedPFPData.filter((place) => {
+        const searchable = [
+          place.InstitutionName,
+          place.NomPlace,
+          place.InstitutionCategory,
+          ...CRITERIA_KEYS.filter((criterion) => place[criterion])
+        ].map((value) => this.normalizeLookupValue(value)).join(' ')
+        return searchable.includes(query)
+      })
+    },
+    selectionCount() {
+      return this.selectedPlaces.filter(Boolean).length
+    },
+    adminInstitutionCount() {
+      return new Set(this.expandedPFPData.map((place) => place.InstitutionId || place.InstitutionName).filter(Boolean)).size
     },
     voteAlreadyCast() {
       return this.votedPlaces[0] !== null
@@ -753,21 +924,27 @@ export default {
         (this.completedPlaceIds || []).map((id) => this.normalizePlaceId(id)).filter(Boolean)
       )
     },
+    visitedPlaceIdSet() {
+      return new Set(
+        (this.visitedPlaceIds || []).map((id) => this.normalizePlaceId(id)).filter(Boolean)
+      )
+    },
     hasPfp4Sections() {
       return (
-        (this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3') &&
+        !this.isAdminPreview &&
+        (this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3' || this.targetPFP === 'PFP2') &&
         this.pfp4MissingCriteria &&
         this.pfp4MissingCriteria.length > 0
       )
     },
     pfp4HighPlaces() {
-      return this.expandedPFPData.filter((r) => r.pfp4Section === 'high')
+      return this.filteredAvailablePlaces.filter((r) => r.pfp4Section === 'high')
     },
     pfp4MediumPlaces() {
-      return this.expandedPFPData.filter((r) => r.pfp4Section === 'medium')
+      return this.filteredAvailablePlaces.filter((r) => r.pfp4Section === 'medium')
     },
     pfp4OtherPlaces() {
-      return this.expandedPFPData.filter((r) => r.pfp4Section === 'other')
+      return this.filteredAvailablePlaces.filter((r) => r.pfp4Section === 'other')
     },
     selectedPlacesForRecap() {
       return this.selectedPlaces
@@ -793,10 +970,41 @@ export default {
       }
     },
 
+    async checkExistingCampaignAssignment() {
+      this.existingCampaignAssignment = null
+      this.assignmentEligibilityChecked = false
+      this.assignmentCheckError = ''
+
+      if (this.isAdminPreview || !this.activeSession) {
+        this.assignmentEligibilityChecked = true
+        return null
+      }
+
+      const userId = this.userStore.profile?.user_id || this.userStore.user?.id || null
+      if (!userId) {
+        this.assignmentCheckError = 'Utilisateur non identifié.'
+        this.assignmentEligibilityChecked = true
+        return null
+      }
+
+      try {
+        this.existingCampaignAssignment = await getExistingCampaignAssignment({
+          userId,
+          pfpType: this.targetPFP,
+          year: this.selectedYear
+        })
+        return this.existingCampaignAssignment
+      } catch (error) {
+        console.error('Impossible de vérifier une affectation existante:', error)
+        this.assignmentCheckError = 'Vérification impossible.'
+        return null
+      } finally {
+        this.assignmentEligibilityChecked = true
+      }
+    },
+
     getAcademicYearKeys(year) {
-      const y = Number(year)
-      if (!Number.isFinite(y)) return [String(year)]
-      return [String(y), `${y - 1}-${y}`]
+      return getAcademicYearKeys(year)
     },
 
     getValueForYearKey(source, year) {
@@ -1197,6 +1405,7 @@ export default {
       const userId = this.userStore.profile?.user_id || this.userStore.user?.id || null
       if (!userId) {
         this.completedPlaceIds = []
+        this.visitedPlaceIds = []
         this.completedStageCount = 0
         return
       }
@@ -1207,7 +1416,6 @@ export default {
           .from('student_result_vote')
           .select('assigned_place_id, pfp_validee')
           .eq('user_id', userId)
-          .eq('pfp_validee', true)
           .not('assigned_place_id', 'is', null)
       ])
 
@@ -1215,19 +1423,23 @@ export default {
       if (assignmentsResult.error) throw assignmentsResult.error
 
       const completed = new Set()
+      const visited = new Set()
       const physioStages = this.extractProfileStageEntries(physioResult.data || [])
 
       physioStages.forEach((stage) => {
-        if (!this.isValidatedLegacyStage(stage)) return
         const placeId = this.resolvePlaceId(this.getPlaceFromStage(stage) || stage)
+        if (placeId) visited.add(String(placeId))
+        if (!this.isValidatedLegacyStage(stage)) return
         if (placeId) completed.add(String(placeId))
       })
       ;(assignmentsResult.data || []).forEach((row) => {
         const placeId = this.resolvePlaceId(row)
-        if (placeId) completed.add(placeId)
+        if (placeId) visited.add(placeId)
+        if (placeId && row.pfp_validee === true) completed.add(placeId)
       })
 
       this.completedPlaceIds = Array.from(completed)
+      this.visitedPlaceIds = Array.from(visited)
       this.completedStageCount = this.completedPlaceIds.length
     },
 
@@ -1324,12 +1536,28 @@ export default {
     },
 
     async refreshSessionAndData() {
-      if (this.sessionRefreshInFlight) return
+      this.previewGeneration++
+      if (this.sessionRefreshInFlight) {
+        this.refreshRequested = true
+        this.expandedPFPData = []
+        return
+      }
       this.sessionRefreshInFlight = true
       try {
+        if (this.isAdminPreview) {
+          await this.refreshAdminPreview()
+          return
+        }
         await this.loadSession()
         if (this.activeSession) {
-          await this.fetchData()
+          await this.checkExistingCampaignAssignment()
+          if (!this.votingAccessBlocked) {
+            await this.fetchData()
+          } else {
+            this.places = []
+            this.expandedPFPData = []
+            this.selectedPlaces = Array(5).fill(null)
+          }
         } else {
           this.targetPFP = null
           this.selectedYear = null
@@ -1338,6 +1566,82 @@ export default {
         }
       } finally {
         this.sessionRefreshInFlight = false
+        if (this.refreshRequested) {
+          this.refreshRequested = false
+          await this.refreshSessionAndData()
+        }
+      }
+    },
+
+    async refreshAdminPreview() {
+      const generation = this.previewGeneration
+      const userId = this.userStore.user?.id
+      const isCurrent = () => generation === this.previewGeneration && this.isAdminPreview && this.userStore.user?.id === userId
+      this.sessionLoading = true
+      this.previewError = ''
+      this.activeSession = null
+      this.targetPFP = null
+      this.selectedYear = null
+      this.places = []
+      this.expandedPFPData = []
+      this.selectedPlaces = Array(5).fill(null)
+      this.votedPlaces = Array(5).fill(null)
+      this.completedPlaceIds = []
+      this.visitedPlaceIds = []
+      this.pfp4ProposedPlaceIds = null
+      this.pfp4MissingCriteria = []
+      this.pfp4AssignCountByPlace = {}
+      this.offerSeatCountByPlace = {}
+      this.offerOccupiedSeatCountByPlace = {}
+      this.useOfferSeatActivation = false
+      this.votesAggregation = {}
+      try {
+        const sessions = await votationSessionService.getAllActiveSessions()
+        if (!isCurrent()) return
+        this.previewSessions = sessions.filter((session) => session.status === 'open')
+        const session = selectPreviewSession(this.previewSessions, this.previewSessionId)
+        this.previewSessionId = session?.id || null
+        if (!session) return
+        await Promise.all([
+          this.institutionsStore.fetchInstitutions(),
+          this.placesStore.fetchPlaces({ force: true })
+        ])
+        // Recheck after data loading: a campaign may have closed in the meantime.
+        const currentSessions = await votationSessionService.getAllActiveSessions()
+        if (!isCurrent()) return
+        this.previewSessions = currentSessions.filter((item) => item.status === 'open')
+        if (!this.previewSessions.some((item) => item.id === session.id)) return
+        const institutions = new Map(this.institutionsStore.institutions.map((item) => [item.InstitutionId, item]))
+        this.places = this.placesStore.places.map((place) => ({
+          ...place,
+          InstitutionName: institutions.get(place.InstitutionId)?.Name || place.InstitutionName || 'Inconnu',
+          InstitutionCategory: institutions.get(place.InstitutionId)?.Category || 'Non spécifié',
+          url: place.InstitutionId
+            ? `/institution/${encodeURIComponent(place.InstitutionId)}`
+            : null,
+          ...Object.fromEntries(CRITERIA_KEYS.map((key) => [key, parseBooleanFlag(place[key])]))
+        }))
+        this.activeSession = session
+        this.targetPFP = session.pfp_type
+        this.selectedYear = session.year
+
+        const offerAvailability = this.computeOfferSeatAvailability()
+        this.offerSeatCountByPlace = offerAvailability.activeCountByPlace
+        this.offerOccupiedSeatCountByPlace = offerAvailability.occupiedCountByPlace
+        this.useOfferSeatActivation = offerAvailability.foundOfferFields
+        this.pfp4AssignCountByPlace = await resultatVotationService.getAssignmentCounts(
+          this.targetPFP,
+          this.selectedYear
+        )
+
+        this.updateExpandedData()
+      } catch (error) {
+        if (isCurrent()) {
+          this.previewSessions = []
+          this.previewError = 'Impossible de charger l’aperçu. Réessayez avec Actualiser.'
+        }
+      } finally {
+        this.sessionLoading = false
       }
     },
 
@@ -1494,7 +1798,7 @@ export default {
           ...p,
           InstitutionName: institutionNameById[p.InstitutionId] || p.InstitutionName || 'Inconnu',
           InstitutionCategory: institutionCategoryById[p.InstitutionId] || 'Non spécifié',
-          url: `/institution/${p.InstitutionId}`,
+          url: p.InstitutionId ? `/institution/${encodeURIComponent(p.InstitutionId)}` : null,
           MSQ: parseBooleanFlag(p.MSQ),
           SYSINT: parseBooleanFlag(p.SYSINT),
           NEUROGER: parseBooleanFlag(p.NEUROGER),
@@ -1695,7 +1999,10 @@ export default {
 
       const savedMissingCriteriaSnapshot = [...(this.pfp4MissingCriteria || [])]
 
-      if (this.targetPFP === 'PFP3' || this.targetPFP === 'PFP4') {
+      if (
+        !this.isAdminPreview &&
+        (this.targetPFP === 'PFP2' || this.targetPFP === 'PFP3' || this.targetPFP === 'PFP4')
+      ) {
         await this.loadMissingCriteriaFromStudentData({ preserveAppliedRule: true })
 
         const liveMissingCriteria = [...(this.pfp4MissingCriteria || [])].sort()
@@ -1833,9 +2140,12 @@ export default {
         }
 
         const baseCapacity = count
-        const assignedCountFromVotes = Number(this.pfp4AssignCountByPlace[place.PlaceId] || 0)
+        const placeId = this.resolvePlaceId(place)
+        const assignedCountFromVotes = Number(
+          (placeId && this.pfp4AssignCountByPlace[placeId]) || 0
+        )
         const assignedCountFromOffer = Number(
-          this.offerOccupiedSeatCountByPlace[place.PlaceId] || 0
+          (placeId && this.offerOccupiedSeatCountByPlace[placeId]) || 0
         )
         const assignedCount = Math.max(assignedCountFromVotes, assignedCountFromOffer)
         if (assignedCount > 0) {
@@ -1869,7 +2179,10 @@ export default {
       const applyMissingCriteriaSections = (inputRows) => {
         const missing = this.getPriorityMissingCriteria()
         if (missing.length === 0) return inputRows
-        const prioritizeGerman = this.completedStageCount === 1 && missing.includes('DE')
+        const prioritizeGerman =
+          (this.targetPFP === 'PFP3' || this.targetPFP === 'PFP4') &&
+          this.completedStageCount === 1 &&
+          missing.includes('DE')
 
         inputRows.forEach((row) => {
           const coveredCount = missing.filter((c) => CRITERIA_KEYS.includes(c) && row[c]).length
@@ -1890,7 +2203,7 @@ export default {
         const sectionOrder = { high: 0, medium: 1, other: 2 }
         return inputRows.sort((a, b) => {
           const sectionDiff =
-            (sectionOrder[a.pfp4Section] || 2) - (sectionOrder[b.pfp4Section] || 2)
+            (sectionOrder[a.pfp4Section] ?? 2) - (sectionOrder[b.pfp4Section] ?? 2)
           if (sectionDiff !== 0) return sectionDiff
           if (prioritizeGerman) {
             const germanDiff = Number(Boolean(b.DE)) - Number(Boolean(a.DE))
@@ -1985,6 +2298,14 @@ export default {
         debugVotation(
           `🎯 PFP3: ${this.expandedPFPData.length}/${rows.length} places proposées (fallback critères)`
         )
+      } else if (this.targetPFP === 'PFP2') {
+        const eligibleRows = rows.filter((row) => this.isPfp2PlaceEligible(row))
+        this.expandedPFPData = this.pfp4MissingCriteria.length > 0
+          ? applyMissingCriteriaSections(eligibleRows)
+          : eligibleRows
+        debugVotation(
+          `🎯 PFP2: ${this.expandedPFPData.length}/${rows.length} places éligibles selon les lieux déjà fréquentés et les critères manquants`
+        )
       } else {
         this.expandedPFPData = rows.filter(
           (r) => !this.completedPlaceIdSet.has(this.resolvePlaceId(r))
@@ -1992,7 +2313,7 @@ export default {
       }
 
       if (
-        (this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3') &&
+        (this.targetPFP === 'PFP4' || this.targetPFP === 'PFP3' || this.targetPFP === 'PFP2') &&
         this.pfp4MissingCriteria.length > 0
       ) {
         const high = this.expandedPFPData.filter((r) => r.pfp4Section === 'high').length
@@ -2015,6 +2336,15 @@ export default {
       return this.pfp4MissingCriteria && this.pfp4MissingCriteria.includes(criteriaName)
     },
 
+    isPfp2PlaceEligible(place) {
+      const placeId = this.resolvePlaceId(place)
+      if (placeId && this.visitedPlaceIdSet.has(placeId)) return false
+
+      const missingCriteria = this.getPriorityMissingCriteria()
+      if (missingCriteria.length === 0) return true
+      return missingCriteria.some((criterion) => Boolean(place?.[criterion]))
+    },
+
     getVoteCount(place) {
       const placeId = place.PlaceId
 
@@ -2026,6 +2356,7 @@ export default {
     },
 
     isPlaceDisabled(place, choiceIndex) {
+      if (this.isAdminPreview) return true
       const normalize = (v) => (v || '').toString().trim().toLowerCase()
       for (let i = 0; i < this.selectedPlaces.length; i++) {
         if (i !== choiceIndex && this.selectedPlaces[i]) {
@@ -2043,10 +2374,20 @@ export default {
     },
 
     async sendVote() {
+      if (this.isAdminPreview) return
       if (this.isSubmitting) return
 
       if (!this.userStore.user) {
         this.dialogMessage = 'Vous devez être connecté pour voter.'
+        this.dialogVisible = true
+        return
+      }
+
+      await this.checkExistingCampaignAssignment()
+      if (this.votingAccessBlocked) {
+        this.dialogMessage = this.existingCampaignAssignment
+          ? 'Une place vous est déjà attribuée pour cette votation. Aucun nouveau vote ne peut être enregistré.'
+          : 'Votre situation ne peut pas être vérifiée actuellement. Aucun vote n’a été enregistré.'
         this.dialogVisible = true
         return
       }
@@ -2111,7 +2452,19 @@ export default {
       this.$forceUpdate()
     },
 
+    selectPlaceForRank({ place, choiceIndex }) {
+      if (this.isAdminPreview || this.isPlaceDisabled(place, choiceIndex)) return
+      const current = this.selectedPlaces[choiceIndex]
+      const sameSelection = current && (
+        (current.PlaceId && place.PlaceId && current.PlaceId === place.PlaceId && current.seatIndex === place.seatIndex) ||
+        (current.InstitutionId === place.InstitutionId && this.normalizeLookupValue(current.NomPlace) === this.normalizeLookupValue(place.NomPlace))
+      )
+      this.selectedPlaces[choiceIndex] = sameSelection ? null : place
+      this.$forceUpdate()
+    },
+
     onRadioClick(place, choiceIndex, event) {
+      if (this.isAdminPreview) return
       try {
         const current = this.selectedPlaces[choiceIndex]
         if (
@@ -2135,6 +2488,9 @@ export default {
     }
   },
   watch: {
+    isAdminPreview() {
+      this.refreshSessionAndData()
+    },
     '$route.fullPath'() {
       this.refreshSessionAndData()
     },
@@ -2158,20 +2514,117 @@ export default {
 </script>
 
 <style scoped>
+.assignment-locked-card {
+  width: min(560px, calc(100% - 2rem));
+  padding: 2rem;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 30%, var(--surface-border));
+  border-radius: 18px;
+  background: var(--surface-card);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.16);
+  color: var(--text-color);
+  text-align: center;
+}
+
+.assignment-locked-icon {
+  display: inline-grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  margin-bottom: 1rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  color: var(--primary-color);
+  font-size: 1.8rem;
+}
+
+.assignment-locked-card h2 {
+  margin: 0 0 0.65rem;
+}
+
+.assignment-locked-card > p {
+  margin: 0 auto 1.25rem;
+  max-width: 46ch;
+  color: var(--text-color-secondary);
+}
+
+.assignment-locked-details {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--surface-ground);
+  text-align: left;
+}
+
+.assignment-locked-details div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 0.75rem;
+}
+
+.assignment-locked-details dt {
+  color: var(--text-color-secondary);
+  font-weight: 600;
+}
+
+.assignment-locked-details dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.assignment-locked-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .votation-container {
   min-height: 100vh;
   padding: 0;
 }
 
+.admin-preview-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem 2rem;
+  max-width: 1680px;
+  margin: 1.25rem auto;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  color: var(--text-color);
+  background: var(--surface-card);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
+}
+
+.admin-preview-copy,
+.admin-preview-actions {
+  display: flex;
+  align-items: center;
+}
+
+.admin-preview-copy { gap: .8rem; }
+.admin-preview-copy h2,
+.admin-preview-copy p { margin: 0; }
+.admin-preview-copy h2 { font-size: 1rem; }
+.admin-preview-copy p { max-width: 62ch; margin-top: .2rem; color: var(--text-color-secondary); font-size: .82rem; line-height: 1.45; }
+.admin-preview-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; border-radius: 12px; color: #071426; background: #ffd400; }
+.admin-preview-actions { justify-content: flex-end; gap: .6rem; }
+.admin-preview-actions label { color: var(--text-color-secondary); font-size: .78rem; font-weight: 700; }
+.admin-preview-actions select { min-height: 44px; max-width: 360px; padding: 0 .75rem; border: 1px solid var(--surface-border); border-radius: 10px; color: var(--text-color); background: var(--surface-ground); font: inherit; }
+.admin-preview-actions select:focus-visible { outline: 3px solid #ffd400; outline-offset: 2px; }
+.admin-preview-error { grid-column: 1 / -1; margin: 0; color: #fca5a5; }
+
 /* En-tête moderne */
 .votation-header {
-  border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+  border-bottom: 1px solid var(--surface-border);
   padding: 2rem;
-  backdrop-filter: blur(10px);
 }
 
 .header-content {
-  max-width: 1400px;
+  max-width: 1680px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -2199,6 +2652,9 @@ export default {
   color: var(--text-color);
 }
 
+.header-title-row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.read-only-badge { display: inline-flex; min-height: 28px; align-items: center; gap: .4rem; padding: .25rem .55rem; border-radius: 999px; color: #fff0b3; background: rgba(255, 212, 0, .12); font-size: .72rem; font-weight: 800; }
+
 .header-subtitle {
   margin: 0.25rem 0 0 0;
   color: var(--text-color-secondary);
@@ -2218,10 +2674,63 @@ export default {
 
 /* Contenu */
 .content-wrapper {
-  max-width: 1400px;
+  max-width: 1680px;
   margin: 2rem auto;
   padding: 0 2rem;
 }
+
+.admin-form-guide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  margin-bottom: .75rem;
+  padding-top: .85rem;
+  padding-bottom: .85rem;
+  border-radius: 14px;
+  background: var(--surface-card);
+}
+.admin-form-guide h2,
+.admin-form-guide p { margin: 0; }
+.admin-form-guide h2 { color: var(--text-color); font-size: 1rem; }
+.admin-form-guide p { max-width: 68ch; margin-top: .25rem; color: var(--text-color-secondary); font-size: .82rem; line-height: 1.45; }
+.admin-form-guide ol { display: flex; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.admin-form-guide li { display: flex; min-height: 44px; align-items: center; gap: .4rem; padding: .3rem .55rem; border-radius: 10px; color: var(--text-color-secondary); background: var(--surface-ground); }
+.admin-form-guide li strong { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: #071426; background: #ffd400; }
+.admin-form-guide li span { font-size: .7rem; font-weight: 700; white-space: nowrap; }
+
+.choice-progress { margin-top: 1.25rem; margin-bottom: 1.25rem; }
+.choice-progress-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.choice-progress-heading h2, .choice-progress-heading p { margin: 0; }
+.choice-progress-heading h2 { color: var(--text-color); font-size: 1.25rem; }
+.choice-progress-heading p { max-width: 68ch; margin-top: .3rem; color: var(--text-color-secondary); line-height: 1.5; }
+.choice-progress-heading > strong { flex: 0 0 auto; padding: .5rem .75rem; border-radius: 999px; color: #071426; background: #ffd400; }
+.choice-progress-bar { overflow: hidden; height: 8px; margin: 1rem 0; border-radius: 999px; background: color-mix(in srgb, var(--surface-card) 80%, white); }
+.choice-progress-bar span { display: block; height: 100%; border-radius: inherit; background: #ffd400; transition: width 220ms ease-out; }
+.choice-slots { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.choice-slots li { display: grid; grid-template-columns: 30px minmax(0,1fr) 36px; align-items: center; gap: .5rem; min-height: 58px; padding: .55rem; border-radius: 12px; color: var(--text-color-secondary); background: var(--surface-card); }
+.choice-slots li > span { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; border: 1px solid var(--surface-border); font-weight: 800; }
+.choice-slots li strong, .choice-slots li small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.choice-slots li strong { font-size: .78rem; }
+.choice-slots li small { margin-top: .15rem; font-size: .68rem; }
+.choice-slots li.complete { color: var(--text-color); background: color-mix(in srgb, var(--surface-card) 88%, #ffd400); }
+.choice-slots li.complete > span { border-color: #ffd400; color: #071426; background: #ffd400; }
+.choice-slots button { display: grid; width: 36px; height: 44px; place-items: center; border: 0; border-radius: 9px; color: var(--text-color-secondary); background: transparent; cursor: pointer; }
+.choice-slots button:focus-visible, .place-search-control input:focus-visible, .search-empty button:focus-visible { outline: 3px solid #ffd400; outline-offset: 2px; }
+.place-tools { margin-top: 1.25rem; margin-bottom: 1rem; }
+.place-tools label { display: block; margin-bottom: .5rem; color: var(--text-color); font-weight: 700; }
+.place-search-control { display: grid; grid-template-columns: 24px minmax(0,1fr) auto; align-items: center; gap: .6rem; min-height: 48px; padding: 0 .85rem; border: 1px solid var(--surface-border); border-radius: 12px; background: var(--surface-card); }
+.place-search-control i { color: var(--text-color-secondary); }
+.place-search-control input { min-width: 0; min-height: 44px; border: 0; outline: 0; color: var(--text-color); background: transparent; font: inherit; }
+.place-search-control span { color: var(--text-color-secondary); font-size: .82rem; white-space: nowrap; }
+.search-empty { display: flex; align-items: center; gap: 1rem; padding-top: 1.25rem; padding-bottom: 1.25rem; border-radius: 14px; color: var(--text-color); background: var(--surface-card); }
+.search-empty > i { color: #ffd400; font-size: 1.5rem; }
+.search-empty h2, .search-empty p { margin: 0; }
+.search-empty h2 { font-size: 1rem; }
+.search-empty p { margin-top: .2rem; color: var(--text-color-secondary); }
+.search-empty button { min-height: 44px; margin-left: auto; padding: .6rem .8rem; border: 0; border-radius: 10px; color: #071426; background: #ffd400; font: inherit; font-weight: 700; cursor: pointer; }
+.mobile-place-cards { display: none; }
 
 /* Tableau moderne */
 .modern-votation-table {
@@ -2229,7 +2738,6 @@ export default {
   border: 1px solid var(--surface-border);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .modern-votation-table :deep(.p-datatable-thead > tr > th) {
@@ -2245,18 +2753,37 @@ export default {
 
 .modern-votation-table :deep(.p-datatable-tbody > tr) {
   background: var(--surface-card);
-  transition: all 0.2s ease;
+  transition: background 0.18s ease;
 }
 
 .modern-votation-table :deep(.p-datatable-tbody > tr:hover) {
   background: var(--surface-hover) !important;
-  transform: translateY(-1px);
 }
 
 .modern-votation-table :deep(.p-datatable-tbody > tr > td) {
   border-color: var(--surface-border);
   color: var(--text-color);
   padding: 0.85rem 0.75rem;
+}
+
+.modern-votation-table :deep(.choice-column-header) {
+  color: #fff0b3;
+  background: color-mix(in srgb, var(--surface-ground) 84%, #ffd400);
+}
+
+.modern-votation-table :deep(.choice-column-cell) {
+  background: rgba(255, 212, 0, .035);
+}
+
+.modern-votation-table :deep(.vote-column-header),
+.modern-votation-table :deep(.vote-total-header) {
+  color: #c9d7ea;
+  background: color-mix(in srgb, var(--surface-ground) 88%, #4f6fa8);
+}
+
+.modern-votation-table :deep(.vote-column-cell),
+.modern-votation-table :deep(.vote-total-cell) {
+  background: rgba(79, 111, 168, .035);
 }
 
 /* Styles pour les liens et contenus */
@@ -2288,9 +2815,10 @@ export default {
 
 /* Radio buttons */
 .radio-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  min-width: 44px;
+  min-height: 44px;
+  place-items: center;
 }
 
 .modern-votation-table :deep(.p-radiobutton) {
@@ -2551,11 +3079,15 @@ export default {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .admin-preview-toolbar { grid-template-columns: 1fr; margin: .75rem 1rem; }
+  .admin-preview-actions { align-items: stretch; flex-direction: column; }
+  .admin-preview-actions select { width: 100%; max-width: none; }
   .votation-header {
     padding: 1.5rem 1rem;
   }
 
   .header-content {
+    align-items: flex-start;
     flex-direction: column;
     gap: 1rem;
   }
@@ -2568,5 +3100,41 @@ export default {
   .header-title {
     font-size: 1.5rem;
   }
+
+  .header-left { align-items: flex-start; gap: .8rem; }
+  .header-icon { padding: .65rem; font-size: 2rem; }
+  .back-button { min-height: 44px; }
+  .desktop-place-table { display: none; }
+  .mobile-place-cards { display: grid; }
+  .admin-form-guide { align-items: flex-start; flex-direction: column; }
+  .admin-form-guide ol { width: 100%; }
+  .admin-form-guide li { min-width: 0; flex: 1; justify-content: center; padding: .3rem; }
+  .admin-form-guide li span { display: none; }
+  .choice-progress-heading { align-items: center; }
+  .choice-progress-heading p { display: none; }
+  .choice-slots { grid-template-columns: 1fr; }
+  .choice-slots li { grid-template-columns: 34px minmax(0,1fr) 44px; min-height: 54px; }
+  .choice-slots button { width: 44px; }
+  .place-search-control { grid-template-columns: 22px minmax(0,1fr); }
+  .place-search-control span { grid-column: 2; padding-bottom: .65rem; }
+  .search-empty { align-items: flex-start; flex-wrap: wrap; }
+  .search-empty button { width: 100%; margin-left: 0; }
+  .recap-section { display: none; }
+  .vote-action-section { padding-bottom: 5rem; }
+  .vote-submit { align-items: stretch; padding: 1rem; }
+  .vote-info { padding: .75rem; }
+  .vote-submit :deep(.p-button) { min-height: 48px; }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  .admin-preview-toolbar { grid-template-columns: 1fr; margin-right: 2rem; margin-left: 2rem; }
+  .admin-preview-actions { justify-content: flex-start; }
+  .desktop-place-table { display: none; }
+  .mobile-place-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .choice-slots { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 </style>

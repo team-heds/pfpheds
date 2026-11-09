@@ -19,7 +19,7 @@ import academicYearService from '@/service/academicYearService'
 
 describe('useAcademicYear', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   // ─── État initial ───
@@ -164,11 +164,13 @@ describe('useAcademicYear', () => {
       const mockYear = { id: 'y1', name: '2024-2025', is_active: true }
       academicYearService.setActiveAcademicYear.mockResolvedValue()
       academicYearService.getActiveAcademicYear.mockResolvedValue(mockYear)
+      academicYearService.getClassesByAcademicYear.mockResolvedValue([])
 
       const { activeAcademicYear, setActiveYear } = useAcademicYear()
       await setActiveYear('y1')
 
       expect(academicYearService.setActiveAcademicYear).toHaveBeenCalledWith('y1')
+      expect(academicYearService.getClassesByAcademicYear).toHaveBeenCalledWith('y1')
       expect(activeAcademicYear.value).toEqual(mockYear)
     })
 

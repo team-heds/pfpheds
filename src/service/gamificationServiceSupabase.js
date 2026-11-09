@@ -64,12 +64,12 @@ class GamificationServiceSupabase {
    * Récupère les données de gamification d'un utilisateur depuis Supabase
    * Compatible avec CardNameProfile.vue
    */
-  async getUserGamificationData(userId) {
+  async getUserGamificationData(userId, { strict = false, refresh = false } = {}) {
     try {
       const cacheKey = `gamification_${userId}`
       const cached = this.cache.get(cacheKey)
       
-      if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+      if (!refresh && cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
         return cached.data
       }
 
@@ -78,10 +78,11 @@ class GamificationServiceSupabase {
         .from('gamification_data')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Erreur Supabase gamification:', error)
+        if (strict) throw error
         return this.getDefaultGamificationData()
       }
 
@@ -94,11 +95,13 @@ class GamificationServiceSupabase {
       let houseName = null
       
       if (gamificationData.house_id) {
-        const { data: houseData } = await this.supabase
+        const { data: houseData, error: houseError } = await this.supabase
           .from('houses')
           .select('*')
           .eq('id', gamificationData.house_id)
           .single()
+
+        if (houseError && strict) throw houseError
 
         if (houseData) {
           houseName = houseData.name.toLowerCase()
@@ -142,6 +145,7 @@ class GamificationServiceSupabase {
 
     } catch (error) {
       console.error('Erreur lors de la récupération des données de gamification:', error)
+      if (strict) throw error
       return this.getDefaultGamificationData()
     }
   }
@@ -314,8 +318,8 @@ class GamificationServiceSupabase {
         const stats = housesStats[houseName] || { members: [] }
         
         // Utiliser les données de la table houses (source de vérité)
-        const totalXP = houseDB.total_xp || 0
-        const totalMembers = houseDB.member_count || stats.totalMembers || 0
+        const totalXP = Number(houseDB.total_xp) || 0
+        const totalMembers = Number(houseDB.member_count ?? stats.totalMembers ?? 0) || 0
         
         // Recalculer le niveau dynamiquement pour être sûr qu'il correspond à l'XP
         const calculatedLevelInfo = this.calculateHouseLevel(totalXP)
@@ -323,25 +327,18 @@ class GamificationServiceSupabase {
         
         // Calculer moyennes depuis gamification_data
         const averageXP = totalMembers > 0 ? Math.round(totalXP / totalMembers) : 0
-        const averageLevel = stats.members.length > 0 ? 
-          Math.round(stats.members.reduce((sum, member) => sum + member.level, 0) / stats.members.length * 10) / 10 : 1
+        // Un étudiant ne lit que sa propre ligne : sans tous les membres, la moyenne serait fausse.
+        const averageLevel = stats.members.length > 0 && stats.members.length >= totalMembers
+          ? Math.round(stats.members.reduce((sum, member) => sum + member.level, 0) / stats.members.length * 10) / 10
+          : null
 
-        // Calculer XP pour prochain niveau (formule: niveau N = (N-1)² × 10000)
-        const nextLevel = houseLevel + 1
-        const xpForNextLevel = Math.pow(nextLevel - 1, 2) * 10000
-        const xpToNext = xpForNextLevel > totalXP ? xpForNextLevel - totalXP : 0
-
-        // Nom du niveau
-        const levelNames = {
-          1: 'Maison Naissante',
-          2: 'Maison Active',
-          3: 'Maison Dynamique',
-          4: 'Maison Brillante',
-          5: 'Maison d\'Excellence',
-          6: 'Maison Prestigieuse',
-          7: 'Maison Légendaire',
-          8: 'Maison Mythique'
-        }
+        // Match calculate_house_level(bigint): remaining XP and the progress
+        // bar use the same thresholds as the displayed house level.
+        const xpToNext = calculatedLevelInfo.xpToNext
+        const levelSpan = totalXP + xpToNext - calculatedLevelInfo.xpRequired
+        const progressPercent = xpToNext <= 0 ? 100 : Math.min(100, Math.max(0,
+          ((totalXP - calculatedLevelInfo.xpRequired) / levelSpan) * 100
+        ))
 
         return {
           name: houseName,
@@ -349,12 +346,13 @@ class GamificationServiceSupabase {
           color: houseDB.color || this.getHouseColor(houseName),
           motto: houseDB.motto || this.getHouseMotto(houseName),
           level: houseLevel,
-          levelName: levelNames[houseLevel] || `Niveau ${houseLevel}`,
+          levelName: calculatedLevelInfo.name,
           totalXP: totalXP,
           totalMembers: totalMembers,
           averageXP: averageXP,
           averageLevel: averageLevel,
-          xpToNext: xpToNext
+          xpToNext,
+          progressPercent
         }
       })
 
@@ -471,6 +469,20 @@ class GamificationServiceSupabase {
    */
   async addUserXP(userId, action, actionData = {}) {
     try {
+      const { data: authData, error: authError } = await this.supabase.auth.getUser()
+      if (authError || !authData?.user?.id) {
+        const error = new Error('Authenticated Supabase user required for gamification')
+        error.code = 'GAMIFICATION_AUTH_REQUIRED'
+        throw error
+      }
+
+      const authenticatedUserId = authData.user.id
+      if (userId && userId !== authenticatedUserId) {
+        const error = new Error('Gamification target must match the authenticated user')
+        error.code = 'GAMIFICATION_IDENTITY_MISMATCH'
+        throw error
+      }
+
       const sourceId = actionData.sourceId || actionData.targetId || null
       const metadata = {
         ...actionData,
@@ -488,8 +500,8 @@ class GamificationServiceSupabase {
 
       if (error) throw error
 
-      this.invalidateCache(userId)
-      const freshData = await this.getUserGamificationData(userId)
+      this.invalidateCache(authenticatedUserId)
+      const freshData = await this.getUserGamificationData(authenticatedUserId)
 
       return {
         ...freshData,
@@ -566,6 +578,27 @@ class GamificationServiceSupabase {
    * @param {number} maxMembersPerHouse - Limite maximale de membres par maison (défaut: 50)
    * @returns {Promise<string>} Nom de la maison assignée
    */
+  /**
+   * État du quiz des maisons pour le compte connecté, décidé par le serveur :
+   * { has_house, house_id, is_player, quiz_open }. Le quiz n'est ouvert qu'aux
+   * joueurs de la gamification qui n'ont pas encore de maison.
+   */
+  async getMyHouseQuizStatus() {
+    const { data, error } = await supabase.rpc('get_my_house_quiz_status')
+    if (error) throw error
+    return data || { has_house: false, house_id: null, is_player: false, quiz_open: false }
+  }
+
+  /**
+   * Maison que le serveur attribuera pour la préférence du quiz (équilibrage des
+   * effectifs de joueurs entre les maisons). Aucune écriture.
+   */
+  async previewMyHouseAssignment(preferredHouseId) {
+    const { data, error } = await supabase.rpc('preview_my_house_assignment', { p_house_id: preferredHouseId })
+    if (error) throw error
+    return data
+  }
+
   async findBestAvailableHouse(quizResults, maxMembersPerHouse = 50) {
     try {
       // Obtenir le nombre actuel de membres par maison
@@ -782,10 +815,25 @@ class GamificationServiceSupabase {
       // Trier les membres par XP décroissant
       houseMembers.sort((a, b) => b.totalXP - a.totalXP)
       
+      // Totaux officiels de la maison. Un étudiant ne lit que sa propre ligne de
+      // gamification_data : dans ce cas, pas de classement nominatif ni de moyenne de niveau.
+      const { data: houseRow } = await supabase
+        .from('houses')
+        .select('total_xp, member_count')
+        .ilike('name', houseName)
+        .maybeSingle()
+      const membersHidden = Boolean(houseRow) && houseMembers.length < Number(houseRow.member_count || 0)
+      if (membersHidden) {
+        houseMembers.length = 0
+        totalXP = Number(houseRow.total_xp || 0)
+      }
+
       // Calculer les statistiques
-      const totalMembers = houseMembers.length
+      const totalMembers = membersHidden ? Number(houseRow.member_count || 0) : houseMembers.length
       const averageXP = totalMembers > 0 ? Math.round(totalXP / totalMembers) : 0
-      const averageLevel = totalMembers > 0 ? Math.round(houseMembers.reduce((sum, member) => sum + member.niveau, 0) / totalMembers) : 1
+      const averageLevel = !membersHidden && totalMembers > 0
+        ? Math.round(houseMembers.reduce((sum, member) => sum + member.niveau, 0) / totalMembers * 10) / 10
+        : null
       
       // Calculer le niveau de la maison basé sur l'XP total
       const houseLevel = this.calculateHouseLevel(totalXP)
@@ -796,6 +844,7 @@ class GamificationServiceSupabase {
         averageXP,
         averageLevel,
         members: houseMembers,
+        membersHidden,
         houseLevel
       }
       

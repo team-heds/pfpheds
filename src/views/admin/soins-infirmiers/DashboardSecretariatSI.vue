@@ -2,13 +2,14 @@
   <AdminLayout>
     <template #header>
       <PageHeader 
+        class="si-page-header"
         title="Dashboard Secrétariat — Soins Infirmiers" 
-        subtitle="Vue d'ensemble et gestion centralisée de la filière SI" 
-        icon="pi pi-heart-fill" 
+        subtitle="Vue d'ensemble et gestion centralisée de la filière SI"
+        icon="pi pi-heart-fill"
       />
     </template>
 
-    <div class="dashboard-si">
+    <div class="dashboard-si si-admin-screen">
       <!-- Loading -->
       <div v-if="loading" class="loading-container">
         <ProgressSpinner />
@@ -21,7 +22,7 @@
         <!-- ============================================ -->
         <div class="kpi-grid">
           <div class="kpi-card">
-            <div class="kpi-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+            <div class="kpi-icon">
               <i class="pi pi-calendar"></i>
             </div>
             <div class="kpi-info">
@@ -32,7 +33,7 @@
           </div>
 
           <div class="kpi-card">
-            <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <div class="kpi-icon">
               <i class="pi pi-book"></i>
             </div>
             <div class="kpi-info">
@@ -43,7 +44,7 @@
           </div>
 
           <div class="kpi-card">
-            <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <div class="kpi-icon">
               <i class="pi pi-users"></i>
             </div>
             <div class="kpi-info">
@@ -54,7 +55,7 @@
           </div>
 
           <div class="kpi-card">
-            <div class="kpi-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <div class="kpi-icon">
               <i class="pi pi-clock"></i>
             </div>
             <div class="kpi-info">
@@ -102,6 +103,8 @@
           <div class="section-header">
             <h3><i class="pi pi-shield"></i> Qualité des données planning</h3>
             <div class="flex align-items-center gap-2">
+              <Tag :value="dataQualitySummary.qualityScore == null ? 'Qualité: —' : `Qualité: ${dataQualitySummary.qualityScore}%`" :severity="dataQualitySummary.qualityScore == null ? 'secondary' : dataQualitySummary.qualityScore === 100 ? 'success' : dataQualitySummary.qualityScore >= 90 ? 'warning' : 'danger'" />
+              <Tag :value="`Complets: ${dataQualitySummary.completeSlots}/${dataQualitySummary.totalSlots}`" severity="secondary" />
               <Tag :value="`Créneaux scannés: ${dataQuality?.fetchedSlots || 0}`" severity="info" />
               <small class="timestamp">Maj {{ formattedDataQualityTimestamp }}</small>
             </div>
@@ -125,12 +128,18 @@
             </div>
           </div>
 
+          <div v-else-if="dataQualitySummary.totalSlots === 0" class="empty-state small-empty">
+            <i class="pi pi-info-circle text-blue-400"></i>
+            <p>Aucun créneau à analyser pour l’année académique active.</p>
+          </div>
+
           <div v-else class="empty-state small-empty">
             <i class="pi pi-check-circle text-green-500"></i>
             <p>Les créneaux du planning sont complets. Aucun blocage détecté.</p>
           </div>
 
           <div class="dq-actions">
+            <Button label="Ouvrir le diagnostic" icon="pi pi-shield" size="small" @click="openPlanningRemediation" />
             <Button label="Voir la feuille de charges" icon="pi pi-external-link" size="small" text @click="openWorkloadDiagnostics" />
           </div>
         </div>
@@ -144,7 +153,7 @@
           </div>
           <div class="shortcuts-grid">
             <!-- Planning -->
-            <div class="shortcut-card" @click="$router.push('/admin/planning/weekly')">
+            <RouterLink class="shortcut-card" to="/admin/planning/weekly">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
                 <i class="pi pi-calendar"></i>
               </div>
@@ -153,10 +162,10 @@
                 <p>Voir et modifier les horaires par semaine</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
-            </div>
+            </RouterLink>
 
             <!-- Structure Mini Brique -->
-            <div class="shortcut-card" @click="$router.push('/admin/planning')">
+            <RouterLink class="shortcut-card" to="/admin/planning">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
                 <i class="pi pi-th-large"></i>
               </div>
@@ -165,10 +174,10 @@
                 <p>Gestion de la structure annuelle des modules</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
-            </div>
+            </RouterLink>
 
             <!-- Vue Journalière / Salles -->
-            <div class="shortcut-card" @click="$router.push('/admin/soins-infirmiers/planning-journalier')">
+            <RouterLink class="shortcut-card" to="/admin/soins-infirmiers/planning-journalier">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
                 <i class="pi pi-building"></i>
               </div>
@@ -177,10 +186,10 @@
                 <p>Cours par jour, enseignants et salles</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
-            </div>
+            </RouterLink>
 
             <!-- Enseignants SI -->
-            <div class="shortcut-card" @click="$router.push('/admin/teachers-si')">
+            <RouterLink class="shortcut-card" to="/admin/teachers-si">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
                 <i class="pi pi-users"></i>
               </div>
@@ -189,10 +198,10 @@
                 <p>Liste et gestion des enseignants</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
-            </div>
+            </RouterLink>
 
             <!-- Cours en postulation -->
-            <div class="shortcut-card" @click="$router.push('/admin/soins-infirmiers/cours-postulation')">
+            <RouterLink class="shortcut-card" to="/admin/soins-infirmiers/cours-postulation">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #f97316, #ea580c);">
                 <i class="pi pi-exclamation-triangle"></i>
               </div>
@@ -201,10 +210,10 @@
                 <p>Repérer les créneaux avec attribution à pourvoir</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
-            </div>
+            </RouterLink>
 
             <!-- Modules -->
-            <div class="shortcut-card" @click="$router.push('/admin/modules')">
+            <RouterLink class="shortcut-card" to="/admin/modules">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #ec4899, #db2777);">
                 <i class="pi pi-book"></i>
               </div>
@@ -213,10 +222,10 @@
                 <p>Administration des modules de cours</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
-            </div>
+            </RouterLink>
 
             <!-- Années académiques -->
-            <div class="shortcut-card" @click="$router.push('/admin/planning/years')">
+            <RouterLink class="shortcut-card" to="/admin/planning/years">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
                 <i class="pi pi-calendar-plus"></i>
               </div>
@@ -225,10 +234,10 @@
                 <p>Créer et gérer les années et cohortes</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
-            </div>
+            </RouterLink>
 
             <!-- Contenu Multimédia -->
-            <div class="shortcut-card" @click="$router.push('/admin/academic/video-library')">
+            <RouterLink class="shortcut-card" to="/admin/academic/video-library">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
                 <i class="pi pi-video"></i>
               </div>
@@ -237,10 +246,10 @@
                 <p>Vidéos et ressources pédagogiques</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
-            </div>
+            </RouterLink>
 
             <!-- Kanban Tâches -->
-            <div class="shortcut-card" @click="$router.push('/admin/academic/kanban')">
+            <RouterLink class="shortcut-card" to="/admin/academic/kanban">
               <div class="shortcut-icon" style="background: linear-gradient(135deg, #64748b, #475569);">
                 <i class="pi pi-th-large"></i>
               </div>
@@ -249,7 +258,7 @@
                 <p>Suivi des tâches en mode Kanban</p>
               </div>
               <i class="pi pi-chevron-right shortcut-arrow"></i>
-            </div>
+            </RouterLink>
           </div>
         </div>
 
@@ -334,7 +343,8 @@
             <div class="flex align-items-center gap-2">
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="searchTeacher" placeholder="Rechercher..." class="p-inputtext-sm" style="width: 220px" />
+                <label class="sr-only" for="si-teacher-search">Rechercher un enseignant SI</label>
+                <InputText id="si-teacher-search" v-model="searchTeacher" placeholder="Rechercher..." class="p-inputtext-sm" style="width: 220px" />
               </span>
               <Button label="Gérer" icon="pi pi-external-link" size="small" text @click="$router.push('/admin/teachers-si')" />
             </div>
@@ -434,24 +444,27 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
-import planningService from '@/service/planningService'
-import academicYearService from '@/service/academicYearService'
 import modulesService from '@/service/modulesService'
-import { supabase } from '@/supabase'
 import { getSITeachers } from '@/service/academicKpiService'
 import { loadEnseignantDashboard } from '@/service/enseignantDashboardService'
-import { scanPlanningDataQuality } from '@/service/dataQualityService'
+import { analyzePlanningDataQuality } from '@/service/dataQualityService'
+import { fetchPlanningSlotsPaginated } from '@/service/siPlanningQueryService'
+import { useActiveAcademicYearContext } from '@/composables/useActiveAcademicYearContext'
 
 const router = useRouter()
+const {
+  activeYearName,
+  activeYearId,
+  activeYearClasses: activeYearClassRows,
+  activeClassCodes,
+  loadActiveAcademicYearContext
+} = useActiveAcademicYearContext()
 
 // State
 const loading = ref(true)
-const activeYearName = ref('')
-const activeYearClasses = ref(0)
-const activeYearId = ref(null)
 const modules = ref([])
 const teachers = ref([])
 const searchTeacher = ref('')
@@ -468,8 +481,10 @@ const currentWeekSlotsData = ref([])
 const alerts = ref([])
 const dataQuality = ref(null)
 const dataQualityLoading = ref(false)
+const planningSlotsSnapshot = ref([])
 
 // Computed
+const activeYearClasses = computed(() => activeYearClassRows.value.length)
 const modulesCount = computed(() => modules.value.length)
 const modulesWithPlanningCount = computed(() => {
   const years = new Set(modules.value.map(m => m.year || m.annee).filter(Boolean))
@@ -505,7 +520,7 @@ const dataQualityIssues = computed(() => {
     })
   }
 
-  const teacherIssues = summary.noTeachersDeclared + summary.noValidTeacher
+  const teacherIssues = summary.teacherIssueSlots ?? summary.noValidTeacher
   if (teacherIssues > 0) {
     items.push({
       id: 'missingTeachers',
@@ -622,13 +637,18 @@ const getClassColor = (classCode) => {
 // Load data
 onMounted(async () => {
   try {
-    await Promise.all([
-      loadAcademicYear(),
+    await loadAcademicYear()
+    const planningPromise = activeClassCodes.value?.size
+      ? fetchPlanningSlotsPaginated({ classCodes: activeClassCodes.value })
+      : Promise.resolve([])
+    const [, , planningSlots] = await Promise.all([
       loadModules(),
       loadTeachers(),
-      loadPlanningStats()
+      planningPromise
     ])
-    await loadDataQuality()
+    planningSlotsSnapshot.value = planningSlots
+    loadPlanningStats(planningSlots)
+    loadDataQuality(planningSlots)
     generateAlerts()
   } catch (err) {
     console.error('Erreur chargement dashboard SI:', err)
@@ -639,14 +659,7 @@ onMounted(async () => {
 
 async function loadAcademicYear() {
   try {
-    const activeYear = await academicYearService.getActiveAcademicYear()
-    if (activeYear) {
-      activeYearName.value = activeYear.name || ''
-      activeYearId.value = activeYear.id
-      
-      const classes = await academicYearService.getClassesByAcademicYear(activeYear.id)
-      activeYearClasses.value = classes?.length || 0
-    }
+    await loadActiveAcademicYearContext()
   } catch (err) {
     console.error('Erreur chargement année:', err)
   }
@@ -662,6 +675,10 @@ function openTeacherProfile(teacher) {
       email: teacher.email || ''
     }
   })
+}
+
+function openPlanningRemediation() {
+  router.push('/admin/soins-infirmiers/qualite-planning')
 }
 
 async function setTeacherFocus(teacher) {
@@ -720,58 +737,23 @@ async function loadTeachers() {
   }
 }
 
-async function loadPlanningStats() {
+function loadPlanningStats(slots = planningSlotsSnapshot.value) {
   try {
-    if (!activeYearId.value) {
-      const activeYear = await academicYearService.getActiveAcademicYear()
-      if (activeYear) activeYearId.value = activeYear.id
-    }
-    
-    if (!activeYearId.value) return
-    
-    // Récupérer les classes de l'année active
-    const classes = await academicYearService.getClassesByAcademicYear(activeYearId.value)
-    if (!classes || classes.length === 0) return
-    
-    // Convertir codes classes (B24-TP → BAC24-TP) pour matcher planning_time_slots
-    const classCodes = classes.map(c => {
-      const code = c.code || ''
-      return code.match(/^B\d/) ? 'BAC' + code.substring(1) : code
-    })
-    
-    // Total slots pour toutes les classes de l'année
-    let totalCount = 0
-    for (const code of classCodes) {
-      const { count } = await supabase
-        .from('planning_time_slots')
-        .select('*', { count: 'exact', head: true })
-        .ilike('class_code', code)
-      totalCount += (count || 0)
-    }
-    totalSlots.value = totalCount
-    
-    // Current week slots — toutes les classes
+    totalSlots.value = slots.length
+
     const weekNum = currentISOWeek.value
-    const allSlots = []
-    const seenIds = new Set()
-    for (const code of classCodes) {
-      const slots = await planningService.getWeekTimeSlots(code, weekNum)
-      for (const s of (slots || [])) {
-        if (!seenIds.has(s.id)) {
-          seenIds.add(s.id)
-          allSlots.push({
-            id: s.id,
-            day: s.day,
-            startTime: s.start_time,
-            endTime: s.end_time,
-            courseTitle: s.course_title,
-            activity: s.activity,
-            moduleCode: s.module_code,
-            classCode: s.class_code
-          })
-        }
-      }
-    }
+    const allSlots = slots
+      .filter(slot => Number(slot.week_number) === Number(weekNum))
+      .map(slot => ({
+        id: slot.id,
+        day: slot.day,
+        startTime: slot.start_time,
+        endTime: slot.end_time,
+        courseTitle: slot.course_title,
+        activity: slot.activity,
+        moduleCode: slot.module_code,
+        classCode: slot.class_code
+      }))
     currentWeekSlots.value = allSlots.length
     currentWeekSlotsData.value = allSlots
   } catch (err) {
@@ -779,24 +761,16 @@ async function loadPlanningStats() {
   }
 }
 
-async function loadDataQuality() {
+function loadDataQuality(slots = planningSlotsSnapshot.value) {
   try {
     dataQualityLoading.value = true
-
-    if (!activeYearId.value) {
-      const activeYear = await academicYearService.getActiveAcademicYear()
-      if (activeYear) activeYearId.value = activeYear.id
-    }
 
     if (!activeYearId.value) {
       dataQuality.value = null
       return
     }
 
-    dataQuality.value = await scanPlanningDataQuality({
-      academicYearId: activeYearId.value,
-      includeRows: false
-    })
+    dataQuality.value = analyzePlanningDataQuality(slots, { includeRows: false })
   } catch (err) {
     console.error('Erreur diagnostic qualité planning:', err)
   } finally {
@@ -1049,8 +1023,15 @@ function openWorkloadDiagnostics() {
   border-radius: 0.75rem;
   background: var(--surface-ground);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   border: 1px solid transparent;
+  color: inherit;
+  text-decoration: none;
+}
+
+.shortcut-card:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
 }
 
 .shortcut-card:hover {
@@ -1548,9 +1529,25 @@ function openWorkloadDiagnostics() {
 }
 
 /* ====== RESPONSIVE ====== */
+@media (max-width: 1024px) {
+  .dashboard-si {
+    padding: 1.25rem;
+  }
+
+  .calendar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .section-header {
+    align-items: flex-start;
+    gap: .75rem;
+    flex-wrap: wrap;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-si {
-    padding: 1rem;
+    padding: .25rem 0 1rem;
   }
   
   .kpi-grid {
@@ -1560,6 +1557,7 @@ function openWorkloadDiagnostics() {
   
   .kpi-card {
     padding: 1rem;
+    min-width: 0;
   }
   
   .kpi-icon {
@@ -1581,13 +1579,86 @@ function openWorkloadDiagnostics() {
   }
   
   .calendar-grid {
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    gap: .75rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: .125rem .125rem .75rem;
+    overscroll-behavior-inline: contain;
+  }
+
+  .calendar-day {
+    flex: 0 0 min(78vw, 19rem);
+    scroll-snap-align: start;
+  }
+
+  .section-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-header,
+  .focus-teacher-section .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 1rem;
+  }
+
+  .section-header > .flex,
+  .dq-actions,
+  .teacher-actions {
+    flex-wrap: wrap;
+  }
+
+  .section-header :deep(.p-inputtext),
+  .section-header :deep(.p-button),
+  .dq-actions :deep(.p-button) {
+    width: 100% !important;
+    min-height: 44px;
+  }
+
+  .alert-item,
+  .dq-issue {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .alert-item :deep(.p-button) {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .shortcut-card,
+  .teacher-item {
+    min-height: 64px;
   }
 }
 
 @media (max-width: 480px) {
-  .calendar-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-card {
+    padding: .875rem 1rem;
+  }
+
+  .shortcut-card {
+    padding: .875rem;
+  }
+
+  .module-compact-item,
+  .teacher-item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .module-tags,
+  .teacher-actions {
+    width: 100%;
+    margin-left: 0;
+    flex-direction: row;
+    justify-content: flex-end;
   }
 }
 </style>

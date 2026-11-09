@@ -33,7 +33,7 @@
                     class="p-button-outlined p-mt-2"
                   />
                   <p v-if="institution.CyberleanURL" class="mt-2">
-                    PDF actuel: <a :href="institution.CyberleanURL" target="_blank">Voir le PDF</a>
+                    PDF actuel: <a :href="institution.CyberleanURL" target="_blank" rel="noopener noreferrer" @click.prevent="openCurrentPdf" @auxclick.middle.prevent="openCurrentPdf">Voir le PDF</a>
                   </p>
                 </div>
               </div>
@@ -219,9 +219,8 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { useToast } from 'primevue/usetoast'
-import { storage } from '../../../../firebase.js'
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage'
 import institutionMediaService from '@/service/institutionMediaService'
+import { uploadPfpDocument, openPfpDocument } from '@/service/pfpDocumentMediaService'
 
 // Import PrimeVue components
 import InputText from 'primevue/inputtext'
@@ -335,23 +334,6 @@ const removeImage = async (index) => {
     }
   }
 
-  if (!isLocalPreview && typeof urlToRemove === 'string' && urlToRemove.includes('firebasestorage.googleapis.com')) {
-    try {
-      await deleteObject(storageRef(storage, urlToRemove))
-    } catch (error) {
-      if (error.code !== 'storage/object-not-found') {
-        console.error("Erreur lors de la suppression de l'image Firebase Storage:", error)
-        toast.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: "La suppression de l'image a échoué.",
-          life: 4000
-        })
-        return
-      }
-    }
-  }
-
   if (isLocalPreview) {
     URL.revokeObjectURL(urlToRemove)
     const localPreviewUrls = localPreviews.value.filter(
@@ -372,18 +354,22 @@ const removeImage = async (index) => {
   localPreviews.value.splice(index, 1)
 }
 
+const openCurrentPdf = async () => {
+  try { await openPfpDocument(institution.value.CyberleanURL) }
+  catch (error) { toast.add({ severity: 'error', summary: 'Document indisponible', detail: error.message, life: 4000 }) }
+}
+
 const handleUpdateInstitution = async () => {
   if (!institution.value) return
 
   try {
-    // 1. Handle PDF Upload to Firebase Storage
+    // Documents are stored in the private Supabase bucket.
     if (pdfFile.value) {
-      const pdfStorageRef = storageRef(storage, `Institutions/${institutionId}/cyberlearn.pdf`)
-      const pdfSnapshot = await uploadBytes(pdfStorageRef, pdfFile.value)
-      institution.value.CyberleanURL = await getDownloadURL(pdfSnapshot.ref)
+      const uploaded = await uploadPfpDocument('institutions', institutionId, pdfFile.value)
+      institution.value.CyberleanURL = uploaded.url
     }
 
-    // 2. Handle Image Uploads to Firebase Storage
+    // Institution images already use Supabase Storage.
     if (imageFiles.value.length > 0) {
       const uploadedFiles = await institutionMediaService.uploadInstitutionImages(
         institutionId,

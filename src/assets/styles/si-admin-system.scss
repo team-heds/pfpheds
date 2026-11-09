@@ -1,0 +1,361 @@
+/*
+ * Soins infirmiers — visual foundation
+ *
+ * This layer intentionally harmonises the six SI administration screens
+ * without changing their component behaviour. It is strictly scoped to the
+ * SI root classes so the rest of the platform keeps its existing appearance.
+ */
+
+.si-page-header {
+  --si-accent: #ffcc00;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  margin-bottom: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--surface-border) 88%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface-card) 96%, var(--si-accent));
+}
+
+.si-page-header h1 {
+  max-width: 42rem;
+  font-size: clamp(1.45rem, 2.2vw, 2rem) !important;
+  letter-spacing: -0.025em;
+}
+
+.si-page-header h1:focus {
+  outline: none !important;
+}
+
+.si-page-header .title-icon {
+  color: var(--si-accent);
+}
+
+.si-page-header .subtitle {
+  max-width: 48rem;
+  margin-top: 0.4rem;
+  color: var(--text-color-secondary);
+  line-height: 1.5;
+}
+
+.si-admin-screen {
+  --si-accent: #ffcc00;
+  --si-radius: 0.875rem;
+  --si-radius-sm: 0.625rem;
+  --si-surface: var(--surface-card);
+  --si-surface-soft: color-mix(in srgb, var(--surface-card) 82%, var(--surface-ground));
+  --si-border: color-mix(in srgb, var(--surface-border) 92%, transparent);
+  --si-muted: var(--text-color-secondary);
+  width: min(100%, 1680px);
+  margin-inline: auto;
+  padding: clamp(1rem, 2vw, 2rem) !important;
+}
+
+.si-admin-screen .dashboard-grid,
+.si-admin-screen > div:not(.loading-container) {
+  min-width: 0;
+}
+
+/* One panel language: restrained border, stable radius, no decorative lift. */
+.si-admin-screen .section-card,
+.si-admin-screen .card-section,
+.si-admin-screen .toolbar-card,
+.si-admin-screen .table-card,
+.si-admin-screen .day-table,
+.si-admin-screen .coeff-panel {
+  border: 1px solid var(--si-border) !important;
+  border-radius: var(--si-radius) !important;
+  background: var(--si-surface) !important;
+  box-shadow: 0 1px 2px rgba(3, 15, 30, 0.12) !important;
+}
+
+.si-admin-screen .section-card:hover,
+.si-admin-screen .card-section:hover {
+  transform: none !important;
+  box-shadow: 0 1px 2px rgba(3, 15, 30, 0.12) !important;
+}
+
+.si-admin-screen .section-header,
+.si-admin-screen .section-header-row,
+.si-admin-screen .card-section__header {
+  gap: 0.75rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1rem !important;
+  border-bottom: 1px solid var(--si-border);
+}
+
+.si-admin-screen .section-header h3,
+.si-admin-screen .section-heading h3,
+.si-admin-screen .card-section__title h3 {
+  font-size: 1rem !important;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.si-admin-screen .section-header h3 i,
+.si-admin-screen .section-heading h3 i,
+.si-admin-screen .card-section__title i {
+  color: var(--si-accent) !important;
+}
+
+/* Filters and actions share the same density and alignment. */
+.si-admin-screen .toolbar-card {
+  padding: 1rem 1.125rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.si-admin-screen .toolbar-row,
+.si-admin-screen .left-tools,
+.si-admin-screen .right-tools,
+.si-admin-screen .card-section__toolbar {
+  gap: 0.75rem !important;
+}
+
+.si-admin-screen .field-inline {
+  align-items: flex-start !important;
+  gap: 0.35rem !important;
+}
+
+.si-admin-screen .field-inline label {
+  color: var(--si-muted) !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+/* KPI cards: same geometry, semantic colour only on the icon. */
+.si-admin-screen .kpi-grid,
+.si-admin-screen .stats-row {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important;
+  gap: 0.875rem !important;
+}
+
+.si-admin-screen .kpi-card,
+.si-admin-screen .stat-card {
+  min-width: 0 !important;
+  min-height: 104px;
+  padding: 1rem 1.125rem !important;
+  border: 1px solid var(--si-border) !important;
+  border-radius: var(--si-radius) !important;
+  background: var(--si-surface) !important;
+  box-shadow: 0 1px 2px rgba(3, 15, 30, 0.12) !important;
+  transform: none !important;
+}
+
+.si-admin-screen .kpi-card:hover,
+.si-admin-screen .stat-card:hover {
+  transform: none !important;
+  border-color: color-mix(in srgb, var(--si-accent) 35%, var(--si-border)) !important;
+  box-shadow: 0 1px 2px rgba(3, 15, 30, 0.12) !important;
+}
+
+.si-admin-screen .kpi-icon,
+.si-admin-screen .stat-card__icon,
+.si-admin-screen .stat-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 0.75rem !important;
+  color: var(--si-stat-accent, var(--si-accent)) !important;
+  background: color-mix(in srgb, var(--si-stat-accent, var(--si-accent)) 16%, var(--si-surface)) !important;
+}
+
+.si-admin-screen .kpi-icon i,
+.si-admin-screen .stat-card__icon i,
+.si-admin-screen .stat-icon i {
+  color: inherit !important;
+}
+
+.si-admin-screen .kpi-card:nth-child(1),
+.si-admin-screen .stat-card--blue { --si-stat-accent: #60a5fa; }
+.si-admin-screen .kpi-card:nth-child(2),
+.si-admin-screen .stat-card--emerald { --si-stat-accent: #34d399; }
+.si-admin-screen .kpi-card:nth-child(3),
+.si-admin-screen .stat-card--amber { --si-stat-accent: #fbbf24; }
+.si-admin-screen .kpi-card:nth-child(4),
+.si-admin-screen .stat-card--red { --si-stat-accent: #fb7185; }
+
+.si-admin-screen .kpi-value,
+.si-admin-screen .stat-card__value,
+.si-admin-screen .stat-value {
+  font-size: clamp(1.35rem, 2vw, 1.65rem) !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.02em;
+}
+
+.si-admin-screen .kpi-label,
+.si-admin-screen .stat-card__label,
+.si-admin-screen .stat-label {
+  color: var(--si-muted) !important;
+  font-size: 0.78rem !important;
+  font-weight: 650;
+}
+
+/* Tables align across planning, workload, postulation and RM views. */
+.si-admin-screen :is(.p-datatable, .p-treetable) {
+  border: 1px solid var(--si-border);
+  border-radius: var(--si-radius-sm);
+  overflow: hidden;
+}
+
+.si-admin-screen :is(.p-datatable, .p-treetable) :is(.p-datatable-thead, .p-treetable-thead) > tr > th {
+  padding: 0.75rem 0.875rem;
+  border-color: var(--si-border);
+  background: var(--si-surface-soft);
+  color: var(--si-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.si-admin-screen :is(.p-datatable, .p-treetable) :is(.p-datatable-tbody, .p-treetable-tbody) > tr > td {
+  padding: 0.75rem 0.875rem;
+  border-color: var(--si-border);
+  vertical-align: top;
+}
+
+.si-admin-screen :is(.p-datatable, .p-treetable) :is(.p-datatable-tbody, .p-treetable-tbody) > tr:hover > td {
+  background: color-mix(in srgb, var(--si-accent) 5%, var(--si-surface));
+}
+
+/* The teacher summary stays prominent without becoming a second visual system. */
+.si-admin-screen .hero-card {
+  padding: clamp(1.125rem, 2.5vw, 1.625rem) !important;
+  border: 1px solid color-mix(in srgb, var(--si-accent) 28%, var(--si-border)) !important;
+  border-radius: var(--si-radius) !important;
+  background: var(--si-surface) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 1px 2px rgba(3, 15, 30, 0.12) !important;
+}
+
+.si-admin-screen .hero-card__eyebrow {
+  padding: 0;
+  border-radius: 0;
+  background: transparent !important;
+  color: var(--si-accent);
+}
+
+.si-admin-screen .hero-card__subtitle,
+.si-admin-screen .hero-card__meta-item {
+  color: var(--si-muted) !important;
+}
+
+.si-admin-screen .hero-card__meta-item {
+  padding: 0;
+  background: transparent !important;
+}
+
+.si-admin-screen .hero-card__metrics {
+  align-content: stretch;
+  gap: 0.75rem !important;
+}
+
+.si-admin-screen .hero-metric {
+  justify-content: center;
+  min-height: 92px;
+  padding: 0.875rem !important;
+  border: 1px solid var(--si-border) !important;
+  border-radius: var(--si-radius-sm) !important;
+  background: var(--si-surface-soft) !important;
+}
+
+.si-admin-screen .hero-metric__label,
+.si-admin-screen .hero-metric__hint {
+  color: var(--si-muted);
+  opacity: 1 !important;
+}
+
+.si-admin-screen .hero-metric__value {
+  color: var(--text-color);
+}
+
+/* Preserve meaning with a quiet accent instead of thick coloured edges. */
+.si-admin-screen .card-section--accent,
+.si-admin-screen .hours-section,
+.si-admin-screen .preview-context,
+.si-admin-screen .alerts-section {
+  border-left-width: 1px !important;
+}
+
+.si-admin-screen .empty-state,
+.si-admin-screen .loading-container {
+  border-radius: var(--si-radius);
+}
+
+@media (max-width: 900px) {
+  .si-admin-screen .hero-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .si-admin-screen .week-schedule,
+  .si-admin-screen .week-calendar {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .si-page-header,
+  .si-admin-screen {
+    padding: 1rem !important;
+  }
+
+  .si-admin-screen {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .si-admin-screen .kpi-grid,
+  .si-admin-screen .stats-row,
+  .si-admin-screen .hero-card__metrics,
+  .si-admin-screen .week-schedule,
+  .si-admin-screen .week-calendar {
+    grid-template-columns: 1fr !important;
+  }
+
+  .si-admin-screen .toolbar-row,
+  .si-admin-screen .left-tools,
+  .si-admin-screen .right-tools,
+  .si-admin-screen .card-section__toolbar,
+  .si-admin-screen .section-header,
+  .si-admin-screen .section-header-row,
+  .si-admin-screen .preview-context-head {
+    align-items: stretch !important;
+    flex-direction: column !important;
+    width: 100%;
+  }
+
+  .si-admin-screen .left-tools > *,
+  .si-admin-screen .right-tools > *,
+  .si-admin-screen .field-inline,
+  .si-admin-screen .field-inline > *,
+  .si-admin-screen .hero-card__actions > *,
+  .si-admin-screen .quick-actions > * {
+    width: 100% !important;
+  }
+
+  .si-admin-screen .p-inputtext,
+  .si-admin-screen .p-dropdown,
+  .si-admin-screen .p-multiselect,
+  .si-admin-screen .p-calendar {
+    max-width: 100%;
+  }
+
+  .si-admin-screen .module-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .si-admin-screen .module-card__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .si-admin-screen *,
+  .si-admin-screen *::before,
+  .si-admin-screen *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

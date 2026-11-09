@@ -47,10 +47,22 @@ describe('garde-fous des jeux', () => {
     const dynamicRoutes = source('src/composables/useDynamicRoutes.js')
 
     expect(tools).toContain("outil.to !== '/tournois' || gamificationFeatures.tournaments")
+    expect(tools).toContain("outil.to !== '/game' || gamificationFeatures.gamesHub")
     expect(hub).toContain('v-if="gamificationFeatures.dailyWheel"')
     expect(hub).toContain('v-if="gamificationFeatures.romRunner"')
+    expect(hub).toContain('v-if="gamificationFeatures.ventriglisse"')
     for (const routeName of ['GameView', 'GameHub', 'RomRunnerView', 'TournoisView', 'TournoiDetailsView']) {
       expect(dynamicRoutes).toContain(`'${routeName}'`)
     }
+  })
+
+  it('active le centre de jeux et le Ventriglisse uniquement dans le build test', () => {
+    const testBuild = source('deploy/staging/build-current-test.mjs')
+    const production = source('.env.production.example')
+
+    expect(testBuild).toContain("VITE_GAMIFICATION_GAMES_HUB: 'true'")
+    expect(testBuild).toContain("VITE_GAMIFICATION_VENTRIGLISSE: 'true'")
+    expect(production).toContain('VITE_GAMIFICATION_GAMES_HUB=false')
+    expect(production).toContain('VITE_GAMIFICATION_VENTRIGLISSE=false')
   })
 })

@@ -18,11 +18,7 @@ import { defineStore } from 'pinia'
 import { supabase } from '@/supabase'
 import votesBackendService from '@/service/votesBackendService'
 
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+import { getAcademicYearKeys, requireAcademicYear } from '@/domain/pfp/academicPeriod'
 
 const isYearMatch = (candidateYear, selectedYear) => {
   if (candidateYear === null || candidateYear === undefined || selectedYear === null || selectedYear === undefined) return false
@@ -141,6 +137,7 @@ export const useVotesStore = defineStore('votes', {
       const shouldUseRPC = useRPC !== null ? useRPC : this.useBackendFunctions
 
       try {
+        year = requireAcademicYear(year)
         const { data: { user } } = await supabase.auth.getUser()
         
         if (!user) {

@@ -3,6 +3,7 @@ const { Router } = require('express')
 const { supabaseAdmin } = require('../supabaseClient')
 const multer = require('multer')
 const { randomUUID } = require('crypto')
+const { toPublicStorageUrl } = require('./storageUrls')
 const fs = require('fs')
 const {
   cleanupUploadedFiles,
@@ -23,9 +24,11 @@ const upload = multer({
 })
 const INSTITUTIONS_BUCKET = 'institutions'
 
+router.use('/documents', require('./pfpDocumentMediaBackend').createPfpDocumentMediaRouter())
+
 function getPublicUrl(path) {
   const { data } = supabaseAdmin.storage.from(INSTITUTIONS_BUCKET).getPublicUrl(path)
-  return data.publicUrl
+  return toPublicStorageUrl(data.publicUrl)
 }
 
 function extractSupabaseStoragePath(url) {

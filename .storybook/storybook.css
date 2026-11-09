@@ -1,0 +1,71 @@
+.storybook-canvas {
+  width: 100%;
+  color: var(--text-color);
+  font-family: var(--app-font-family);
+}
+
+.storybook-stack {
+  display: grid;
+  gap: var(--app-space-6);
+  width: min(100%, 72rem);
+}
+
+.storybook-section {
+  display: grid;
+  gap: var(--app-space-4);
+}
+
+.storybook-section > h2,
+.storybook-section > p {
+  margin: 0;
+}
+
+.storybook-section > p {
+  max-width: var(--app-text-measure);
+  color: var(--text-color-secondary);
+}
+
+.storybook-component-row {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-3);
+  flex-wrap: wrap;
+}
+
+.storybook-surface {
+  padding: var(--app-space-6);
+  border-radius: var(--app-radius-xl);
+  background: var(--surface-card);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.storybook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--app-space-4);
+}
+
+.storybook-data-table {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.storybook-data-table .p-datatable-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.storybook-data-table .p-datatable-table {
+  min-width: 56rem;
+}
+
+@media (max-width: 40rem) {
+  .storybook-canvas {
+    padding: 1rem;
+  }
+
+  .storybook-surface {
+    padding: var(--app-space-4);
+  }
+}

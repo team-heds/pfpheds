@@ -1,163 +1,67 @@
 <template>
   <div class="modal-overlay">
-    <div class="modal-content">
-      <h4>Éditer le fichier</h4>
-
-      <!-- Nom du fichier -->
-      <label>
-        Nom du fichier :
-        <input v-model="localFile.name" type="text" />
-      </label>
-      <br />
-
-      <!-- URL actuelle (utilisée s’il n’y a pas d’upload) -->
-      <label>
-        URL :
-        <input v-model="localFile.url" type="text" />
-      </label>
-      <br />
-
-      <!-- Possibilité de remplacer le fichier actuel par un nouveau upload -->
-      <p>Ou téléverser un nouveau fichier pour remplacer l'actuel :</p>
-      <input type="file" @change="handleFileChange" />
-
+    <form class="modal-content" role="dialog" aria-modal="true" aria-labelledby="edit-document-title" @submit.prevent="handleSave">
+      <h4 id="edit-document-title">Modifier le document</h4>
+      <label>Nom du fichier<input v-model="localFile.name" type="text" required :disabled="uploading" /></label>
+      <label>URL actuelle<input v-model="localFile.url" type="url" :required="!selectedFile" :disabled="uploading" /></label>
+      <label>Remplacer par un nouveau fichier<input type="file" :accept="DOCUMENT_ACCEPT" :disabled="uploading" @change="handleFileChange" /></label>
+      <p class="file-help">PDF, DOCX, XLSX, PPTX, JPG, PNG, WEBP ou TXT · 20 Mo maximum</p>
+      <p v-if="errorMessage" class="form-error" role="alert">{{ errorMessage }}</p>
       <div class="modal-actions">
-        <button @click="handleSave" class="p-button p-component">
-          Sauvegarder
-        </button>
-        <button @click="handleClose" class="p-button p-component p-button-secondary">
-          Annuler
-        </button>
+        <button type="submit" class="p-button p-component" :disabled="uploading">{{ uploading ? 'Téléversement…' : 'Sauvegarder' }}</button>
+        <button type="button" class="p-button p-component p-button-secondary" :disabled="uploading" @click="emits('close')">Annuler</button>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
 <script setup>
 import { reactive, watch, ref } from 'vue'
-import { defineProps, defineEmits } from 'vue'
-import { storage } from 'root/firebase.js'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { DOCUMENT_ACCEPT, uploadFilePhysioDocument, validateDocumentUrl } from '@/service/filePhysioMediaService'
 
-// --- Récupère la prop "file" (l'élément à éditer) ---
-const props = defineProps({
-  file: {
-    type: Object,
-    required: true
-  }
-})
-
+const props = defineProps({ file: { type: Object, required: true } })
 const emits = defineEmits(['close', 'save'])
-
-// Copie réactive locale de l'objet reçu (nom, url, id, etc.)
-const localFile = reactive({
-  id: '',
-  name: '',
-  url: ''
-})
-
-// On stocke ici le "nouveau fichier" sélectionné (s'il y en a un).
+const localFile = reactive({ id: '', name: '', url: '' })
 const selectedFile = ref(null)
+const uploading = ref(false)
+const errorMessage = ref('')
 
-// Synchronise localFile avec la prop "file" reçue.
-watch(
-  () => props.file,
-  (newFile) => {
-    if (newFile) {
-      localFile.id = newFile.id
-      localFile.name = newFile.name
-      localFile.url = newFile.url
-    }
-  },
-  { immediate: true }
-)
+watch(() => props.file, file => {
+  if (!file) return
+  Object.assign(localFile, { id: file.id, name: file.name, url: file.url })
+  selectedFile.value = null
+  errorMessage.value = ''
+}, { immediate: true })
 
-// Gère la sélection d'un nouveau fichier (input type="file")
-const handleFileChange = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    selectedFile.value = file
+const handleFileChange = event => { selectedFile.value = event.target.files?.[0] || null }
+
+async function handleSave() {
+  if (uploading.value) return
+  errorMessage.value = ''
+  if (!localFile.name.trim()) {
+    errorMessage.value = 'Saisissez le nom du document.'
+    return
   }
-}
-
-// Lors du clic sur "Sauvegarder"
-const handleSave = async () => {
-  // Si un nouveau fichier a été sélectionné, on l'upload pour récupérer une nouvelle URL
-  if (selectedFile.value) {
-    try {
-      console.log('📤 [EditFileDocPFP] Upload vers Firebase Storage...')
-      
-      // Créer un nom de fichier unique avec timestamp
-      const timestamp = Date.now()
-      const fileName = `${timestamp}_${selectedFile.value.name}`
-      const filePath = `documentPFP/${fileName}`
-      
-      console.log('📁 [EditFileDocPFP] Upload vers:', filePath)
-      
-      // Créer la référence Firebase Storage
-      const fileRef = storageRef(storage, filePath)
-      
-      // Upload le fichier vers Firebase Storage
-      const snapshot = await uploadBytes(fileRef, selectedFile.value, {
-        contentType: selectedFile.value.type,
-        customMetadata: {
-          originalName: selectedFile.value.name,
-          uploadedAt: new Date().toISOString()
-        }
-      })
-      
-      console.log('✅ [EditFileDocPFP] Fichier uploadé:', snapshot.metadata.fullPath)
-      
-      // Obtenir l'URL de téléchargement
-      const downloadURL = await getDownloadURL(fileRef)
-      
-      console.log('🔗 [EditFileDocPFP] URL du fichier:', downloadURL)
-
-      // On met à jour l'URL dans localFile
-      localFile.url = downloadURL
-      
-    } catch (error) {
-      console.error("❌ [EditFileDocPFP] Erreur lors de l'upload du fichier :", error)
-      alert(`Erreur d'upload: ${error.message || error}`)
-      return
-    }
+  uploading.value = true
+  try {
+    const url = selectedFile.value
+      ? (await uploadFilePhysioDocument(selectedFile.value)).url
+      : validateDocumentUrl(localFile.url)
+    emits('save', { ...localFile, name: localFile.name.trim(), url })
+  } catch (error) {
+    errorMessage.value = error.message || 'Le document n’a pas pu être téléversé.'
+  } finally {
+    uploading.value = false
   }
-
-  // On émet l'objet modifié (nom/URL) vers le parent
-  emits('save', { ...localFile })
-}
-
-// Fermer la modale
-const handleClose = () => {
-  emits('close')
 }
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  /* Couche translucide en fond */
-  background-color: rgba(0, 0, 0, 0.5); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background-color: #0B213F;
-  padding: 1rem;
-  border-radius: 4px;
-  width: 320px;
-  color: #fff;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 1rem;
-}
+.modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgb(0 0 0 / 50%); display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal-content { width: min(100%, 420px); background: var(--surface-card, #0b213f); color: var(--text-color, #fff); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--surface-border); }
+label { display: block; margin-top: 1rem; }
+input { display: block; width: 100%; margin-top: .4rem; padding: .6rem; box-sizing: border-box; background: var(--surface-ground, #071425); color: inherit; border: 1px solid var(--surface-border); border-radius: 6px; }
+.file-help { font-size: .8rem; color: var(--text-color-secondary); }
+.form-error { color: var(--red-300, #fca5a5); }
+.modal-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.5rem; }
 </style>

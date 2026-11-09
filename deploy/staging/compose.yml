@@ -1,0 +1,152 @@
+name: pfpheds-staging
+
+# Candidate configuration. See README before starting: application schema is
+# deliberately not restored automatically and production data is never mounted.
+x-service: &service
+  restart: unless-stopped
+  networks: [isolated]
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: '3'}
+
+services:
+  db:
+    <<: *service
+    image: supabase/postgres:15.6.1.101
+    environment:
+      POSTGRES_PASSWORD: ${STAGING_DB_PASSWORD:?Generate staging secrets first}
+      JWT_SECRET: ${STAGING_JWT_SECRET:?Generate staging secrets first}
+      JWT_EXP: '3600'
+    volumes: [database:/var/lib/postgresql/data]
+    mem_limit: 1g
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  auth:
+    <<: *service
+    image: supabase/gotrue:v2.144.0
+    depends_on: {db: {condition: service_healthy}}
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: '9999'
+      API_EXTERNAL_URL: https://test.hedsvs.ch
+      GOTRUE_SITE_URL: https://test.hedsvs.ch
+      GOTRUE_URI_ALLOW_LIST: https://test.hedsvs.ch/**,http://localhost:8180/**
+      GOTRUE_DB_DRIVER: postgres
+      DATABASE_URL: postgres://postgres:${STAGING_DB_PASSWORD}@db:5432/staging?search_path=auth,public
+      GOTRUE_JWT_SECRET: ${STAGING_JWT_SECRET}
+      GOTRUE_JWT_EXP: '3600'
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_DISABLE_SIGNUP: 'true'
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: 'true'
+      GOTRUE_MAILER_AUTOCONFIRM: 'false'
+      GOTRUE_SMTP_HOST: mail
+      GOTRUE_SMTP_PORT: '1025'
+      GOTRUE_SMTP_ADMIN_EMAIL: test@example.invalid
+      GOTRUE_SMTP_SENDER_NAME: HEdS TEST
+    mem_limit: 256m
+
+  rest:
+    <<: *service
+    image: postgrest/postgrest:v12.2.3
+    depends_on: {db: {condition: service_healthy}}
+    environment:
+      PGRST_DB_URI: postgres://postgres:${STAGING_DB_PASSWORD}@db:5432/staging
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${STAGING_JWT_SECRET}
+    mem_limit: 256m
+
+  mail:
+    <<: *service
+    image: axllent/mailpit:v1.20.3
+    mem_limit: 128m
+
+  backend:
+    <<: *service
+    build:
+      context: ./backend
+    depends_on: {db: {condition: service_healthy}}
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      SUPABASE_URL: http://gateway:8080
+      SUPABASE_KEY: ${STAGING_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${STAGING_SERVICE_ROLE_KEY}
+      SUPABASE_PUBLIC_URL: https://test.hedsvs.ch
+      BACKEND_URL: https://test.hedsvs.ch
+    mem_limit: 512m
+
+  storage:
+    <<: *service
+    image: supabase/storage-api:v1.11.1
+    depends_on: {db: {condition: service_healthy}}
+    environment:
+      DATABASE_URL: postgres://postgres:${STAGING_DB_PASSWORD}@db:5432/staging
+      ANON_KEY: ${STAGING_ANON_KEY}
+      SERVICE_KEY: ${STAGING_SERVICE_ROLE_KEY}
+      PGRST_JWT_SECRET: ${STAGING_JWT_SECRET}
+      POSTGREST_URL: http://rest:3000
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      FILE_SIZE_LIMIT: '20971520'
+      TENANT_ID: staging
+      REGION: local
+      GLOBAL_S3_BUCKET: staging
+    volumes: [files:/var/lib/storage]
+    mem_limit: 256m
+
+  meta:
+    <<: *service
+    image: supabase/postgres-meta@sha256:2c03ebcf2705734b898b316d3c3edc2b9358d60705b65951e3d9d009f8f9478b
+    depends_on: {db: {condition: service_healthy}}
+    environment:
+      PG_META_PORT: '8080'
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: '5432'
+      PG_META_DB_NAME: staging
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: ${STAGING_DB_PASSWORD}
+    mem_limit: 256m
+
+  studio:
+    <<: *service
+    image: supabase/studio@sha256:68af30b003bd2f839d6e84f71f96a86ff4f22eb2e989fad94e1d6780c4eaa0b6
+    depends_on: [meta]
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: ${STAGING_DB_PASSWORD}
+      DEFAULT_ORGANIZATION_NAME: HEdS TEST
+      DEFAULT_PROJECT_NAME: TEST - copie independante
+      SUPABASE_URL: http://gateway:8080
+      SUPABASE_PUBLIC_URL: https://test.hedsvs.ch
+      SUPABASE_ANON_KEY: ${STAGING_ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${STAGING_SERVICE_ROLE_KEY}
+      NEXT_PUBLIC_ENABLE_LOGS: 'false'
+      NEXT_ANALYTICS_BACKEND_PROVIDER: postgres
+    mem_limit: 768m
+
+  gateway:
+    <<: *service
+    networks: [isolated, edge]
+    image: caddy:2.8
+    depends_on: [rest, auth]
+    ports: ['127.0.0.1:8180:8080', '127.0.0.1:8025:8025', '127.0.0.1:8181:8181']
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./studio-private.caddy:/etc/caddy/studio-private.caddy:ro
+      - ./frontend-dist:/srv/frontend:ro
+    mem_limit: 128m
+
+networks:
+  edge:
+  isolated:
+    internal: true
+volumes:
+  database:
+  files:

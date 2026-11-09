@@ -18,11 +18,7 @@
 import { supabase } from '@/supabase'
 
 const TABLE = 'votation_sessions'
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+import { getAcademicYearKeys, requireAcademicYear } from '@/domain/pfp/academicPeriod'
 
 const votationSessionService = {
   /**
@@ -74,6 +70,7 @@ const votationSessionService = {
    * Ouvrir une nouvelle session de votation
    */
   async openSession(pfpType, year, targetClass, userId) {
+    year = requireAcademicYear(year)
     // Fermer toute session existante pour ce PFP/année
     await this.closeSession(pfpType, year)
 
@@ -154,6 +151,7 @@ const votationSessionService = {
     priorityUserIds = [],
     priorityReasons = null
   ) {
+    year = requireAcademicYear(year)
     // Fermer toute session prioritaire existante pour ce PFP/année
     await this.closePrioritySession(pfpType, year)
 
@@ -236,6 +234,7 @@ const votationSessionService = {
    * Upsert : si un brouillon existe déjà pour ce PFP/année, on le met à jour
    */
   async savePriorityDraft(pfpType, year, targetClass, priorityUserIds = [], reasons = {}) {
+    year = requireAcademicYear(year)
     const yearKeys = getAcademicYearKeys(year)
     // Chercher un brouillon existant (closed + jamais ouvert)
     const { data: existing } = await supabase

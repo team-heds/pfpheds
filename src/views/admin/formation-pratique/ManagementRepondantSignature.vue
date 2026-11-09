@@ -177,6 +177,7 @@ import Column from 'primevue/column'
 import Tag from 'primevue/tag'
 import Avatar from 'primevue/avatar'
 import Checkbox from 'primevue/checkbox'
+import { respondentLabelIncludes } from '@/domain/pfp/respondentNames'
 
 const loading = ref(false)
 const repondantsHESList = ref([])
@@ -256,7 +257,7 @@ const fetchAssignedStudents = async (repondantName) => {
 
   loading.value = true
   try {
-    // 1. Chercher dans student_result_vote les correspondances
+    // 1. Charger les affectations publiées, puis vérifier localement chaque membre d'un éventuel binôme.
     const { data: assignments, error } = await supabase
       .from('student_result_vote')
       .select(`
@@ -271,29 +272,33 @@ const fetchAssignedStudents = async (repondantName) => {
         is_validated,
         assigned_praticien_id
       `)
-      .or(`repondant_hes.eq."${repondantName}",signataire_hes.eq."${repondantName}"`)
       .eq('status', 'published')
 
     if (error) throw error
 
-    if (!assignments?.length) {
+    const matchingAssignments = (assignments || []).filter(assignment =>
+      respondentLabelIncludes(assignment.repondant_hes, repondantName) ||
+      respondentLabelIncludes(assignment.signataire_hes, repondantName)
+    )
+
+    if (!matchingAssignments.length) {
       assignedStudents.value = []
       return
     }
 
     // 2. Enrichir avec les infos étudiants
-    const userIds = [...new Set(assignments.map(a => a.user_id))]
+    const userIds = [...new Set(matchingAssignments.map(a => a.user_id))]
     const profiles = (await getAllStudents()).filter((profile) => userIds.includes(profile.user_id))
 
     // 3. Récupérer les détails des praticiens formateurs
-    const praticienIds = [...new Set(assignments.map(a => a.assigned_praticien_id).filter(id => id))]
+    const praticienIds = [...new Set(matchingAssignments.map(a => a.assigned_praticien_id).filter(id => id))]
     const { data: praticiens } = await supabase
       .from('praticiens_formateurs')
       .select('id, nom, prenom, mail, institution, localite')
       .in('id', praticienIds)
 
     // 4. Récupérer les détails des répondants/signataires HES
-    const repondantNames = [...new Set(assignments.flatMap(a => [a.repondant_hes, a.signataire_hes].filter(name => name)))]
+    const repondantNames = [...new Set(matchingAssignments.flatMap(a => [a.repondant_hes, a.signataire_hes].filter(name => name)))]
     const { data: repondantsDetails } = await supabase
       .from('RepondantPhysioHES')
       .select('first_name, last_name')
@@ -303,7 +308,7 @@ const fetchAssignedStudents = async (repondantName) => {
     const praticiensMap = new Map((praticiens || []).map(p => [p.id, p]))
     const repondantsMap = new Map((repondantsDetails || []).map(r => [`${r.first_name} ${r.last_name}`, r]))
 
-    assignedStudents.value = assignments.filter(a => profilesMap.has(a.user_id)).map(a => {
+    assignedStudents.value = matchingAssignments.filter(a => profilesMap.has(a.user_id)).map(a => {
       const p = profilesMap.get(a.user_id)
       const praticien = praticiensMap.get(a.assigned_praticien_id)
       return {
@@ -311,7 +316,7 @@ const fetchAssignedStudents = async (repondantName) => {
         pfp_type: normalizePfp(a.pfp_type),
         student_name: p ? `${(p.family_name || '').toUpperCase()} ${p.forname || ''}`.trim() : 'Inconnu',
         student_class: p?.Classe || p?.classe || '-',
-        role: a.repondant_hes === repondantName ? 'Répondant' : 'Signataire',
+        role: respondentLabelIncludes(a.repondant_hes, repondantName) ? 'Répondant' : 'Signataire',
         praticien_details: praticien ? `${praticien.prenom} ${praticien.nom}` : 'Non assigné',
         praticien_mail: praticien?.mail || '-',
         signataire_details: (() => {

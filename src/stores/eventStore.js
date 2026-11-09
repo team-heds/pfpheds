@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { supabase } from '@/supabase';
+import { runtimeFeatures } from '@/config/runtimeFeatures';
 
 export const useEventStore = defineStore('event', () => {
   const debug = (...args) => {
@@ -49,9 +50,33 @@ export const useEventStore = defineStore('event', () => {
         throw fetchError;
       }
 
-      debug(`✅ ${data?.length || 0} événements chargés`);
-      events.value = data || [];
-      return data;
+      const normalized = (data || []).map((event) => ({
+        ...event,
+        startDate: event.start_date,
+        endDate: event.end_date,
+        image: event.image_url,
+        admin: event.admin_uid,
+      }));
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && normalized.length) {
+        const { data: responses, error: responseError } = await supabase
+          .from('event_registrations')
+          .select('event_id,response')
+          .eq('user_uid', user.id)
+          .in('event_id', normalized.map((event) => event.id));
+        if (!responseError) {
+          const byEvent = new Map((responses || []).map((item) => [item.event_id, item.response]));
+          normalized.forEach((event) => {
+            event.current_response = byEvent.get(event.id) || null;
+            event.registered = event.current_response === 'going' ? [user.id] : [];
+          });
+        }
+      }
+
+      debug(`✅ ${normalized.length} événements chargés`);
+      events.value = normalized;
+      return normalized;
     } catch (err) {
       console.error('Erreur lors du chargement des événements:', err);
       error.value = err.message;
@@ -67,6 +92,8 @@ export const useEventStore = defineStore('event', () => {
   function listenEvents() {
     // Charger les événements initiaux
     fetchEvents();
+
+    if (!runtimeFeatures.supabaseRealtime) return () => {};
 
     let refreshTimer = null;
 
@@ -131,7 +158,7 @@ export const useEventStore = defineStore('event', () => {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `events/${fileName}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('events')
           .upload(filePath, event.image, {
             cacheControl: '3600',
@@ -159,7 +186,11 @@ export const useEventStore = defineStore('event', () => {
         type: event.type || 'public',
         role: event.type === 'private' ? (event.role || null) : null,
         admin_uid: event.admin,  // ✅ Utilise admin_uid (contrainte NOT NULL)
-        image_url: imageUrl
+        image_url: imageUrl,
+        // La colonne status vaut 'draft' par défaut (hub AlpinPhysio) : un événement
+        // créé ici doit être publié pour être visible et ouvert aux inscriptions.
+        status: 'published',
+        published_at: new Date().toISOString()
       };
 
       const { data, error: insertError } = await supabase
@@ -326,6 +357,8 @@ export const useEventStore = defineStore('event', () => {
    */
   async function toggleRegistration(eventId, userId, registeredList = [], userInfo = null) {
     try {
+      // Conservé pour compatibilité avec les anciens appels du composant événement.
+      void registeredList;
       // Vérifier si l'utilisateur est déjà inscrit
       const { data: existing } = await supabase
         .from('event_registrations')

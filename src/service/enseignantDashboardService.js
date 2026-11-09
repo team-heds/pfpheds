@@ -4,6 +4,7 @@
  */
 import { supabase } from '@/supabase'
 import academicYearService from '@/service/academicYearService'
+import { fetchPlanningSlotsPaginated } from '@/service/siPlanningQueryService'
 
 function normalizeTeacherValue(value) {
   return String(value || '')
@@ -211,7 +212,7 @@ function getSlotDurationHours(slot) {
  * @param {string} userId - ID de l'enseignant
  * @param {string} userEmail - Email de l'enseignant (fallback)
  */
-export async function getMyCourses(userId, userEmail, teacherName = null, activeYearClassCodes = null) {
+export async function getMyCourses(userId, userEmail, teacherName = null, activeYearClassCodes = null, planningSlots = null) {
   try {
     if (import.meta.env.DEV) console.log('📚 [getMyCourses] Chargement cours pour enseignant:', userId)
 
@@ -297,7 +298,7 @@ export async function getMyCourses(userId, userEmail, teacherName = null, active
         }))
     }
 
-    const planningCourses = await getMyCoursesFromPlanning(userId, userEmail, teacherName, activeYearClassCodes)
+    const planningCourses = await getMyCoursesFromPlanning(userId, userEmail, teacherName, activeYearClassCodes, planningSlots)
     const merged = new Map()
 
     ;[...courses, ...planningCourses].forEach(course => {
@@ -317,36 +318,13 @@ export async function getMyCourses(userId, userEmail, teacherName = null, active
   }
 }
 
-async function getMyCoursesFromPlanning(userId, userEmail, teacherName = null, activeYearClassCodes = null) {
+async function getMyCoursesFromPlanning(userId, userEmail, teacherName = null, activeYearClassCodes = null, planningSlots = null) {
   try {
     if (!userId && !userEmail && !teacherName) return []
 
-    const slots = []
-    const pageSize = 1000
-    let from = 0
-    let hasMore = true
-
-    while (hasMore) {
-      const to = from + pageSize - 1
-      const { data, error } = await supabase
-        .from('planning_time_slots')
-        .select('*')
-        .range(from, to)
-
-      if (error) {
-        console.error('❌ [getMyCoursesFromPlanning] Erreur chargement slots:', error)
-        return []
-      }
-
-      const page = data || []
-      slots.push(...page)
-
-      if (page.length < pageSize) {
-        hasMore = false
-      } else {
-        from += pageSize
-      }
-    }
+    const slots = Array.isArray(planningSlots)
+      ? planningSlots
+      : await fetchPlanningSlotsPaginated({ classCodes: activeYearClassCodes })
 
     if (!slots.length) return []
 
@@ -519,7 +497,7 @@ async function getMyCoursesSimple(userId, userEmail) {
  * @param {string} userEmail - Email de l'enseignant
  * @param {string} teacherName - Nom de l'enseignant (pour recherche dans teachers array)
  */
-export async function getMyWeekPlanning(userId, userEmail, teacherName = null, activeYearClassCodes = null) {
+export async function getMyWeekPlanning(userId, userEmail, teacherName = null, activeYearClassCodes = null, planningSlots = null) {
   try {
     if (import.meta.env.DEV) console.log('📅 [getMyWeekPlanning] Chargement planning pour:', userEmail || userId)
     
@@ -530,18 +508,15 @@ export async function getMyWeekPlanning(userId, userEmail, teacherName = null, a
     startOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
     const weekNumber = getWeekNumber(startOfWeek)
     
-    // Récupérer tous les créneaux de la semaine courante
-    const { data: slots, error } = await supabase
-      .from('planning_time_slots')
-      .select('*')
-      .eq('week_number', weekNumber)
-      .order('day_index', { ascending: true })
-      .order('start_time', { ascending: true })
-    
-    if (error) {
-      console.warn('⚠️ [getMyWeekPlanning] Erreur:', error)
-      return { week: generateEmptyWeek(), allSlots: [] }
-    }
+    const activeSlots = Array.isArray(planningSlots)
+      ? planningSlots
+      : await fetchPlanningSlotsPaginated({ classCodes: activeYearClassCodes })
+    const slots = activeSlots
+      .filter(slot => Number(slot.week_number) === Number(weekNumber))
+      .sort((left, right) => {
+        const dayOrder = Number(left.day_index ?? 99) - Number(right.day_index ?? 99)
+        return dayOrder || String(left.start_time || '').localeCompare(String(right.start_time || ''))
+      })
     
     if (!slots || slots.length === 0) {
       if (import.meta.env.DEV) console.log('ℹ️ [getMyWeekPlanning] Aucun planning trouvé pour semaine', weekNumber)
@@ -567,26 +542,22 @@ export async function getMyWeekPlanning(userId, userEmail, teacherName = null, a
 /**
  * Récupère toutes les séances à venir de l'enseignant
  */
-export async function getUpcomingSessions(userEmail, teacherName = null, limit = 10, activeYearClassCodes = null) {
+export async function getUpcomingSessions(userEmail, teacherName = null, limit = 10, activeYearClassCodes = null, planningSlots = null) {
   try {
     if (import.meta.env.DEV) console.log('📆 [getUpcomingSessions] Chargement séances à venir pour:', userEmail)
 
     const currentWeek = getWeekNumber(new Date())
     
-    // Récupérer les créneaux à venir
-    const { data: slots, error } = await supabase
-      .from('planning_time_slots')
-      .select('*')
-      .gte('week_number', currentWeek)
-      .order('week_number', { ascending: true })
-      .order('day_index', { ascending: true })
-      .order('start_time', { ascending: true })
-      .limit(200)
-    
-    if (error || !slots) {
-      console.warn('⚠️ [getUpcomingSessions] Erreur:', error)
-      return []
-    }
+    const activeSlots = Array.isArray(planningSlots)
+      ? planningSlots
+      : await fetchPlanningSlotsPaginated({ classCodes: activeYearClassCodes })
+    const slots = activeSlots
+      .filter(slot => Number(slot.week_number) >= Number(currentWeek))
+      .sort((left, right) => {
+        const weekOrder = Number(left.week_number || 0) - Number(right.week_number || 0)
+        const dayOrder = Number(left.day_index ?? 99) - Number(right.day_index ?? 99)
+        return weekOrder || dayOrder || String(left.start_time || '').localeCompare(String(right.start_time || ''))
+      })
     
     // Filtrer les créneaux de l'enseignant
     const mySlots = slots.filter(slot => {
@@ -796,12 +767,16 @@ export async function loadEnseignantDashboard(userId, userEmail, teacherName = n
     if (import.meta.env.DEV) console.log('🚀 [loadEnseignantDashboard] Chargement complet pour:', userEmail)
 
     const activeYearClassCodes = await resolveActiveAcademicYearClassCodes()
+    if (!(activeYearClassCodes instanceof Set) || activeYearClassCodes.size === 0) {
+      throw new Error('Impossible de charger le dashboard enseignant sans année académique active.')
+    }
+    const planningSlots = await fetchPlanningSlotsPaginated({ classCodes: activeYearClassCodes })
     
     // Charger cours, planning et séances à venir en parallèle
     const [courses, planningData, upcomingSessions] = await Promise.all([
-      getMyCourses(userId, userEmail, teacherName, activeYearClassCodes),
-      getMyWeekPlanning(userId, userEmail, teacherName, activeYearClassCodes),
-      getUpcomingSessions(userEmail, teacherName, 15, activeYearClassCodes)
+      getMyCourses(userId, userEmail, teacherName, activeYearClassCodes, planningSlots),
+      getMyWeekPlanning(userId, userEmail, teacherName, activeYearClassCodes, planningSlots),
+      getUpcomingSessions(userEmail, teacherName, 15, activeYearClassCodes, planningSlots)
     ])
     
     const weekPlanning = planningData.week || planningData
@@ -819,6 +794,7 @@ export async function loadEnseignantDashboard(userId, userEmail, teacherName = n
       modules,
       upcomingSessions,
       allSlots,
+      planningSlots,
       stats
     }
     
@@ -838,6 +814,7 @@ export async function loadEnseignantDashboard(userId, userEmail, teacherName = n
       modules: [],
       upcomingSessions: [],
       allSlots: [],
+      planningSlots: [],
       stats: {
         coursesCount: 0,
         totalHours: 0,

@@ -7,12 +7,10 @@
     
     <div class="house-content">
       <div class="house-info">
-        <h3 class="house-name clickable" @click="navigateToHouseStats" :title="props.maison.toLowerCase() === 'gamemaster' ? 'Voir le classement' : 'Cliquer pour voir les statistiques de la maison'">{{ houseDisplayName }}</h3>
+        <button class="house-name clickable" type="button" @click="navigateToHouseStats" :aria-label="props.maison.toLowerCase() === 'gamemaster' ? 'Voir le classement' : `Voir les statistiques de la maison ${houseDisplayName}`">{{ houseDisplayName }}</button>
         <p class="house-motto">"{{ houseMotto }}"</p>
         
         <div class="level-section">
-          <br>
-          <br>
           <span class="level-text">Niveau {{ niveau }}</span>
         </div>
         
@@ -27,14 +25,14 @@
       </div>
       
       <div class="house-actions">
-        <Button class="action-btn" @click="navigateToProfile" title="Voir le profil">
-          <i class="pi pi-user"></i>
+        <Button class="action-btn" @click="navigateToProfile" aria-label="Voir le profil">
+          <i class="pi pi-user" aria-hidden="true"></i>
         </Button>
-        <Button class="action-btn" @click="navigateToHouseStats" title="Voir les statistiques de la maison">
-          <i class="pi pi-home"></i>
+        <Button class="action-btn" @click="navigateToHouseStats" :aria-label="`Voir les statistiques de la maison ${houseDisplayName}`">
+          <i class="pi pi-home" aria-hidden="true"></i>
         </Button>
-        <Button class="action-btn" @click="navigateToGlobalRanking" title="Voir le classement global des maisons">
-          <i class="pi pi-chart-bar"></i>
+        <Button class="action-btn" @click="navigateToGlobalRanking" aria-label="Voir le classement global des maisons">
+          <i class="pi pi-chart-bar" aria-hidden="true"></i>
         </Button>
       </div>
     </div>
@@ -157,7 +155,7 @@ const houseBackground = computed(() => {
 const houseDisplayName = computed(() => {
   const house = props.maison.toLowerCase()
   if (house === 'gamemaster') {
-    return '🎮 Maître du Jeu 🎮'
+    return 'Maître du Jeu'
   }
   // Capitaliser la première lettre pour les autres maisons
   return props.maison.charAt(0).toUpperCase() + props.maison.slice(1)
@@ -169,10 +167,10 @@ const streakText = computed(() => {
 })
 
 const getParticleStyle = (index) => {
-  const delay = Math.random() * 4
-  const duration = 3 + Math.random() * 2
-  const size = 2 + Math.random() * 4
-  const left = Math.random() * 100
+  const delay = ((index * 7) % 20) / 5
+  const duration = 3 + ((index * 11) % 10) / 5
+  const size = 2 + ((index * 13) % 20) / 5
+  const left = (index * 37) % 100
   
   return {
     left: `${left}%`,
@@ -187,6 +185,7 @@ const getParticleStyle = (index) => {
 <style scoped>
 .bandeau-maison {
   position: relative;
+  container: bandeau / inline-size;
   background: linear-gradient(135deg, var(--house-color), color-mix(in srgb, var(--house-color) 80%, black));
   border-radius: 20px;
   padding: 3.5rem 4.5rem;
@@ -270,6 +269,10 @@ const getParticleStyle = (index) => {
 }
 
 .house-name {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
   font-size: 2.8rem;
   font-weight: 700;
   margin: 0 0 0.8rem 0;
@@ -277,6 +280,11 @@ const getParticleStyle = (index) => {
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   letter-spacing: 0.5px;
   line-height: 1.2;
+}
+.house-name:focus-visible,
+.action-btn:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 3px;
 }
 
 .house-name.clickable {
@@ -454,9 +462,11 @@ const getParticleStyle = (index) => {
 @media (max-width: 768px) {
   .bandeau-maison {
     padding: 1.5rem;
+    min-height: 22rem;
   }
   
   .house-content {
+    flex-direction: column;
     gap: 1rem;
   }
   
@@ -465,6 +475,7 @@ const getParticleStyle = (index) => {
   }
   
   .house-actions {
+    position: static;
     flex-direction: row;
     justify-content: center;
   }
@@ -472,5 +483,33 @@ const getParticleStyle = (index) => {
   .level-section {
     justify-content: center;
   }
+}
+
+/* Le bandeau vit souvent dans une colonne étroite (profil sur bureau) :
+   on adapte la mise en page à sa propre largeur, pas seulement à l'écran. */
+@container bandeau (max-width: 560px) {
+  .house-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .house-name {
+    font-size: 1.75rem;
+  }
+
+  .house-actions {
+    position: static;
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .particle,
+  .shine-effect,
+  .streak-flame .pi-bolt,
+  .house-name,
+  .action-btn,
+  .level-text { animation:none; transition:none; }
 }
 </style>

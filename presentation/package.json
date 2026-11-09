@@ -9,7 +9,8 @@
     "preview": "vite preview --host 0.0.0.0 --port 5183",
     "pdf": "npm run build && node scripts/export-pdf.mjs",
     "pdf:agents": "npm run build && node scripts/export-pdf.mjs --slug agents-ia-developpement",
-    "pdf:all": "npm run build && node scripts/export-pdf.mjs && node scripts/export-pdf.mjs --slug agents-ia-developpement",
+    "pdf:soins": "npm run build && node scripts/export-pdf.mjs --slug soins-infirmiers",
+    "pdf:all": "npm run build && node scripts/export-pdf.mjs && node scripts/export-pdf.mjs --slug agents-ia-developpement && node scripts/export-pdf.mjs --slug soins-infirmiers",
     "test": "playwright test"
   },
   "dependencies": {

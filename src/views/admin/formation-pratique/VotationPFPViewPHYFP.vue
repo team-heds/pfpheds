@@ -1875,11 +1875,7 @@ const parseIntSafe = (value) => {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 
 const isYearMatch = (candidateYear, selectedYear) => {
   if (!candidateYear || !selectedYear) return false
@@ -2100,7 +2096,7 @@ const loadData = async () => {
   if (!config) { loading.value = false; return }
 
   try {
-    const allStudentsData = await getAllStudents()
+    const allStudentsData = await getAllStudents(filterYear.value)
     allStudents.value = allStudentsData.filter(student => {
       const classe = student.Classe || student.classe || student.class || student.Class || ''
       return classe === targetClass

@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
         agentsIaDeveloppement: resolve(import.meta.dirname, 'agents-ia-developpement/index.html'),
+        soinsInfirmiers: resolve(import.meta.dirname, 'soins-infirmiers/index.html'),
       },
     },
   },

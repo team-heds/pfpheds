@@ -11,7 +11,7 @@
         <!-- Logo (gauche) -->
         <div class="navbar-brand">
           <router-link class="navbar-brand__link" to="/feed" aria-label="HEdS — Accueil">
-            <img src="/pictoHEdS.png" alt="" class="navbar-brand__image" />
+            <img :src="hedsIcon" alt="" class="navbar-brand__image" />
           </router-link>
         </div>
 
@@ -19,16 +19,16 @@
         <div class="navbar-primary-scroll">
           <ul class="center-menu">
             <li v-for="item in filteredMenuItems" :key="item.title">
-              <ButtonNavbar
-                :icon="item.icon"
-                :bgColor="'var(--surface-overlay)'"
-                :hoverBgColor="'var(--surface-hover)'"
-                :iconColor="'var(--primary-color)'"
-                @click="navigateTo(item.link)"
+              <router-link
+                :to="resolveMenuLink(item)"
+                class="navbar-destination"
+                :class="{ 'navbar-destination--active': isMenuItemActive(item) }"
                 :title="item.title"
                 :aria-label="item.title"
-                :active="isMenuItemActive(item)"
-              />
+                :aria-current="isMenuItemActive(item) ? 'page' : undefined"
+              >
+                <i :class="item.icon" aria-hidden="true"></i>
+              </router-link>
             </li>
           </ul>
         </div>
@@ -51,18 +51,6 @@
             title="Message"
           />
           -->
-
-          <!-- ­ƒöö Notifications -->
-          <ButtonNavbar
-            v-if="user"
-            icon="pi pi-bell"
-            :bgColor="'var(--surface-overlay)'"
-            :hoverBgColor="'var(--surface-hover)'"
-            :iconColor="'var(--primary-color)'"
-            @click="navigateTo('/feed')"
-            title="Notifications"
-            aria-label="Notifications"
-          />
 
           <!-- ÔÜÖ´©Å Param├¿tres -->
           <ButtonNavbar
@@ -100,14 +88,14 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ref as dbRef, get } from "firebase/database";
-import { db } from '../../../../firebase.js';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import SwitchColor from '@/components/ui/buttons/SwitchColor.vue';
 import ButtonNavbar from '@/components/ui/buttons/ButtonNavbar.vue';
 import Dialog from 'primevue/dialog';
 import GlobalSearch from '@/components/common/utils/GlobalSearch.vue';
+import hedsIcon from '@/assets/images/hespicto.png';
+import { getVotationDestination } from '@/composables/useNavigationDestinations';
 
 const router = useRouter();
 const route = useRoute();
@@ -125,9 +113,9 @@ const isAcademicRestricted = computed(() =>
 
 const allMenuItems = [
   { icon: "pi pi-home", link: "/feed", title: "Accueil" },
-  { icon: "pi pi-bookmark", link: "/institution", title: "institutions" },
+  { icon: "pi pi-bookmark", link: "/institution", title: "Institutions" },
   { icon: "pi pi-check", link: "votation_dynamic", title: "Votation", isVotation: true },
-  { icon: "pi pi-map-marker", link: "/map", title: "Map" },
+  { icon: "pi pi-map-marker", link: "/map", title: "Carte" },
   { icon: "pi pi-user-plus", link: "/admin", title: "Admin", adminOnly: true },
   { icon: "pi pi-chart-bar", link: "/admin/dashboard-rm", title: "Dashboard", restrictedAcademicOnly: true }
 ];
@@ -164,10 +152,7 @@ const openSettingsDialog = () => isSettingsDialogVisible.value = true;
 
 // Résoudre le lien de votation selon le pfp_cohort de l'étudiant
 const getVotationLink = () => {
-  const userProfile = userStore.profile;
-  const cohort = userProfile?.pfp_cohort;
-  if (cohort === 'PFP1B') return '/votation_pfp1b';
-  return '/votation';
+  return getVotationDestination(userStore.profile);
 };
 
 const navigateTo = (path) => {
@@ -189,12 +174,7 @@ const isMenuItemActive = (item) => {
 const navigateToProfile = () => {
   const currentUser = authStore.user;
   if (currentUser) {
-    // Pour Firebase, on utilise uid
-    if (authStore.isFirebaseUser) {
-      navigateTo(`/profile/${currentUser.uid}`);
-    }
-    // Pour Supabase, on utilise id
-    else if (authStore.isSupabaseUser) {
+    if (authStore.isSupabaseUser) {
       navigateTo(`/profile/${currentUser.id}`);
     }
   }
@@ -216,24 +196,9 @@ const updateUserState = async () => {
   user.value = currentUser;
   
   if (currentUser) {
-    // Pour les utilisateurs Firebase, charger les rôles depuis Firebase
-    if (authStore.isFirebaseUser) {
-      const userId = currentUser.uid;
-      try {
-        const userRef = dbRef(db, `Users/${userId}`);
-        const snapshot = await get(userRef);
-        if (snapshot.exists()) {
-          const userData = snapshot.val();
-          userRoles.value = userData.Roles || {};
-          hasAdminAccess.value = userData.Roles?.admin || userData.Roles?.editor;
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des données utilisateur:', error);
-      }
-    }
     // Le profil Supabase est initialisé une seule fois au bootstrap puis maintenu
     // à jour par le store. Ne pas le recharger à chaque navigation.
-    else if (authStore.isSupabaseUser) {
+    if (authStore.isSupabaseUser) {
       if (!userStore.initialized) {
         await userStore.init({
           session: authStore.session,
@@ -265,7 +230,7 @@ const updateUserState = async () => {
 // Mettre à jour les droits seulement quand l'identité ou le rôle change.
 // Un changement de route ne doit déclencher aucun appel Supabase.
 watch(
-  () => [authStore.user?.id || authStore.user?.uid, userStore.profile?.role, userStore.profile?.permissions],
+  () => [authStore.user?.id, userStore.profile?.role, userStore.profile?.permissions],
   () => { void updateUserState(); },
 );
 
@@ -288,15 +253,18 @@ onMounted(async () => {
 .desktop-nav {
   display: flex;
   flex-direction: column;
-  padding-inline: clamp(2rem, 8vw, 10rem);
+  width: min(100%, 90rem);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 4rem);
 }
 
 .navbar-container {
   --navbar-control-size: 44px;
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr);
   align-items: center;
-  justify-content: space-between;
+  column-gap: clamp(0.5rem, 1.5vw, 1.25rem);
   width: 100%;
   min-width: 0;
   padding-block: 1rem;
@@ -329,9 +297,7 @@ onMounted(async () => {
 }
 
 .navbar-primary-scroll {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  min-width: 0;
 }
 
 .navbar-primary-scroll::-webkit-scrollbar {
@@ -342,17 +308,55 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
+  gap: clamp(0.5rem, 1.5vw, 1.25rem);
   width: max-content;
   margin: 0;
-  padding: 1rem;
+  padding: 0;
   list-style: none;
 }
 
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  justify-self: end;
+  gap: clamp(0.5rem, 1.25vw, 1rem);
+}
+
+.navbar-destination {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--navbar-control-size);
+  min-width: var(--navbar-control-size);
+  height: var(--navbar-control-size);
+  border-radius: 12px;
+  color: var(--primary-color);
+  background: var(--surface-overlay);
+  text-decoration: none;
+  transition: background-color 150ms ease, color 150ms ease, transform 100ms ease;
+}
+
+.navbar-destination i {
+  font-size: 20px;
+}
+
+.navbar-destination:hover {
+  background: var(--surface-hover);
+}
+
+.navbar-destination--active,
+.navbar-destination--active:hover {
+  color: var(--surface-overlay);
+  background: var(--primary-color);
+}
+
+.navbar-destination:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.navbar-destination:active {
+  transform: scale(0.96);
 }
 
 /* La navigation mobile dédiée prend le relais. */
@@ -361,7 +365,7 @@ onMounted(async () => {
 }
 
 /* Sur les tablettes étroites, les destinations restent visibles sur une seconde ligne. */
-@media (min-width: 769px) and (max-width: 900px) {
+@media (min-width: 769px) and (max-width: 1000px) {
   .desktop-nav {
     padding-inline: 1rem;
   }
@@ -396,8 +400,15 @@ onMounted(async () => {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .navbar-destination {
+    transition: none;
+  }
+}
+
 @media (forced-colors: active) {
-  .navbar-brand__link:focus-visible {
+  .navbar-brand__link:focus-visible,
+  .navbar-destination:focus-visible {
     outline-color: CanvasText;
   }
 }

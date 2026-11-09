@@ -6,6 +6,44 @@ function normalizeClassCode(code) {
   return String(code).trim().toUpperCase()
 }
 
+export function expandPlanningClassCodeAliases(classCodes = []) {
+  const aliases = new Set()
+
+  for (const rawCode of classCodes) {
+    if (!rawCode) continue
+    const code = normalizeClassCode(rawCode)
+    aliases.add(code)
+
+    const cohortMatch = code.match(/^(?:B|BA|BAC)(\d{2})(.*)$/)
+    if (!cohortMatch) continue
+
+    const [, year, suffix] = cohortMatch
+    aliases.add(`B${year}${suffix}`)
+    aliases.add(`BA${year}${suffix}`)
+    aliases.add(`BAC${year}${suffix}`)
+  }
+
+  return [...aliases]
+}
+
+function hasText(value) {
+  return typeof value === 'string' ? value.trim().length > 0 : Boolean(value)
+}
+
+function slotDeliveryMode(slot) {
+  const text = [slot?.day, slot?.activity_type, slot?.activity, slot?.course_title, slot?.room]
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
+  return {
+    isRemote: /\b(distance|distanciel|online|en ligne|e-?learning)\b/.test(text),
+    isAsynchronous: /\b(asynchrone|asynchronous)\b/.test(text)
+  }
+}
+
 function extractRawTeachers(rawTeachers) {
   if (!rawTeachers) return []
   if (Array.isArray(rawTeachers)) {
@@ -50,11 +88,12 @@ function buildTeacherNormalization(rawTeachers) {
   }
 }
 
-function collectIssues(slot) {
+export function collectPlanningSlotIssues(slot) {
   const issues = []
-  const hasStart = Boolean(slot?.start_time)
-  const hasEnd = Boolean(slot?.end_time)
-  if (!hasStart || !hasEnd) {
+  const hasStart = hasText(slot?.start_time)
+  const hasEnd = hasText(slot?.end_time)
+  const deliveryMode = slotDeliveryMode(slot)
+  if ((!hasStart || !hasEnd) && !deliveryMode.isAsynchronous) {
     issues.push('missing_time')
   }
 
@@ -63,15 +102,15 @@ function collectIssues(slot) {
     issues.push('invalid_time')
   }
 
-  if (!slot?.course_id && !slot?.course_code) {
+  if (!hasText(slot?.course_id) && !hasText(slot?.course_code)) {
     issues.push('missing_course_link')
   }
 
-  if (!slot?.activity_type && !slot?.activity) {
+  if (!hasText(slot?.activity_type) && !hasText(slot?.activity)) {
     issues.push('missing_activity')
   }
 
-  if (!slot?.room) {
+  if (!hasText(slot?.room) && !deliveryMode.isRemote && !deliveryMode.isAsynchronous) {
     issues.push('missing_room')
   }
 
@@ -93,16 +132,20 @@ function collectIssues(slot) {
   }
 }
 
-function summarizeIssues(rows) {
+export function summarizePlanningDataQuality(rows) {
   const summary = {
     totalSlots: rows.length,
+    completeSlots: 0,
+    slotsWithAnyIssue: 0,
+    qualityScore: null,
     missingCourseLink: 0,
     noTeachersDeclared: 0,
     noValidTeacher: 0,
     missingActivity: 0,
     missingRoom: 0,
     missingTime: 0,
-    invalidTime: 0
+    invalidTime: 0,
+    teacherIssueSlots: 0
   }
 
   for (const row of rows) {
@@ -113,7 +156,14 @@ function summarizeIssues(rows) {
     if (row.issues.includes('missing_room')) summary.missingRoom++
     if (row.issues.includes('missing_time')) summary.missingTime++
     if (row.issues.includes('invalid_time')) summary.invalidTime++
+    if (row.issues.length === 0) summary.completeSlots++
+    else summary.slotsWithAnyIssue++
+    if (row.issues.includes('no_valid_teacher')) summary.teacherIssueSlots++
   }
+
+  summary.qualityScore = summary.totalSlots > 0
+    ? Math.round((summary.completeSlots / summary.totalSlots) * 1000) / 10
+    : null
 
   return summary
 }
@@ -135,75 +185,9 @@ function isDayIndexOrderError(error) {
   return text.includes('day_index') && (text.includes('does not exist') || text.includes('column') || text.includes('schema cache'))
 }
 
-export async function scanPlanningDataQuality({
-  academicYearId = null,
-  weekNumber = null,
-  classCodes = [],
-  limit = 5000,
-  includeRows = true
-} = {}) {
-  const buildQuery = (includeAcademicYear = true, includeDayIndexOrder = true) => {
-    let query = supabase
-      .from('planning_time_slots')
-      .select('*')
-      .order('week_number')
-      .order('start_time')
-
-    if (includeDayIndexOrder) {
-      query = query.order('day_index')
-    }
-
-    if (includeAcademicYear && academicYearId) {
-      query = query.eq('academic_year_id', academicYearId)
-    }
-
-    if (weekNumber != null) {
-      query = query.eq('week_number', weekNumber)
-    }
-
-    if (Array.isArray(classCodes) && classCodes.length > 0) {
-      const uniqueCodes = Array.from(new Set(classCodes.filter(Boolean).map(normalizeClassCode)))
-      if (uniqueCodes.length === 1) {
-        query = query.eq('class_code', uniqueCodes[0])
-      } else if (uniqueCodes.length > 1) {
-        query = query.in('class_code', uniqueCodes)
-      }
-    }
-
-    if (limit) {
-      query = query.limit(limit)
-    }
-
-    return query
-  }
-
-  let useAcademicYearFilter = true
-  let useDayIndexOrder = true
-  let { data, error } = await buildQuery(useAcademicYearFilter, useDayIndexOrder)
-
-  if (error && academicYearId && isAcademicYearFilterError(error)) {
-    console.warn('[DataQuality] Colonne academic_year_id absente/inaccessible, fallback sans filtre année')
-    useAcademicYearFilter = false
-    const retry = await buildQuery(useAcademicYearFilter, useDayIndexOrder)
-    data = retry.data
-    error = retry.error
-  }
-
-  if (error && isDayIndexOrderError(error)) {
-    console.warn('[DataQuality] Colonne day_index absente/inaccessible, fallback sans tri day_index')
-    useDayIndexOrder = false
-    const retry = await buildQuery(useAcademicYearFilter, useDayIndexOrder)
-    data = retry.data
-    error = retry.error
-  }
-
-  if (error) {
-    console.error('[DataQuality] Erreur lecture planning_time_slots:', error)
-    throw error
-  }
-
-  const rows = (data || []).map(slot => {
-    const { issues, normalizedNames, normalizedTeacherCount, rawTeacherCount } = collectIssues(slot)
+export function analyzePlanningDataQuality(slots = [], { includeRows = true } = {}) {
+  const rows = (slots || []).map(slot => {
+    const { issues, normalizedNames, normalizedTeacherCount, rawTeacherCount } = collectPlanningSlotIssues(slot)
     return {
       slotId: slot.id,
       weekNumber: slot.week_number,
@@ -229,13 +213,123 @@ export async function scanPlanningDataQuality({
     }
   })
 
-  const summary = summarizeIssues(rows)
-
   return {
     fetchedSlots: rows.length,
-    summary,
+    summary: summarizePlanningDataQuality(rows),
     rows: includeRows ? rows : undefined,
     generatedAt: new Date().toISOString()
+  }
+}
+
+export async function scanPlanningDataQuality({
+  academicYearId = null,
+  weekNumber = null,
+  classCodes = [],
+  limit = 5000,
+  includeRows = true
+} = {}) {
+  const requestedLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : 5000
+  const maxPageSize = 1000
+  const buildQuery = (includeAcademicYear = true, includeDayIndexOrder = true, offset = 0) => {
+    const pageSize = Math.min(maxPageSize, requestedLimit - offset)
+    let query = supabase
+      .from('planning_time_slots')
+      .select('*')
+      .order('week_number')
+      .order('start_time')
+
+    if (includeDayIndexOrder) {
+      query = query.order('day_index')
+    }
+
+    query = query.order('id')
+
+    if (includeAcademicYear && academicYearId) {
+      query = query.eq('academic_year_id', academicYearId)
+    }
+
+    if (weekNumber != null) {
+      query = query.eq('week_number', weekNumber)
+    }
+
+    if (Array.isArray(classCodes) && classCodes.length > 0) {
+      const uniqueCodes = expandPlanningClassCodeAliases(classCodes)
+      if (uniqueCodes.length === 1) {
+        query = query.ilike('class_code', uniqueCodes[0])
+      } else if (uniqueCodes.length > 1) {
+        query = query.or(uniqueCodes.map(code => `class_code.ilike.${code}`).join(','))
+      }
+    }
+
+    return query.range(offset, offset + pageSize - 1)
+  }
+
+  let useAcademicYearFilter = true
+  let useDayIndexOrder = true
+  let { data, error } = await buildQuery(useAcademicYearFilter, useDayIndexOrder)
+
+  if (error && academicYearId && isAcademicYearFilterError(error)) {
+    if (!Array.isArray(classCodes) || classCodes.length === 0) {
+      throw new Error('Impossible de limiter le diagnostic à l’année active : aucun code de classe fourni et planning_time_slots.academic_year_id est indisponible.')
+    }
+    console.warn('[DataQuality] Colonne academic_year_id absente/inaccessible, fallback sans filtre année')
+    useAcademicYearFilter = false
+    const retry = await buildQuery(useAcademicYearFilter, useDayIndexOrder)
+    data = retry.data
+    error = retry.error
+  }
+
+  if (error && isDayIndexOrderError(error)) {
+    console.warn('[DataQuality] Colonne day_index absente/inaccessible, fallback sans tri day_index')
+    useDayIndexOrder = false
+    const retry = await buildQuery(useAcademicYearFilter, useDayIndexOrder)
+    data = retry.data
+    error = retry.error
+  }
+
+  if (error) {
+    console.error('[DataQuality] Erreur lecture planning_time_slots:', error)
+    throw error
+  }
+
+  let pagesFetched = 1
+  let lastPageLength = (data || []).length
+  let allData = data || []
+
+  while (allData.length < requestedLimit && lastPageLength === Math.min(maxPageSize, requestedLimit - (allData.length - lastPageLength))) {
+    const offset = allData.length
+    const pageSize = Math.min(maxPageSize, requestedLimit - offset)
+    const nextPage = await buildQuery(useAcademicYearFilter, useDayIndexOrder, offset)
+    if (nextPage.error) {
+      console.error('[DataQuality] Erreur lecture page planning_time_slots:', nextPage.error)
+      throw nextPage.error
+    }
+
+    const pageRows = nextPage.data || []
+    allData = allData.concat(pageRows)
+    lastPageLength = pageRows.length
+    pagesFetched++
+    if (lastPageLength < pageSize) break
+  }
+
+  data = allData.slice(0, requestedLimit)
+  const truncated = data.length >= requestedLimit && lastPageLength === Math.min(maxPageSize, requestedLimit - (data.length - lastPageLength))
+
+  const analysis = analyzePlanningDataQuality(data, { includeRows })
+
+  return {
+    ...analysis,
+    scope: {
+      academicYearId,
+      academicYearFilterApplied: useAcademicYearFilter && Boolean(academicYearId),
+      classCodes: expandPlanningClassCodeAliases(classCodes),
+      weekNumber,
+      limit: requestedLimit,
+      pageSize: maxPageSize,
+      pagesFetched,
+      truncated
+    },
+    generatedAt: analysis.generatedAt
   }
 }
 
@@ -255,7 +349,7 @@ export function buildDataQualityAlerts(summary) {
   }
 
   if (summary.noTeachersDeclared > 0 || summary.noValidTeacher > 0) {
-    const total = summary.noTeachersDeclared + summary.noValidTeacher
+    const total = summary.teacherIssueSlots ?? summary.noValidTeacher
     alerts.push({
       id: 'dq-missing-teachers',
       severity: total > 10 ? 'danger' : 'warning',

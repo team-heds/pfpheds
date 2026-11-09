@@ -493,11 +493,7 @@ const parseIntSafe = (value) => {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
-const getAcademicYearKeys = (year) => {
-  const y = Number(year)
-  if (!Number.isFinite(y)) return [String(year)]
-  return [String(y), `${y - 1}-${y}`]
-}
+import { getAcademicYearKeys } from '@/domain/pfp/academicPeriod'
 
 const getPropositionForPfp = (place, pfpType, year) => {
   const proposition = place?.[`${pfpType.toLowerCase()}_proposition`]
@@ -796,7 +792,7 @@ const loadData = async () => {
     }
 
     // 2. Students
-    const studentsData = await getAllStudents()
+    const studentsData = await getAllStudents(filterYear.value)
     allStudents.value = studentsData
 
     const assignedSnapshot = await loadAssignedSnapshot(filterPFP.value, filterYear.value)

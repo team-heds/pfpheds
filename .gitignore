@@ -11,6 +11,7 @@ node_modules
 .DS_Store
 dist
 dist-ssr
+storybook-static
 dev-dist
 coverage
 *.local
@@ -145,3 +146,11 @@ algo/
 
 # components.d.ts
 src/components.d.ts
+
+# Agents & artefacts locaux (non versionnés)
+.codex-tmp/
+.codex/tmp/
+.impeccable/
+artifacts/
+outputs/
+tmp/

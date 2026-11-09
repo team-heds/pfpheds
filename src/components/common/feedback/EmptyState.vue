@@ -28,7 +28,7 @@ const props = defineProps({
   display: grid;
   place-items: center;
   padding: calc(var(--space-6, 1.5rem) * 2);
-  color: var(--text-600, #6b7280);
+  color: var(--text-color-secondary, #9ca3af);
 }
 
 .empty-inner {
@@ -38,13 +38,13 @@ const props = defineProps({
 
 .empty-icon {
   font-size: 2rem;
-  color: var(--text-500, #9CA3AF);
+  color: var(--primary-color, #f3c300);
   margin-bottom: var(--space-3, .75rem);
 }
 
 .empty-title {
   margin: 0 0 var(--space-2, .5rem) 0;
-  color: var(--text-900, #111827);
+  color: var(--text-color, #f3f4f6);
   font-weight: var(--font-weight-bold, 700);
 }
 

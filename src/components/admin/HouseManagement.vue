@@ -3,21 +3,14 @@
     <!-- Section Classement des Maisons -->
     <div class="col-12">
       <div class="card">
-        <div class="flex justify-content-between align-items-center mb-4">
+        <div class="flex justify-content-between align-items-center mb-4 house-ranking-header">
           <div class="flex align-items-center gap-2">
             <div class="bg-blue-100 text-blue-600 p-2 border-circle">
               <i class="pi pi-trophy text-lg"></i>
             </div>
-            <h3 class="text-xl font-bold text-900 m-0">Classement des Maisons HES</h3>
+            <h2 class="text-xl font-bold text-900 m-0">Classement des maisons HES</h2>
           </div>
-          <Button 
-            v-if="canManageHouses"
-            @click="showPointsDialog = true"
-            icon="pi pi-plus"
-            label="Attribuer Points"
-            severity="success"
-            size="small"
-          />
+          <Tag value="Totaux calculés automatiquement" severity="info" class="house-ranking-tag" />
         </div>
         
         <div v-if="loading" class="flex flex-column align-items-center justify-content-center py-6">
@@ -83,25 +76,18 @@
               <!-- Actions -->
               <div class="flex gap-1 justify-content-center">
                 <Button 
-                  v-if="canManageHouses"
-                  @click="editHousePoints(house)"
-                  icon="pi pi-pencil"
-                  severity="info"
-                  text
-                  size="small"
-                  v-tooltip="'Modifier points'"
-                />
-                <Button 
                   @click="viewHouseDetails(house)"
                   icon="pi pi-eye"
+                  :aria-label="`Voir les détails de la maison ${house.displayName}`"
                   text
                   size="small"
                   v-tooltip="'Voir détails'"
                 />
                 <Button 
-                  v-if="canManageHouses"
+                  v-if="house.name !== 'gamemaster'"
                   @click="viewHouseMembers(house)"
                   icon="pi pi-users"
+                  :aria-label="`Voir les membres de la maison ${house.displayName}`"
                   severity="secondary"
                   text
                   size="small"
@@ -114,211 +100,44 @@
       </div>
     </div>
 
-    <!-- Section Historique des Points -->
+    <!-- Les points de maison sont dérivés des soldes XP des membres. -->
     <div class="col-12">
       <div class="card">
         <div class="flex align-items-center gap-2 mb-4">
-          <div class="bg-orange-100 text-orange-600 p-2 border-circle">
-            <i class="pi pi-history text-lg"></i>
+          <div class="bg-blue-100 text-blue-600 p-2 border-circle">
+            <i class="pi pi-info-circle text-lg"></i>
           </div>
-          <h3 class="text-xl font-bold text-900 m-0">Historique des Points</h3>
+          <h2 class="text-xl font-bold text-900 m-0">Calcul des points</h2>
         </div>
-        
-        <!-- Filtres -->
-        <div class="flex gap-3 mb-4 flex-wrap">
-          <Dropdown 
-            v-model="selectedHouseFilter" 
-            :options="houseFilterOptions" 
-            optionLabel="label" 
-            optionValue="value"
-            placeholder="Toutes les maisons"
-            @change="loadPointsHistory"
-            class="w-12rem"
-          />
-          
-          <Calendar 
-            v-model="dateRange" 
-            selectionMode="range" 
-            :manualInput="false"
-            placeholder="Période"
-            @date-select="loadPointsHistory"
-            class="w-12rem"
-          />
-        </div>
-        
-        <!-- Liste historique -->
-        <div class="flex flex-column gap-3">
-          <div 
-            v-for="entry in pointsHistory" 
-            :key="entry.id"
-            class="flex align-items-center gap-3 p-3 border-1 surface-border border-round"
-          >
-            <div class="flex align-items-center justify-content-center w-3rem h-3rem border-circle"
-                 :style="{ backgroundColor: houseData.value[entry.house]?.color + '20', color: houseData.value[entry.house]?.color }">
-              <i class="pi pi-home text-lg"></i>
-            </div>
-            
-            <div class="flex-1">
-              <div class="flex justify-content-between align-items-center mb-2">
-                <Tag 
-                  :value="getHouseDisplayName(entry.house)" 
-                  :severity="getHouseSeverity(entry.house)"
-                  class="font-semibold"
-                />
-                <span class="font-bold text-lg" 
-                      :class="entry.points > 0 ? 'text-green-600' : 'text-red-600'">
-                  {{ entry.points > 0 ? '+' : '' }}{{ entry.points }} points
-                </span>
-              </div>
-              
-              <p class="text-900 m-0 mb-2">{{ entry.reason }}</p>
-              
-              <div class="flex gap-3 text-sm text-600">
-                <span>{{ formatDate(entry.timestamp) }}</span>
-                <span>par {{ entry.authorName }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <p class="text-700 m-0">
+          Le total d'une maison correspond à la somme des XP de ses membres.
+          Il est recalculé par Supabase et ne peut plus être modifié séparément
+          depuis le navigateur.
+        </p>
       </div>
     </div>
-
-    <!-- Dialog d'attribution de points -->
-    <Dialog 
-      v-model:visible="showPointsDialog" 
-      :header="editingHouse ? 'Modifier Points' : 'Attribuer Points'"
-      :modal="true"
-      :closable="true"
-      class="w-11 md:w-30rem"
-    >
-      <div class="flex flex-column gap-4">
-        <div class="field">
-          <label for="houseSelect" class="font-semibold">Maison *</label>
-          <Dropdown 
-            id="houseSelect"
-            v-model="pointsForm.house" 
-            :options="houseOptions" 
-            optionLabel="label" 
-            optionValue="value"
-            placeholder="Sélectionner une maison"
-            :class="{ 'p-invalid': errors.house }"
-            :disabled="!!editingHouse"
-            class="w-full"
-          />
-          <small v-if="errors.house" class="p-error">{{ errors.house }}</small>
-        </div>
-        
-        <div class="field">
-          <label for="points" class="font-semibold">Points *</label>
-          <InputNumber 
-            id="points"
-            v-model="pointsForm.points" 
-            placeholder="Nombre de points (+ ou -)"
-            :class="{ 'p-invalid': errors.points }"
-            :min="-1000"
-            :max="1000"
-            class="w-full"
-          />
-          <small v-if="errors.points" class="p-error">{{ errors.points }}</small>
-          <small class="text-600">Utilisez des nombres négatifs pour retirer des points</small>
-        </div>
-        
-        <div class="field">
-          <label for="reason" class="font-semibold">Raison *</label>
-          <Textarea 
-            id="reason"
-            v-model="pointsForm.reason" 
-            placeholder="Raison de l'attribution/retrait de points"
-            rows="3"
-            :class="{ 'p-invalid': errors.reason }"
-            class="w-full"
-          />
-          <small v-if="errors.reason" class="p-error">{{ errors.reason }}</small>
-        </div>
-      </div>
-      
-      <template #footer>
-        <Button 
-          @click="showPointsDialog = false" 
-          label="Annuler" 
-          text
-        />
-        <Button 
-          @click="assignPoints" 
-          label="Attribuer"
-          :loading="assigning"
-          severity="success"
-        />
-      </template>
-    </Dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
-import InputNumber from 'primevue/inputnumber'
-import Textarea from 'primevue/textarea'
-import Dropdown from 'primevue/dropdown'
-import Calendar from 'primevue/calendar'
-import Dialog from 'primevue/dialog'
 import ProgressSpinner from 'primevue/progressspinner'
 
-const authStore = useAuthStore()
-
-// Vérifier les permissions
-const canManageHouses = computed(() => {
-  return authStore.user && (
-    authStore.user.role === 'admin' || 
-    authStore.user.role === 'house_coach' ||
-    authStore.user.role === 'game_master'
-  )
-})
+const router = useRouter()
 
 const toast = useToast()
 
 // État réactif
 const houses = ref([])
-const pointsHistory = ref([])
 const loading = ref(true)
-const assigning = ref(false)
-
-// Filtres
-const selectedHouseFilter = ref(null)
-const dateRange = ref(null)
-
-// Dialogs
-const showPointsDialog = ref(false)
-const editingHouse = ref(null)
-
-// Formulaire d'attribution de points
-const pointsForm = reactive({
-  house: '',
-  points: 0,
-  reason: ''
-})
-
-const errors = ref({})
 
 // Données des maisons chargées depuis Supabase
 const houseData = ref({})
-
-// Options pour les dropdowns (computed pour être dynamiques)
-const houseOptions = computed(() => {
-  return Object.keys(houseData.value).map(key => ({
-    label: houseData.value[key].displayName || key,
-    value: key
-  }))
-})
-
-const houseFilterOptions = computed(() => [
-  { label: 'Toutes les maisons', value: null },
-  ...houseOptions.value
-])
 
 // Permissions temporairement désactivées
 
@@ -364,18 +183,10 @@ const loadHouseDefinitions = async () => {
 const loadHouses = async () => {
   try {
     loading.value = true
-    
-    // Utiliser la vue SQL pour obtenir toutes les statistiques en une seule requête
-    const { data, error } = await supabase
-      .from('house_points_totals')
-      .select('*')
-    
-    if (error) {
-      // Si la vue n'existe pas encore, fallback sur l'ancienne méthode
-      console.warn('Vue house_points_totals non trouvée, utilisation de la méthode manuelle')
-      await loadHousesManually()
-      return
-    }
+
+    const { data, error } = await supabase.rpc('get_house_gamification_totals')
+
+    if (error) throw error
     
     // Mapper les données de la vue
     houses.value = data.map(house => ({
@@ -385,6 +196,7 @@ const loadHouses = async () => {
       description: house.description,
       totalPoints: parseInt(house.total_points) || 0,
       memberCount: parseInt(house.member_count) || 0,
+      level: parseInt(house.house_level) || 1,
       completedChallenges: parseInt(house.completed_challenges) || 0,
       completedQuests: parseInt(house.completed_quests) || 0
     }))
@@ -404,213 +216,21 @@ const loadHouses = async () => {
   }
 }
 
-// Méthode manuelle de fallback si la vue n'existe pas
-const loadHousesManually = async () => {
-  const housesData = []
-  
-  for (const houseName of Object.keys(houseData.value)) {
-    let memberCount = 0
-    
-    // Essayer de compter les membres (peut échouer si la colonne house n'existe pas)
-    try {
-      const { count } = await supabase
-        .from('users_profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('house', houseName)
-      memberCount = count || 0
-    } catch (error) {
-      console.warn(`Impossible de compter les membres de ${houseName}:`, error.message)
-    }
-    
-    // Calculer les points totaux depuis l'historique
-    let totalPoints = 0
-    try {
-      const { data: pointsData } = await supabase
-        .from('house_points_history')
-        .select('points')
-        .eq('house', houseName)
-      
-      totalPoints = pointsData?.reduce((sum, entry) => sum + entry.points, 0) || 0
-    } catch (error) {
-      console.warn(`Impossible de charger les points de ${houseName}:`, error.message)
-    }
-    
-    housesData.push({
-      name: houseName,
-      displayName: houseData.value[houseName].displayName,
-      color: houseData.value[houseName].color,
-      description: houseData.value[houseName].description,
-      totalPoints,
-      memberCount,
-      completedChallenges: 0,
-      completedQuests: 0
-    })
-  }
-  
-  houses.value = housesData
-}
-
-const loadPointsHistory = async () => {
-  try {
-    let query = supabase
-      .from('house_points_history')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50)
-    
-    // Filtre par maison
-    if (selectedHouseFilter.value) {
-      query = query.eq('house', selectedHouseFilter.value)
-    }
-    
-    // Filtre par date
-    if (dateRange.value && dateRange.value[0]) {
-      query = query.gte('created_at', dateRange.value[0].toISOString())
-      
-      if (dateRange.value[1]) {
-        query = query.lte('created_at', dateRange.value[1].toISOString())
-      }
-    }
-    
-    const { data, error } = await query
-    
-    if (error) throw error
-    
-    // Charger les informations des auteurs séparément
-    const userIds = [...new Set(data.map(entry => entry.created_by).filter(Boolean))]
-    
-    let authorsMap = {}
-    if (userIds.length > 0) {
-      const { data: authorsData } = await supabase
-        .from('users_profiles')
-        .select('id, first_name, last_name, email')
-        .in('id', userIds)
-      
-      if (authorsData) {
-        authorsMap = authorsData.reduce((acc, author) => {
-          acc[author.id] = author
-          return acc
-        }, {})
-      }
-    }
-    
-    // Formater les données pour l'affichage
-    pointsHistory.value = data.map(entry => {
-      const author = authorsMap[entry.created_by]
-      
-      return {
-        id: entry.id,
-        house: entry.house,
-        points: entry.points,
-        reason: entry.reason,
-        timestamp: new Date(entry.created_at).getTime(),
-        authorName: author 
-          ? `${author.first_name || ''} ${author.last_name || ''}`.trim() || author.email
-          : 'Système'
-      }
-    })
-    
-  } catch (error) {
-    console.error('Erreur lors du chargement de l\'historique:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Impossible de charger l\'historique des points',
-      life: 3000
-    })
-  }
-}
-
-const validatePointsForm = () => {
-  errors.value = {}
-  
-  if (!pointsForm.house) {
-    errors.value.house = 'Veuillez sélectionner une maison'
-  }
-  
-  if (!pointsForm.points || pointsForm.points === 0) {
-    errors.value.points = 'Veuillez entrer un nombre de points différent de 0'
-  }
-  
-  if (!pointsForm.reason.trim()) {
-    errors.value.reason = 'Veuillez indiquer une raison'
-  }
-  
-  return Object.keys(errors.value).length === 0
-}
-
-const assignPoints = async () => {
-  if (!validatePointsForm()) return
-  
-  try {
-    assigning.value = true
-    
-    // Insérer dans l'historique des points
-    const { error } = await supabase
-      .from('house_points_history')
-      .insert({
-        house: pointsForm.house,
-        points: pointsForm.points,
-        reason: pointsForm.reason,
-        created_by: authStore.user.id
-      })
-    
-    if (error) throw error
-    
-    toast.add({
-      severity: 'success',
-      summary: 'Succès',
-      detail: `${pointsForm.points > 0 ? 'Points attribués' : 'Points retirés'} avec succès à ${getHouseDisplayName(pointsForm.house)}`,
-      life: 3000
-    })
-    
-    showPointsDialog.value = false
-    Object.assign(pointsForm, { house: '', points: 0, reason: '' })
-    editingHouse.value = null
-    
-    // Recharger les données
-    await Promise.all([
-      loadHouses(),
-      loadPointsHistory()
-    ])
-    
-  } catch (error) {
-    console.error('Erreur lors de l\'attribution des points:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: error.message || 'Erreur lors de l\'attribution des points',
-      life: 3000
-    })
-  } finally {
-    assigning.value = false
-  }
-}
-
-const editHousePoints = (house) => {
-  editingHouse.value = house
-  pointsForm.house = house.name
-  showPointsDialog.value = true
-}
-
 const viewHouseDetails = (house) => {
-  // Naviguer vers les détails de la maison
-  console.log('Voir détails de la maison:', house)
+  router.push({ name: 'HouseStatsPage', params: { houseName: house.name } })
 }
 
 const viewHouseMembers = (house) => {
-  // Naviguer vers la liste des membres de la maison
-  console.log('Voir membres de la maison:', house)
+  router.push({
+    name: 'UserManagementView',
+    query: { house: house.name }
+  })
 }
 
 // Utilitaires
 const getProgressPercentage = (house, leader) => {
   if (!leader || leader.totalPoints === 0) return 0
   return Math.round((house.totalPoints / leader.totalPoints) * 100)
-}
-
-const getHouseDisplayName = (houseName) => {
-  return houseData.value[houseName]?.displayName || houseName
 }
 
 const getHouseSeverity = (houseName) => {
@@ -627,32 +247,20 @@ const getHouseSeverity = (houseName) => {
 
 // Méthode getRoleLabel supprimée - système de rôles désactivé
 
-const formatDate = (timestamp) => {
-  if (!timestamp) return 'N/A'
-  const date = new Date(timestamp)
-  const now = new Date()
-  const diff = now - date
-  
-  if (diff < 3600000) { // Moins d'1 heure
-    return 'Il y a ' + Math.floor(diff / 60000) + ' min'
-  } else if (diff < 86400000) { // Moins d'1 jour
-    return 'Il y a ' + Math.floor(diff / 3600000) + 'h'
-  } else {
-    return date.toLocaleDateString('fr-FR')
-  }
-}
-
 // Initialisation
 onMounted(async () => {
   // Charger d'abord les définitions des maisons
   await loadHouseDefinitions()
   
-  // Puis charger les statistiques et l'historique
-  await Promise.all([
-    loadHouses(),
-    loadPointsHistory()
-  ])
+  // Puis charger les statistiques calculées par Supabase.
+  await loadHouses()
 })
 </script>
 
-<!-- Styles supprimés - utilisation exclusive des classes PrimeVue -->
+<style scoped>
+@media (max-width: 640px) {
+  .house-ranking-header { align-items: flex-start !important; flex-direction: column; gap: 0.75rem; }
+  .house-ranking-tag { max-width: 100%; }
+  .house-ranking-tag :deep(.p-tag-value) { white-space: normal; }
+}
+</style>

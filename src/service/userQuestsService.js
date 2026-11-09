@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import { runtimeFeatures } from '@/config/runtimeFeatures'
 
 const emptyQuestStats = () => ({
   totalQuests: 0,
@@ -239,7 +240,7 @@ class UserQuestsService {
    * @param {string} userId - ID utilisateur
    * @returns {Promise<Object>} Statistiques
    */
-  async getQuestStats(userId) {
+  async getQuestStats(userId, { strict = false } = {}) {
     try {
       const { data, error } = await supabase
         .from('user_quest_progress')
@@ -280,6 +281,7 @@ class UserQuestsService {
       
     } catch (error) {
       console.error('❌ Erreur statistiques quêtes:', error)
+      if (strict) throw error
       return emptyQuestStats()
     }
   }
@@ -291,6 +293,7 @@ class UserQuestsService {
    * @returns {RealtimeChannel} Canal Supabase
    */
   subscribeToQuestUpdates(userId, callback) {
+    if (!runtimeFeatures.supabaseRealtime) return null
     try {
       const channel = supabase
         .channel(`user-quests-${userId}`)

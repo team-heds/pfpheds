@@ -2,20 +2,22 @@
   <AdminLayout>
     <template #header>
       <PageHeader 
+        class="si-page-header"
         title="Vue Journalière — Gestion des Salles" 
-        subtitle="Tous les cours par jour avec enseignants, classes et salles" 
-        icon="pi pi-building" 
+        subtitle="Tous les cours par jour avec enseignants, classes et salles"
+        icon="pi pi-building"
       />
     </template>
 
-    <div class="daily-planning-page">
+    <div class="daily-planning-page si-admin-screen">
       <!-- Toolbar -->
       <div class="toolbar-card">
         <div class="toolbar-row">
           <div class="flex gap-3 align-items-center flex-wrap">
             <div class="field-inline">
-              <label>Semaine</label>
+              <label for="si-daily-week">Semaine</label>
               <Dropdown 
+                inputId="si-daily-week"
                 v-model="selectedWeek" 
                 :options="weekOptions" 
                 optionLabel="label" 
@@ -26,8 +28,9 @@
               />
             </div>
             <div class="field-inline">
-              <label>Jour</label>
+              <label for="si-daily-day">Jour</label>
               <Dropdown 
+                inputId="si-daily-day"
                 v-model="selectedDay" 
                 :options="dayOptions" 
                 optionLabel="label" 
@@ -38,8 +41,9 @@
               />
             </div>
             <div class="field-inline">
-              <label>Classe</label>
+              <label for="si-daily-class">Classe</label>
               <Dropdown 
+                inputId="si-daily-class"
                 v-model="selectedClass" 
                 :options="classOptions" 
                 optionLabel="label" 
@@ -51,6 +55,7 @@
             </div>
           </div>
           <div class="flex gap-2 align-items-center">
+            <Tag :value="activeYearName || 'Aucune année active'" :severity="activeYearName ? 'success' : 'danger'" />
             <Tag :value="dateRangeLabel" severity="info" />
             <Button label="Exporter" icon="pi pi-download" severity="secondary" size="small" @click="exportDay" />
           </div>
@@ -203,8 +208,10 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { supabase } from '@/supabase'
 import planningService from '@/service/planningService'
-import academicYearService from '@/service/academicYearService'
-import { useAcademicYear } from '@/composables/useAcademicYear'
+import {
+  slotBelongsToAcademicYear,
+  useActiveAcademicYearContext
+} from '@/composables/useActiveAcademicYearContext'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import PageHeader from '@/components/admin/common/PageHeader.vue'
 
@@ -215,54 +222,13 @@ const selectedDay = ref(null)
 const selectedClass = ref(null)
 const allSlots = ref([])
 const courseModules = ref([])
-const activeYearClassCodes = ref(null)
-const { activeAcademicYear, loadActiveAcademicYear } = useAcademicYear()
-
-function normalizeClassCode(value) {
-  return String(value || '')
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, '')
-}
-
-function getClassCodeAliases(value) {
-  const raw = normalizeClassCode(value)
-  if (!raw) return []
-
-  const aliases = new Set([raw])
-  const normalized = raw.replace(/_/g, '-')
-  aliases.add(normalized)
-
-  const bacMatch = normalized.match(/^BAC(\d{2})(-.+)?$/)
-  if (bacMatch) aliases.add(`B${bacMatch[1]}${bacMatch[2] || ''}`)
-
-  const bMatch = normalized.match(/^B(\d{2})(-.+)?$/)
-  if (bMatch) aliases.add(`BAC${bMatch[1]}${bMatch[2] || ''}`)
-
-  return Array.from(aliases)
-}
-
-async function loadActiveYearClassCodes() {
-  try {
-    const yearId = activeAcademicYear.value?.id
-    if (!yearId) {
-      activeYearClassCodes.value = null
-      return
-    }
-
-    const classes = await academicYearService.getClassesByAcademicYear(yearId)
-    const classCodes = new Set(
-      (classes || [])
-        .flatMap(c => getClassCodeAliases(c?.code))
-        .filter(Boolean)
-    )
-
-    activeYearClassCodes.value = classCodes.size > 0 ? classCodes : null
-  } catch (err) {
-    console.warn('[DailyPlanning] Impossible de charger les classes de l\'année active:', err)
-    activeYearClassCodes.value = null
-  }
-}
+const {
+  activeYearName,
+  activeYearId,
+  academicStartYear,
+  activeClassCodes,
+  loadActiveAcademicYearContext
+} = useActiveAcademicYearContext()
 
 const dayOptions = [
   { label: 'Lundi', value: 'lundi' },
@@ -285,7 +251,7 @@ const weekOptions = computed(() => {
   const weeks = []
   const now = new Date()
   const currentMonth = now.getMonth() + 1
-  const aYear = currentMonth >= 8 ? now.getFullYear() : now.getFullYear() - 1
+  const aYear = academicStartYear.value || (currentMonth >= 8 ? now.getFullYear() : now.getFullYear() - 1)
   const maxAutumnWeek = isoWeeksInYear(aYear)
 
   for (let w = 38; w <= maxAutumnWeek; w++) {
@@ -414,21 +380,9 @@ async function loadSlots() {
     // Normaliser class_code en majuscules (les données peuvent avoir bac24 ou BAC24)
     const normalizedSlots = (data || []).map(s => ({ ...s, class_code: s.class_code?.toUpperCase() || s.class_code }))
 
-    if (activeYearClassCodes.value instanceof Set && activeYearClassCodes.value.size > 0) {
-      allSlots.value = normalizedSlots.filter(slot => {
-        const slotCodes = []
-        if (Array.isArray(slot.class_codes)) slotCodes.push(...slot.class_codes)
-        if (slot.class_code) slotCodes.push(slot.class_code)
-        if (slotCodes.length === 0) return false
-
-        return slotCodes.some(code => {
-          const aliases = getClassCodeAliases(code)
-          return aliases.some(alias => activeYearClassCodes.value.has(alias))
-        })
-      })
-    } else {
-      allSlots.value = normalizedSlots
-    }
+    allSlots.value = activeYearId.value
+      ? normalizedSlots.filter(slot => slotBelongsToAcademicYear(slot, activeClassCodes.value))
+      : []
   } catch (err) {
     console.error('Erreur chargement créneaux:', err)
     toast.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les créneaux' })
@@ -524,8 +478,7 @@ async function exportDay() {
 
 onMounted(async () => {
   try {
-    await loadActiveAcademicYear()
-    await loadActiveYearClassCodes()
+    await loadActiveAcademicYearContext()
     courseModules.value = await planningService.getAllCourseModules()
   } catch (err) {
     console.error('Erreur chargement modules:', err)
@@ -546,10 +499,9 @@ onMounted(async () => {
 })
 
 watch(
-  () => activeAcademicYear.value?.id,
+  () => activeYearId.value,
   async (newYear, oldYear) => {
     if (newYear === oldYear) return
-    await loadActiveYearClassCodes()
     await loadSlots()
   }
 )
@@ -717,5 +669,69 @@ watch(
 .empty-state small {
   color: var(--text-color-secondary);
   opacity: 0.7;
+}
+
+@media (max-width: 1024px) {
+  .daily-planning-page {
+    padding: 1.25rem;
+  }
+
+  .toolbar-row {
+    align-items: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .daily-planning-page {
+    padding: .25rem 0 1rem;
+  }
+
+  .toolbar-card {
+    padding: 1rem;
+  }
+
+  .toolbar-row,
+  .toolbar-row > .flex,
+  .toolbar-row > .flex:last-child,
+  .field-inline {
+    width: 100%;
+  }
+
+  .toolbar-row > .flex {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .field-inline :deep(.p-dropdown),
+  .toolbar-row :deep(.p-button) {
+    width: 100% !important;
+    min-height: 44px;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-card {
+    min-width: 0;
+  }
+
+  .day-header {
+    align-items: flex-start;
+    gap: .75rem;
+    flex-wrap: wrap;
+  }
+
+  .day-table {
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

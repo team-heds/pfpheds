@@ -1,501 +1,202 @@
 <template>
-  <div class="quests-profile-card">
-    <!-- Header -->
-    <div class="card-header">
-      <div class="header-with-badge">
-        <h4>🗺️ Mes Quêtes Actives</h4>
-        <span v-if="activeQuests.length > 0" class="count-badge" :style="{ backgroundColor: houseColor }">
-          {{ activeQuests.length }}
-        </span>
+  <section class="quests-profile-card" :style="{ '--house-color': houseColor, '--house-foreground': houseForeground }" :aria-label="isViewingOtherUser ? 'Quêtes de ce profil' : 'Mes quêtes actives'">
+    <header class="card-header">
+      <div>
+        <h3><i class="pi pi-compass" aria-hidden="true"></i> {{ isViewingOtherUser ? 'Quêtes de ce profil' : 'Mes quêtes actives' }}</h3>
+        <p>{{ isViewingOtherUser ? 'Consultation de ses objectifs en lecture seule.' : 'Poursuivez vos objectifs depuis le journal de quêtes.' }}</p>
       </div>
-      <Button 
-        icon="pi pi-arrow-right" 
-        class="p-button-text p-button-sm"
-        @click="navigateToAllQuests"
-        v-tooltip.top="'Voir toutes les quêtes'"
-      />
+      <span v-if="!loading && !error && activeQuests.length" class="count-badge">{{ activeQuests.length }}</span>
+    </header>
+
+    <div v-if="loading" class="widget-state" role="status" aria-busy="true">
+      <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+      <p>Chargement des quêtes…</p>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
-      <ProgressSpinner :style="{ width: '40px', height: '40px' }" strokeWidth="4" />
-      <p class="text-sm text-600 mt-2">Chargement...</p>
+    <div v-else-if="error" class="widget-state error-state" role="alert">
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      <div><strong>Quêtes indisponibles</strong><p>{{ error }}</p></div>
+      <button class="retry-button" type="button" @click="loadUserQuests">Réessayer</button>
     </div>
 
-    <!-- Liste des quêtes -->
-    <div v-else-if="activeQuests.length > 0" class="quests-list">
-      <div 
-        v-for="quest in displayedQuests"
-        :key="quest.id"
-        class="quest-item"
-        @click="navigateToQuestDetails(quest)"
-      >
-        <!-- Icône -->
-        <div class="quest-icon" :style="{ backgroundColor: houseColor }">
-          <i class="pi pi-flag"></i>
-        </div>
-        
-        <!-- Contenu -->
-        <div class="quest-content">
-          <div class="quest-header">
-            <span class="quest-title">{{ quest.title }}</span>
-            <span class="difficulty-badge" :class="`difficulty-${quest.difficulty}`">
-              {{ getDifficultyLabel(quest.difficulty) }}
+    <template v-else-if="activeQuests.length">
+      <ul class="quests-list">
+        <li v-for="quest in displayedQuests" :key="quest.id">
+          <component :is="isViewingOtherUser ? 'div' : 'button'" class="quest-item" :type="isViewingOtherUser ? null : 'button'" :aria-label="isViewingOtherUser ? null : `Retrouver la quête ${quest.title || 'sans titre'} dans le journal`" @click="!isViewingOtherUser && navigateToAllQuests()">
+            <span class="quest-icon" aria-hidden="true"><i class="pi pi-flag"></i></span>
+            <span class="quest-content">
+              <span class="quest-header"><strong class="quest-title">{{ quest.title || 'Quête sans titre' }}</strong><span class="difficulty-badge">{{ getDifficultyLabel(quest.difficulty) }}</span></span>
+              <span v-if="quest.description" class="quest-description">{{ quest.description }}</span>
+              <span class="quest-progress">
+                <span class="progress-bar" role="progressbar" :aria-label="`Progression de ${quest.title || 'la quête'}`" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="progressOf(quest)"><span class="progress-fill" :style="{ transform: `scaleX(${progressOf(quest) / 100})` }"></span></span>
+                <span class="progress-text">{{ progressOf(quest) }} %</span>
+              </span>
+              <span class="quest-status">{{ questStatus(quest) === 'in_progress' ? 'En cours' : 'À commencer' }}</span>
             </span>
-          </div>
-          
-          <p class="quest-description">{{ quest.description }}</p>
-          
-          <!-- Barre de progression -->
-          <div class="quest-progress">
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: quest.progress + '%', backgroundColor: houseColor }"></div>
-            </div>
-            <span class="progress-text">{{ quest.progress }}%</span>
-          </div>
-        </div>
+            <span class="quest-reward"><span>{{ rewardOf(quest) }} XP</span><i v-if="!isViewingOtherUser" class="pi pi-arrow-right" aria-hidden="true"></i></span>
+          </component>
+        </li>
+      </ul>
+      <button v-if="!isViewingOtherUser" class="journal-link" type="button" @click="navigateToAllQuests">Ouvrir mon journal de quêtes <i class="pi pi-arrow-right" aria-hidden="true"></i></button>
+    </template>
 
-        <!-- Récompense -->
-        <div class="quest-reward">
-          <div class="xp-badge" :style="{ color: houseColor, borderColor: houseColor }">
-            <i class="pi pi-star-fill"></i>
-            {{ quest.xp_reward || quest.points }} XP
-          </div>
-          <i class="pi pi-chevron-right quest-arrow"></i>
-        </div>
-      </div>
-
-      <!-- Bouton Voir Plus -->
-      <Button 
-        v-if="activeQuests.length > 3"
-        @click="navigateToAllQuests"
-        :label="`Voir toutes mes quêtes (${activeQuests.length})`"
-        icon="pi pi-arrow-right"
-        iconPos="right"
-        class="see-all-btn"
-        size="small"
-        :style="{ backgroundColor: houseColor, borderColor: houseColor }"
-      />
+    <div v-else-if="!viewerUserId && !isPreview" class="widget-state">
+      <i class="pi pi-user" aria-hidden="true"></i>
+      <div><strong>Connectez-vous pour retrouver vos quêtes</strong><button class="journal-link" type="button" @click="router.push('/home')">Se connecter</button></div>
     </div>
 
-    <!-- État vide -->
-    <div v-else class="empty-state">
-      <div class="empty-icon">🗺️</div>
-      <p class="text-600 text-sm">Aucune quête active pour le moment</p>
-      <Button 
-        @click="navigateToAllQuests"
-        label="Explorer les quêtes"
-        icon="pi pi-compass"
-        class="p-button-sm mt-3"
-        :style="{ backgroundColor: houseColor, borderColor: houseColor }"
-      />
+    <div v-else class="widget-state empty-state">
+      <i class="pi pi-compass" aria-hidden="true"></i>
+      <div><strong>{{ isViewingOtherUser ? 'Aucune quête active pour ce profil' : 'Aucune quête active pour le moment' }}</strong><p>{{ isViewingOtherUser ? 'Les prochains objectifs apparaîtront ici.' : 'Consultez le journal pour retrouver vos quêtes et leur historique.' }}</p><button v-if="!isViewingOtherUser" class="journal-link" type="button" @click="navigateToAllQuests">Voir toutes les quêtes <i class="pi pi-arrow-right" aria-hidden="true"></i></button></div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '@/supabase'
 import { useAuthStore } from '@/stores/authStore'
-import Button from 'primevue/button'
-import ProgressSpinner from 'primevue/progressspinner'
+import userQuestsService from '@/service/userQuestsService'
+import { getReadableTextColor } from '@/utils/colorContrast'
+
+const props = defineProps({
+  userId: { type: String, default: null },
+  houseColor: { type: String, default: '#2E8B57' },
+  previewQuests: { type: Array, default: null },
+  previewLoading: { type: Boolean, default: false },
+})
 
 const router = useRouter()
 const authStore = useAuthStore()
-
-// Props
-const props = defineProps({
-  userId: {
-    type: String,
-    default: null
-  },
-  houseColor: {
-    type: String,
-    default: '#2E8B57' // Harmonis par défaut
-  }
-})
-
-// State
-const activeQuests = ref([])
+const viewerUserId = computed(() => authStore.user?.id || null)
+const displayUserId = computed(() => props.userId || viewerUserId.value)
+const isViewingOtherUser = computed(() => Boolean(viewerUserId.value && props.userId && props.userId !== viewerUserId.value))
+const isPreview = computed(() => Array.isArray(props.previewQuests))
+const houseForeground = computed(() => getReadableTextColor(props.houseColor))
+const quests = ref([])
 const loading = ref(false)
+const error = ref('')
+const currentTime = ref(Date.now())
+let requestGeneration = 0
+let disposed = false
 let realtimeChannel = null
+let clock = null
 
-// Computed
-const displayedQuests = computed(() => {
-  return activeQuests.value.slice(0, 3) // Afficher max 3 quêtes
-})
+const progressOf = quest => {
+  const value = Number(quest.progress ?? quest.userProgress?.progress ?? 0)
+  return Number.isFinite(value) ? Math.round(Math.min(100, Math.max(0, value))) : 0
+}
+const rewardOf = quest => {
+  const value = Number(quest.xp_reward ?? quest.points ?? 0)
+  return Number.isFinite(value) ? Math.max(0, value) : 0
+}
+const questStatus = quest => quest.status ?? quest.userProgress?.status
+const activeQuests = computed(() => quests.value.filter(quest => {
+  if (!quest || !['not_started', 'in_progress'].includes(questStatus(quest))) return false
+  const value = quest.end_date || quest.endDate
+  const endTime = value ? new Date(value).getTime() : NaN
+  return !Number.isFinite(endTime) || endTime > currentTime.value
+}).slice().sort((first, second) => progressOf(second) - progressOf(first)))
+const displayedQuests = computed(() => activeQuests.value.slice(0, 3))
+const getDifficultyLabel = value => ({
+  easy: 'Facile', medium: 'Moyen', hard: 'Difficile', expert: 'Expert', epic: 'Épique', legendary: 'Légendaire',
+})[String(value || '').toLowerCase()] || 'Difficulté non précisée'
 
-const completedCount = computed(() => {
-  return activeQuests.value.filter(q => q.completed).length
-})
-
-const totalXP = computed(() => {
-  return activeQuests.value.reduce((sum, q) => sum + (q.xp_reward || q.points || 0), 0)
-})
-
-const averageProgress = computed(() => {
-  if (activeQuests.value.length === 0) return 0
-  const total = activeQuests.value.reduce((sum, q) => sum + (q.progress || 0), 0)
-  return Math.round(total / activeQuests.value.length)
-})
-
-// Methods
-const getDifficultyLabel = (difficulty) => {
-  const labels = {
-    easy: 'Facile',
-    medium: 'Moyen',
-    hard: 'Difficile',
-    expert: 'Expert'
+const detachRealtime = () => {
+  if (realtimeChannel) {
+    try { userQuestsService.unsubscribeFromQuestUpdates(realtimeChannel) } catch { /* A stale channel must not retain the previous profile. */ }
   }
-  return labels[difficulty] || difficulty
+  realtimeChannel = null
 }
 
 const loadUserQuests = async () => {
-  try {
-    loading.value = true
-    const userId = props.userId || authStore.user?.id
-    
-    if (!userId) {
-      console.warn('Aucun userId fourni pour charger les quêtes')
-      return
-    }
-    
-    console.log('🔍 Chargement des quêtes pour:', userId)
-    
-    // Récupérer UNIQUEMENT les quêtes actives (non complétées) de l'utilisateur
-    const { data: userQuests, error } = await supabase
-      .from('user_quest_progress')
-      .select(`
-        *,
-        quest:quests(*)
-      `)
-      .eq('user_id', userId)
-      .eq('completed', false) // Filtrer les quêtes NON complétées
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      console.error('Erreur chargement quêtes:', error)
-      return
-    }
-    
-    if (userQuests && userQuests.length > 0) {
-      // Formater les données
-      activeQuests.value = userQuests.map(uq => ({
-        id: uq.quest_id,
-        title: uq.quest?.title || 'Quête',
-        description: uq.quest?.description || '',
-        difficulty: uq.quest?.difficulty || 'medium',
-        xp_reward: uq.quest?.xp_reward || uq.quest?.points || 0,
-        points: uq.quest?.points || 0,
-        progress: uq.progress || 0,
-        completed: uq.completed || false,
-        steps_completed: uq.steps_completed || 0,
-        total_steps: uq.quest?.steps?.length || 1
-      }))
-      
-      console.log(`✅ ${activeQuests.value.length} quêtes chargées`)
-    } else {
-      activeQuests.value = []
-      console.log('📭 Aucune quête active trouvée')
-    }
-  } catch (err) {
-    console.error('❌ Erreur lors du chargement des quêtes:', err)
-  } finally {
+  const generation = ++requestGeneration
+  currentTime.value = Date.now()
+  quests.value = []
+  error.value = ''
+  if (isPreview.value) {
+    // Stories may omit progress statuses; this fallback is presentation-only.
+    quests.value = props.previewQuests.filter(quest => quest && typeof quest === 'object').map(quest => ({ ...quest, status: questStatus(quest) || (progressOf(quest) ? 'in_progress' : 'not_started') }))
+    loading.value = props.previewLoading
+    return
+  }
+  const userId = displayUserId.value
+  if (!viewerUserId.value || !userId) {
     loading.value = false
+    return
+  }
+  loading.value = true
+  try {
+    const result = await userQuestsService.getUserQuests(userId)
+    if (!Array.isArray(result)) throw new Error('Invalid quest list')
+    if (!disposed && generation === requestGeneration) quests.value = result
+  } catch {
+    if (!disposed && generation === requestGeneration) error.value = 'Vérifiez votre connexion puis réessayez.'
+  } finally {
+    if (!disposed && generation === requestGeneration) loading.value = false
   }
 }
 
-const subscribeToQuestUpdates = () => {
-  const userId = props.userId || authStore.user?.id
-  
-  if (!userId) return
-  
-  console.log('🔔 Abonnement aux mises à jour des quêtes pour:', userId)
-  
-  realtimeChannel = supabase
-    .channel('user-quests-updates')
-    .on('postgres_changes', 
-      { 
-        event: '*', 
-        schema: 'public', 
-        table: 'user_quest_progress',
-        filter: `user_id=eq.${userId}`
-      }, 
-      (payload) => {
-        console.log('🔄 Mise à jour quête détectée:', payload.eventType)
-        loadUserQuests() // Recharger les quêtes
-      }
-    )
-    .subscribe()
+const subscribeToUpdates = () => {
+  const userId = displayUserId.value
+  if (!viewerUserId.value || !userId || isPreview.value) return
+  realtimeChannel = userQuestsService.subscribeToQuestUpdates(userId, () => {
+    if (!disposed && userId === displayUserId.value && !isPreview.value) void loadUserQuests()
+  })
 }
 
-const navigateToQuestDetails = (quest) => {
-  router.push('/quests')
-}
+const navigateToAllQuests = () => router.push('/quests')
 
-const navigateToAllQuests = () => {
-  router.push('/quests')
-}
+watch([displayUserId, viewerUserId, () => props.previewQuests, () => props.previewLoading], () => {
+  detachRealtime()
+  void loadUserQuests()
+  subscribeToUpdates()
+}, { immediate: true, flush: 'sync' })
 
-// Lifecycle
-onMounted(() => {
-  loadUserQuests()
-  subscribeToQuestUpdates()
-})
-
+onMounted(() => { clock = setInterval(() => { currentTime.value = Date.now() }, 60000) })
 onBeforeUnmount(() => {
-  if (realtimeChannel) {
-    supabase.removeChannel(realtimeChannel)
-  }
+  disposed = true
+  ++requestGeneration
+  detachRealtime()
+  if (clock !== null) clearInterval(clock)
 })
 </script>
 
 <style scoped>
-.quests-profile-card {
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-  border-radius: 1.2rem;
-  background: var(--surface-card);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-}
-
-/* Header */
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.25rem;
-}
-
-.header-with-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.header-with-badge h4 {
-  font-weight: bold;
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.count-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 0.5rem;
-  border-radius: 12px;
-  color: white;
-  font-size: 0.75rem;
-  font-weight: bold;
-}
-
-/* Loading */
-.loading-state {
-  text-align: center;
-  padding: 2rem;
-}
-
-/* Liste des quêtes */
-.quests-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.quest-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--surface-border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: var(--surface-ground);
-}
-
-.quest-item:hover {
-  background: var(--surface-hover);
-  border-color: var(--primary-color);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-/* Icône */
-.quest-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-  transition: transform 0.3s ease;
-}
-
-.quest-item:hover .quest-icon {
-  transform: scale(1.05);
-}
-
-/* Contenu */
-.quest-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.quest-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.quest-title {
-  font-weight: 600;
-  font-size: 1rem;
-  color: var(--text-color);
-  flex: 1;
-  min-width: 0;
-}
-
-.difficulty-badge {
-  padding: 0.15rem 0.5rem;
-  border-radius: 0.5rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.difficulty-easy { background: #10b981; color: white; }
-.difficulty-medium { background: #f59e0b; color: white; }
-.difficulty-hard { background: #ef4444; color: white; }
-.difficulty-expert { background: #8b5cf6; color: white; }
-
-.quest-description {
-  font-size: 0.875rem;
-  color: var(--text-color-secondary);
-  margin: 0 0 0.75rem 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.5;
-}
-
-/* Progression */
-.quest-progress {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--surface-border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-
-.progress-text {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-color-secondary);
-  min-width: 35px;
-  text-align: right;
-}
-
-/* Récompense */
-.quest-reward {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.xp-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.4rem 0.75rem;
-  border: 2px solid;
-  border-radius: 0.75rem;
-  font-weight: bold;
-  font-size: 0.85rem;
-  background: var(--surface-card);
-}
-
-.xp-badge i {
-  font-size: 0.8rem;
-}
-
-.quest-arrow {
-  color: var(--text-color-secondary);
-  font-size: 0.9rem;
-}
-
-/* Bouton voir tout */
-.see-all-btn {
-  width: 100%;
-  margin-top: 0.5rem;
-  border: none;
-  color: white;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.see-all-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
-}
-
-/* État vide */
-.empty-state {
-  text-align: center;
-  padding: 2.5rem 1rem;
-}
-
-.empty-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .quest-item {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .quest-reward {
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .quest-title {
-    font-size: 0.95rem;
-  }
-}
+.quests-profile-card { margin-top: 1.5rem; padding: 1.25rem; border-radius: 16px; color: var(--text-color); background: var(--surface-card); }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
+.card-header h3 { display: flex; align-items: center; gap: .55rem; margin: 0; font-size: 1.1rem; line-height: 1.35; }
+.card-header h3 i { color: var(--primary-color); }
+.card-header p, .widget-state p { margin: .4rem 0 0; color: var(--text-color-secondary); line-height: 1.5; }
+.count-badge { display: grid; min-width: 28px; min-height: 28px; padding: .2rem .4rem; place-items: center; border-radius: 8px; color: var(--house-foreground); background: var(--house-color); font-size: .875rem; font-weight: 700; }
+.quests-list { margin: 0; padding: 0; list-style: none; }
+.quests-list li + li { border-top: 1px solid var(--surface-border); }
+.quest-item { display: flex; align-items: flex-start; gap: .85rem; width: 100%; min-height: 44px; padding: 1rem 0; border: 0; border-radius: 8px; color: inherit; background: transparent; font: inherit; text-align: left; transition: background-color 160ms ease-out; }
+button.quest-item { cursor: pointer; }
+button.quest-item:hover { background: var(--surface-hover); }
+.quest-icon { display: grid; flex: 0 0 40px; width: 40px; height: 40px; place-items: center; border-radius: 10px; color: var(--house-foreground); background: var(--house-color); }
+.quest-content { flex: 1; min-width: 0; }
+.quest-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; }
+.quest-title { overflow-wrap: anywhere; line-height: 1.35; }
+.difficulty-badge, .quest-status { color: var(--text-color-secondary); font-size: .875rem; }
+.quest-description { display: -webkit-box; overflow: hidden; margin-top: .25rem; color: var(--text-color-secondary); line-height: 1.5; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.quest-progress { display: flex; align-items: center; gap: .65rem; margin-top: .65rem; }
+.progress-bar { flex: 1; overflow: hidden; height: 6px; border-radius: 3px; background: var(--surface-border); }
+.progress-fill { display: block; width: 100%; height: 100%; border-radius: inherit; background: var(--house-color); transform-origin: left; transition: transform 300ms ease-out; }
+.progress-text { flex: 0 0 auto; min-width: 3rem; color: var(--text-color-secondary); font-size: .875rem; text-align: right; }
+.quest-status { display: block; margin-top: .25rem; }
+.quest-reward { box-sizing: border-box; display: flex; flex: 0 0 auto; align-items: center; gap: .6rem; color: var(--primary-color); font-size: .875rem; font-weight: 700; white-space: nowrap; }
+.quest-reward i { color: var(--text-color-secondary); }
+.journal-link, .retry-button { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; min-height: 44px; padding: .65rem 0; border: 0; border-radius: 8px; color: var(--primary-color); background: transparent; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.journal-link { margin-top: .5rem; }
+.retry-button { padding-inline: .75rem; }
+button:focus-visible { outline: 3px solid var(--primary-color); outline-offset: 3px; }
+.widget-state { display: flex; align-items: flex-start; gap: .75rem; padding: 1rem 0; }
+.widget-state > i { margin-top: .15rem; color: var(--house-color); font-size: 1.25rem; }
+.widget-state p { margin-top: 0; }
+.widget-state strong + p { margin-top: .4rem; }
+.error-state { flex-wrap: wrap; }
+.error-state > i { color: var(--red-400); }
+@media (max-width: 600px) { .quests-profile-card { padding: 1rem; } .quest-item { flex-wrap: wrap; } .quest-reward { width: 100%; justify-content: flex-end; padding-left: calc(40px + .85rem); } }
+@media (prefers-reduced-motion: reduce) { .quest-item, .progress-fill { transition: none; } }
 </style>

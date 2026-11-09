@@ -1,12 +1,12 @@
 <template>
-  <div class="p-4 max-w-7xl mx-auto">
+  <div class="p-4 max-w-7xl mx-auto gamification-manager">
     <!-- Header simplifié -->
-    <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border">
+    <div class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border manager-toolbar">
       <div class="flex align-items-center gap-2">
         <i class="pi pi-flag text-primary text-2xl"></i>
-        <h1 class="text-2xl font-semibold m-0 text-900">Gestion des Quêtes</h1>
+        <h2 class="text-2xl font-semibold m-0 text-900">Quêtes</h2>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 manager-actions">
         <Button 
           @click="navigateToPublicCreation"
           icon="pi pi-external-link"
@@ -25,13 +25,14 @@
     </div>
 
     <!-- Filtres et recherche -->
-    <div class="flex flex-wrap gap-3 mb-4">
-      <div class="p-inputgroup flex-1" style="min-width: 300px;">
+    <div class="flex flex-wrap gap-3 mb-4 manager-filters">
+      <div class="p-inputgroup flex-1 manager-search" style="min-width: 300px;">
         <span class="p-inputgroup-addon">
           <i class="pi pi-search"></i>
         </span>
         <InputText 
           v-model="searchQuery" 
+          aria-label="Rechercher une quête"
           placeholder="Rechercher une quête..."
           @input="filterQuests"
         />
@@ -39,6 +40,7 @@
       
       <Dropdown 
         v-model="selectedStatus" 
+        aria-label="Filtrer les quêtes par statut"
         :options="statusOptions" 
         optionLabel="label" 
         optionValue="value"
@@ -49,6 +51,7 @@
       
       <Dropdown 
         v-model="selectedType" 
+        aria-label="Filtrer les quêtes par type"
         :options="typeOptions" 
         optionLabel="label" 
         optionValue="value"
@@ -128,6 +131,7 @@
               icon="pi pi-pencil" 
               class="p-button-outlined p-button-sm"
               @click="editQuest(quest)"
+              :aria-label="`Modifier la quête ${quest.title}`"
               v-tooltip="'Modifier'"
             />
             <Button 
@@ -135,6 +139,7 @@
               icon="pi pi-trash" 
               class="p-button-outlined p-button-danger p-button-sm"
               @click="confirmDeleteQuest(quest)"
+              :aria-label="`Archiver la quête ${quest.title}`"
               v-tooltip="'Supprimer'"
             />
           </div>
@@ -150,6 +155,7 @@
       :modal="true"
       :closable="true"
       maximizable
+      :pt="{ maximizableButton: { 'aria-label': 'Agrandir ou réduire le formulaire de quête' } }"
       :style="{ width: '95vw', maxWidth: '1200px' }"
       class="quest-creation-dialog"
     >
@@ -233,9 +239,10 @@
                 <div class="grid">
                   <div class="col-12 md:col-4">
                     <div class="mb-4">
-                      <label for="type" class="block text-900 font-bold mb-2">Type *</label>
+                      <label for="quest-type" class="block text-900 font-bold mb-2">Type *</label>
                       <Dropdown 
-                        id="type"
+                        inputId="quest-type"
+                        aria-label="Type de quête"
                         v-model="questForm.type" 
                         :options="typeOptions.filter(t => t.value)" 
                         optionLabel="label" 
@@ -250,9 +257,10 @@
                   
                   <div class="col-12 md:col-4">
                     <div class="mb-4">
-                      <label for="difficulty" class="block text-900 font-bold mb-2">Difficulté *</label>
+                      <label for="quest-difficulty" class="block text-900 font-bold mb-2">Difficulté *</label>
                       <Dropdown 
-                        id="difficulty"
+                        inputId="quest-difficulty"
+                        aria-label="Difficulté de la quête"
                         v-model="questForm.difficulty" 
                         :options="difficultyOptions" 
                         optionLabel="label" 
@@ -267,9 +275,10 @@
                   
                   <div class="col-12 md:col-4">
                     <div class="mb-4">
-                      <label for="status" class="block text-900 font-bold mb-2">Statut</label>
+                      <label for="quest-status" class="block text-900 font-bold mb-2">Statut</label>
                       <Dropdown 
-                        id="status"
+                        inputId="quest-status"
+                        aria-label="Statut de la quête"
                         v-model="questForm.status" 
                         :options="statusOptions.filter(s => s.value)" 
                         optionLabel="label" 
@@ -291,11 +300,12 @@
                   <div class="grid">
                     <div class="col-12 md:col-6">
                       <div class="mb-4">
-                        <label for="startDate" class="block text-900 font-bold mb-2">
+                        <label for="quest-start-date" class="block text-900 font-bold mb-2">
                           <i class="pi pi-clock mr-2"></i>Date et Heure de Début
                         </label>
                         <Calendar 
-                          id="startDate"
+                          inputId="quest-start-date"
+                          aria-label="Date et heure de début de la quête"
                           v-model="questForm.startDate" 
                           showTime
                           hourFormat="24"
@@ -313,11 +323,12 @@
                     
                     <div class="col-12 md:col-6">
                       <div class="mb-4">
-                        <label for="endDate" class="block text-900 font-bold mb-2">
+                        <label for="quest-end-date" class="block text-900 font-bold mb-2">
                           <i class="pi pi-clock mr-2"></i>Date et Heure de Fin
                         </label>
                         <Calendar 
-                          id="endDate"
+                          inputId="quest-end-date"
+                          aria-label="Date et heure de fin de la quête"
                           v-model="questForm.endDate" 
                           showTime
                           hourFormat="24"
@@ -598,6 +609,7 @@
                   </h4>
                   <Button 
                     @click="removeStep(index)"
+                    :aria-label="`Supprimer l’étape ${index + 1}`"
                     icon="pi pi-trash"
                     class="p-button-rounded p-button-text p-button-danger"
                     v-tooltip="'Supprimer'"
@@ -628,6 +640,30 @@
                       <label :for="`required${index}`" class="text-900">Étape requise</label>
                     </div>
                   </div>
+
+                  <div class="col-12 md:col-4">
+                    <label :for="`action${index}`" class="block text-900 font-bold mb-2">Action vérifiée *</label>
+                    <Dropdown
+                      :id="`action${index}`"
+                      v-model="step.actionType"
+                      :options="actionOptions"
+                      optionLabel="label"
+                      optionValue="value"
+                      placeholder="Choisir une action"
+                      class="w-full"
+                    />
+                  </div>
+
+                  <div class="col-12 md:col-4">
+                    <label :for="`target${index}`" class="block text-900 font-bold mb-2">Nombre requis</label>
+                    <InputNumber
+                      :inputId="`target${index}`"
+                      v-model="step.target"
+                      :min="1"
+                      :max="1000"
+                      class="w-full"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -657,6 +693,7 @@
                   />
                   <Button 
                     @click="questForm.hints.splice(index, 1)"
+                    :aria-label="`Supprimer l’indice ${index + 1}`"
                     icon="pi pi-times"
                     class="p-button-rounded p-button-text p-button-danger"
                   />
@@ -708,15 +745,15 @@
     <!-- Dialog de confirmation de suppression -->
     <Dialog 
       v-model:visible="showDeleteDialog" 
-      header="Confirmer la suppression"
+      header="Confirmer l’archivage"
       :modal="true"
       :closable="true"
       :style="{ width: '400px' }"
     >
       <div class="delete-confirmation">
         <i class="pi pi-exclamation-triangle warning-icon"></i>
-        <p>Êtes-vous sûr de vouloir supprimer la quête <strong>"{{ questToDelete?.title }}"</strong> ?</p>
-        <p class="warning-text">Cette action est irréversible.</p>
+        <p>Archiver la quête <strong>"{{ questToDelete?.title }}"</strong> ?</p>
+        <p class="warning-text">La progression et l’historique seront conservés.</p>
       </div>
       
       <template #footer>
@@ -727,7 +764,7 @@
         />
         <Button 
           @click="deleteQuest" 
-          label="Supprimer"
+          label="Archiver"
           :loading="deleting"
           class="p-button-danger"
         />
@@ -785,7 +822,7 @@ const questForm = reactive({
   description: '',
   type: '',
   difficulty: 'easy',
-  status: 'active',
+  status: 'draft',
   icon: '🗺️',
   
   // Récompenses
@@ -813,6 +850,7 @@ const questForm = reactive({
     title: '', 
     description: '',
     required: true,
+    actionType: null,
     target: 1,
     current: 0
   }],
@@ -826,9 +864,17 @@ const errors = ref({})
 // Options pour les dropdowns
 const statusOptions = [
   { label: 'Tous', value: null },
+  { label: 'Brouillon', value: 'draft' },
+  { label: 'Planifié', value: 'scheduled' },
   { label: 'Actif', value: 'active' },
-  { label: 'Inactif', value: 'inactive' },
-  { label: 'Brouillon', value: 'draft' }
+  { label: 'Terminé', value: 'completed' },
+  { label: 'Archivé', value: 'archived' }
+]
+
+const actionOptions = [
+  { label: 'Connexion', value: 'LOGIN' },
+  { label: 'Mise à jour du profil', value: 'PROFILE_UPDATE' },
+  { label: 'Publication', value: 'POST' }
 ]
 
 const difficultyOptions = [
@@ -927,8 +973,8 @@ const resetForm = () => {
     type: '',
     difficulty: 'easy',
     points: 50,
-    status: 'active',
-    steps: [{ title: '' }]
+    status: 'draft',
+    steps: [{ title: '', description: '', required: true, actionType: null, target: 1 }]
   })
   errors.value = {}
   editingQuest.value = null
@@ -956,12 +1002,21 @@ const validateForm = () => {
   if (!questForm.points || questForm.points < 1) {
     errors.value.points = 'Les points doivent être supérieurs à 0'
   }
+
+  if (questForm.status !== 'draft') {
+    if (!questForm.startDate || !questForm.endDate || questForm.endDate <= questForm.startDate) {
+      errors.value.dates = 'Une période valide est obligatoire avant publication'
+    }
+    if (!questForm.steps.length || questForm.steps.some(step => !step.title?.trim() || !step.actionType || !step.target)) {
+      errors.value.steps = 'Chaque étape publiée doit avoir un titre, une action et une cible'
+    }
+  }
   
   return Object.keys(errors.value).length === 0
 }
 
 const addStep = () => {
-  questForm.steps.push({ title: '' })
+  questForm.steps.push({ title: '', description: '', required: true, actionType: null, target: 1 })
 }
 
 const removeStep = (index) => {
@@ -971,7 +1026,15 @@ const removeStep = (index) => {
 }
 
 const saveQuest = async () => {
-  if (!validateForm()) return
+  if (!validateForm()) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Quête incomplète',
+      detail: Object.values(errors.value).join(' · '),
+      life: 5000
+    })
+    return
+  }
   
   try {
     saving.value = true
@@ -1000,6 +1063,7 @@ const saveQuest = async () => {
         title: step.title.trim(),
         description: step.description || null,
         required: step.required !== false,
+        actionType: step.actionType,
         target: step.target || 1,
         current: step.current || 0
       })),
@@ -1072,7 +1136,13 @@ const editQuest = (quest) => {
     targetHouses: quest.targetHouses || [],
     prerequisites: quest.prerequisites || [],
     rewardBadges: quest.rewardBadges || [],
-    steps: quest.steps?.length ? [...quest.steps] : [{ title: '', description: '', required: true, target: 1, current: 0 }],
+    steps: quest.steps?.length
+      ? quest.steps.map(step => ({
+          ...step,
+          actionType: step.action_type,
+          target: step.target_value || 1
+        }))
+      : [{ title: '', description: '', required: true, actionType: null, target: 1, current: 0 }],
     hints: quest.hints?.length ? [...quest.hints] : ['']
   })
   showCreateDialog.value = true
@@ -1093,7 +1163,7 @@ const deleteQuest = async () => {
     toast.add({
       severity: 'success',
       summary: 'Succès',
-      detail: 'Quête supprimée avec succès',
+    detail: 'Quête archivée avec historique conservé',
       life: 3000
     })
     
@@ -1114,8 +1184,19 @@ const deleteQuest = async () => {
   }
 }
 
-const viewQuestDetails = (quest) => {
-  console.log('Voir détails de la quête:', quest)
+const viewQuestDetails = async (quest) => {
+  try {
+    const preview = await adminQuestsService.previewQuestLifecycle(quest.id)
+    const validation = preview.validation?.valid ? 'Configuration valide' : `À corriger : ${(preview.validation?.errors || []).join(', ')}`
+    toast.add({
+      severity: preview.validation?.valid ? 'info' : 'warn',
+      summary: `${getStatusLabel(preview.current_status)} · ${validation}`,
+      detail: `${preview.audience_count} personne(s) éligible(s), ${preview.assigned_count} assignée(s), ${preview.not_started_count} sans démarrer`,
+      life: 7000
+    })
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Aperçu impossible', detail: error.message, life: 4000 })
+  }
 }
 
 // Navigation vers la vue de création publique
@@ -1137,18 +1218,22 @@ const getTypeLabel = (type) => {
 
 const getStatusLabel = (status) => {
   const labels = {
+    scheduled: 'Planifié',
     active: 'Actif',
-    inactive: 'Inactif',
-    draft: 'Brouillon'
+    draft: 'Brouillon',
+    completed: 'Terminé',
+    archived: 'Archivé'
   }
   return labels[status] || status
 }
 
 const getStatusSeverity = (status) => {
   const severities = {
+    scheduled: 'info',
     active: 'success',
-    inactive: 'secondary',
-    draft: 'warning'
+    draft: 'warning',
+    completed: 'secondary',
+    archived: 'contrast'
   }
   return severities[status] || 'info'
 }
@@ -1206,5 +1291,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Styles personnalisés supprimés - utilisation exclusive de PrimeVue et classes utilitaires */
+@media (max-width: 640px) {
+  .gamification-manager { padding: 1rem 0 !important; }
+  .manager-toolbar { align-items: stretch !important; flex-direction: column; gap: 1rem; }
+  .manager-actions { width: 100%; flex-direction: column; }
+  .manager-actions :deep(.p-button) { width: 100%; justify-content: center; }
+  .manager-filters { flex-direction: column; }
+  .manager-search { width: 100%; min-width: 0 !important; }
+  .manager-filters :deep(.p-dropdown) { width: 100%; min-width: 0 !important; }
+}
 </style>

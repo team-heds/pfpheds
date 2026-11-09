@@ -1,6 +1,7 @@
 <template>
-  <div class="chart-wrapper" :style="{ height: height + 'px' }">
+  <div class="chart-wrapper" :style="{ height: height + 'px' }" :role="chartData ? 'img' : 'status'" :aria-label="accessibleLabel || label || 'Graphique en ligne'">
     <Line v-if="chartData" :data="chartData" :options="chartOptions" />
+    <p v-else class="chart-empty">Aucune donnée disponible</p>
   </div>
 </template>
 
@@ -48,7 +49,8 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  textColor: String
+  textColor: String,
+  accessibleLabel: String
 })
 
 // Détection réactive du thème
@@ -165,4 +167,5 @@ const chartOptions = computed(() => {
   position: relative;
   width: 100%;
 }
+.chart-empty { display:grid;place-items:center;height:100%;margin:0;color:var(--text-color-secondary); }
 </style>

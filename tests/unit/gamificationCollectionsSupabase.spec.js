@@ -44,13 +44,13 @@ describe('collections gamification Supabase', () => {
   })
 
   it('normalise target_value et current_value pour les défis', async () => {
-    const challenge = { id: 'c1', name: 'Défi', target_value: 5, action_type: 'quiz_complete', xp_reward: 100, week_number: 35, year: 2026, is_active: true }
+    const challenge = { id: 'c1', name: 'Défi', target_value: 5, action_type: 'quiz_complete', xp_reward: 100, week_number: 35, year: 2026, end_date: '2026-09-28', is_active: true }
     responses.set('challenges', { data: [challenge], error: null })
     responses.set('user_challenge_progress', { data: [{ challenge_id: 'c1', current_value: 3, completed: false, challenge }], error: null })
 
     const result = await challengesService.getUserActiveChallenges('user-1')
 
-    expect(result[0]).toMatchObject({ id: 'c1', challengeId: 'c1', challengeName: 'Défi', target: 5, progress: 3, completed: false, type: 'quiz_complete', reward: { xp: 100 } })
+    expect(result[0]).toMatchObject({ id: 'c1', challengeId: 'c1', challengeName: 'Défi', target: 5, progress: 3, completed: false, type: 'quiz_complete', endDate: '2026-09-28T23:59:59.999', reward: { xp: 100 } })
     expect(calls.find((call) => call.table === 'user_challenge_progress').filters).toContainEqual(['user_id', 'user-1'])
     expect(calls.find((call) => call.table === 'challenges').ors.some((filter) => filter.includes('start_date.is.null,start_date.lte.'))).toBe(true)
   })

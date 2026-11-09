@@ -118,6 +118,20 @@ describe('parcours complet de réinitialisation du mot de passe', () => {
     expect(wrapper.find('form.password-form').exists()).toBe(true)
   })
 
+  it('explique une adresse ou un code qui ne correspond pas au compte', async () => {
+    recovery.authorizeWithOtp.mockRejectedValueOnce({ message: 'User not found' })
+    const wrapper = await mountJourney({ status: 'invalid', reason: 'error' })
+
+    await wrapper.get('#codeEmail').setValue('student@example.ch')
+    await wrapper.get('#codeToken').setValue('123456')
+    await wrapper.get('form.code-form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.get('[role="alert"]').text()).toContain(
+      'L’adresse email ou le code ne correspond pas'
+    )
+  })
+
   it('refuse des mots de passe différents sans appeler Supabase', async () => {
     const wrapper = await mountJourney({ status: 'valid' })
 

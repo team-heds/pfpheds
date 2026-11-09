@@ -1,0 +1,6 @@
+--- docker-compose.yml
++++ docker-compose.yml
+@@ -220,2 +220,3 @@
+       STORAGE_BACKEND: file
++      GLOBAL_S3_BUCKET: "undefined"
+       FILE_STORAGE_BACKEND_PATH: /var/lib/storage
