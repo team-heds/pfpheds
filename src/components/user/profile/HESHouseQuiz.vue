@@ -692,11 +692,11 @@ onMounted(async () => {
 
 .answer-option {
   padding: 1rem;
-  border: 2px solid #e0e0e0;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: white;
+  background: var(--surface-card);
 }
 
 .answer-option:hover {
@@ -707,7 +707,7 @@ onMounted(async () => {
 
 .answer-option.selected {
   border-color: var(--primary-color);
-  background: #ebf3fd;
+  background: color-mix(in srgb, var(--primary-color) 16%, var(--surface-card));
 }
 
 .answer-content {
@@ -724,7 +724,7 @@ onMounted(async () => {
 
 .answer-text {
   flex: 1;
-  color: #2c3e50;
+  color: var(--text-color);
 }
 
 .question-actions {
@@ -778,7 +778,7 @@ onMounted(async () => {
 .house-motto {
   font-size: 1.3rem;
   font-style: italic;
-  color: #7f8c8d;
+  color: var(--text-color-secondary);
   margin-bottom: 2rem;
 }
 
@@ -786,7 +786,7 @@ onMounted(async () => {
   margin-bottom: 2rem;
   font-size: 1.1rem;
   line-height: 1.6;
-  color: #34495e;
+  color: var(--text-color);
 }
 
 .result-actions {
@@ -879,7 +879,7 @@ onMounted(async () => {
 }
 
 .confirmation-message {
-  background: #f0f9ff;
+  background: var(--surface-section);
   border: 2px solid #22c55e;
   border-radius: 12px;
   padding: 2rem;
@@ -902,7 +902,7 @@ onMounted(async () => {
 .confirmation-message p {
   font-size: 1.1rem;
   line-height: 1.6;
-  color: #374151;
+  color: var(--text-color);
   margin-bottom: 1rem;
 }
 

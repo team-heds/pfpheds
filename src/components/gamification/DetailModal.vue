@@ -1,599 +1,303 @@
 <template>
-  <Dialog 
-    v-model:visible="visible" 
-    :modal="true" 
-    :closable="true"
-    :dismissableMask="true"
-    :style="{ width: '90vw', maxWidth: '600px' }"
-    :contentStyle="{ padding: 0 }"
+  <Dialog
+    v-model:visible="visible"
+    modal
+    dismissable-mask
+    :header="title"
+    :style="{ width: 'min(92vw, 560px)' }"
+    class="gamification-detail-dialog"
   >
-    <!-- Badge Detail -->
-    <template v-if="type === 'badge' && item">
-      <div class="detail-modal badge-detail" :class="`rarity-${item.rarity}`">
-        <div class="detail-header">
-          <div class="icon-container">
-            <i :class="item.icon || 'pi pi-star'" class="detail-icon"></i>
-            <div class="rarity-glow"></div>
-          </div>
-          <div class="rarity-badge" :class="`rarity-${item.rarity}`">
-            {{ getRarityLabel(item.rarity) }}
-          </div>
-        </div>
-        
-        <div class="detail-content">
-          <h2 class="detail-title">{{ item.name }}</h2>
-          <p class="detail-description">{{ item.description }}</p>
-          
-          <div class="detail-stats">
-            <div class="stat-item">
-              <i class="pi pi-bolt"></i>
-              <span>+{{ item.points || item.xp_reward || 0 }} XP</span>
-            </div>
-            <div class="stat-item" v-if="item.badge_type || item.category">
-              <i class="pi pi-tag"></i>
-              <span>{{ item.badge_type || item.category }}</span>
-            </div>
-          </div>
-          
-          <div class="unlock-info" v-if="item.unlocked_at">
-            <i class="pi pi-check-circle"></i>
-            <span>Débloqué le {{ formatDate(item.unlocked_at) }}</span>
-          </div>
-          
-          <div class="requirements" v-if="item.requirements">
-            <h3>Condition de déblocage :</h3>
-            <p>{{ formatRequirements(item.requirements) }}</p>
-          </div>
-        </div>
+    <div v-if="item" class="detail" :style="{ '--accent': accent }">
+      <!-- En-tête : icône et étiquette (rareté ou difficulté) -->
+      <div class="detail__hero">
+        <span class="detail__icon" aria-hidden="true">
+          <i v-if="isPrimeIcon(icon)" :class="icon"></i>
+          <template v-else>{{ icon }}</template>
+        </span>
+        <span class="detail__tag">{{ tagLabel }}</span>
       </div>
-    </template>
 
-    <!-- Challenge Detail -->
-    <template v-else-if="type === 'challenge' && item">
-      <div class="detail-modal challenge-detail">
-        <div class="detail-header challenge-header">
-          <div class="icon-container">
-            <i :class="item.icon || 'pi pi-flag'" class="detail-icon"></i>
-          </div>
-          <div class="difficulty-badge" :class="`difficulty-${item.difficulty}`">
-            {{ getDifficultyLabel(item.difficulty) }}
-          </div>
-        </div>
-        
-        <div class="detail-content">
-          <h2 class="detail-title">{{ item.title }}</h2>
-          <p class="detail-description">{{ item.description }}</p>
-          
-          <div class="progress-section" v-if="item.progress !== undefined">
-            <div class="progress-header">
-              <span>Progression</span>
-              <span class="progress-value">{{ item.progress }}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: item.progress + '%' }"></div>
-            </div>
-          </div>
-          
-          <div class="detail-stats">
-            <div class="stat-item">
-              <i class="pi pi-bolt"></i>
-              <span>+{{ item.points || item.xp_reward || 0 }} XP</span>
-            </div>
-            <div class="stat-item" v-if="item.type">
-              <i class="pi pi-tag"></i>
-              <span>{{ item.type }}</span>
-            </div>
-            <div class="stat-item" v-if="item.end_date">
-              <i class="pi pi-calendar"></i>
-              <span>Jusqu'au {{ formatDate(item.end_date) }}</span>
-            </div>
-          </div>
-          
-          <div class="action-buttons">
-            <Button 
-              v-if="!item.completed"
-              label="Commencer" 
-              icon="pi pi-play" 
-              class="start-btn"
-              @click="startChallenge"
-            />
-            <Button 
-              v-else
-              label="Complété" 
-              icon="pi pi-check" 
-              class="completed-btn"
-              disabled
-            />
-          </div>
-        </div>
-      </div>
-    </template>
+      <p v-if="item.description" class="detail__description">{{ item.description }}</p>
 
-    <!-- Quest Detail -->
-    <template v-else-if="type === 'quest' && item">
-      <div class="detail-modal quest-detail">
-        <div class="detail-header quest-header">
-          <div class="icon-container">
-            <i :class="item.icon || 'pi pi-compass'" class="detail-icon"></i>
-          </div>
-          <div class="difficulty-badge" :class="`difficulty-${item.difficulty}`">
-            {{ getDifficultyLabel(item.difficulty) }}
-          </div>
+      <!-- Progression d'un défi -->
+      <div v-if="type === 'challenge'" class="detail__progress">
+        <div class="detail__progress-head">
+          <span>Progression</span>
+          <strong>{{ challengeProgress.value }}/{{ challengeProgress.target }}</strong>
         </div>
-        
-        <div class="detail-content">
-          <h2 class="detail-title">{{ item.title }}</h2>
-          <p class="detail-description">{{ item.description }}</p>
-          
-          <div class="story-section" v-if="item.story">
-            <h3>Histoire</h3>
-            <p class="story-text">{{ item.story }}</p>
-          </div>
-          
-          <div class="steps-section" v-if="item.steps">
-            <h3>Étapes ({{ item.steps_completed || 0 }}/{{ item.total_steps || item.steps.length }})</h3>
-            <div class="steps-list">
-              <div 
-                v-for="(step, index) in item.steps" 
-                :key="index"
-                class="step-item"
-                :class="{ completed: index < (item.steps_completed || 0) }"
-              >
-                <div class="step-number">{{ index + 1 }}</div>
-                <div class="step-content">
-                  <h4>{{ step.title }}</h4>
-                  <p>{{ step.description }}</p>
-                  <span class="step-xp">+{{ step.xp }} XP</span>
-                </div>
-                <i 
-                  v-if="index < (item.steps_completed || 0)" 
-                  class="pi pi-check-circle step-check"
-                ></i>
-              </div>
-            </div>
-          </div>
-          
-          <div class="detail-stats">
-            <div class="stat-item">
-              <i class="pi pi-bolt"></i>
-              <span>+{{ item.points || item.xp_reward || 0 }} XP Total</span>
-            </div>
-            <div class="stat-item" v-if="item.is_daily">
-              <i class="pi pi-calendar"></i>
-              <span>Quotidienne</span>
-            </div>
-            <div class="stat-item" v-if="item.is_weekly">
-              <i class="pi pi-calendar"></i>
-              <span>Hebdomadaire</span>
-            </div>
-          </div>
-          
-          <div class="action-buttons">
-            <Button 
-              v-if="!item.completed"
-              label="Commencer la quête" 
-              icon="pi pi-play" 
-              class="start-btn"
-              @click="startQuest"
-            />
-            <Button 
-              v-else
-              label="Quête complétée" 
-              icon="pi pi-check" 
-              class="completed-btn"
-              disabled
-            />
-          </div>
+        <div
+          class="detail__bar"
+          role="progressbar"
+          :aria-valuenow="challengeProgress.percent"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-label="`Progression du défi ${title}`"
+        >
+          <span :style="{ transform: `scaleX(${challengeProgress.percent / 100})` }"></span>
         </div>
       </div>
-    </template>
+
+      <ul class="detail__facts">
+        <li><i class="pi pi-star-fill" aria-hidden="true"></i>+{{ xp }} XP</li>
+        <li v-if="type === 'challenge' && actionInfo"><i :class="actionInfo.icon" aria-hidden="true"></i>{{ actionInfo.label }}</li>
+        <li v-if="type === 'badge' && categoryLabel"><i class="pi pi-tag" aria-hidden="true"></i>{{ categoryLabel }}</li>
+        <li v-if="type === 'challenge' && endDate"><i class="pi pi-calendar" aria-hidden="true"></i>Jusqu’au {{ formatDate(endDate) }}</li>
+      </ul>
+
+      <p v-if="type === 'challenge' && actionInfo?.hint && !item.completed" class="detail__hint">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>{{ actionInfo.hint }}
+      </p>
+
+      <p v-if="type === 'badge' && unlockedAt" class="detail__success">
+        <i class="pi pi-check-circle" aria-hidden="true"></i>Débloqué le {{ formatDate(unlockedAt) }}
+      </p>
+      <p v-else-if="type === 'challenge' && item.completed" class="detail__success">
+        <i class="pi pi-check-circle" aria-hidden="true"></i>Défi réussi{{ item.completedAt ? ` le ${formatDate(item.completedAt)}` : '' }}
+      </p>
+
+      <div v-if="cta" class="detail__actions">
+        <button type="button" class="detail__cta" @click="go(cta.to)">
+          {{ cta.label }} <i class="pi pi-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
   </Dialog>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
-import Button from 'primevue/button'
+import { useAuthStore } from '@/stores/authStore'
+import { BADGE_RARITY, BADGE_CATEGORIES } from '@/service/badgesService'
 
 const props = defineProps({
   modelValue: Boolean,
   type: String, // 'badge', 'challenge', 'quest'
-  item: Object
+  item: Object,
+  // Consultation d'un autre profil : aucune action personnelle proposée.
+  readOnly: { type: Boolean, default: false }
 })
+const emit = defineEmits(['update:modelValue'])
 
-const emit = defineEmits(['update:modelValue', 'start'])
+const router = useRouter()
+const authStore = useAuthStore()
 
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
 
-const getRarityLabel = (rarity) => {
-  const labels = {
-    common: 'Commun',
-    uncommon: 'Peu Commun',
-    rare: 'Rare',
-    epic: 'Épique',
-    legendary: 'Légendaire',
-    mythic: 'Mythique'
-  }
-  return labels[rarity] || rarity
+const DIFFICULTY = {
+  easy: { label: 'Facile', color: '#22C55E' },
+  medium: { label: 'Moyen', color: '#F59E0B' },
+  hard: { label: 'Difficile', color: '#EF4444' },
+  legendary: { label: 'Légendaire', color: '#8B5CF6' },
+  expert: { label: 'Expert', color: '#8B5CF6' }
 }
 
-const getDifficultyLabel = (difficulty) => {
-  const labels = {
-    easy: 'Facile',
-    medium: 'Moyen',
-    hard: 'Difficile',
-    expert: 'Expert'
-  }
-  return labels[difficulty] || difficulty
+// Actions réellement comptées par le moteur, avec un libellé et une aide lisibles.
+const ACTIONS = {
+  update_profile: { label: 'Mise à jour du profil', icon: 'pi pi-user-edit', hint: 'Enregistre une modification de ton profil : le défi se valide tout seul.', cta: { label: 'Mettre à jour mon profil', to: 'profile' } },
+  daily_login: { label: 'Connexion quotidienne', icon: 'pi pi-sign-in', hint: 'Chaque jour où tu te connectes compte une fois, automatiquement.' },
+  create_post: { label: 'Publication dans le feed', icon: 'pi pi-pencil', hint: 'Publie un message dans le feed : le défi se valide tout seul.', cta: { label: 'Publier dans le feed', to: '/feed' } }
+}
+
+const title = computed(() => props.item?.name || props.item?.title || '')
+
+const icon = computed(() => props.item?.icon || (props.type === 'badge' ? '🏅' : props.type === 'quest' ? 'pi pi-compass' : 'pi pi-flag'))
+const isPrimeIcon = (value) => typeof value === 'string' && value.startsWith('pi ')
+
+const difficulty = computed(() => DIFFICULTY[String(props.item?.difficulty || '').toLowerCase()] || null)
+const rarity = computed(() => BADGE_RARITY[props.item?.rarity] || null)
+
+const tagLabel = computed(() => {
+  if (props.type === 'badge') return rarity.value?.name || 'Badge'
+  return difficulty.value?.label || (props.type === 'quest' ? 'Quête' : 'Défi')
+})
+const accent = computed(() => (props.type === 'badge' ? rarity.value?.color : difficulty.value?.color) || 'var(--primary-color)')
+
+const xp = computed(() => {
+  const item = props.item || {}
+  if (props.type === 'badge') return Number(item.xpBonus ?? item.xp_bonus ?? 0)
+  return Number(item.reward?.xp ?? item.xp_reward ?? item.points ?? 0)
+})
+
+const categoryLabel = computed(() => {
+  const category = props.item?.category
+  if (!category || category === 'general') return null
+  return BADGE_CATEGORIES[category]?.name || null
+})
+
+const actionInfo = computed(() => ACTIONS[String(props.item?.type || props.item?.action_type || '').toLowerCase()] || null)
+const endDate = computed(() => props.item?.endDate || props.item?.end_date || null)
+const unlockedAt = computed(() => props.item?.unlockedAt || props.item?.unlocked_at || null)
+
+const challengeProgress = computed(() => {
+  const target = Math.max(1, Number(props.item?.target || props.item?.target_value || 1))
+  const value = Math.min(target, Number(props.item?.progress || 0))
+  return { value, target, percent: Math.round((value / target) * 100) }
+})
+
+const cta = computed(() => {
+  if (props.readOnly || !props.item) return null
+  if (props.type === 'challenge' && !props.item.completed && actionInfo.value?.cta) return actionInfo.value.cta
+  if (props.type === 'quest') return { label: 'Voir mes quêtes', to: '/quests' }
+  return null
+})
+
+const go = (to) => {
+  visible.value = false
+  router.push(to === 'profile' ? `/profile/${authStore.user?.id}` : to)
 }
 
 const formatDate = (date) => {
   if (!date) return ''
-  return new Date(date).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
-}
-
-const formatRequirements = (requirements) => {
-  if (!requirements) return ''
-  if (typeof requirements === 'string') {
-    try {
-      requirements = JSON.parse(requirements)
-    } catch {
-      return requirements
-    }
-  }
-  
-  const { type, value } = requirements
-  const messages = {
-    quests_completed: `Complète ${value} quête(s)`,
-    level: `Atteins le niveau ${value}`,
-    login_streak: `Connecte-toi ${value} jours d'affilée`,
-    comments: `Fais ${value} commentaires`,
-    likes_received: `Reçois ${value} likes`,
-    help_count: `Aide ${value} personne(s)`,
-    house: `Rejoins la maison ${value}`,
-    challenges_completed: `Complète ${value} défi(s)`,
-    badges_count: `Débloque ${value} badges`
-  }
-  
-  return messages[type] || `${type}: ${value}`
-}
-
-const startChallenge = () => {
-  emit('start', { type: 'challenge', item: props.item })
-  visible.value = false
-}
-
-const startQuest = () => {
-  emit('start', { type: 'quest', item: props.item })
-  visible.value = false
+  const value = /^\d{4}-\d{2}-\d{2}$/.test(String(date)) ? `${date}T12:00:00` : date
+  return new Date(value).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 </script>
 
 <style scoped>
-.detail-modal {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px;
-  overflow: hidden;
+.detail {
+  display: grid;
+  gap: 1.1rem;
+  color: var(--text-color);
 }
 
-.detail-header {
-  position: relative;
-  padding: 3rem 2rem 2rem;
-  text-align: center;
-  background: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(0,0,0,0.1));
-}
-
-.icon-container {
-  position: relative;
-  display: inline-block;
-  margin-bottom: 1rem;
-}
-
-.detail-icon {
-  font-size: 4rem;
-  color: white;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-  position: relative;
-  z-index: 2;
-}
-
-.rarity-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
-  animation: pulse 2s ease-in-out infinite;
-  z-index: 1;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
-}
-
-.rarity-badge,
-.difficulty-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: white;
-}
-
-/* Rarity colors */
-.rarity-common { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
-.rarity-uncommon { background: linear-gradient(135deg, #27ae60, #229954); }
-.rarity-rare { background: linear-gradient(135deg, #3498db, #2980b9); }
-.rarity-epic { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
-.rarity-legendary { background: linear-gradient(135deg, #f39c12, #e67e22); }
-.rarity-mythic { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-
-/* Difficulty colors */
-.difficulty-easy { background: linear-gradient(135deg, #2ecc71, #27ae60); }
-.difficulty-medium { background: linear-gradient(135deg, #f39c12, #e67e22); }
-.difficulty-hard { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-.difficulty-expert { background: linear-gradient(135deg, #8e44ad, #71368a); }
-
-.detail-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 16px 16px 0 0;
-  margin-top: -16px;
-}
-
-.detail-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0 0 1rem 0;
-}
-
-.detail-description {
-  font-size: 1rem;
-  color: #7f8c8d;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-}
-
-.detail-stats {
+.detail__hero {
   display: flex;
+  align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
-  margin: 1.5rem 0;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: #ecf0f1;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #34495e;
-}
-
-.stat-item i {
-  color: #3498db;
-}
-
-.unlock-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   padding: 1rem;
-  background: #d5f4e6;
-  border-radius: 8px;
-  color: #27ae60;
-  font-weight: 500;
-  margin: 1rem 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--surface-border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-card));
 }
 
-.requirements {
-  padding: 1rem;
-  background: #fff3cd;
-  border-left: 4px solid #f39c12;
-  border-radius: 4px;
-  margin: 1rem 0;
+.detail__icon {
+  display: grid;
+  flex: 0 0 3.25rem;
+  width: 3.25rem;
+  height: 3.25rem;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--surface-card);
+  font-size: 1.8rem;
+  line-height: 1;
 }
 
-.requirements h3 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #856404;
-  margin: 0 0 0.5rem 0;
+.detail__icon .pi {
+  font-size: 1.4rem;
+  color: var(--accent);
 }
 
-.requirements p {
-  font-size: 0.95rem;
-  color: #856404;
+.detail__tag {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  color: var(--text-color);
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.detail__description {
   margin: 0;
+  color: var(--text-color-secondary);
+  line-height: 1.55;
 }
 
-.progress-section {
-  margin: 1.5rem 0;
-}
-
-.progress-header {
+.detail__progress-head {
   display: flex;
   justify-content: space-between;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
-  font-weight: 600;
-  color: #2c3e50;
 }
 
-.progress-value {
-  color: #3498db;
-}
-
-.progress-bar {
-  height: 8px;
-  background: #ecf0f1;
-  border-radius: 4px;
+.detail__bar {
   overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-section);
 }
 
-.progress-fill {
+.detail__bar span {
+  display: block;
   height: 100%;
-  background: linear-gradient(90deg, #3498db, #2ecc71);
-  transition: width 0.3s ease;
+  border-radius: inherit;
+  background: var(--accent);
+  transform-origin: left center;
 }
 
-.story-section {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.story-section h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 0.75rem 0;
-}
-
-.story-text {
-  font-size: 0.95rem;
-  color: #7f8c8d;
-  line-height: 1.6;
-  font-style: italic;
+.detail__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.steps-section {
-  margin: 1.5rem 0;
-}
-
-.steps-section h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 1rem 0;
-}
-
-.steps-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.step-item {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #bdc3c7;
-  transition: all 0.3s ease;
-}
-
-.step-item.completed {
-  background: #d5f4e6;
-  border-left-color: #27ae60;
-}
-
-.step-number {
-  width: 32px;
-  height: 32px;
-  display: flex;
+.detail__facts li {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  background: white;
-  border-radius: 50%;
-  font-weight: 600;
-  color: #7f8c8d;
-  flex-shrink: 0;
-}
-
-.step-item.completed .step-number {
-  background: #27ae60;
-  color: white;
-}
-
-.step-content {
-  flex: 1;
-}
-
-.step-content h4 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 0.25rem 0;
-}
-
-.step-content p {
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  background: var(--surface-section);
   font-size: 0.85rem;
-  color: #7f8c8d;
-  margin: 0 0 0.5rem 0;
 }
 
-.step-xp {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #3498db;
+.detail__facts .pi-star-fill {
+  color: #f3c300;
 }
 
-.step-check {
-  font-size: 1.5rem;
-  color: #27ae60;
-  align-self: center;
-}
-
-.action-buttons {
+.detail__hint,
+.detail__success {
   display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
-.start-btn {
-  flex: 1;
-  background: linear-gradient(135deg, #3498db, #2ecc71);
-  border: none;
-  padding: 0.75rem;
-  font-weight: 600;
+.detail__hint {
+  color: var(--text-color-secondary);
+  background: var(--surface-section);
 }
 
-.start-btn:hover {
-  background: linear-gradient(135deg, #2980b9, #27ae60);
+.detail__success {
+  color: #22c55e;
+  background: color-mix(in srgb, #22c55e 12%, transparent);
 }
 
-.completed-btn {
-  flex: 1;
-  background: #95a5a6;
-  border: none;
-  padding: 0.75rem;
-  font-weight: 600;
-  cursor: not-allowed;
+.detail__actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
-@media (max-width: 768px) {
-  .detail-content {
-    padding: 1.5rem;
-  }
-  
-  .detail-title {
-    font-size: 1.5rem;
-  }
-  
-  .detail-stats {
-    flex-direction: column;
-  }
+.detail__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.1rem;
+  border: 0;
+  border-radius: 10px;
+  color: #071426;
+  background: #f3c300;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.detail__cta:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 </style>

@@ -811,7 +811,7 @@ onUnmounted(() => {
   color: var(--text-color-secondary);
   margin-top: 4px;
   padding: 4px 8px;
-  background: var(--surface-100);
+  background: color-mix(in srgb, var(--surface-500) 18%, var(--surface-card));
   border-radius: 6px;
   border-left: 3px solid var(--blue-500);
 }
@@ -819,14 +819,14 @@ onUnmounted(() => {
 .quest-deadline-compact.deadline-urgent {
   background: rgba(249, 115, 22, 0.1);
   border-left-color: var(--orange-500);
-  color: var(--orange-700);
+  color: var(--orange-400);
   font-weight: 600;
 }
 
 .quest-deadline-compact.deadline-expired {
   background: rgba(239, 68, 68, 0.1);
   border-left-color: var(--red-500);
-  color: var(--red-700);
+  color: var(--red-400);
   font-weight: 600;
 }
 
@@ -851,12 +851,12 @@ onUnmounted(() => {
   border-radius: 6px;
 }
 
-.badge-mini.diff-EASY { background: var(--green-100); }
-.badge-mini.diff-MEDIUM { background: var(--blue-100); }
-.badge-mini.diff-HARD { background: var(--orange-100); }
-.badge-mini.diff-EPIC { background: var(--purple-100); }
-.badge-mini.diff-LEGENDARY { background: var(--pink-100); }
-.badge-mini.type { background: var(--cyan-100); }
+.badge-mini.diff-EASY { background: color-mix(in srgb, var(--green-500) 18%, var(--surface-card)); }
+.badge-mini.diff-MEDIUM { background: color-mix(in srgb, var(--blue-500) 18%, var(--surface-card)); }
+.badge-mini.diff-HARD { background: color-mix(in srgb, var(--orange-500) 18%, var(--surface-card)); }
+.badge-mini.diff-EPIC { background: color-mix(in srgb, var(--purple-500) 18%, var(--surface-card)); }
+.badge-mini.diff-LEGENDARY { background: color-mix(in srgb, var(--pink-500) 18%, var(--surface-card)); }
+.badge-mini.type { background: color-mix(in srgb, var(--cyan-500) 18%, var(--surface-card)); }
 
 .separator {
   color: var(--text-color-secondary);
@@ -864,7 +864,7 @@ onUnmounted(() => {
 }
 
 .xp-value {
-  color: var(--yellow-700);
+  color: var(--yellow-400);
   font-weight: 700;
 }
 
@@ -911,25 +911,25 @@ onUnmounted(() => {
 }
 
 .status-badge-compact.status-available {
-  background: var(--blue-50);
+  background: color-mix(in srgb, var(--blue-500) 18%, var(--surface-card));
   border-color: var(--blue-500);
   color: var(--blue-600);
 }
 
 .status-badge-compact.status-progress {
-  background: var(--yellow-50);
+  background: color-mix(in srgb, var(--yellow-500) 18%, var(--surface-card));
   border-color: var(--yellow-500);
-  color: var(--yellow-700);
+  color: var(--yellow-400);
 }
 
 .status-badge-compact.status-completed {
-  background: var(--green-50);
+  background: color-mix(in srgb, var(--green-500) 18%, var(--surface-card));
   border-color: var(--green-500);
   color: var(--green-600);
 }
 
 .status-badge-compact.status-expired {
-  background: var(--red-50);
+  background: color-mix(in srgb, var(--red-500) 18%, var(--surface-card));
   border-color: var(--red-500);
   color: var(--red-600);
 }
@@ -1026,18 +1026,18 @@ onUnmounted(() => {
   gap: 6px;
 }
 
-.modal-badge.difficulty { background: var(--yellow-100); color: var(--yellow-900); }
-.modal-badge.diff-EASY { background: var(--green-100); color: var(--green-900); }
-.modal-badge.diff-MEDIUM { background: var(--blue-100); color: var(--blue-900); }
-.modal-badge.diff-HARD { background: var(--orange-100); color: var(--orange-900); }
-.modal-badge.diff-EPIC { background: var(--purple-100); color: var(--purple-900); }
-.modal-badge.diff-LEGENDARY { background: var(--pink-100); color: var(--pink-900); }
-.modal-badge.type { background: var(--cyan-100); color: var(--cyan-900); }
+.modal-badge.difficulty { background: color-mix(in srgb, var(--yellow-500) 18%, var(--surface-card)); color: var(--yellow-400); }
+.modal-badge.diff-EASY { background: color-mix(in srgb, var(--green-500) 18%, var(--surface-card)); color: var(--green-400); }
+.modal-badge.diff-MEDIUM { background: color-mix(in srgb, var(--blue-500) 18%, var(--surface-card)); color: var(--blue-400); }
+.modal-badge.diff-HARD { background: color-mix(in srgb, var(--orange-500) 18%, var(--surface-card)); color: var(--orange-400); }
+.modal-badge.diff-EPIC { background: color-mix(in srgb, var(--purple-500) 18%, var(--surface-card)); color: var(--purple-400); }
+.modal-badge.diff-LEGENDARY { background: color-mix(in srgb, var(--pink-500) 18%, var(--surface-card)); color: var(--pink-400); }
+.modal-badge.type { background: color-mix(in srgb, var(--cyan-500) 18%, var(--surface-card)); color: var(--cyan-400); }
 .modal-badge.status { background: var(--surface-section); }
 
 .modal-deadline {
-  background: var(--blue-100);
-  color: var(--blue-900);
+  background: color-mix(in srgb, var(--blue-500) 18%, var(--surface-card));
+  color: var(--blue-400);
   padding: 12px 16px;
   border-radius: 10px;
   display: flex;
@@ -1048,19 +1048,19 @@ onUnmounted(() => {
 }
 
 .modal-deadline.urgent {
-  background: var(--orange-100);
-  color: var(--orange-900);
+  background: color-mix(in srgb, var(--orange-500) 18%, var(--surface-card));
+  color: var(--orange-400);
   animation: pulse-modal 2s infinite;
 }
 
 .modal-deadline.expired {
-  background: var(--red-100);
-  color: var(--red-900);
+  background: color-mix(in srgb, var(--red-500) 18%, var(--surface-card));
+  color: var(--red-400);
 }
 
 .modal-deadline.completed {
-  background: var(--green-100);
-  color: var(--green-900);
+  background: color-mix(in srgb, var(--green-500) 18%, var(--surface-card));
+  color: var(--green-400);
 }
 
 @keyframes pulse-modal {
@@ -1328,39 +1328,39 @@ onUnmounted(() => {
 }
 
 .meta-badge.difficulty {
-  background: linear-gradient(135deg, var(--yellow-50), var(--yellow-100));
-  color: var(--yellow-900);
-  border: 1px solid var(--yellow-200);
+  background: color-mix(in srgb, var(--yellow-500) 14%, var(--surface-card));
+  color: var(--yellow-400);
+  border: 1px solid color-mix(in srgb, var(--yellow-500) 40%, var(--surface-border));
 }
 
 .meta-badge.diff-EASY {
-  background: linear-gradient(135deg, var(--green-50), var(--green-100));
-  color: var(--green-900);
-  border: 1px solid var(--green-200);
+  background: color-mix(in srgb, var(--green-500) 14%, var(--surface-card));
+  color: var(--green-400);
+  border: 1px solid color-mix(in srgb, var(--green-500) 40%, var(--surface-border));
 }
 
 .meta-badge.diff-MEDIUM {
-  background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
-  color: var(--blue-900);
-  border: 1px solid var(--blue-200);
+  background: color-mix(in srgb, var(--blue-500) 14%, var(--surface-card));
+  color: var(--blue-400);
+  border: 1px solid color-mix(in srgb, var(--blue-500) 40%, var(--surface-border));
 }
 
 .meta-badge.diff-HARD {
-  background: linear-gradient(135deg, var(--orange-50), var(--orange-100));
-  color: var(--orange-900);
-  border: 1px solid var(--orange-200);
+  background: color-mix(in srgb, var(--orange-500) 14%, var(--surface-card));
+  color: var(--orange-400);
+  border: 1px solid color-mix(in srgb, var(--orange-500) 40%, var(--surface-border));
 }
 
 .meta-badge.diff-EPIC {
-  background: linear-gradient(135deg, var(--purple-50), var(--purple-100));
-  color: var(--purple-900);
-  border: 1px solid var(--purple-200);
+  background: color-mix(in srgb, var(--purple-500) 14%, var(--surface-card));
+  color: var(--purple-400);
+  border: 1px solid color-mix(in srgb, var(--purple-500) 40%, var(--surface-border));
 }
 
 .meta-badge.diff-LEGENDARY {
-  background: linear-gradient(135deg, var(--pink-50), var(--pink-100));
-  color: var(--pink-900);
-  border: 1px solid var(--pink-200);
+  background: color-mix(in srgb, var(--pink-500) 14%, var(--surface-card));
+  color: var(--pink-400);
+  border: 1px solid color-mix(in srgb, var(--pink-500) 40%, var(--surface-border));
   animation: shimmer-legendary 2s infinite;
 }
 
@@ -1370,15 +1370,15 @@ onUnmounted(() => {
 }
 
 .meta-badge.type {
-  background: linear-gradient(135deg, var(--cyan-50), var(--cyan-100));
-  color: var(--cyan-900);
-  border: 1px solid var(--cyan-200);
+  background: color-mix(in srgb, var(--cyan-500) 14%, var(--surface-card));
+  color: var(--cyan-400);
+  border: 1px solid color-mix(in srgb, var(--cyan-500) 40%, var(--surface-border));
 }
 
 .meta-badge.level {
-  background: linear-gradient(135deg, var(--indigo-50), var(--indigo-100));
-  color: var(--indigo-900);
-  border: 1px solid var(--indigo-200);
+  background: color-mix(in srgb, var(--indigo-500) 14%, var(--surface-card));
+  color: var(--indigo-400);
+  border: 1px solid color-mix(in srgb, var(--indigo-500) 40%, var(--surface-border));
 }
 
 /* STATUS INDICATOR CLAIR */
@@ -1396,27 +1396,27 @@ onUnmounted(() => {
 }
 
 .status-indicator.status-available {
-  background: var(--blue-50);
-  color: var(--blue-700);
+  background: color-mix(in srgb, var(--blue-500) 18%, var(--surface-card));
+  color: var(--blue-400);
   border-color: var(--blue-300);
 }
 
 .status-indicator.status-progress {
-  background: var(--yellow-50);
-  color: var(--yellow-800);
+  background: color-mix(in srgb, var(--yellow-500) 18%, var(--surface-card));
+  color: var(--yellow-400);
   border-color: var(--yellow-300);
   animation: pulse-status 2s infinite;
 }
 
 .status-indicator.status-completed {
-  background: var(--green-50);
-  color: var(--green-700);
+  background: color-mix(in srgb, var(--green-500) 18%, var(--surface-card));
+  color: var(--green-400);
   border-color: var(--green-300);
 }
 
 .status-indicator.status-expired {
-  background: var(--red-50);
-  color: var(--red-700);
+  background: color-mix(in srgb, var(--red-500) 18%, var(--surface-card));
+  color: var(--red-400);
   border-color: var(--red-300);
 }
 
@@ -1519,8 +1519,8 @@ onUnmounted(() => {
 }
 
 .detail-item.reward-item-detail {
-  background: linear-gradient(135deg, var(--yellow-50), var(--yellow-100));
-  border-color: var(--yellow-200);
+  background: color-mix(in srgb, var(--yellow-500) 14%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--yellow-500) 40%, var(--surface-border));
 }
 
 .detail-icon {
@@ -1530,7 +1530,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
+  background: var(--surface-card);
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
@@ -1671,26 +1671,26 @@ onUnmounted(() => {
 }
 
 .status-badge.status-available {
-  background: var(--blue-50);
+  background: color-mix(in srgb, var(--blue-500) 18%, var(--surface-card));
   border-color: var(--blue-500);
   color: var(--blue-600);
 }
 
 .status-badge.status-progress {
-  background: var(--yellow-50);
+  background: color-mix(in srgb, var(--yellow-500) 18%, var(--surface-card));
   border-color: var(--yellow-500);
-  color: var(--yellow-700);
+  color: var(--yellow-400);
   animation: pulse-status 2s infinite;
 }
 
 .status-badge.status-completed {
-  background: var(--green-50);
+  background: color-mix(in srgb, var(--green-500) 18%, var(--surface-card));
   border-color: var(--green-500);
   color: var(--green-600);
 }
 
 .status-badge.status-expired {
-  background: var(--red-50);
+  background: color-mix(in srgb, var(--red-500) 18%, var(--surface-card));
   border-color: var(--red-500);
   color: var(--red-600);
 }
@@ -1755,53 +1755,53 @@ onUnmounted(() => {
 }
 
 .mini-badge.difficulty {
-  background: linear-gradient(135deg, var(--yellow-50), var(--yellow-100));
-  color: var(--yellow-800);
-  border-color: var(--yellow-200);
+  background: color-mix(in srgb, var(--yellow-500) 14%, var(--surface-card));
+  color: var(--yellow-400);
+  border-color: color-mix(in srgb, var(--yellow-500) 40%, var(--surface-border));
 }
 
 .mini-badge.diff-EASY {
-  background: linear-gradient(135deg, var(--green-50), var(--green-100));
-  color: var(--green-800);
+  background: color-mix(in srgb, var(--green-500) 14%, var(--surface-card));
+  color: var(--green-400);
 }
 
 .mini-badge.diff-MEDIUM {
-  background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
-  color: var(--blue-800);
+  background: color-mix(in srgb, var(--blue-500) 14%, var(--surface-card));
+  color: var(--blue-400);
 }
 
 .mini-badge.diff-HARD {
-  background: linear-gradient(135deg, var(--orange-50), var(--orange-100));
-  color: var(--orange-800);
+  background: color-mix(in srgb, var(--orange-500) 14%, var(--surface-card));
+  color: var(--orange-400);
 }
 
 .mini-badge.diff-EPIC {
-  background: linear-gradient(135deg, var(--purple-50), var(--purple-100));
-  color: var(--purple-800);
+  background: color-mix(in srgb, var(--purple-500) 14%, var(--surface-card));
+  color: var(--purple-400);
 }
 
 .mini-badge.diff-LEGENDARY {
-  background: linear-gradient(135deg, var(--pink-50), var(--pink-100));
-  color: var(--pink-800);
+  background: color-mix(in srgb, var(--pink-500) 14%, var(--surface-card));
+  color: var(--pink-400);
   animation: shimmer-badge 3s infinite;
 }
 
 @keyframes shimmer-badge {
   0%, 100% { box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  50% { box-shadow: 0 2px 8px var(--pink-200), 0 0 12px var(--pink-100); }
+  50% { box-shadow: 0 2px 8px color-mix(in srgb, var(--pink-500) 40%, var(--surface-border)), 0 0 12px var(--pink-100); }
 }
 
 .mini-badge.type {
-  background: linear-gradient(135deg, var(--cyan-50), var(--cyan-100));
-  color: var(--cyan-800);
-  border-color: var(--cyan-200);
+  background: color-mix(in srgb, var(--cyan-500) 14%, var(--surface-card));
+  color: var(--cyan-400);
+  border-color: color-mix(in srgb, var(--cyan-500) 40%, var(--surface-border));
 }
 
 .mini-badge.level {
-  background: linear-gradient(135deg, var(--indigo-50), var(--indigo-100));
-  color: var(--indigo-800);
+  background: color-mix(in srgb, var(--indigo-500) 14%, var(--surface-card));
+  color: var(--indigo-400);
   font-size: 0.7rem;
-  border-color: var(--indigo-200);
+  border-color: color-mix(in srgb, var(--indigo-500) 40%, var(--surface-border));
 }
 
 .quest-description-compact {
@@ -1902,20 +1902,20 @@ onUnmounted(() => {
 
 .info-item.recurring {
   color: var(--purple-600);
-  background: var(--purple-50);
+  background: color-mix(in srgb, var(--purple-500) 18%, var(--surface-card));
 }
 
 .info-item.expiring {
-  color: var(--orange-700);
+  color: var(--orange-400);
   font-weight: 700;
-  background: var(--orange-50);
+  background: color-mix(in srgb, var(--orange-500) 18%, var(--surface-card));
   animation: pulse-warning 1.5s infinite;
 }
 
 .info-item.expired {
-  color: var(--red-700);
+  color: var(--red-400);
   font-weight: 700;
-  background: var(--red-50);
+  background: color-mix(in srgb, var(--red-500) 18%, var(--surface-card));
 }
 
 @keyframes pulse-warning {
@@ -1960,9 +1960,9 @@ onUnmounted(() => {
 }
 
 .reward-item.xp {
-  background: linear-gradient(135deg, var(--yellow-50), var(--yellow-100));
-  color: var(--yellow-900);
-  border-color: var(--yellow-200);
+  background: color-mix(in srgb, var(--yellow-500) 14%, var(--surface-card));
+  color: var(--yellow-400);
+  border-color: color-mix(in srgb, var(--yellow-500) 40%, var(--surface-border));
 }
 
 .reward-item.xp i {
@@ -1977,9 +1977,9 @@ onUnmounted(() => {
 }
 
 .reward-item.badges {
-  background: linear-gradient(135deg, var(--purple-50), var(--purple-100));
-  color: var(--purple-900);
-  border-color: var(--purple-200);
+  background: color-mix(in srgb, var(--purple-500) 14%, var(--surface-card));
+  color: var(--purple-400);
+  border-color: color-mix(in srgb, var(--purple-500) 40%, var(--surface-border));
 }
 
 .reward-item.badges i {
@@ -2221,7 +2221,7 @@ onUnmounted(() => {
 
 /* Reward chips plus visuels */
 .reward-chip {
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.02));
+  background: var(--surface-section);
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -2524,7 +2524,7 @@ onUnmounted(() => {
 }
 
 .meta-item.recurring {
-  background: #f0fdfa;
+  background: color-mix(in srgb, var(--teal-500) 12%, var(--surface-card));
   color: #0891b2;
   border-color: #99f6e4;
 }
