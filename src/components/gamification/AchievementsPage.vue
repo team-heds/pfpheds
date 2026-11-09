@@ -360,7 +360,7 @@ onBeforeUnmount(() => {
 
 .achievements-page {
   min-height: 100vh;
-  background: #0b213f;
+  background: var(--surface-ground);
   padding-top: 2rem;
   padding-bottom: 4rem;
 }
@@ -376,7 +376,7 @@ onBeforeUnmount(() => {
 .loading-spinner {
   text-align: center;
   padding: 2rem;
-  background: white;
+  background: var(--surface-card);
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
@@ -389,7 +389,7 @@ onBeforeUnmount(() => {
 
 /* Page Header */
 .page-header {
-  background: white;
+  background: var(--surface-card);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   padding: 2rem 0;
 }
@@ -404,7 +404,7 @@ onBeforeUnmount(() => {
 }
 
 .title-section h1 {
-  color: #1f2937;
+  color: var(--text-color);
   margin: 0 0 0.5rem 0;
   display: flex;
   align-items: center;
@@ -412,7 +412,7 @@ onBeforeUnmount(() => {
 }
 
 .title-section p {
-  color: #6b7280;
+  color: var(--text-color-secondary);
   margin: 0;
 }
 
@@ -439,7 +439,7 @@ onBeforeUnmount(() => {
 }
 
 .stat-card {
-  background: white;
+  background: var(--surface-card);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -466,12 +466,12 @@ onBeforeUnmount(() => {
 .stat-number {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-color);
   margin-bottom: 0.25rem;
 }
 
 .stat-label {
-  color: #6b7280;
+  color: var(--text-color-secondary);
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
 }
@@ -498,8 +498,8 @@ onBeforeUnmount(() => {
   gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
-  background: #071426;
-  border: 1px solid #243a58;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
   border-radius: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
@@ -515,14 +515,14 @@ onBeforeUnmount(() => {
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #6b7280;
+  color: var(--text-color-secondary);
 }
 
 .search-input {
   width: 100%;
   min-height: 44px;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--surface-border);
   border-radius: 10px;
   font-size: 0.875rem;
 }
@@ -536,9 +536,9 @@ onBeforeUnmount(() => {
 .filter-btn {
   min-height: 44px;
   padding: 0.5rem 1rem;
-  border: 1px solid #465c78;
-  background: #101d31;
-  color: #e5eaf0;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-section);
+  color: var(--text-color);
   border-radius: 10px;
   cursor: pointer;
   font-size: 0.875rem;
@@ -598,12 +598,12 @@ onBeforeUnmount(() => {
 }
 
 .empty-state h3 {
-  color: #374151;
+  color: var(--text-color);
   margin-bottom: 0.5rem;
 }
 
 .empty-state p {
-  color: #6b7280;
+  color: var(--text-color-secondary);
 }
 
 /* Badge Modal */
@@ -634,11 +634,11 @@ onBeforeUnmount(() => {
 
 .badge-info h3 {
   margin: 0 0 0.5rem 0;
-  color: #1f2937;
+  color: var(--text-color);
 }
 
 .badge-description {
-  color: #6b7280;
+  color: var(--text-color-secondary);
   margin-bottom: 1rem;
 }
 
@@ -671,11 +671,11 @@ onBeforeUnmount(() => {
 
 .progress-section h4 {
   margin: 0 0 0.5rem 0;
-  color: #1f2937;
+  color: var(--text-color);
 }
 
 .progress-details {
-  color: #6b7280;
+  color: var(--text-color-secondary);
   font-size: 0.875rem;
 }
 
