@@ -130,7 +130,7 @@
           </div>
         </div>
         
-        <div class="stat-card">
+        <div v-if="houseStats.averageLevel != null" class="stat-card">
           <div class="stat-icon" :style="{ backgroundColor: houseInfo?.color }">
             <i class="pi pi-chart-line"></i>
           </div>
@@ -142,7 +142,7 @@
       </div>
 
       <!-- Classement des membres -->
-      <div class="members-ranking">
+      <div v-if="houseStats.members?.length" class="members-ranking">
         <h2>Classement des Membres</h2>
         <div class="ranking-list">
           <div 

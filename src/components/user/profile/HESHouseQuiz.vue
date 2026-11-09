@@ -451,30 +451,20 @@ const saveHouseSelection = async () => {
       return
     }
 
-    // Sauvegarder la maison directement dans gamification_data
-    try {
-      const houseId = getHouseIdByName(selectedHouse.value.name)
+    // Enregistre la maison côté serveur. Sans confirmation du serveur, rien n'est annoncé.
+    const houseId = getHouseIdByName(selectedHouse.value.name)
+    const { data: assigned, error: assignError } = await gamificationServiceSupabase.supabase.rpc('assign_my_house', {
+      p_house_id: houseId
+    })
+    if (assignError) throw assignError
+    // Une maison déjà attribuée n'est jamais remplacée par le quiz : le serveur renvoie celle retenue.
+    const keptExistingHouse = Boolean(assigned?.house_id) && assigned.house_id !== houseId
+    const effectiveHouse = keptExistingHouse
+      ? Object.values(houses).find((house) => getHouseIdByName(house.name) === assigned.house_id) || selectedHouse.value
+      : selectedHouse.value
 
-      const { data, error } = await gamificationServiceSupabase.supabase.rpc('assign_my_house', {
-        p_house_id: houseId
-      })
-
-      if (error) {
-        console.error('❌ Erreur sauvegarde gamification_data:', error)
-        throw error
-      }
-
-      console.log(
-        '✅ Maison sauvegardée dans gamification_data:',
-        selectedHouse.value.name,
-        'pour utilisateur:',
-        userId
-      )
-      console.log('Données sauvegardées:', data)
-    } catch (error) {
-      console.error('❌ Erreur sauvegarde Supabase:', error)
-      // Continuer même en cas d'erreur de sauvegarde
-    }
+    // Les pages profil relisent la maison sans attendre l'expiration du cache.
+    gamificationServiceSupabase.invalidateCache(userId)
 
     // NOUVEAU : Déclencher l'intégration gamification pour quiz terminé
     await gamificationIntegration.onQuizComplete(userId, {
@@ -484,14 +474,21 @@ const saveHouseSelection = async () => {
       timestamp: Date.now()
     })
 
-    toast.add({
-      severity: 'success',
-      summary: 'Félicitations !',
-      detail: `Tu as été assigné à la maison ${selectedHouse.value.name} et tu as gagné 50 XP !`,
-      life: 5000
-    })
+    toast.add(keptExistingHouse
+      ? {
+          severity: 'info',
+          summary: 'Maison inchangée',
+          detail: `Tu restes dans la maison ${effectiveHouse.name}. Un changement de maison passe par l’équipe de la plateforme.`,
+          life: 6000
+        }
+      : {
+          severity: 'success',
+          summary: 'Félicitations !',
+          detail: `Bienvenue dans la maison ${effectiveHouse.name} ! +50 XP`,
+          life: 5000
+        })
 
-    emit('houseSelected', selectedHouse.value)
+    emit('houseSelected', effectiveHouse)
 
     // Rediriger vers le profil après 2 secondes
     setTimeout(() => {

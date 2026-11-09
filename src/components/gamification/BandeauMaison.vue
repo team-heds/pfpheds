@@ -185,6 +185,7 @@ const getParticleStyle = (index) => {
 <style scoped>
 .bandeau-maison {
   position: relative;
+  container: bandeau / inline-size;
   background: linear-gradient(135deg, var(--house-color), color-mix(in srgb, var(--house-color) 80%, black));
   border-radius: 20px;
   padding: 3.5rem 4.5rem;
@@ -480,6 +481,25 @@ const getParticleStyle = (index) => {
   }
   
   .level-section {
+    justify-content: center;
+  }
+}
+
+/* Le bandeau vit souvent dans une colonne étroite (profil sur bureau) :
+   on adapte la mise en page à sa propre largeur, pas seulement à l'écran. */
+@container bandeau (max-width: 560px) {
+  .house-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .house-name {
+    font-size: 1.75rem;
+  }
+
+  .house-actions {
+    position: static;
+    flex-direction: row;
     justify-content: center;
   }
 }
