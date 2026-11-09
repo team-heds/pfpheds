@@ -357,7 +357,7 @@ onBeforeUnmount(() => {
 
 .challenges-page {
   min-height: 100vh;
-  background: var(--surface-ground);
+  background: transparent;
   padding-top: 2rem;
   padding-bottom: 4rem;
 }

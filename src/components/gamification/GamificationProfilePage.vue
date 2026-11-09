@@ -452,7 +452,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.gamification-profile-page { box-sizing: border-box; width: 100%; min-height: 100%; padding: 1rem 1rem 6rem; color: var(--text-color, #f8fafc); background: radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--house-color) 18%, transparent), transparent 34rem), var(--surface-ground, #040d1a); }
+.gamification-profile-page { box-sizing: border-box; width: 100%; min-height: 100%; padding: 1rem 1rem 6rem; color: var(--text-color, #f8fafc); background: transparent; }
 .profile-shell { width: min(100%, 1240px); margin: 0 auto; }
 .identity-copy h2, .identity-copy p, .section-heading h2, .section-heading p, .empty-state h3, .empty-state p, .quick-stats p, .state-panel h2, .state-panel p { margin: 0; }
 .section-heading p, .progress-copy, .empty-state p, .state-panel p { color: var(--text-color-secondary, #b7c2d4); line-height: 1.55; }
