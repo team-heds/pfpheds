@@ -1,6 +1,6 @@
 <template>
   <Navbar />
-  <main class="gamification-profile-page" data-page-scroll :style="{ '--house-color': houseColor, '--house-foreground': houseTextColor, '--house-image': houseBackgroundImage ? `url(${houseBackgroundImage})` : 'none' }">
+  <main class="gamification-profile-page" data-page-scroll :style="{ '--house-color': houseColor, '--house-foreground': houseTextColor }">
     <div class="profile-shell">
       <GamificationPageHeader
         :title="isViewingOtherUser ? 'Progression du profil' : 'Ma progression'"
@@ -258,7 +258,6 @@ const normalizedHouse = computed(() => normalizeHouse(userStats.value?.maison))
 const houseIdentity = computed(() => HES_HOUSES[normalizedHouse.value?.toLowerCase()] || null)
 const houseColor = computed(() => houseConfig[normalizedHouse.value]?.color || '#70819b')
 const houseTextColor = computed(() => getReadableTextColor(houseColor.value))
-const houseBackgroundImage = computed(() => houseConfig[normalizedHouse.value]?.image || null)
 const currentLevel = computed(() => Math.min(20, Math.max(1, Number(userStats.value?.niveau) || 1)))
 const totalXP = computed(() => Number(userStats.value?.xp || userStats.value?.totalXP || 0))
 const currentLevelInfo = computed(() => levelsConfig.getLevelInfo(currentLevel.value))
@@ -465,17 +464,17 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--text-color); ou
 .error-state > i { color: #fca5a5; }
 .primary-button, .secondary-button { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; margin-top: 1rem; padding: .65rem 1rem; border: 0; border-radius: 12px; font-weight: 700; }
 .primary-button { color: #071426; background: #f3c300; }
-.secondary-button { border: 1px solid #465c78; color: #f8fafc; background: rgba(7,20,38,.72); }
+.secondary-button { border: 1px solid var(--surface-border); color: var(--text-color); background: var(--surface-section); }
 .profile-summary { display: grid; overflow: hidden; border-radius: 16px; background: var(--surface-card, #071426); box-shadow: 0 18px 48px rgba(0,0,0,.22); }
 .identity-panel, .progress-panel { padding: 1.35rem; }
-.identity-panel { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; color: #f8fafc; background: linear-gradient(110deg, rgba(7,20,38,.96), rgba(7,20,38,.68)), var(--house-image) center / cover; }
+.identity-panel { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; color: var(--text-color); background: var(--surface-card, #071426); }
 .context-label, .summary-label { display: block; margin: 0 0 .35rem; color: var(--text-color-secondary); font-size: .78rem; font-weight: 700; letter-spacing: .055em; text-transform: uppercase; }
-.identity-panel .summary-label { color: #c7d2e3; }
-.identity-copy h2 { max-width: 24ch; color: #f8fafc; overflow-wrap: anywhere; font-size: clamp(1.65rem, 4vw, 2.5rem); line-height: 1.12; letter-spacing: -.025em; }
-.level-name { margin-top: .65rem !important; color: #e2e8f0; }
+.identity-panel .summary-label { color: var(--text-color-secondary); }
+.identity-copy h2 { max-width: 24ch; color: var(--text-color); overflow-wrap: anywhere; font-size: clamp(1.65rem, 4vw, 2.5rem); line-height: 1.12; letter-spacing: -.025em; }
+.level-name { margin-top: .65rem !important; color: var(--text-color-secondary); }
 .house-summary { display: flex; align-items: center; gap: .8rem; margin-top: 2rem; }
 .house-summary strong { display: block; font-size: 1.1rem; }
-.house-motto { margin: .8rem 0 0; color: #d9e4ef; font-size: 1rem; line-height: 1.55; }
+.house-motto { margin: .8rem 0 0; color: var(--text-color-secondary); font-size: 1rem; line-height: 1.55; }
 .house-icon { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; border-radius: 12px; color: var(--house-foreground); background: var(--house-color); }
 :deep(h1[tabindex="-1"]:focus-visible) { outline: 2px solid var(--primary-color); outline-offset: .3rem; }
 .progress-panel { display: flex; flex-direction: column; justify-content: center; min-height: 180px; background: color-mix(in srgb, var(--surface-card, #071426) 88%, var(--house-color)); }

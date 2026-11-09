@@ -227,19 +227,16 @@ const formatCompletionDate = (dateString) => {
 
 <style scoped>
 .challenge-card {
-  --challenge-surface: #ffffff;
-  --challenge-text: #172033;
-  --challenge-text-secondary: #4b5568;
+  --challenge-surface: var(--surface-card);
+  --challenge-text: var(--text-color);
+  --challenge-text-secondary: var(--text-color-secondary);
   position: relative;
-  background: linear-gradient(135deg, 
-    var(--challenge-surface) 0%,
-    color-mix(in srgb, var(--house-color) 12%, var(--challenge-surface)) 100%
-  );
+  background: var(--challenge-surface);
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
-  border: 2px solid var(--house-color);
+  border: 1px solid var(--surface-border);
   overflow: hidden;
   min-height: 280px;
   display: flex;
@@ -282,7 +279,7 @@ const formatCompletionDate = (dateString) => {
 
 /* Completed State */
 .completed {
-  background: linear-gradient(135deg, var(--challenge-surface) 0%, color-mix(in srgb, #22C55E 14%, var(--challenge-surface)) 100%);
+  background: var(--challenge-surface);
   border-color: #22C55E;
 }
 

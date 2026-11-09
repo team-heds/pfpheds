@@ -357,7 +357,7 @@ onBeforeUnmount(() => {
 
 .challenges-page {
   min-height: 100vh;
-  background: #0b213f;
+  background: var(--surface-ground);
   padding-top: 2rem;
   padding-bottom: 4rem;
 }
@@ -373,7 +373,7 @@ onBeforeUnmount(() => {
 .loading-spinner {
   text-align: center;
   padding: 2rem;
-  background: white;
+  background: var(--surface-card);
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
@@ -386,7 +386,7 @@ onBeforeUnmount(() => {
 
 /* Page Header */
 .page-header {
-  background: white;
+  background: var(--surface-card);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   padding: 2rem 0;
 }
@@ -401,7 +401,7 @@ onBeforeUnmount(() => {
 }
 
 .title-section h1 {
-  color: #1f2937;
+  color: var(--text-color);
   margin: 0 0 0.5rem 0;
   display: flex;
   align-items: center;
@@ -409,7 +409,7 @@ onBeforeUnmount(() => {
 }
 
 .title-section p {
-  color: #6b7280;
+  color: var(--text-color-secondary);
   margin: 0;
 }
 
@@ -443,8 +443,8 @@ onBeforeUnmount(() => {
 }
 
 .week-card, .time-remaining-card {
-  background: #071426;
-  border: 1px solid #243a58;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
@@ -452,11 +452,11 @@ onBeforeUnmount(() => {
 
 .week-header h2 {
   margin: 0 0 0.5rem 0;
-  color: #f8fafc;
+  color: var(--text-color);
 }
 
 .week-dates {
-  color: #b8c3d1;
+  color: var(--text-color-secondary);
   font-size: 0.875rem;
 }
 
@@ -505,14 +505,14 @@ onBeforeUnmount(() => {
 }
 
 .time-label {
-  color: #b8c3d1;
+  color: var(--text-color-secondary);
   font-size: 0.875rem;
 }
 
 .time-value {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #f8fafc;
+  color: var(--text-color);
 }
 
 /* Statistics Overview */
@@ -526,7 +526,7 @@ onBeforeUnmount(() => {
 }
 
 .stat-card {
-  background: white;
+  background: var(--surface-card);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -542,17 +542,17 @@ onBeforeUnmount(() => {
 .stat-number {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text-color);
 }
 
 .stat-label {
-  color: #6b7280;
+  color: var(--text-color-secondary);
   font-size: 0.875rem;
 }
 
 /* Challenges Section */
 .challenges-empty {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--text-color-secondary);
   margin: 0;
 }
 
@@ -564,7 +564,7 @@ onBeforeUnmount(() => {
 
 .challenges-section h2 {
   margin-bottom: 1.5rem;
-  color: #ffffff;
+  color: var(--text-color);
 }
 
 .challenges-grid {
@@ -589,7 +589,7 @@ onBeforeUnmount(() => {
 
 .section-header h2 {
   margin: 0;
-  color: #ffffff;
+  color: var(--text-color);
 }
 
 .toggle-history-btn {
@@ -607,7 +607,7 @@ onBeforeUnmount(() => {
 }
 
 .history-item {
-  background: white;
+  background: var(--surface-card);
   border-radius: 8px;
   padding: 1rem;
   display: flex;
@@ -632,13 +632,13 @@ onBeforeUnmount(() => {
 
 .history-name {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-color);
   margin-bottom: 0.25rem;
 }
 
 .history-date {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--text-color-secondary);
 }
 
 .history-reward {
@@ -673,11 +673,11 @@ onBeforeUnmount(() => {
 
 .challenge-info h3 {
   margin: 0 0 0.5rem 0;
-  color: #1f2937;
+  color: var(--text-color);
 }
 
 .challenge-description {
-  color: #6b7280;
+  color: var(--text-color-secondary);
   margin-bottom: 1rem;
 }
 
@@ -699,8 +699,8 @@ onBeforeUnmount(() => {
 .difficulty-chip.difficulty-legendary { background: rgba(139, 92, 246, 0.2); color: #8B5CF6; }
 
 .category-chip {
-  background: rgba(107, 114, 128, 0.2);
-  color: #6B7280;
+  background: var(--surface-section);
+  color: var(--text-color-secondary);
 }
 
 .progress-details, .reward-details {
@@ -711,7 +711,7 @@ onBeforeUnmount(() => {
 
 .progress-details h4, .reward-details h4 {
   margin: 0 0 1rem 0;
-  color: #1f2937;
+  color: var(--text-color);
 }
 
 .progress-info {
@@ -722,7 +722,7 @@ onBeforeUnmount(() => {
 
 .progress-numbers {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-color);
 }
 
 .progress-bar-large {
@@ -747,7 +747,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #1f2937;
+  color: var(--text-color);
 }
 
 .reward-item i {
