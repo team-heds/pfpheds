@@ -3,10 +3,14 @@
 -- Usage (une seule transaction, arrêt à la première erreur) :
 --   psql -X -v ON_ERROR_STOP=1 -v admin_id=<uuid admin> -v launch_date=2026-11-16 -f gamification-launch-2026-2027.sql
 --
--- Prérequis : migrations de la PR #237 et 20261109090000_gamification_season_reset.sql appliquées.
+-- Prérequis : migrations de la PR #237, 20261109090000_gamification_season_reset.sql et
+-- 20261109100000_balanced_house_assignment.sql appliquées.
 -- Effets :
+--   A. clôt les anciens défis, les quêtes échues et désactive les badges du pilote
+--      (préalable au contrôle de qualité, qui refuse des entrées actives non supportées) ;
+--   0. remet en ordre le journal XP et les maisons des profils (outils existants) ;
 --   1. archive puis remet à 0 l'XP, les niveaux et les points des maisons (maisons et badges conservés) ;
---   2. clôt les anciens défis, les quêtes échues et désactive les badges du pilote ;
+--   1b. retire les BA23 des maisons (ils ne jouent plus ; leur maison reste archivée) ;
 --   3. publie les 4 défis de lancement, ouverts 4 semaines à partir de launch_date ;
 --   4. ouvre les récompenses aux étudiants BA24, BA25 et BA26 (liste nominative, auditée).
 -- Relançable : la remise à 0 n'est faite qu'une fois par saison, les défis ne sont pas dupliqués.
@@ -28,17 +32,7 @@ begin
   end if;
 end $$;
 
-\echo '== Avant remise à zéro'
-select jsonb_pretty(public.preview_gamification_season_reset('2026-2027'));
-
-\echo '== 1. Remise à zéro de la saison 2026-2027'
-select jsonb_pretty(public.apply_gamification_season_reset(
-  '2026-2027',
-  'Lancement de la gamification 2026-2027 : XP et points des maisons remis à zéro'
-))
-where not (public.preview_gamification_season_reset('2026-2027') ->> 'already_reset')::boolean;
-
-\echo '== 2. Clôture des anciens défis, des quêtes échues et des badges du pilote'
+\echo '== A. Clôture des anciens défis, des quêtes échues et des badges du pilote'
 update public.challenges
 set is_active = false,
     status = 'archived',
@@ -57,6 +51,46 @@ update public.badges
 set is_active = false
 where is_active
   and name ilike 'TEST%';
+
+\echo '== 0. Remise en ordre des données (outils existants, sans effet si déjà fait)'
+-- Soldes d'ouverture du journal XP, niveaux et points recalculés.
+select public.apply_gamification_reconciliation('launch-2026-2027-reconciliation')
+  - 'before' as reconciliation;
+-- Maisons du profil synchronisées, lignes orphelines mises en quarantaine.
+select public.apply_gamification_data_quality('launch-2026-2027-data-quality')
+  - 'before' as qualite;
+
+\echo '== Avant remise à zéro'
+select jsonb_pretty(public.preview_gamification_season_reset('2026-2027'));
+
+\echo '== 1. Remise à zéro de la saison 2026-2027'
+select jsonb_pretty(public.apply_gamification_season_reset(
+  '2026-2027',
+  'Lancement de la gamification 2026-2027 : XP et points des maisons remis à zéro'
+))
+where not (public.preview_gamification_season_reset('2026-2027') ->> 'already_reset')::boolean;
+
+\echo '== 1b. BA23 retirés des maisons (leur ancienne maison reste dans l''archive de saison)'
+with ba23 as (
+  select up.user_id
+  from public.user_profiles up
+  where up.classe = 'BA23'
+    and up.role = 'EtudiantPhysio'
+),
+cleared as (
+  update public.gamification_data gd
+  set house_id = null, updated_at = now()
+  from ba23
+  where gd.user_id = ba23.user_id and gd.house_id is not null
+  returning gd.user_id
+)
+select count(*) as ba23_retires from cleared;
+
+update public.user_profiles up
+set house_id = null, updated_at = now()
+where up.classe = 'BA23'
+  and up.role = 'EtudiantPhysio'
+  and up.house_id is not null;
 
 \echo '== 3. Défis de lancement'
 with launch as (select current_setting('gamification.launch_date')::date as d),

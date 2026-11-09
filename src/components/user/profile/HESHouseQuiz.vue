@@ -47,7 +47,27 @@
     </div>
 
     <!-- Header du quiz -->
-    <div class="quiz-header" v-if="!quizCompleted && !existingHouse">
+    <!-- Quiz fermé : compte hors gamification (ex. BA23, personnel) -->
+    <div v-if="quizStatusLoaded && !existingHouse && !quizOpen" class="existing-house-message">
+      <div class="message-card">
+        <div class="confirmation-message">
+          <i class="pi pi-info-circle success-icon" aria-hidden="true"></i>
+          <h3>Quiz des maisons non disponible</h3>
+          <p>
+            Le quiz est réservé aux étudiant·e·s qui participent à la gamification et n'ont pas
+            encore de maison.
+          </p>
+        </div>
+        <div class="action-buttons">
+          <button @click="goToProfile" class="profile-button">
+            <i class="pi pi-user"></i>
+            Voir mon profil
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-header" v-if="quizAvailable && !quizCompleted">
       <div class="quiz-logo">
         <i class="pi pi-graduation-cap quiz-icon"></i>
       </div>
@@ -64,7 +84,7 @@
     </div>
 
     <!-- Questions du quiz -->
-    <div class="question-section" v-if="!quizCompleted && !existingHouse && currentQuestion">
+    <div class="question-section" v-if="quizAvailable && !quizCompleted && currentQuestion">
       <div class="question-card">
         <h3 class="question-title">{{ currentQuestion.question }}</h3>
         <div class="answers-container">
@@ -164,6 +184,10 @@ const quizCompleted = ref(false)
 const isCalculating = ref(false)
 const selectedHouse = ref(null)
 const existingHouse = ref(null)
+// Décidé par le serveur : quiz ouvert seulement aux joueurs sans maison.
+const quizStatusLoaded = ref(false)
+const quizOpen = ref(false)
+const quizAvailable = computed(() => quizStatusLoaded.value && quizOpen.value && !existingHouse.value)
 
 // Configuration des maisons HES
 const houses = {
@@ -394,11 +418,16 @@ const calculateHouse = async () => {
 
     console.log('📊 Scores du quiz:', houseScores)
 
-    // 🎯 NOUVEAU: Utiliser le système d'équilibrage automatique
-    const bestAvailableHouse = await gamificationServiceSupabase.findBestAvailableHouse(
-      houseScores,
-      50
+    // Le serveur équilibre les effectifs : il garde la préférence du quiz si la maison
+    // n'est pas plus remplie que les autres, sinon il propose la moins remplie.
+    const preferred = Object.keys(houseScores).reduce((a, b) =>
+      houseScores[a] >= houseScores[b] ? a : b
     )
+    const assignedId = await gamificationServiceSupabase.previewMyHouseAssignment(
+      getHouseIdByName(houses[preferred].name)
+    )
+    const bestAvailableHouse =
+      Object.keys(houses).find((key) => getHouseIdByName(houses[key].name) === assignedId) || preferred
 
     console.log(`🏠 Maison assignée: ${bestAvailableHouse}`)
 
@@ -408,33 +437,25 @@ const calculateHouse = async () => {
       isCalculating.value = false
       quizCompleted.value = true
 
-      // Afficher un message si la maison a été changée pour équilibrage
-      const originalWinner = Object.keys(houseScores).reduce((a, b) =>
-        houseScores[a] > houseScores[b] ? a : b
-      )
-
-      if (originalWinner !== bestAvailableHouse) {
+      // Préférence du quiz non retenue : la maison choisie est la moins remplie.
+      if (preferred !== bestAvailableHouse) {
         toast.add({
           severity: 'info',
-          summary: 'Équilibrage des Maisons',
-          detail: `Tu as été assigné à ${houses[bestAvailableHouse].name} pour maintenir l'équilibre entre les maisons !`,
-          life: 5000
+          summary: 'Équilibrage des maisons',
+          detail: `Pour garder des maisons de même taille, tu rejoins ${houses[bestAvailableHouse].name}.`,
+          life: 6000
         })
       }
     }, 2000)
   } catch (error) {
     console.error('❌ Erreur lors du calcul de la maison:', error)
-
-    // Fallback: méthode originale en cas d'erreur
-    setTimeout(() => {
-      const winningHouse = Object.keys(houseScores).reduce((a, b) =>
-        houseScores[a] > houseScores[b] ? a : b
-      )
-
-      selectedHouse.value = houses[winningHouse]
-      isCalculating.value = false
-      quizCompleted.value = true
-    }, 2000)
+    isCalculating.value = false
+    toast.add({
+      severity: 'error',
+      summary: 'Quiz indisponible',
+      detail: 'Ta maison ne peut pas être calculée pour le moment. Réessaie plus tard.',
+      life: 5000
+    })
   }
 }
 
@@ -457,11 +478,13 @@ const saveHouseSelection = async () => {
       p_house_id: houseId
     })
     if (assignError) throw assignError
-    // Une maison déjà attribuée n'est jamais remplacée par le quiz : le serveur renvoie celle retenue.
-    const keptExistingHouse = Boolean(assigned?.house_id) && assigned.house_id !== houseId
-    const effectiveHouse = keptExistingHouse
-      ? Object.values(houses).find((house) => getHouseIdByName(house.name) === assigned.house_id) || selectedHouse.value
-      : selectedHouse.value
+    // Le serveur renvoie la maison réellement attribuée (les effectifs peuvent avoir
+    // changé depuis l'aperçu ; une maison existante n'est jamais remplacée).
+    const effectiveHouse =
+      Object.values(houses).find((house) => getHouseIdByName(house.name) === assigned?.house_id) ||
+      selectedHouse.value
+    const changedMeanwhile = effectiveHouse.name !== selectedHouse.value.name
+    selectedHouse.value = effectiveHouse
 
     // Les pages profil relisent la maison sans attendre l'expiration du cache.
     gamificationServiceSupabase.invalidateCache(userId)
@@ -474,19 +497,14 @@ const saveHouseSelection = async () => {
       timestamp: Date.now()
     })
 
-    toast.add(keptExistingHouse
-      ? {
-          severity: 'info',
-          summary: 'Maison inchangée',
-          detail: `Tu restes dans la maison ${effectiveHouse.name}. Un changement de maison passe par l’équipe de la plateforme.`,
-          life: 6000
-        }
-      : {
-          severity: 'success',
-          summary: 'Félicitations !',
-          detail: `Bienvenue dans la maison ${effectiveHouse.name} ! +50 XP`,
-          life: 5000
-        })
+    toast.add({
+      severity: 'success',
+      summary: 'Félicitations !',
+      detail: changedMeanwhile
+        ? `Les maisons se sont remplies entre-temps : bienvenue dans la maison ${effectiveHouse.name} ! +50 XP`
+        : `Bienvenue dans la maison ${effectiveHouse.name} ! +50 XP`,
+      life: 6000
+    })
 
     emit('houseSelected', effectiveHouse)
 
@@ -566,15 +584,24 @@ onMounted(async () => {
   try {
     const userId = props.userId || authStore.user?.id
     if (userId) {
-      // Utiliser le service Supabase pour vérifier la maison existante
-      const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId)
-      if (gamificationData?.maison) {
-        existingHouse.value = gamificationData.maison
-        // Permettre de refaire le quiz même avec une maison existante
+      const status = await gamificationServiceSupabase.getMyHouseQuizStatus()
+      if (status.has_house) {
+        const known = Object.values(houses).find((house) => getHouseIdByName(house.name) === status.house_id)
+        if (known) {
+          existingHouse.value = known.name
+        } else {
+          const gamificationData = await gamificationServiceSupabase.getUserGamificationData(userId)
+          existingHouse.value = gamificationData?.maison || null
+        }
       }
+      quizOpen.value = Boolean(status.quiz_open)
+      quizStatusLoaded.value = true
     }
   } catch (error) {
     console.error('Erreur lors de la vérification Supabase:', error)
+    // Sans réponse du serveur, le quiz reste fermé et un message s'affiche (jamais d'écran vide).
+    quizOpen.value = false
+    quizStatusLoaded.value = true
   }
 })
 </script>

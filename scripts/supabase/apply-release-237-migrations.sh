@@ -67,6 +67,7 @@ migrations=(
   20260930141639_fix_user_track_roles_rls_recursion.sql
   20261103085335_fix_user_track_roles_recursive_policies.sql
   20261109090000_gamification_season_reset.sql
+  20261109100000_balanced_house_assignment.sql
 )
 
 remote() { ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$host" "$@"; }

@@ -34,7 +34,7 @@
               <div><span class="summary-label">Maison</span><strong>{{ normalizedHouse || 'Aucune maison attribuée' }}</strong></div>
             </div>
             <p v-if="houseIdentity" class="house-motto">{{ houseIdentity.motto }}</p>
-            <button v-if="!normalizedHouse && !isViewingOtherUser && houseQuizEnabled" class="secondary-button" type="button" @click="goTo('/hes-house-quiz')">
+            <button v-if="!normalizedHouse && !isViewingOtherUser && houseQuizEnabled && houseQuizOpen" class="secondary-button" type="button" @click="goTo('/hes-house-quiz')">
               Découvrir ma maison <i class="pi pi-arrow-right" aria-hidden="true"></i>
             </button>
           </div>
@@ -73,7 +73,7 @@
               <strong v-if="Number(featuredQuest.xp_reward || featuredQuest.points) > 0">{{ formatNumber(featuredQuest.xp_reward || featuredQuest.points) }} XP à gagner</strong>
             </div>
           </template>
-          <div v-else-if="!normalizedHouse && houseQuizEnabled" class="next-step__body">
+          <div v-else-if="!normalizedHouse && !isViewingOtherUser && houseQuizEnabled && houseQuizOpen" class="next-step__body">
             <div><h3>Découvrez votre maison</h3><p>Répondez au questionnaire pour découvrir Harmonis, Elaris, Doloris ou Solencia et rejoindre votre maison.</p></div>
             <RouterLink class="primary-button" to="/hes-house-quiz">Découvrir ma maison <i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
           </div>
@@ -176,6 +176,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useHouseQuizStatus } from '@/composables/useHouseQuizStatus'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase.js'
@@ -204,6 +205,7 @@ const authStore = useAuthStore()
 const collectionsEnabled = gamificationFeatures.userJourney && gamificationFeatures.badgesChallenges
 const gamesEnabled = gamificationFeatures.gamesHub
 const houseQuizEnabled = gamificationFeatures.userJourney && gamificationFeatures.houseQuiz
+const { quizOpen: houseQuizOpen } = useHouseQuizStatus({ enabled: houseQuizEnabled })
 const displayUserId = computed(() => props.id || authStore.user?.id)
 const isViewingOtherUser = computed(() => Boolean(props.id && props.id !== authStore.user?.id))
 

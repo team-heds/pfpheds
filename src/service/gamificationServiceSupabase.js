@@ -578,6 +578,27 @@ class GamificationServiceSupabase {
    * @param {number} maxMembersPerHouse - Limite maximale de membres par maison (défaut: 50)
    * @returns {Promise<string>} Nom de la maison assignée
    */
+  /**
+   * État du quiz des maisons pour le compte connecté, décidé par le serveur :
+   * { has_house, house_id, is_player, quiz_open }. Le quiz n'est ouvert qu'aux
+   * joueurs de la gamification qui n'ont pas encore de maison.
+   */
+  async getMyHouseQuizStatus() {
+    const { data, error } = await supabase.rpc('get_my_house_quiz_status')
+    if (error) throw error
+    return data || { has_house: false, house_id: null, is_player: false, quiz_open: false }
+  }
+
+  /**
+   * Maison que le serveur attribuera pour la préférence du quiz (équilibrage des
+   * effectifs de joueurs entre les maisons). Aucune écriture.
+   */
+  async previewMyHouseAssignment(preferredHouseId) {
+    const { data, error } = await supabase.rpc('preview_my_house_assignment', { p_house_id: preferredHouseId })
+    if (error) throw error
+    return data
+  }
+
   async findBestAvailableHouse(quizResults, maxMembersPerHouse = 50) {
     try {
       // Obtenir le nombre actuel de membres par maison
