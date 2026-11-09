@@ -1,7 +1,7 @@
 ---
 ticket: GAMIFICATION-LANCEMENT-2026-2027
 validated: test
-environment: test validé le 9 novembre 2026, production à lancer
+environment: test validé le 9 novembre 2026, lancement production prévu le mercredi 11 novembre 2026
 ---
 
 # Lancement de la gamification 2026-2027
@@ -92,6 +92,10 @@ Copie fraîche de la base prod dans une base temporaire du même conteneur, supp
 - relance du script : aucun effet.
 
 ## Mise en production (dans l'ordre)
+
+**Date retenue : mercredi 11 novembre 2026.** Défis ouverts du 11 novembre au 8 décembre 2026
+(`launch_date=2026-11-11`). PR #243 et #241 fusionnées le 9 novembre dans
+`claude/sauvegarde-travail-codex` ; il reste la #237 vers `prod`.
 
 Prérequis : la release #237 est prête (PR #241 fusionnée, plan `docs/plans/release-237.md`).
 
