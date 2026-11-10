@@ -5,7 +5,8 @@ const { responses, supabaseMock } = vi.hoisted(() => {
   const responses = {
     posts: [],
     post_media: [],
-    user_profiles: []
+    user_profiles: [],
+    rpc: []
   }
 
   const makeBuilder = (table) => {
@@ -22,7 +23,8 @@ const { responses, supabaseMock } = vi.hoisted(() => {
   return {
     responses,
     supabaseMock: {
-      from: vi.fn((table) => makeBuilder(table))
+      from: vi.fn((table) => makeBuilder(table)),
+      rpc: vi.fn(() => Promise.resolve(responses.rpc.shift() || { data: [], error: null }))
     }
   }
 })
@@ -64,6 +66,7 @@ describe('socialFeedStore', () => {
     responses.posts.length = 0
     responses.post_media.length = 0
     responses.user_profiles.length = 0
+    responses.rpc.length = 0
     vi.clearAllMocks()
   })
 
@@ -219,5 +222,38 @@ describe('socialFeedStore', () => {
         { communityId: null, filter: { type: 'hashtag', value: 'HEdS' } }
       )
     ).toBe(false)
+  })
+
+  it('charge le compteur et l’état « aimé » avec chaque page', async () => {
+    const store = useSocialFeedStore()
+    responses.posts.push({ data: [makeRow('post-1'), makeRow('post-2')], error: null })
+    responses.post_media.push({ data: [], error: null })
+    responses.rpc.push({
+      data: [
+        { post_id: 'post-1', like_count: 3, liked_by_me: true },
+        { post_id: 'post-2', like_count: 0, liked_by_me: false }
+      ],
+      error: null
+    })
+    responses.user_profiles.push({ data: [], error: null })
+
+    await store.loadScope(rootScope)
+    const [first, second] = store.getEntry(rootScope).posts
+    expect(supabaseMock.rpc).toHaveBeenCalledWith('get_post_like_summaries', { p_post_ids: ['post-1', 'post-2'] })
+    expect(first).toMatchObject({ likes_count: 3, liked_by_me: true })
+    expect(second).toMatchObject({ likes_count: 0, liked_by_me: false })
+
+    store.setPostLike('post-2', { liked: true, count: 1 })
+    expect(store.getEntry(rootScope).posts[1]).toMatchObject({ likes_count: 1, liked_by_me: true })
+  })
+
+  it('affiche le fil même si les j’aime sont indisponibles', async () => {
+    const store = useSocialFeedStore()
+    queueSuccessfulPage([makeRow('post-1')])
+    responses.rpc.push({ data: null, error: new Error('rpc down') })
+
+    const result = await store.loadScope(rootScope)
+    expect(result.ok).toBe(true)
+    expect(store.getEntry(rootScope).posts[0]).toMatchObject({ id: 'post-1', likes_count: null, liked_by_me: null })
   })
 })

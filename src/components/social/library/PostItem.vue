@@ -18,7 +18,15 @@
     </div>
 
     <!-- Contenu du post -->
-    <div class="post-content p-3">
+    <div
+      class="post-content p-3"
+      @dblclick="onContentDoubleClick"
+      @pointerup="onContentPointerUp"
+    >
+      <!-- Cœur animé du double-tap -->
+      <span v-if="burstKey" :key="burstKey" class="like-burst" :style="burstStyle" aria-hidden="true">
+        <i class="pi pi-heart-fill"></i>
+      </span>
       <!-- Texte du post -->
       <div v-if="post.Content" class="post-text">
         <div v-html="sanitizeHtml(post.Content)"></div>
@@ -96,9 +104,21 @@
 
     <!-- Boutons d'action -->
     <div class="post-actions post-actions-mobile-row">
-      <button type="button" class="action-button" @click="toggleLike" :aria-pressed="isLiked" :aria-label="`${isLiked ? 'Retirer' : 'Ajouter'} la mention J’aime`">
-        <i :class="isLiked ? 'pi pi-heart-fill' : 'pi pi-heart'" class="action-icon"></i>
-        <span>{{ likeCount }}</span>
+      <button
+        type="button"
+        class="action-button like-button"
+        :class="{ 'is-liked': likeState.liked }"
+        :aria-pressed="likeState.liked ? 'true' : 'false'"
+        aria-label="J’aime"
+        @click="onLikeClick"
+      >
+        <i
+          :key="likeIconKey"
+          :class="[likeState.liked ? 'pi pi-heart-fill' : 'pi pi-heart', { 'like-pop': likeIconKey > 0 && likeState.liked }]"
+          class="action-icon"
+          aria-hidden="true"
+        ></i>
+        <span>J’aime</span>
       </button>
       <button type="button" class="action-button" @click="toggleComments" :aria-expanded="showComments" aria-label="Afficher les commentaires">
         <i class="pi pi-comment action-icon"></i>
@@ -110,6 +130,14 @@
       </button>
     </div>
 
+
+    <!-- Compteur de j'aime (ouvre la liste des personnes) -->
+    <div class="like-summary" aria-live="polite">
+      <button v-if="likeState.count > 0" type="button" class="like-count-button" @click="showLikers = true">
+        {{ likeCountLabel }}
+      </button>
+    </div>
+    <PostLikersDialog v-if="post.id" v-model:visible="showLikers" :post-id="String(post.id)" />
 
     <!-- Liste des commentaires (affichés seulement si showComments est true) -->
     <div v-if="showComments && post.replies" class="comments-section p-3">
@@ -182,6 +210,9 @@ import { useAuthStore } from '@/stores/authStore'; // Assurez-vous que ce store 
 import Textarea from 'primevue/textarea';
 import gamificationIntegration from '@/service/gamificationIntegration';
 import { sanitizeHtml } from '@/composables/useSanitize';
+import { usePostLike } from '@/composables/usePostLike';
+import { createDoubleTapDetector, isInteractiveTarget } from '@/service/postLikes';
+import PostLikersDialog from '@/components/social/library/PostLikersDialog.vue';
 
 const props = defineProps({
   post: {
@@ -218,11 +249,50 @@ const authorAvatarUrl = computed(() =>
   props.post.author?.avatar_url ||
   defaultAvatar
 );
-const likeCount = computed(() => props.post.likes_count || 0);
 const commentCount = computed(() => props.post.replies_count || 0);
 
-// TODO: La logique 'isLiked' nécessite que l'API retourne si l'utilisateur actuel a aimé le post.
-const isLiked = ref(false); // Placeholder
+// J'aime : mise à jour optimiste, double-tap pour aimer, liste des personnes.
+const {
+  view: likeState,
+  canLike,
+  countLabel: likeCountLabel,
+  toggle: toggleLikeState,
+  like: likeOnly
+} = usePostLike(() => props.post);
+const showLikers = ref(false);
+const likeIconKey = ref(0);
+const burstKey = ref(0);
+const burstStyle = ref({});
+const detectTouchDoubleTap = createDoubleTapDetector();
+
+const onLikeClick = () => {
+  likeIconKey.value += 1;
+  toggleLikeState();
+};
+
+// Le cœur apparaît à la hauteur du geste : visible même sur une longue publication.
+const likeFromDoubleTap = (event) => {
+  const box = event.currentTarget?.getBoundingClientRect?.();
+  burstStyle.value = box && box.height > 0 ? { top: `${Math.round(event.clientY - box.top)}px` } : {};
+  if (canLike.value) burstKey.value += 1;
+  if (!likeState.liked) likeIconKey.value += 1;
+  likeOnly();
+};
+
+const onContentDoubleClick = (event) => {
+  if (isInteractiveTarget(event.target)) return;
+  window.getSelection?.()?.removeAllRanges();
+  likeFromDoubleTap(event);
+};
+
+// Sur écran tactile, dblclick n'est pas fiable : on détecte les deux appuis nous-mêmes.
+const onContentPointerUp = (event) => {
+  if (event.pointerType === 'mouse' || isInteractiveTarget(event.target)) return;
+  if (detectTouchDoubleTap(event.timeStamp, event.clientX, event.clientY)) {
+    event.preventDefault();
+    likeFromDoubleTap(event);
+  }
+};
 
 const topLevelReplies = computed(() => {
   // TODO: Adapter à la structure des réponses de Supabase
@@ -284,35 +354,6 @@ const submitReplyTo = async (parentReplyId) => {
     replyToId.value = null;
   } catch (error) {
     console.error('Erreur lors de la création de la réponse:', error);
-  }
-};
-
-const toggleLike = async () => {
-  if (!currentUser.value) return alert('Vous devez être connecté pour liker.');
-  
-  try {
-    // TODO: Implémenter l'action 'toggleLike' dans le postsStore et l'API backend.
-    console.log(`Toggling like for post ${props.post.id}`);
-    // postsStore.toggleLike(props.post.id);
-    
-    const wasLiked = isLiked.value;
-    isLiked.value = !isLiked.value; // Optimistic update
-    
-    // NOUVEAU : Déclencher l'intégration gamification pour like
-    if (!wasLiked) { // Seulement si c'est un nouveau like (pas un unlike)
-      await gamificationIntegration.onSocialInteraction(currentUser.value.uid || currentUser.value.id, {
-        action: 'like',
-        targetType: 'post',
-        targetId: props.post.id,
-        targetAuthorId: props.post.IdUser,
-        timestamp: Date.now()
-      });
-    }
-    
-  } catch (error) {
-    console.error('Erreur lors du like:', error);
-    // Revert optimistic update en cas d'erreur
-    isLiked.value = !isLiked.value;
   }
 };
 
@@ -429,6 +470,8 @@ const getInstagramEmbedUrl = (url) => {
 }
 
 .post-content {
+  position: relative;
+  touch-action: manipulation;
   display: flex;
   flex-direction: column;
   margin-top: 10px;
@@ -504,6 +547,90 @@ const getInstagramEmbedUrl = (url) => {
 
 .action-icon {
   font-size: 20px;
+}
+
+.like-button.is-liked,
+.like-button.is-liked:hover {
+  color: var(--like-color, #ed4956);
+}
+
+.like-pop {
+  animation: like-pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+
+@keyframes like-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.like-summary {
+  min-height: 1.5rem;
+  padding: 0 0.5rem;
+  text-align: left;
+}
+
+.like-count-button {
+  border: 0;
+  background: transparent;
+  padding: 0.25rem 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.like-count-button:hover {
+  text-decoration: underline;
+}
+
+.like-count-button:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+.like-burst {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+  animation: like-burst 0.8s ease-out forwards;
+}
+
+.like-burst .pi {
+  font-size: clamp(4rem, 18vw, 6.5rem);
+  color: var(--like-color, #ed4956);
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes like-burst {
+  0% { opacity: 0; transform: scale(0.4); }
+  15% { opacity: 0.95; transform: scale(1.15); }
+  30% { transform: scale(0.95); }
+  45% { transform: scale(1); }
+  80% { opacity: 0.95; }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .like-pop {
+    animation: none;
+  }
+  .like-burst {
+    animation: like-burst-fade 0.6s linear forwards;
+  }
+  @keyframes like-burst-fade {
+    0%, 70% { opacity: 0.95; }
+    100% { opacity: 0; }
+  }
 }
 
 .avatar {
