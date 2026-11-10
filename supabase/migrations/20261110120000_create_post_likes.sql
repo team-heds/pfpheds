@@ -27,26 +27,34 @@ alter table public.post_likes enable row level security;
 revoke all on table public.post_likes from public, anon, authenticated;
 grant select, insert, delete on table public.post_likes to authenticated;
 
-drop policy if exists post_likes_select_authenticated on public.post_likes;
-create policy post_likes_select_authenticated
-  on public.post_likes
-  for select
-  to authenticated
-  using (true);
+-- Règles créées seulement si absentes (migration rejouable, sans suppression).
+do $policies$
+begin
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'post_likes' and policyname = 'post_likes_select_authenticated') then
+    create policy post_likes_select_authenticated
+      on public.post_likes
+      for select
+      to authenticated
+      using (true);
+  end if;
 
-drop policy if exists post_likes_insert_own on public.post_likes;
-create policy post_likes_insert_own
-  on public.post_likes
-  for insert
-  to authenticated
-  with check ((select auth.uid()) = user_id);
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'post_likes' and policyname = 'post_likes_insert_own') then
+    create policy post_likes_insert_own
+      on public.post_likes
+      for insert
+      to authenticated
+      with check ((select auth.uid()) = user_id);
+  end if;
 
-drop policy if exists post_likes_delete_own on public.post_likes;
-create policy post_likes_delete_own
-  on public.post_likes
-  for delete
-  to authenticated
-  using ((select auth.uid()) = user_id);
+  if not exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'post_likes' and policyname = 'post_likes_delete_own') then
+    create policy post_likes_delete_own
+      on public.post_likes
+      for delete
+      to authenticated
+      using ((select auth.uid()) = user_id);
+  end if;
+end
+$policies$;
 
 -- Résumé des j'aime pour une page du fil : compteur et état « aimé par moi ».
 create or replace function public.get_post_like_summaries(p_post_ids uuid[])
