@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase.js'
+import { fetchLikeSummaries } from '@/service/postLikesService'
 
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PENDING_MEDIA_POSTS = 100
@@ -122,6 +123,13 @@ export const useSocialFeedStore = defineStore('socialFeed', {
         console.warn('[SocialFeed] Médias indisponibles, affichage du texte seul:', error)
       }
 
+      let likeSummaries = null
+      try {
+        likeSummaries = await fetchLikeSummaries(postIds)
+      } catch (error) {
+        console.warn('[SocialFeed] J’aime indisponibles, chargement par publication:', error)
+      }
+
       try {
         await this.fetchAvatars(userIds)
       } catch (error) {
@@ -151,7 +159,10 @@ export const useSocialFeedStore = defineStore('socialFeed', {
         Hashtags: row.hashtags || {},
         MentionGroups: row.mentions || {},
         community_id: row.community_id || null,
-        media: [...new Set((mediaByPost[row.id] || []).map((media) => media.url))]
+        media: [...new Set((mediaByPost[row.id] || []).map((media) => media.url))],
+        // null = inconnu : PostItem le recharge lui-même.
+        likes_count: likeSummaries ? likeSummaries[row.id]?.count || 0 : null,
+        liked_by_me: likeSummaries ? Boolean(likeSummaries[row.id]?.liked) : null
       }))
     },
 
@@ -302,6 +313,16 @@ export const useSocialFeedStore = defineStore('socialFeed', {
       if (pendingPostIds.length > MAX_PENDING_MEDIA_POSTS) {
         delete this.pendingMedia[pendingPostIds[0]]
       }
+    },
+
+    /** Garde le même état de j'aime dans toutes les vues du fil déjà chargées. */
+    setPostLike(postId, { liked, count }) {
+      Object.values(this.entries).forEach((entry) => {
+        const post = entry.posts.find((item) => item.id === postId)
+        if (!post) return
+        post.liked_by_me = liked
+        post.likes_count = count
+      })
     },
 
     setPublishing(scope, publishing) {

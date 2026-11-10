@@ -305,7 +305,9 @@ export default {
           Hashtags: hashtagsObject,
           MentionGroups: mentionsObject,
           community_id: props.communityId || null,
-          media: media.map((m) => m.url)
+          media: media.map((m) => m.url),
+          likes_count: 0,
+          liked_by_me: false
         }
         const insertedRow = {
           id: ins.id,
