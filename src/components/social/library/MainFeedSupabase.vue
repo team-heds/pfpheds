@@ -7,6 +7,7 @@
           <HeaderIcons />
         </div>
       </transition>
+      <StoriesBar v-if="!communityId" class="feed-stories" />
       <div v-if="refreshWarning" class="feed-warning" role="status">{{ refreshWarning }}</div>
       <LoadingState
         v-if="initialLoading && filteredPosts.length === 0"
@@ -39,6 +40,7 @@
         @reset-filter="resetFilter"
       />
       <div class="posts-container" ref="postsContainerRef">
+        <StoriesBar v-if="!communityId" class="feed-stories" />
         <button type="button" class="quick-post-bar" aria-haspopup="dialog" @click="handleCreateClick">
           <span class="quick-post-icon-circle" aria-hidden="true">
             <i class="pi pi-file-edit quick-post-icon"></i>
@@ -76,6 +78,7 @@ import Toast from 'primevue/toast'
 import FilterComponent from '@/components/social/library/FilterComponent.vue'
 import CreatePostDialog from '@/components/social/library/CreatePostDialog.vue'
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
+import StoriesBar from '@/components/social/library/StoriesBar.vue'
 import { publishPost } from '@/service/postPublishService'
 import { runtimeFeatures } from '@/config/runtimeFeatures'
 import LoadingState from '@/components/common/states/LoadingState.vue'
@@ -97,6 +100,7 @@ export default {
   },
   components: {
     HeaderIcons,
+    StoriesBar,
     InfinityScroll,
     PostItem,
     Toast,
@@ -551,6 +555,9 @@ export default {
   font-size: 0.875rem;
 }
 
+.feed-stories {
+  margin-bottom: 0.5rem;
+}
 .quick-post-bar {
   display: flex;
   align-items: center;
