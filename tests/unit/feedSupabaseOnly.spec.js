@@ -27,14 +27,44 @@ describe('FeedView Supabase', () => {
     expect(source).toContain('scroll-target="window"')
   })
 
-  it('récompense aussi une publication Supabase créée depuis le parcours mobile', () => {
-    const source = fs.readFileSync(
-      path.resolve(process.cwd(), 'src/components/social/library/CreateContentMobile.vue'),
-      'utf8'
-    )
+  it('publie depuis le bureau et le mobile par le même service, qui appelle la gamification POST', () => {
+    const read = (file) => fs.readFileSync(path.resolve(process.cwd(), file), 'utf8')
+    const service = read('src/service/postPublishService.js')
+    expect(service).toContain("import gamificationIntegration from '@/service/gamificationIntegration'")
+    expect(service).toContain("action: 'post'")
+    expect(service).toContain('targetId: inserted.id')
 
-    expect(source).toContain("import gamificationIntegration from '@/service/gamificationIntegration'")
-    expect(source).toContain('gamificationIntegration.onSocialInteraction(user.id')
-    expect(source).toContain('targetId: inserted.id')
+    for (const file of [
+      'src/components/social/library/CreateContentMobile.vue',
+      'src/components/social/library/MainFeedSupabase.vue'
+    ]) {
+      const source = read(file)
+      expect(source).toContain("import { publishPost } from '@/service/postPublishService'")
+      expect(source).not.toMatch(/firebase/i)
+    }
+  })
+
+  it('le composer n’affiche plus de bouton anglais « Choose »', () => {
+    const read = (file) => fs.readFileSync(path.resolve(process.cwd(), file), 'utf8')
+    for (const file of [
+      'src/components/social/library/CreatePostDialog.vue',
+      'src/components/social/library/PostComposer.vue'
+    ]) {
+      const source = read(file)
+      expect(source).not.toContain('FileUpload')
+      expect(source).not.toMatch(/\bChoose\b/)
+    }
+  })
+
+  it('les commentaires ne rapportent aucun XP', () => {
+    const read = (file) => fs.readFileSync(path.resolve(process.cwd(), file), 'utf8')
+    for (const file of [
+      'src/components/social/library/PostItem.vue',
+      'src/components/social/library/PostComments.vue',
+      'src/composables/usePostComments.js',
+      'src/service/postCommentsService.js'
+    ]) {
+      expect(read(file)).not.toMatch(/gamification/i)
+    }
   })
 })
