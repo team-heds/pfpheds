@@ -105,33 +105,6 @@
               <Button label="Ajouter option" icon="pi pi-plus" class="p-button-outlined p-mb-3" @click="pollOptions.push('')" />
               <Button label="Ajouter le sondage" icon="pi pi-check" class="p-button-primary" @click="addPoll" :disabled="!pollQuestion || pollOptions.some(opt => !opt)" />
             </TabPanel>
-            <TabPanel header="Audio">
-              <div class="p-field p-mb-3">
-                <FileUpload mode="basic" accept="audio/*" :maxFileSize="10000000" chooseLabel="Choisir un fichier audio" class="p-mb-3" @select="onAudioChange" />
-              </div>
-              <div class="p-field">
-                <span class="p-float-label">
-                  <InputText id="audio-caption" v-model="audioCaption" class="p-w-100" />
-                  <label for="audio-caption">Légende audio</label>
-                </span>
-              </div>
-              <Button label="Ajouter l'audio" icon="pi pi-check" class="p-button-primary" @click="addAudio" :disabled="!audioSrc" />
-            </TabPanel>
-            <TabPanel header="Carrousel">
-              <div class="p-field">
-                <FileUpload mode="basic" accept="image/*,video/*" multiple :maxFileSize="10000000" chooseLabel="Choisir des médias" class="p-mb-3" @select="onCarouselChange" />
-              </div>
-              <div v-if="carouselMedia.length" class="selected-media p-mb-3">
-                <h3>Médias sélectionnés ({{ carouselMedia.length }})</h3>
-                <div class="media-preview-grid">
-                  <div v-for="(media, idx) in carouselMedia" :key="idx" class="media-preview-item">
-                    <img v-if="media.type && media.type.includes('image')" :src="media.preview" alt="Preview" />
-                    <video v-else-if="media.type && media.type.includes('video')" :src="media.preview" controls></video>
-                  </div>
-                </div>
-              </div>
-              <Button label="Ajouter le carrousel" icon="pi pi-check" class="p-button-primary" @click="addCarousel" :disabled="carouselMedia.length === 0" />
-            </TabPanel>
           </TabView>
         </div>
       </div>
@@ -177,12 +150,7 @@
 </template>
 
 <script>
-import StoryQuiz from './StoryQuiz.vue';
-import StoryStickerPoll from './StoryStickerPoll.vue';
-import StoryAudio from './StoryAudio.vue';
-import StoryCarousel from './StoryCarousel.vue';
 import Button from 'primevue/button';
-import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import ColorPicker from 'primevue/colorpicker';
@@ -191,17 +159,11 @@ import TabPanel from 'primevue/tabpanel';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Badge from 'primevue/badge';
-import FileUpload from 'primevue/fileupload';
 
 export default {
   name: 'StoryEditor',
   components: {
-    StoryQuiz,
-    StoryStickerPoll,
-    StoryAudio,
-    StoryCarousel,
     Button,
-    Dialog,
     InputText,
     Dropdown,
     ColorPicker,
@@ -209,8 +171,7 @@ export default {
     TabPanel,
     DataTable,
     Column,
-    Badge,
-    FileUpload
+    Badge
   },
   props: {
     src: { type: String, required: true },
@@ -242,9 +203,6 @@ export default {
       quizAnswerIdx: 0,
       pollQuestion: '',
       pollOptions: ['', ''],
-      audioSrc: '',
-      audioCaption: '',
-      carouselMedia: [],
     };
   },
   mounted() {
@@ -365,53 +323,6 @@ export default {
       this.pollQuestion = '';
       this.pollOptions = ['', ''];
     },
-    // Audio
-    onAudioChange(event) {
-      const file = event.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.audioSrc = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    },
-    addAudio() {
-      if (!this.audioSrc) return;
-
-      this.elements.push({
-        type: 'audio',
-        src: this.audioSrc,
-        caption: this.audioCaption
-      });
-      this.audioSrc = '';
-      this.audioCaption = '';
-    },
-    // Carousel
-    onCarouselChange(event) {
-      this.carouselMedia = [];
-
-      Array.from(event.files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.carouselMedia.push({
-            type: file.type,
-            preview: e.target.result,
-            file: file
-          });
-        };
-        reader.readAsDataURL(file);
-      });
-    },
-    addCarousel() {
-      if (this.carouselMedia.length === 0) return;
-
-      this.elements.push({
-        type: 'carousel',
-        media: [...this.carouselMedia]
-      });
-      this.carouselMedia = [];
-    },
     // Remove
     removeElement(idx) {
       this.elements.splice(idx, 1);
@@ -492,7 +403,7 @@ export default {
       const canvas = this.$refs.canvas;
       canvas.toBlob((blob) => {
         this.$emit('edited', blob, this.elements);
-      });
+      }, 'image/jpeg', 0.9);
     },
     getElementSeverity(type) {
       switch(type) {

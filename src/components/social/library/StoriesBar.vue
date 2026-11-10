@@ -1,162 +1,165 @@
 <template>
-  <div class="stories-bar">
-    <!-- Bouton d'ajout de story -->
-    <div class="story-item add-story-container">
-      <!--
-        Sur mobile : redirige vers /create (page dédiée)
-        Sur desktop : ouvre la dialog AddStory
-      -->
-      <button type="button" class="add-story" @click="handleAddStoryClick" aria-label="Créer une story">
-        <span class="add-icon">+</span>
+  <section class="stories-bar" aria-label="Stories">
+    <div class="stories-track">
+      <button type="button" class="story-chip" @click="handleAddStoryClick">
+        <span class="story-ring story-ring--add" aria-hidden="true">
+          <img :src="ownAvatar" alt="" class="story-avatar" />
+          <span class="story-plus"><i class="pi pi-plus"></i></span>
+        </span>
+        <span class="story-name">Votre story</span>
       </button>
-      <p>Créer</p>
+
+      <button
+        v-for="group in groups"
+        :key="group.userId"
+        type="button"
+        class="story-chip"
+        :aria-label="`Voir ${group.stories.length > 1 ? `les ${group.stories.length} stories` : 'la story'} de ${group.isOwn ? 'vous' : group.displayName}${group.hasUnseen ? ', non vue' : ''}`"
+        @click="openGroup(group)"
+      >
+        <span class="story-ring" :class="{ 'story-ring--unseen': group.hasUnseen, 'story-ring--own': group.isOwn }" aria-hidden="true">
+          <img :src="group.avatarUrl || defaultAvatar" alt="" class="story-avatar" loading="lazy" />
+        </span>
+        <span class="story-name">{{ group.isOwn ? 'Vous' : firstName(group.displayName) }}</span>
+      </button>
+
+      <p v-if="loadError" class="stories-error" role="status">{{ loadError }}</p>
     </div>
-    <!-- Liste des stories -->
-    <button type="button"
-      v-for="user in uniqueUsers"
-      :key="user.userId"
-      class="story-item"
-      @click="openStory(user.stories)"
-      :aria-label="`Voir la story de ${getUserDisplayName(user.userName)}`"
+
+    <Dialog
+      v-if="!isMobile"
+      v-model:visible="showAddStory"
+      modal
+      header="Nouvelle story"
+      :style="{ width: '34rem' }"
+      :breakpoints="{ '960px': '80vw', '640px': '95vw' }"
     >
-      <img
-        :src="user.userAvatar || defaultAvatar"
-        alt="avatar"
-        class="avatar"
-        :class="{ 'unseen-story': user.hasUnseenStory }"
-      />
-      <p>{{ getUserDisplayName(user.userName) }}</p>
-    </button>
-    <!-- Sur desktop uniquement, dialog AddStory -->
-    <AddStory v-if="showAddStory && !isMobile" @close="showAddStory = false" @uploaded="fetchStories" />
-    <StoryModal v-if="selectedStory" :story="selectedStory" @close="selectedStory = null" @refreshStories="fetchStories" />
-  </div>
+      <AddStoryCore @uploaded="onUploaded" />
+    </Dialog>
+
+    <StoryModal
+      v-if="openedGroup"
+      :stories="openedGroup.stories"
+      :start-index="openedIndex"
+      :author-name="openedGroup.isOwn ? 'Vous' : openedGroup.displayName"
+      :author-avatar="openedGroup.avatarUrl || defaultAvatar"
+      :is-own="openedGroup.isOwn"
+      @viewed="onViewed"
+      @deleted="onDeleted"
+      @close="closeGroup"
+    />
+  </section>
 </template>
 
 <script>
-import AddStory from './AddStory.vue';
+import AddStoryCore from './AddStoryCore.vue';
 import StoryModal from './StoryModal.vue';
-import { db } from '../../../../firebase';
-import { ref as dbRef, onValue, update } from 'firebase/database';
-import { getCurrentUser } from './Utils/authUser.js';
-import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/authStore';
+import { supabase } from '@/supabase.js';
+import { fetchActiveStories, firstUnseenIndex, groupStoriesByAuthor, markStoryViewed } from '@/service/storiesService';
+
+const defaultAvatar = new URL('@/assets/avatar/avatar1.jpg', import.meta.url).href;
+const REFRESH_MS = 5 * 60 * 1000;
 
 export default {
   name: 'StoriesBar',
-  components: { AddStory, StoryModal },
+  components: { AddStoryCore, StoryModal },
   data() {
     return {
-      stories: [], // toutes les stories non expirées
-      uniqueUsers: [], // stories groupées par utilisateur
+      stories: [],
+      currentUserId: null,
+      ownAvatarUrl: null,
       showAddStory: false,
-      selectedStory: null,
-      defaultAvatar: 'https://ui-avatars.com/api/?name=User',
-      currentUser: null,
+      openedUserId: null,
+      openedIndex: 0,
+      loadError: '',
+      defaultAvatar,
       isMobile: window.innerWidth <= 768,
+      refreshTimer: null
     };
   },
+  computed: {
+    groups() {
+      return groupStoriesByAuthor(this.stories, this.currentUserId);
+    },
+    openedGroup() {
+      return this.groups.find((g) => g.userId === this.openedUserId) || null;
+    },
+    ownAvatar() {
+      return this.ownAvatarUrl || defaultAvatar;
+    }
+  },
   async mounted() {
-    this.currentUser = await getCurrentUser();
-    this.fetchStories();
     window.addEventListener('resize', this.checkMobile);
+    const authStore = useAuthStore();
+    if (!authStore.user) await authStore.checkAuthState?.();
+    const userId = authStore.user?.id;
+    this.currentUserId = userId && userId !== 'guest-user' ? userId : null;
+    if (!this.currentUserId) return;
+    this.loadOwnAvatar();
+    await this.fetchStories();
+    this.refreshTimer = setInterval(() => {
+      if (!this.openedUserId && document.visibilityState === 'visible') this.fetchStories();
+    }, REFRESH_MS);
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkMobile);
+    clearInterval(this.refreshTimer);
   },
   methods: {
-    getUserDisplayName(userName) {
-      if (!userName) return '';
-      if (userName.includes('@')) {
-        return userName.split('@')[0];
-      }
-      return userName;
+    firstName(name) {
+      const clean = String(name || '').split('@')[0].trim();
+      return clean.split(/\s+/)[0] || 'Utilisateur';
     },
-    fetchStories() {
-      // Récupère les stories non expirées depuis la RTDB
-      const now = Date.now();
-      const storiesRef = dbRef(db, 'stories');
-      onValue(storiesRef, (snapshot) => {
-        const data = snapshot.val();
-        let stories = [];
-        if (data) {
-          const storyEntries = Object.entries(data)
-            .map(([id, story]) => ({ id, ...story }))
-            .filter(story => story.expiresAt > now)
-            .sort((a, b) => b.expiresAt - a.expiresAt);
-         // Pour chaque story, récupère la photo utilisateur depuis /Users/{userId}/PhotoURL
-         const promises = storyEntries.map(async (story) => {
-           if (story.userId) {
-             try {
-               const userRef = dbRef(db, `Users/${story.userId}/PhotoURL`);
-               const snapshot = await new Promise(resolve => onValue(userRef, resolve, { onlyOnce: true }));
-               const photoURL = snapshot.val();
-               return { ...story, userAvatar: photoURL || story.userAvatar || this.defaultAvatar };
-             } catch {
-               return { ...story, userAvatar: story.userAvatar || this.defaultAvatar };
-             }
-           }
-           return { ...story, userAvatar: story.userAvatar || this.defaultAvatar };
-         });
-         Promise.all(promises).then(storiesWithAvatars => {
-            this.stories = storiesWithAvatars;
-            // Grouper les stories par utilisateur
-            const userMap = {};
-            storiesWithAvatars.forEach(story => {
-              if (!userMap[story.userId]) {
-                userMap[story.userId] = [];
-              }
-              userMap[story.userId].push(story);
-            });
-            this.uniqueUsers = Object.values(userMap).map(stories => {
-              // Trier les stories de l'utilisateur par date
-              stories.sort((a, b) => b.timestamp - a.timestamp);
-              // Vérifier si l'utilisateur courant a vu toutes les stories de cet utilisateur
-              const hasUnseenStory = this.currentUser
-                ? stories.some(story => !(story.viewers || []).includes(this.currentUser.uid))
-                : false;
-              // Utiliser la plus récente pour l'avatar/nom
-              return {
-                userId: stories[0].userId,
-                userName: stories[0].userName,
-                userAvatar: stories[0].userAvatar,
-                stories: stories,
-                hasUnseenStory
-              };
-            });
-          });
-         return;
-        }
-        this.stories = stories;
-      });
+    async loadOwnAvatar() {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('avatar_url')
+        .eq('user_id', this.currentUserId)
+        .maybeSingle();
+      this.ownAvatarUrl = data?.avatar_url || null;
     },
-    async openStory(stories) {
-      // stories = tableau de stories de l'utilisateur
-      this.selectedStory = stories;
-      // Marquer toutes les stories comme vues pour l'utilisateur courant
-      if (this.currentUser) {
-        for (const story of stories) {
-          if (!(story.viewers || []).includes(this.currentUser.uid)) {
-            const storyRef = dbRef(db, `stories/${story.id}/viewers`);
-            // Ajoute l'uid dans viewers (évite les doublons)
-            const newViewers = [...(story.viewers || []), this.currentUser.uid];
-            await update(dbRef(db, `stories/${story.id}`), { viewers: newViewers });
-          }
-        }
-        // Refresh stories to update seen status
-        setTimeout(() => this.fetchStories(), 500);
+    async fetchStories() {
+      try {
+        this.stories = await fetchActiveStories();
+        this.loadError = '';
+      } catch (e) {
+        console.error('[Stories] Chargement impossible:', e);
+        this.loadError = this.stories.length ? '' : 'Stories indisponibles pour le moment.';
       }
+    },
+    openGroup(group) {
+      this.openedIndex = firstUnseenIndex(group);
+      this.openedUserId = group.userId;
+    },
+    closeGroup() {
+      this.openedUserId = null;
+    },
+    async onViewed(story) {
+      if (story.seen || story.user_id === this.currentUserId) return;
+      // Marquer tout de suite à l'écran ; l'enregistrement suit.
+      story.seen = true;
+      try {
+        await markStoryViewed(story.id);
+      } catch (e) {
+        console.warn('[Stories] Vue non enregistrée:', e);
+      }
+    },
+    onDeleted(storyId) {
+      this.stories = this.stories.filter((s) => s.id !== storyId);
+      if (!this.openedGroup) this.closeGroup();
+    },
+    onUploaded() {
+      this.showAddStory = false;
+      this.fetchStories();
     },
     checkMobile() {
       this.isMobile = window.innerWidth <= 768;
     },
     handleAddStoryClick() {
-      // Mobile : redirige vers la page /create, Desktop : ouvre la dialog
-      if (this.isMobile) {
-        this.$router.push('/create');
-      } else {
-        this.showAddStory = true;
-      }
-    },
+      if (this.isMobile) this.$router.push({ path: '/create', query: { tab: 'story' } });
+      else this.showAddStory = true;
+    }
   }
 };
 </script>
@@ -164,183 +167,121 @@ export default {
 <style scoped>
 .stories-bar {
   width: 100%;
+  min-width: 0;
+}
+
+.stories-track {
   display: flex;
-  align-items: flex-end;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 0.85rem;
   overflow-x: auto;
-  overflow-y: hidden;
-  padding: 1rem 0 1.5rem 0;
-  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  padding: 0.75rem 1rem 0.65rem;
+  scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
-.stories-bar::-webkit-scrollbar {
-  height: 7px;
-  background: transparent;
-}
-.stories-bar::-webkit-scrollbar-thumb {
-  background: #bdbdbd;
-  border-radius: 4px;
+
+.stories-track::-webkit-scrollbar {
+  display: none;
 }
 
-/* Styles pour les stories */
-.story-item {
+.story-chip {
+  flex: 0 0 auto;
+  width: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
   border: 0;
   background: transparent;
-  color: inherit;
+  color: var(--text-color);
   font: inherit;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 8px;
   cursor: pointer;
+  scroll-snap-align: start;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.story-chip:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+
+.story-ring {
   position: relative;
-  outline: none;
-}
-.story-item:focus-visible{outline:3px solid var(--primary-color);outline-offset:3px;border-radius:.75rem}
-
-.story-item:active::after {
-  content: '';
-  position: absolute;
-  left: 50%; top: 50%;
-  transform: translate(-50%,-50%) scale(1.5);
-  width: 80%; height: 80%;
-  border-radius: 32%;
-  background: rgba(33,150,243,0.11);
-  animation: ripple-story 0.4s linear;
-  pointer-events: none;
-  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 50%;
+  padding: 3px;
+  background: var(--surface-border);
+  transition: transform 0.15s ease;
 }
 
-@keyframes ripple-story {
-  0% { opacity: 1; transform: translate(-50%,-50%) scale(0.8); }
-  100% { opacity: 0; transform: translate(-50%,-50%) scale(1.6); }
+.story-chip:active .story-ring {
+  transform: scale(0.94);
 }
 
-.story-item .avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 32%;
-  margin-bottom: 5px;
+.story-ring--unseen {
+  background: linear-gradient(135deg, #f3c300 0%, #d49f3f 45%, var(--primary-color) 100%);
+}
+
+.story-ring--add {
+  background: transparent;
+}
+
+.story-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--primary-color, #2196f3);
-  transition: box-shadow 0.22s, border 0.22s;
-  background: linear-gradient(135deg, #e3f2fd 0%, #fff 100%);
-  position: relative;
+  border: 2px solid var(--surface-card, #fff);
+  background: var(--surface-ground);
 }
 
-.story-item .avatar.active, .story-item .avatar.unseen {
-  border: 3px solid;
-  border-image: linear-gradient(120deg, #2196f3 60%, #ffb300 100%) 1;
-  box-shadow: 0 0 0 3px #fff, 0 0 12px 2px #2196f3;
+.story-plus {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: var(--primary-color-text);
+  border: 2px solid var(--surface-card, #fff);
+  font-size: 0.65rem;
 }
 
-.story-item .avatar:hover {
-  box-shadow: 0 0 0 2px var(--primary-color, #2196f3), 0 0 3px 2px #d49f3f;
+.story-plus .pi {
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 
-.story-item p {
+.story-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.stories-error {
+  align-self: center;
   margin: 0;
-  margin-top: 2px;
-  font-size: 1.07rem;
-  color: var(--primary-color, #1976d2);
-  font-weight: 600;
-  text-align: center;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 2px rgba(33,150,243,0.07);
-}
-
-.add-story-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 8px;
-  cursor: pointer;
-}
-
-.add-story {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 32%;
-  background: var(--surface-card, #f8fafd);
-  box-shadow: 0 4px 16px 0 rgba(33,150,243,0.11);
-  color: #fff;
-  font-size: 2rem;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  margin-bottom: 5px;
-  position: relative;
-  transition: box-shadow 0.2s, background 0.2s;
-}
-
-.add-story:hover {
-  box-shadow: 0 0 0 3px var(--primary-color, #2196f3), 0 4px 16px 0 rgba(33,150,243,0.11);
-}
-
-.add-story:focus-visible {
-  box-shadow: 0 0 0 3px var(--primary-color, #2196f3), 0 4px 16px 0 rgba(33,150,243,0.11);
-}
-
-.add-story .plus-icon {
-  font-size: 2.1rem;
-  font-weight: bold;
-  text-shadow: 0 2px 8px rgba(33,150,243,0.13);
-  color: #fff;
-}
-
-.add-icon {
-  font-size: 2rem;
-  color: var(--primary-color, #2196f3);
-}
-
-.story-item p, .add-story-container p {
   font-size: 0.8rem;
-  text-align: center;
-  word-break: break-word;
+  color: var(--text-color-secondary);
+  white-space: nowrap;
 }
 
-@media (max-width: 768px) {
-  .stories-bar {
-    padding: 10px;
-    gap: 12px;
-    min-height: 80px;
-    border-radius: 0.8rem;
-    margin-bottom: 0.6rem;
-  }
-  
-  .story-item .avatar,
-  .add-story {
-    width: 45px;
-    height: 45px;
-  }
-  
-  .add-icon {
-    font-size: 1.7rem;
-  }
-  
-  .story-item p, .add-story-container p {
-    font-size: 0.75rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .stories-bar {
-    padding: 8px;
-    gap: 10px;
-    min-height: 70px;
-  }
-  
-  .story-item .avatar,
-  .add-story {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .add-icon {
-    font-size: 1.5rem;
+@media (prefers-reduced-motion: reduce) {
+  .story-ring {
+    transition: none;
   }
 }
 </style>

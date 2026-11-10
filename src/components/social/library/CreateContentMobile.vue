@@ -31,7 +31,7 @@
         />
       </div>
       <div v-if="currentTab === 'story'" id="create-panel-story" role="tabpanel" aria-labelledby="create-tab-story">
-        <AddStoryCore @uploaded="goBack" @use-post="currentTab = 'post'" />
+        <AddStoryCore @uploaded="goBack" />
       </div>
     </main>
 
@@ -78,7 +78,7 @@ export default {
   },
   data() {
     return {
-      currentTab: 'post',
+      currentTab: this.$route?.query?.tab === 'story' ? 'story' : 'post',
       canPublish: false,
       busy: false,
       touchStartX: 0,
