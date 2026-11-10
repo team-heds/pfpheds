@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase.js'
 import { fetchLikeSummaries } from '@/service/postLikesService'
+import { fetchCommentCounts } from '@/service/postCommentsService'
 
 const DEFAULT_PAGE_SIZE = 10
 const MAX_PENDING_MEDIA_POSTS = 100
@@ -130,6 +131,13 @@ export const useSocialFeedStore = defineStore('socialFeed', {
         console.warn('[SocialFeed] J’aime indisponibles, chargement par publication:', error)
       }
 
+      let commentCounts = null
+      try {
+        commentCounts = await fetchCommentCounts(postIds)
+      } catch (error) {
+        console.warn('[SocialFeed] Commentaires indisponibles, chargement par publication:', error)
+      }
+
       try {
         await this.fetchAvatars(userIds)
       } catch (error) {
@@ -162,7 +170,8 @@ export const useSocialFeedStore = defineStore('socialFeed', {
         media: [...new Set((mediaByPost[row.id] || []).map((media) => media.url))],
         // null = inconnu : PostItem le recharge lui-même.
         likes_count: likeSummaries ? likeSummaries[row.id]?.count || 0 : null,
-        liked_by_me: likeSummaries ? Boolean(likeSummaries[row.id]?.liked) : null
+        liked_by_me: likeSummaries ? Boolean(likeSummaries[row.id]?.liked) : null,
+        comments_count: commentCounts ? commentCounts[row.id] || 0 : null
       }))
     },
 
@@ -322,6 +331,14 @@ export const useSocialFeedStore = defineStore('socialFeed', {
         if (!post) return
         post.liked_by_me = liked
         post.likes_count = count
+      })
+    },
+
+    /** Garde le même nombre de commentaires dans toutes les vues du fil déjà chargées. */
+    setPostCommentCount(postId, count) {
+      Object.values(this.entries).forEach((entry) => {
+        const post = entry.posts.find((item) => item.id === postId)
+        if (post) post.comments_count = count
       })
     },
 

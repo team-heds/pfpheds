@@ -39,22 +39,13 @@
         @reset-filter="resetFilter"
       />
       <div class="posts-container" ref="postsContainerRef">
-        <div class="quick-post-bar" @click="handleCreateClick">
-          <span class="quick-post-icon-circle">
+        <button type="button" class="quick-post-bar" aria-haspopup="dialog" @click="handleCreateClick">
+          <span class="quick-post-icon-circle" aria-hidden="true">
             <i class="pi pi-file-edit quick-post-icon"></i>
           </span>
-          <div class="quick-post-placeholder">Exprime-toi...</div>
-        </div>
-        <CreatePostDialog
-          v-model="showCreatePost"
-          :loading="loading"
-          :value="newPost"
-          :selectedMedia="selectedMedia"
-          @update:value="(val) => (newPost = val)"
-          @publish="postMessage"
-          @media-selected="handleFileSelection"
-          @remove-media="removeMedia"
-        />
+          <span class="quick-post-placeholder">Quoi de neuf ? Créer une publication</span>
+        </button>
+        <CreatePostDialog v-model="showCreatePost" :publish="publishFromComposer" />
         <div v-if="refreshWarning" class="feed-warning" role="status">{{ refreshWarning }}</div>
         <LoadingState
           v-if="initialLoading && filteredPosts.length === 0"
@@ -85,7 +76,7 @@ import Toast from 'primevue/toast'
 import FilterComponent from '@/components/social/library/FilterComponent.vue'
 import CreatePostDialog from '@/components/social/library/CreatePostDialog.vue'
 import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
-import gamificationIntegration from '@/service/gamificationIntegration'
+import { publishPost } from '@/service/postPublishService'
 import { runtimeFeatures } from '@/config/runtimeFeatures'
 import LoadingState from '@/components/common/states/LoadingState.vue'
 import {
@@ -119,12 +110,9 @@ export default {
     const feedStore = useSocialFeedStore()
     const toast = useToast()
 
-    const newPost = ref('')
-    const detectedTags = ref([])
     const postsPerPage = ref(10)
     const localCurrentUser = ref(null)
     const lastScrollTop = ref(0)
-    const selectedMedia = ref([])
     const showCreatePost = ref(false)
     const showHeaderStories = ref(true)
     const showHeaderIcons = ref(true)
@@ -184,19 +172,6 @@ export default {
       viewportWidth.value = window.innerWidth
     }
 
-    const cleanupMediaPreviews = (items) => {
-      ;(items || []).forEach((m) => {
-        if (m?.preview && String(m.preview).startsWith('blob:')) {
-          URL.revokeObjectURL(m.preview)
-        }
-      })
-    }
-
-    watch(newPost, (value) => {
-      const textWithoutHtml = value.replace(/<[^>]+>/g, '')
-      detectedTags.value = extractTags(textWithoutHtml)
-    })
-
     watch(
       () => props.communityId,
       async () => {
@@ -213,11 +188,6 @@ export default {
       }
     )
 
-    const extractTags = (text) => {
-      const regex = /[#@][\w-]+/g
-      return text.match(regex) || []
-    }
-
     const fetchAvatars = async (userIds) => {
       try {
         await feedStore.fetchAvatars(userIds)
@@ -226,166 +196,49 @@ export default {
       }
     }
 
-    const postMessage = async () => {
-      const textWithoutHtml = newPost.value.replace(/<[^>]+>/g, '').trim()
-      if (textWithoutHtml === '' && selectedMedia.value.length === 0) {
-        toast.add({
-          severity: 'warn',
-          summary: 'Contenu vide',
-          detail: 'Ajoutez un texte ou un média avant de publier.',
-          life: 2500
-        })
-        return
-      }
-
-      if (!localCurrentUser.value?.id) {
-        toast.add({
-          severity: 'error',
-          summary: 'Utilisateur non connecté',
-          detail: 'Reconnectez-vous pour publier un post.',
-          life: 3000
-        })
-        return
-      }
-
+    // Publication depuis le composer : la gamification (action POST) est appelée par publishPost.
+    const publishFromComposer = async ({ content, files }) => {
+      const user = localCurrentUser.value || authStore.user
+      if (!user?.id) throw new Error('Utilisateur non connecté')
       feedStore.setPublishing(activeScope.value, true)
       try {
-        const authorName =
-          localCurrentUser.value.user_metadata?.full_name ||
-          localCurrentUser.value.email?.split('@')[0] ||
-          localCurrentUser.value.id
-
-        const hashtagsObject = detectedTags.value
-          .filter((tag) => tag.startsWith('#'))
-          .reduce((acc, tag) => {
-            const cleanTag = tag.substring(1)
-            acc[cleanTag] = true
-            return acc
-          }, {})
-
-        const mentionsObject = detectedTags.value
-          .filter((tag) => tag.startsWith('@'))
-          .reduce((acc, tag) => {
-            const cleanMention = tag.substring(1)
-            acc[cleanMention] = true
-            return acc
-          }, {})
-
-        const { data: ins, error: insErr } = await supabase
-          .from('posts')
-          .insert([
-            {
-              user_id: localCurrentUser.value.id,
-              author_name: authorName,
-              content: newPost.value,
-              hashtags: hashtagsObject,
-              mentions: mentionsObject,
-              community_id: props.communityId || null
-            }
-          ])
-          .select('id, created_at')
-          .single()
-        if (insErr) throw insErr
-
-        const media = await uploadMedia()
-        if (media.length > 0) {
-          const rows = media.map((m) => ({ post_id: ins.id, url: m.url, type: m.type }))
-          const { error: mediaErr } = await supabase.from('post_media').insert(rows)
-          if (mediaErr) throw mediaErr
-        }
-
-        // Optimistic update: afficher immédiatement le post
-        const mapped = {
-          id: ins.id,
-          Author: authorName,
-          IdUser: localCurrentUser.value.id,
-          avatar_url: feedStore.avatarCache[localCurrentUser.value.id] || null,
-          Content: newPost.value,
-          Timestamp: Date.now(),
-          Hashtags: hashtagsObject,
-          MentionGroups: mentionsObject,
-          community_id: props.communityId || null,
-          media: media.map((m) => m.url),
-          likes_count: 0,
-          liked_by_me: false
-        }
+        const published = await publishPost({
+          user,
+          content,
+          files,
+          communityId: props.communityId || null
+        })
         const insertedRow = {
-          id: ins.id,
-          user_id: localCurrentUser.value.id,
-          author_name: authorName,
-          content: newPost.value,
-          created_at: ins.created_at,
-          hashtags: hashtagsObject,
-          mentions: mentionsObject,
-          community_id: props.communityId || null
+          id: published.id,
+          user_id: user.id,
+          author_name: published.authorName,
+          content,
+          created_at: published.createdAt,
+          hashtags: published.hashtags,
+          mentions: published.mentions,
+          community_id: published.communityId
         }
         if (postMatchesFeedScope(insertedRow, activeScope.value)) {
-          feedStore.upsertPost(activeScope.value, mapped)
+          feedStore.upsertPost(activeScope.value, {
+            id: published.id,
+            Author: published.authorName,
+            IdUser: user.id,
+            avatar_url: feedStore.avatarCache[user.id] || null,
+            Content: content,
+            Timestamp: Date.parse(published.createdAt) || Date.now(),
+            Hashtags: published.hashtags,
+            MentionGroups: published.mentions,
+            community_id: published.communityId,
+            media: published.media.map((m) => m.url),
+            likes_count: 0,
+            liked_by_me: false,
+            comments_count: 0
+          })
         }
-
-        await gamificationIntegration.onSocialInteraction(localCurrentUser.value.id, {
-          action: 'post',
-          targetType: 'post',
-          targetId: ins.id,
-          postLength: textWithoutHtml.length,
-          hasMedia: selectedMedia.value.length > 0,
-          hashtagsCount: Object.keys(hashtagsObject).length,
-          mentionsCount: Object.keys(mentionsObject).length,
-          timestamp: Date.now()
-        })
-
-        newPost.value = ''
-        cleanupMediaPreviews(selectedMedia.value)
-        selectedMedia.value = []
-        detectedTags.value = []
-        showCreatePost.value = false
-      } catch (e) {
-        console.error('Erreur publication Supabase:', e)
-        toast.add({
-          severity: 'error',
-          summary: 'Publication échouée',
-          detail: e?.message || 'Une erreur est survenue lors de la publication.',
-          life: 4000
-        })
+        toast.add({ severity: 'success', summary: 'Publication partagée', life: 2500 })
       } finally {
         feedStore.setPublishing(activeScope.value, false)
       }
-    }
-
-    const uploadMedia = async () => {
-      const uploaded = []
-      for (const media of selectedMedia.value) {
-        try {
-          const file = media.file
-          const path = `posts/${localCurrentUser.value.id}/${Date.now()}_${file.name}`
-          const { error: upErr } = await supabase.storage
-            .from('post-media')
-            .upload(path, file, { upsert: true })
-          if (upErr) throw upErr
-          const { data: pub } = supabase.storage.from('post-media').getPublicUrl(path)
-          uploaded.push({ url: pub.publicUrl, type: file.type })
-        } catch (e) {
-          console.error('Erreur upload média Supabase:', e)
-        }
-      }
-      return uploaded
-    }
-
-    const handleFileSelection = (event) => {
-      const files = event.files
-      for (const file of files) {
-        const fileType = file.type
-        const previewUrl = URL.createObjectURL(file)
-        selectedMedia.value.push({ file, type: fileType, preview: previewUrl })
-      }
-    }
-
-    const removeMedia = (index) => {
-      const media = selectedMedia.value[index]
-      if (media?.preview && String(media.preview).startsWith('blob:')) {
-        URL.revokeObjectURL(media.preview)
-      }
-      selectedMedia.value.splice(index, 1)
     }
 
     const setAvailableHashtagsFromPosts = () => {
@@ -624,7 +477,6 @@ export default {
       window.removeEventListener('scroll', handleWindowScroll)
       window.removeEventListener('resize', handleResize)
       postsContainerRef.value?.removeEventListener('scroll', handleScroll)
-      cleanupMediaPreviews(selectedMedia.value)
       if (postsChannel) {
         supabase.removeChannel(postsChannel)
         postsChannel = null
@@ -639,13 +491,10 @@ export default {
     return {
       posts,
       filteredPosts,
-      newPost,
-      detectedTags,
       loading,
       postsPerPage,
       localCurrentUser,
       lastScrollTop,
-      selectedMedia,
       filterTypes,
       selectedFilterType,
       filterOptions,
@@ -656,6 +505,7 @@ export default {
       showCreatePost,
       isMobile,
       handleCreateClick,
+      publishFromComposer,
       showHeaderStories,
       showHeaderIcons,
       showEditAndStories,
@@ -664,11 +514,6 @@ export default {
       refreshWarning,
       mainFeedRef,
       postsContainerRef,
-      extractTags,
-      postMessage,
-      uploadMedia,
-      handleFileSelection,
-      removeMedia,
       reloadPosts,
       fetchAvailableFilters,
       onFilterTypeChange,
@@ -709,6 +554,9 @@ export default {
 .quick-post-bar {
   display: flex;
   align-items: center;
+  border: 1px solid var(--surface-border);
+  font: inherit;
+  color: inherit;
   background: var(--surface-card, #f8f8fa);
   border-radius: 1.2rem;
   padding: 0.5rem 1rem;
@@ -741,8 +589,15 @@ export default {
   font-size: 1rem;
   color: var(--primary-color);
 }
+.quick-post-bar:hover {
+  background: var(--surface-hover);
+}
+.quick-post-bar:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
 .quick-post-placeholder {
-  color: #888;
+  color: var(--text-color-secondary);
   font-size: 1.01rem;
   flex: 1;
   text-align: left;

@@ -93,6 +93,7 @@ export default {
         'AddStory',
         'AddStoryCore',
         'AddStoryMobile',
+        'CreateContentMobile',
       ];
       // Affiche uniquement sur mobile
       return window.innerWidth <= 600 && !excluded.includes(routeName);

@@ -577,10 +577,11 @@ canvas {
   box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
 }
 .publish-btn {
-  background: #F3C300;
-  color: #181e2a;
+  background: var(--primary-color);
+  color: var(--primary-color-text);
   border: none;
-  border-radius: 12px;
+  border-radius: 999px;
+  min-height: 2.75rem;
   font-weight: bold;
   font-size: 1.05rem;
   padding: 10px 28px;
@@ -588,8 +589,11 @@ canvas {
   transition: background 0.2s;
 }
 .publish-btn:disabled {
-  background: #bdbdbd;
-  color: #fff;
+  opacity: 0.5;
+}
+.publish-btn:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
 }
 .storyeditor-fixed-btn-bar {
   position: fixed;

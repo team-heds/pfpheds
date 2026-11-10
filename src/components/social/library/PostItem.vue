@@ -12,7 +12,12 @@
         </router-link>
         <h5 v-else>{{ authorName }}</h5>
         <div>
-          <span class="post-date">{{ formatTimestamp(post.Timestamp) }}</span>
+          <time
+            v-if="post.Timestamp"
+            class="post-date"
+            :datetime="new Date(post.Timestamp).toISOString()"
+            :title="formatFullDate(post.Timestamp)"
+          >{{ formatRelativeTime(post.Timestamp) }}</time>
         </div>
       </div>
     </div>
@@ -120,9 +125,9 @@
         ></i>
         <span>J’aime</span>
       </button>
-      <button type="button" class="action-button" @click="toggleComments" :aria-expanded="showComments" aria-label="Afficher les commentaires">
-        <i class="pi pi-comment action-icon"></i>
-        <span>{{ commentCount }}</span>
+      <button type="button" class="action-button" aria-label="Commenter" @click="openComments">
+        <i class="pi pi-comment action-icon" aria-hidden="true"></i>
+        <span>Commenter</span>
       </button>
       <button type="button" class="action-button" @click="sharePost" aria-label="Partager cette publication">
         <i class="pi pi-share-alt action-icon"></i>
@@ -139,80 +144,19 @@
     </div>
     <PostLikersDialog v-if="post.id" v-model:visible="showLikers" :post-id="String(post.id)" />
 
-    <!-- Liste des commentaires (affichés seulement si showComments est true) -->
-    <div v-if="showComments && post.replies" class="comments-section p-3">
-      <div v-for="(reply, replyId) in topLevelReplies" :key="replyId" class="comment-card compact">
-        <div class="comment-card-avatar" :class="{'with-photo': reply.photoURL}" >
-          <img v-if="reply.photoURL" :src="reply.photoURL" alt="avatar" />
-          <span v-else>{{ reply.Author ? reply.Author[0].toUpperCase() : '?' }}</span>
-        </div>
-        <div class="comment-card-body">
-          <div class="comment-card-meta">
-            <span class="comment-card-date">{{ formatTimestamp(reply.Timestamp) }}</span>
-          </div>
-          <div class="comment-card-content">{{ reply.Content }}</div>
-          <div class="comment-card-actions">
-            <button class="reply-link" @click="toggleReplyTo(replyId)">Répondre</button>
-          </div>
-          <!-- Champ de réponse -->
-          <div v-if="replyToId === replyId" class="reply-to-bar">
-            <Textarea
-              v-model="replyToContent"
-              placeholder="Répondre à ce commentaire..."
-              class="comment-bar-textarea compact"
-              autoResize
-              @keydown.enter.exact.prevent="submitReplyTo(replyId)"
-            />
-            <button class="comment-bar-send compact" @click="submitReplyTo(replyId)">
-              <i class="pi pi-send"></i>
-            </button>
-          </div>
-          <!-- Réponses -->
-          <div v-if="reply.replies" class="comment-replies compact">
-            <div v-for="(subReply, subId) in reply.replies" :key="subId" class="comment-card reply-thread compact">
-              <div class="comment-card-avatar small" :class="{'with-photo': subReply.photoURL}">
-                <img v-if="subReply.photoURL" :src="subReply.photoURL" alt="avatar" />
-                <span v-else>{{ subReply.Author ? subReply.Author[0].toUpperCase() : '?' }}</span>
-              </div>
-              <div class="comment-card-body">
-                <div class="comment-card-meta">
-                  <span class="comment-card-author">{{ subReply.Author }}</span>
-                  <span class="comment-card-date">{{ formatTimestamp(subReply.Timestamp) }}</span>
-                </div>
-                <div class="comment-card-content">{{ subReply.Content }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Nouvelle zone de commentaire compacte et colorée -->
-    <div class="comment-bar-modern compact">
-      <Textarea
-        v-model="replyContent"
-        placeholder="Écrire un commentaire..."
-        class="comment-bar-textarea compact"
-        autoResize
-        @keydown.enter.exact.prevent="submitReply"
-      />
-      <button class="comment-bar-send compact" @click="submitReply">
-        <i class="pi pi-send"></i>
-      </button>
-    </div>
+    <!-- Commentaires : liste repliée, réponses, champ compact -->
+    <PostComments v-if="post.id" ref="commentsRef" :post="post" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
-import { usePostsStore } from '@/stores/postsStore';
-import { useAuthStore } from '@/stores/authStore'; // Assurez-vous que ce store existe et expose l'utilisateur
-import Textarea from 'primevue/textarea';
-import gamificationIntegration from '@/service/gamificationIntegration';
 import { sanitizeHtml } from '@/composables/useSanitize';
 import { usePostLike } from '@/composables/usePostLike';
 import { createDoubleTapDetector, isInteractiveTarget } from '@/service/postLikes';
 import PostLikersDialog from '@/components/social/library/PostLikersDialog.vue';
+import PostComments from '@/components/social/library/PostComments.vue';
+import { formatFullDate, formatRelativeTime } from '@/service/postComments';
 
 const props = defineProps({
   post: {
@@ -221,16 +165,8 @@ const props = defineProps({
   },
 });
 
-const postsStore = usePostsStore();
-const authStore = useAuthStore();
-
-const currentUser = computed(() => authStore.user);
-
 // State
-const replyContent = ref('');
-const replyToId = ref(null);
-const replyToContent = ref('');
-const showComments = ref(false);
+const commentsRef = ref(null);
 const isMobile = ref(window.matchMedia('(max-width: 600px)').matches);
 const pdfError = ref(false);
 
@@ -249,7 +185,6 @@ const authorAvatarUrl = computed(() =>
   props.post.author?.avatar_url ||
   defaultAvatar
 );
-const commentCount = computed(() => props.post.replies_count || 0);
 
 // J'aime : mise à jour optimiste, double-tap pour aimer, liste des personnes.
 const {
@@ -294,75 +229,6 @@ const onContentPointerUp = (event) => {
   }
 };
 
-const topLevelReplies = computed(() => {
-  // TODO: Adapter à la structure des réponses de Supabase
-  return props.post.replies || [];
-});
-
-// Methods
-const submitReply = async () => {
-  if (!replyContent.value.trim() || !currentUser.value) return;
-
-  try {
-    const newReply = {
-      content: replyContent.value,
-      author_id: currentUser.value.id,
-      parent_id: props.post.id,
-    };
-
-    await postsStore.createPost(newReply);
-    
-    // NOUVEAU : Déclencher l'intégration gamification pour commentaire
-    await gamificationIntegration.onSocialInteraction(currentUser.value.uid || currentUser.value.id, {
-      action: 'comment',
-      targetType: 'post',
-      targetId: props.post.id,
-      targetAuthorId: props.post.IdUser,
-      commentLength: replyContent.value.length,
-      timestamp: Date.now()
-    });
-    
-    replyContent.value = '';
-  } catch (error) {
-    console.error('Erreur lors de la création du commentaire:', error);
-  }
-};
-
-const submitReplyTo = async (parentReplyId) => {
-  if (!replyToContent.value.trim() || !currentUser.value) return;
-
-  try {
-    const newReply = {
-      content: replyToContent.value,
-      author_id: currentUser.value.id,
-      parent_id: parentReplyId, // Répondre à un commentaire, pas au post principal
-    };
-
-    await postsStore.createPost(newReply);
-    
-    // NOUVEAU : Déclencher l'intégration gamification pour réponse à commentaire
-    await gamificationIntegration.onSocialInteraction(currentUser.value.uid || currentUser.value.id, {
-      action: 'reply',
-      targetType: 'comment',
-      targetId: parentReplyId,
-      originalPostId: props.post.id,
-      commentLength: replyToContent.value.length,
-      timestamp: Date.now()
-    });
-    
-    replyToContent.value = '';
-    replyToId.value = null;
-  } catch (error) {
-    console.error('Erreur lors de la création de la réponse:', error);
-  }
-};
-
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  return `${date.toLocaleDateString()} à ${date.toLocaleTimeString()}`;
-};
-
 const sharePost = () => {
   const postUrl = `${window.location.origin}/posts/${props.post.id}`;
   navigator.clipboard.writeText(postUrl).then(() => {
@@ -370,17 +236,10 @@ const sharePost = () => {
   });
 };
 
-const toggleComments = () => {
-  showComments.value = !showComments.value;
-};
-
-const toggleReplyTo = (replyId) => {
-  if (replyToId.value === replyId) {
-    replyToId.value = null;
-  } else {
-    replyToId.value = replyId;
-  }
-  replyToContent.value = '';
+// Icône bulle : ouvre les commentaires et place le curseur dans le champ (comme Instagram).
+const openComments = async () => {
+  await commentsRef.value?.expand();
+  commentsRef.value?.focus();
 };
 
 // Media Helpers (inchangés pour la plupart)
@@ -641,139 +500,6 @@ const getInstagramEmbedUrl = (url) => {
   object-fit: cover;
 }
 
-.comment-card.compact {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background: var(--surface-card, #f7f8fa);
-  border-radius: 11px;
-  box-shadow: none;
-  padding: 7px 10px 7px 7px;
-  margin-bottom: 8px;
-  max-width: 99%;
-  min-width: 0;
-}
-.comment-card-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 1.2rem;
-  background: #e0e4ea;
-  color: #5a5a5a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.95em;
-  flex-shrink: 0;
-  user-select: none;
-  border: 1px solid #ececec;
-  overflow: hidden;
-}
-.comment-card-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  display: block;
-}
-.comment-card-avatar.small {
-  width: 22px;
-  height: 22px;
-  font-size: 0.85em;
-}
-.comment-card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.comment-card-meta {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-bottom: 0;
-}
-.comment-card-author {
-  color: var(--primary-color, #1976d2);
-  font-weight: 600;
-  font-size: 0.98em;
-  letter-spacing: 0.01em;
-}
-.comment-card-date {
-  color: #b5b5b5;
-  font-size: 0.80em;
-  margin-top: 0;
-}
-.comment-card-content {
-  font-size: 0.98em;
-  color: var(--text-color, #222);
-  margin-top: 1px;
-  margin-bottom: 2px;
-  word-break: break-word;
-  line-height: 1.35;
-}
-.comment-card-actions {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-.reply-link {
-  background: none;
-  border: none;
-  color: var(--primary-color, #1976d2);
-  cursor: pointer;
-  font-size: 0.93em;
-  padding: 0 0.25em;
-  opacity: 0.8;
-  transition: opacity 0.17s;
-}
-.reply-link:hover {
-  text-decoration: underline;
-  opacity: 1;
-}
-.reply-to-bar {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 5px;
-  margin-bottom: 5px;
-}
-.comment-replies.compact {
-  margin-left: 18px;
-  margin-top: 4px;
-}
-.comment-card.reply-thread.compact {
-  background: var(--surface-card, #f7f8fa);
-  border-radius: 9px;
-  box-shadow: none;
-  padding: 5px 7px 5px 5px;
-  margin-bottom: 4px;
-  margin-top: 0;
-  max-width: 97%;
-  min-width: 0;
-}
-@media (max-width: 600px) {
-  .comment-card.compact {
-    padding: 4px 3px 4px 3px;
-    border-radius: 8px;
-    font-size: 0.93em;
-  }
-  .comment-card-avatar {
-    width: 22px;
-    height: 22px;
-    font-size: 0.85em;
-  }
-  .comment-card-content, .comment-card-actions {
-    margin-left: 0;
-  }
-  .comment-replies.compact {
-    margin-left: 7px;
-  }
-  .comment-card.reply-thread.compact {
-    padding: 3px 4px 3px 3px;
-    border-radius: 6px;
-    font-size: 0.90em;
-  }
-}
 
 /* Responsive mobile */
 @media (max-width: 600px) {
@@ -857,115 +583,7 @@ const getInstagramEmbedUrl = (url) => {
   background: #000;
 }
 
-.reply-link {
-  background: none;
-  border: none;
-  color: var(--primary-color, #2196f3);
-  cursor: pointer;
-  font-size: 0.95em;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  padding: 0 0.5em;
-  opacity: 0.8;
-  transition: opacity 0.17s;
-}
-
-.reply-link:hover {
-  text-decoration: underline;
-  opacity: 1;
-}
-
-.reply-to-bar {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 6px;
-  margin-bottom: 10px;
-}
-
-.comment-replies {
-  margin-left: 24px;
-  margin-top: 4px;
-}
-
-.comment-thread {
-  background: var(--surface-50, #f7f8fa);
-  border-radius: 9px;
-  margin-bottom: 4px;
-  padding: 7px 11px;
-}
-
-.comment-bar-modern.compact {
-  display: flex;
-  align-items: center;
-  background: var(--surface-card);
-  border: 1px solid var(--surface-border, #ececec);
-  border-radius: 13px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
-  padding: 5px 8px;
-  margin: 12px 0 0 0;
-  gap: 7px;
-  min-height: 38px;
-  max-width: 99%;
-}
-
-.comment-bar-textarea.compact {
-  flex: 1;
-  min-height: 22px;
-  border: none;
-  background: transparent;
-  resize: none;
-  font-size: 0.97em;
-  padding: 4px 8px;
-  outline: none;
-  border-radius: 10px;
-  box-shadow: none;
-  color: var(--text-color, #222);
-}
-
-.comment-bar-textarea.compact::placeholder {
-  color: #bcbcbc;
-  opacity: 1;
-}
-
-.comment-bar-send.compact {
-  background: var(--surface-100);
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1em;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.07);
-  cursor: pointer;
-  transition: background 0.18s;
-}
-
-.comment-bar-send.compact:hover {
-  background: var(--primary-color, #1976d2);
-}
-
 @media (max-width: 600px) {
-  .comment-bar-modern.compact {
-    width: 100% !important;
-    margin: 12px 0 0 0;
-    box-sizing: border-box;
-    border-radius: 10px;
-    padding: 5px 5vw!important;
-    background: var(--surface-card, #182336);
-  }
-  .comment-bar-send.compact {
-    width: 22px;
-    height: 22px;
-    font-size: 0.9em;
-  }
-  .comment-bar-textarea.compact {
-    font-size: 0.93em;
-    padding: 2px 4px;
-  }
   .avatar {
     margin: 1rem !important;
   }
