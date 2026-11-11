@@ -1,5 +1,4 @@
 import { supabase } from '@/supabase'
-import { buildFeedPostContent } from '@/utils/alpinPhysioEvents'
 
 const ALPIN_TYPE = 'alpinphysio'
 
@@ -34,34 +33,6 @@ export async function listAlpinEvents({ publicOnly = false } = {}) {
   return (data || []).map(mapAlpinEvent)
 }
 
-async function syncFeedPost(event) {
-  if (!event?.id) return
-
-  if (event.status !== 'published' || !event.show_in_feed) {
-    const { error } = await supabase.from('posts').delete().eq('event_id', event.id)
-    assertSuccess(error)
-    return
-  }
-
-  const date = new Intl.DateTimeFormat('fr-CH', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  }).format(new Date(event.start_date))
-  const content = buildFeedPostContent(event, date)
-  const post = {
-    event_id: event.id,
-    user_id: event.admin_uid,
-    author_name: "Alp'in Physio",
-    content,
-    hashtags: { alpinphysio: true, evenement: true },
-    mentions: {},
-    community_id: null,
-  }
-
-  const { error } = await supabase.from('posts').upsert(post, { onConflict: 'event_id' })
-  assertSuccess(error)
-}
-
 export async function saveAlpinEvent(input, userId) {
   const payload = {
     title: input.title?.trim(),
@@ -75,7 +46,6 @@ export async function saveAlpinEvent(input, userId) {
     capacity: input.capacity ? Number(input.capacity) : null,
     type: ALPIN_TYPE,
     association_id: ALPIN_TYPE,
-    admin_uid: userId,
     image_url: input.image_url || null,
     status: input.status || 'draft',
     show_on_public_site: Boolean(input.show_on_public_site),
@@ -84,12 +54,14 @@ export async function saveAlpinEvent(input, userId) {
     cancelled_at: input.status === 'cancelled' ? new Date().toISOString() : null,
   }
 
+  // Le créateur reste l'auteur de l'événement : une modification par un autre
+  // responsable ne le réattribue pas. La publication du fil d'actualité est
+  // tenue à jour par la base (déclencheur alpinphysio_event_feed_post_sync).
   const request = input.id
     ? supabase.from('events').update(payload).eq('id', input.id)
-    : supabase.from('events').insert(payload)
+    : supabase.from('events').insert({ ...payload, admin_uid: userId })
   const { data, error } = await request.select('*').single()
   assertSuccess(error)
-  await syncFeedPost(data)
   return mapAlpinEvent(data)
 }
 
