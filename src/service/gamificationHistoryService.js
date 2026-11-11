@@ -11,6 +11,7 @@ const ACTION_PRESENTATION = Object.freeze({
   CHALLENGE_COMPLETE: { label: 'Défi réussi', detail: 'L’objectif du défi a été atteint.', icon: 'pi pi-flag' },
   OPENING_BALANCE: { label: 'Solde initial repris', detail: 'Vos points existants ont été repris lors du passage à Supabase.', icon: 'pi pi-history' },
   DAILY_WHEEL: { label: 'Activité quotidienne', detail: 'Une activité quotidienne a été validée.', icon: 'pi pi-star' },
+  EVENT_CHECKIN: { label: 'Présence à un événement', detail: 'Votre présence a été validée par QR code.', icon: 'pi pi-qrcode' },
   QUIZ_COMPLETE: { label: 'Quiz réussi', detail: 'Un quiz a été validé.', icon: 'pi pi-check-circle' },
 })
 

@@ -87,12 +87,22 @@
       <h4 class="section-title m-0">
         Événements à venir
       </h4>
-      <Button
-        icon="pi pi-arrow-right"
-        class="p-button-text p-button-sm"
-        @click="goToEventManagement"
-        v-tooltip.top="'Voir tous les événements'"
-      />
+      <div class="flex align-items-center">
+        <Button
+          v-if="eventCheckinEnabled"
+          icon="pi pi-qrcode"
+          class="p-button-text p-button-sm"
+          aria-label="Scanner un QR code de présence"
+          @click="$router.push({ path: '/scan', query: { camera: '1' } })"
+          v-tooltip.top="'Scanner un QR code de présence'"
+        />
+        <Button
+          icon="pi pi-arrow-right"
+          class="p-button-text p-button-sm"
+          @click="goToEventManagement"
+          v-tooltip.top="'Voir tous les événements'"
+        />
+      </div>
     </div>
 
     <div v-if="upcomingEvents.length === 0" class="no-events">
@@ -185,6 +195,7 @@ export default {
       authStore,
       userStore,
       gamificationUserJourneyEnabled: gamificationFeatures.userJourney,
+      eventCheckinEnabled: gamificationFeatures.eventCheckin,
       // upcomingEvents: computed(() => eventStore.upcomingEvents) // Supprimé car dupliqué
     };
   },
