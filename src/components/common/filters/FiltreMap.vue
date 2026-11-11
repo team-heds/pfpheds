@@ -11,12 +11,12 @@
 
     <!-- Contenu Principal -->
     <div class="main-content">
-      <div class="px-4 py-8 md:px-6 lg:px-8">
+      <div class="map-page-padding px-4 py-8 md:px-6 lg:px-8">
         <!-- Titre et Description -->
-        <div class="text-900 font-bold text-6xl text-center mb-4">
+        <div class="map-title text-900 font-bold text-6xl text-center mb-4">
           Carte Interactive
         </div>
-        <p class="text-600 font-normal text-lg text-center mb-6">
+        <p class="map-intro text-600 font-normal text-lg text-center mb-6">
           Liste des différentes places de formation pratique de la filière physiothérapie de la HES-SO Valais-Wallis
         </p>
 
@@ -329,9 +329,25 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  /* Téléphone : la carte occupe l'essentiel de l'écran, le titre reste discret. */
   .map-container {
-    height: 300px;
+    height: min(62dvh, 32rem);
+    min-height: 20rem;
   }
+  .map-page-padding {
+    padding: 0 0 1rem !important;
+  }
+  .map-title {
+    margin-bottom: 0.25rem !important;
+    font-size: 1.75rem !important;
+    text-align: left !important;
+  }
+  .map-intro {
+    margin-bottom: 1rem !important;
+    font-size: 0.9rem !important;
+    text-align: left !important;
+  }
+  .mobile-filters { margin-bottom: 1rem; }
 }
 
 @media (max-width: 63.99rem) {

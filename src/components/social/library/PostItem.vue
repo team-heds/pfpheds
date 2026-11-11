@@ -507,8 +507,10 @@ const getInstagramEmbedUrl = (url) => {
   .post-content,
   .post-media,
   .media-container {
-    width: 96vw !important;
-    max-width: 96vw !important;
+    /* 100 % du fil, pas de la fenêtre : une largeur en vw dépassait du
+       conteneur et la carte était coupée à droite. */
+    width: 100% !important;
+    max-width: 100% !important;
     margin: 10px auto !important;
     padding: 14px 6px 16px 6px !important;
     border-radius: 14px !important;
