@@ -700,4 +700,26 @@ onBeforeUnmount(() => {
     grid-template-columns: 1fr;
   }
 }
+
+/* Téléphone : un seul défilement, celui de la page (.content dans App.vue).
+   Un second bloc défilant de la hauteur de l'écran obligeait à faire défiler
+   deux zones imbriquées. */
+@media (max-width: 768px) {
+  .page-wrapper {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .achievements-page {
+    min-height: 0;
+  }
+}
+
+/* Sous 16 px, le téléphone zoome la page quand on touche le champ. */
+@media (max-width: 768px) {
+  .search-input {
+    font-size: 1rem;
+  }
+}
 </style>
