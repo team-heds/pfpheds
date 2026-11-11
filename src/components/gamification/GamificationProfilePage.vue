@@ -112,6 +112,7 @@
             <RouterLink to="/quests"><i class="pi pi-compass" aria-hidden="true"></i><span><strong>Quêtes</strong><small>Vos objectifs et leurs étapes</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
             <RouterLink v-if="collectionsEnabled" to="/challenges"><i class="pi pi-flag" aria-hidden="true"></i><span><strong>Défis</strong><small>Les activités proposées</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
             <RouterLink v-if="collectionsEnabled" to="/achievements"><i class="pi pi-shield" aria-hidden="true"></i><span><strong>Badges</strong><small>Vos réussites à collectionner</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
+            <RouterLink v-if="eventCheckinEnabled" to="/scan"><i class="pi pi-qrcode" aria-hidden="true"></i><span><strong>Présences</strong><small>Scanner un QR code et retrouver vos présences</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
             <RouterLink to="/houses/ranking"><i class="pi pi-chart-line" aria-hidden="true"></i><span><strong>Maisons</strong><small>Le classement collectif</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
             <RouterLink v-if="gamesEnabled" to="/game"><i class="pi pi-play" aria-hidden="true"></i><span><strong>Jeux</strong><small>Une pause à partager</small></span><i class="pi pi-arrow-right" aria-hidden="true"></i></RouterLink>
           </nav>
@@ -226,6 +227,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const collectionsEnabled = gamificationFeatures.userJourney && gamificationFeatures.badgesChallenges
 const gamesEnabled = gamificationFeatures.gamesHub
+const eventCheckinEnabled = gamificationFeatures.eventCheckin
 const houseQuizEnabled = gamificationFeatures.userJourney && gamificationFeatures.houseQuiz
 const { quizOpen: houseQuizOpen } = useHouseQuizStatus({ enabled: houseQuizEnabled })
 const displayUserId = computed(() => props.id || authStore.user?.id)
