@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase'
+import { buildFeedPostContent } from '@/utils/alpinPhysioEvents'
 
 const ALPIN_TYPE = 'alpinphysio'
 
@@ -46,8 +47,7 @@ async function syncFeedPost(event) {
     dateStyle: 'long',
     timeStyle: 'short',
   }).format(new Date(event.start_date))
-  const location = event.lieu ? ` · ${event.lieu}` : ''
-  const content = `<p><strong>${event.title}</strong></p><p>${date}${location}</p><p>${event.description || ''}</p><p><a href="/events">Répondre à l’événement</a></p>`
+  const content = buildFeedPostContent(event, date)
   const post = {
     event_id: event.id,
     user_id: event.admin_uid,
@@ -153,6 +153,17 @@ export async function listMaterials(eventId) {
     .order('created_at')
   assertSuccess(error)
   return data || []
+}
+
+export async function countMissingMaterials(eventIds) {
+  if (!eventIds?.length) return 0
+  const { count, error } = await supabase
+    .from('event_material_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'missing')
+    .in('event_id', eventIds)
+  assertSuccess(error)
+  return count || 0
 }
 
 export async function saveMaterial(item) {
