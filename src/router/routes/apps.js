@@ -47,6 +47,7 @@ export default [
   { path: '/list', component: () => import('@/components/media/audio/ListComponent.vue'), name: 'ListComponent', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
 
   // Routes spéciales
+  { path: '/mot-du-jour', component: () => import('@/views/apps/tools/WordOfDayView.vue'), name: 'WordOfDayView', beforeEnter: featureGuard('wordOfDay'), meta: { requiresAuth: true } },
   { path: '/ventriglisse3d', component: () => import('@/components/games/Ventriglisse3D.vue'), name: 'Ventriglisse3D', beforeEnter: featureGuard('ventriglisse'), meta: { requiresAuth: true } },
   { path: '/qr', component: () => import('@/components/ui/QrCodeGenerator.vue'), name: 'QRCodePage', meta: { requiresAuth: false } },
   { path: '/outils', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },
