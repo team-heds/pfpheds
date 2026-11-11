@@ -14,7 +14,7 @@
       <div class="section-body form-grid">
         <FieldInput v-model="draft.heroEyebrow" label="Surtitre" />
         <FieldInput v-model="draft.heroLead" label="Sous-titre" />
-        <FieldInput v-model="draft.heroImage" label="Image principale" wide />
+        <AlpinImageField v-model="draft.heroImage" label="Image principale" wide />
         <FieldInput v-model="draft.heroCaption" label="Légende de l’image" wide />
         <FieldInput v-model="draft.yearsCount" label="Nombre d’années" />
         <FieldInput v-model="draft.eventsCount" label="Nombre d’événements" />
@@ -22,7 +22,7 @@
         <FieldInput v-model="draft.aboutTitle" label="Titre histoire" />
         <FieldInput v-model="draft.aboutLead" label="Introduction" type="textarea" wide />
         <FieldInput v-model="draft.aboutBody" label="Texte complémentaire" type="textarea" wide />
-        <FieldInput v-model="draft.aboutImage" label="Image de l’histoire" wide />
+        <AlpinImageField v-model="draft.aboutImage" label="Image de l’histoire" wide />
       </div>
     </details>
 
@@ -39,7 +39,7 @@
           <div class="form-grid">
             <FieldInput v-model="member.name" label="Nom" />
             <FieldInput v-model="member.role" label="Rôle" />
-            <FieldInput v-model="member.image" label="Image" wide />
+            <AlpinImageField v-model="member.image" label="Portrait" wide />
             <FieldInput v-model="member.position" label="Position de l’image" />
             <FieldInput v-model="member.bio" label="Présentation" type="textarea" wide />
           </div>
@@ -66,7 +66,7 @@
           <div class="form-grid">
             <FieldInput v-model="activity.number" label="Numéro" />
             <FieldInput v-model="activity.title" label="Titre" />
-            <FieldInput v-model="activity.image" label="Image" wide />
+            <AlpinImageField v-model="activity.image" label="Image" wide />
             <FieldInput v-model="activity.description" label="Description" type="textarea" wide />
           </div>
         </article>
@@ -88,7 +88,7 @@
           <div class="repeat-card__heading"><strong>{{ photo.title || `Photo ${index + 1}` }}</strong><button type="button" aria-label="Retirer cette photo" @click="remove('galleryPhotos', index)"><i class="pi pi-trash" /></button></div>
           <div class="form-grid">
             <FieldInput v-model="photo.title" label="Titre" />
-            <FieldInput v-model="photo.image" label="Image" wide />
+            <AlpinImageField v-model="photo.image" label="Photo" wide />
             <FieldInput v-model="photo.date" label="Date" />
             <FieldInput v-model="photo.location" label="Lieu" />
             <FieldInput v-model="photo.description" label="Description" type="textarea" wide />
@@ -104,7 +104,7 @@
         <div class="form-grid section-intro"><FieldInput v-model="draft.partnersEyebrow" label="Surtitre" /><FieldInput v-model="draft.partnersTitle" label="Titre" /></div>
         <article v-for="(partner, index) in draft.partners" :key="`partner-${index}`" class="repeat-card compact">
           <div class="repeat-card__heading"><strong>{{ partner.name || `Sponsor ${index + 1}` }}</strong><button type="button" aria-label="Retirer ce sponsor" @click="remove('partners', index)"><i class="pi pi-trash" /></button></div>
-          <div class="form-grid"><FieldInput v-model="partner.name" label="Nom" /><FieldInput v-model="partner.logo" label="Logo" /><FieldInput v-model="partner.url" label="Site web" wide /></div>
+          <div class="form-grid"><FieldInput v-model="partner.name" label="Nom" /><AlpinImageField v-model="partner.logo" label="Logo" contain /><FieldInput v-model="partner.url" label="Site web" wide /></div>
         </article>
         <button class="add-button" type="button" @click="add('partners', { name: '', logo: '', url: '' })"><i class="pi pi-plus" />Ajouter un sponsor</button>
       </div>
@@ -116,7 +116,7 @@
         <FieldInput v-model="draft.contactEyebrow" label="Surtitre" />
         <FieldInput v-model="draft.contactTitle" label="Titre" wide />
         <FieldInput v-model="draft.contactLead" label="Introduction" wide />
-        <FieldInput v-model="draft.contactImage" label="Image" wide />
+        <AlpinImageField v-model="draft.contactImage" label="Image" wide />
         <FieldInput v-model="draft.email" label="Email" />
         <FieldInput v-model="draft.instagram" label="Nom Instagram" />
         <FieldInput v-model="draft.instagramUrl" label="Lien Instagram" wide />
@@ -133,6 +133,7 @@
 import { reactive, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import FieldInput from '@/components/alpinphysio/FieldInput.vue'
+import AlpinImageField from '@/components/alpinphysio/AlpinImageField.vue'
 import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
 
 const props = defineProps({ content: { type: Object, required: true }, saving: Boolean })
