@@ -1,6 +1,7 @@
 <template>
   <div
     class="gamification-notifications"
+    :style="{ '--toast-offset': `${toastOffset}px` }"
     role="status"
     aria-live="polite"
     aria-atomic="false"
@@ -115,6 +116,8 @@ const allNotifications = ref([])
 const listenerId = ref(null)
 const centerVisible = ref(props.showCenter)
 const scheduledTimers = new Set()
+const toastOffset = ref(0)
+let toastOffsetTimer = null
 const MAX_NOTIFICATION_HISTORY = 50
 let subscriptionGeneration = 0
 let disposed = false
@@ -170,6 +173,39 @@ const schedule = (callback, delay) => {
 const clearScheduledTimers = () => {
   scheduledTimers.forEach((timerId) => window.clearTimeout(timerId))
   scheduledTimers.clear()
+  stopToastOffsetWatch()
+}
+
+// Les messages de l'application (PrimeVue Toast, ex. « Connexion réussie ») sortent au même
+// coin de l'écran. Tant qu'une notification est affichée, on la place sous ces messages
+// pour qu'elle reste lisible. Sur mobile, les notifications sont en bas : rien à décaler.
+const measureToastOffset = () => {
+  if (typeof document === 'undefined') return 0
+  if (window.matchMedia?.('(max-width: 768px)')?.matches) return 0
+  let bottom = 0
+  document.querySelectorAll('.p-toast-top-right .p-toast-message').forEach((message) => {
+    bottom = Math.max(bottom, message.getBoundingClientRect().bottom)
+  })
+  return Math.max(0, Math.round(bottom))
+}
+
+const stopToastOffsetWatch = () => {
+  if (toastOffsetTimer !== null) window.clearInterval(toastOffsetTimer)
+  toastOffsetTimer = null
+  toastOffset.value = 0
+}
+
+const syncToastOffset = () => {
+  if (disposed || notifications.value.length === 0) {
+    stopToastOffsetWatch()
+    return
+  }
+  toastOffset.value = measureToastOffset()
+}
+
+const startToastOffsetWatch = () => {
+  toastOffset.value = measureToastOffset()
+  if (toastOffsetTimer === null) toastOffsetTimer = window.setInterval(syncToastOffset, 200)
 }
 
 // Afficher une notification
@@ -195,6 +231,8 @@ const showNotification = (data) => {
     allNotifications.value.splice(MAX_NOTIFICATION_HISTORY)
   }
   
+  startToastOffsetWatch()
+
   // Animation d'entrée
   schedule(() => {
     const notif = notifications.value.find(n => n.id === notification.id)
@@ -392,10 +430,11 @@ onUnmounted(() => {
 <style scoped>
 .gamification-notifications {
   position: fixed;
-  top: 1rem;
+  top: calc(1rem + var(--toast-offset, 0px));
   right: 1rem;
   z-index: 9999;
   pointer-events: none;
+  transition: top 0.2s ease;
 }
 
 .notification-toast {
@@ -586,6 +625,7 @@ onUnmounted(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .gamification-notifications,
   .notification-toast,
   .notification-item {
     transition: none;

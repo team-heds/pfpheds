@@ -23,6 +23,37 @@ describe('GamificationNotification immediate events', () => {
     vi.useRealTimers()
   })
 
+  it('se place sous un message de l’application affiché au même coin, puis remonte', async () => {
+    const toast = document.createElement('div')
+    toast.className = 'p-toast p-toast-top-right'
+    const message = document.createElement('div')
+    message.className = 'p-toast-message'
+    message.getBoundingClientRect = () => ({ bottom: 108 })
+    toast.appendChild(message)
+    document.body.appendChild(toast)
+
+    const wrapper = mount(GamificationNotification, {
+      props: { userId: 'student-1', realtimeEnabled: false, autoHide: false },
+      global: { stubs: { Button: true } }
+    })
+    const offset = () => wrapper.get('.gamification-notifications').element.style.getPropertyValue('--toast-offset')
+
+    expect(offset()).toBe('0px')
+    window.dispatchEvent(new CustomEvent('gamification:notification', {
+      detail: { type: 'streak', title: 'Série de 7 jours !', message: 'Bravo', xpGain: 20 }
+    }))
+    await nextTick()
+    expect(offset()).toBe('108px')
+
+    toast.remove()
+    vi.advanceTimersByTime(250)
+    await nextTick()
+    expect(offset()).toBe('0px')
+
+    wrapper.unmount()
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
   it('shows an RPC badge immediately without Realtime and deduplicates it', async () => {
     const wrapper = mount(GamificationNotification, {
       props: {
@@ -77,7 +108,8 @@ describe('GamificationNotification immediate events', () => {
     }))
     await nextTick()
 
-    expect(vi.getTimerCount()).toBe(2)
+    // Animation d'entrée, masquage automatique et suivi de position sous les messages de l'application.
+    expect(vi.getTimerCount()).toBe(3)
     wrapper.unmount()
     expect(vi.getTimerCount()).toBe(0)
   })
