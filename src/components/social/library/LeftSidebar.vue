@@ -42,6 +42,11 @@
             <span>Documents pour les PFPs</span>
             <i class="pi pi-chevron-right profile-action__arrow" aria-hidden="true"></i>
         </button>
+        <button v-if="mentoringEnabled" type="button" class="profile-action" @click="goToMentoring">
+            <span class="profile-action__icon"><i class="pi pi-comments"></i></span>
+            <span>Mentorat</span>
+            <i class="pi pi-chevron-right profile-action__arrow" aria-hidden="true"></i>
+        </button>
         <button type="button" class="profile-action" @click="goToTools">
             <span class="profile-action__icon"><i class="pi pi-wrench"></i></span>
             <span>Outils</span>
@@ -185,6 +190,7 @@ export default {
       authStore,
       userStore,
       gamificationUserJourneyEnabled: gamificationFeatures.userJourney,
+      mentoringEnabled: gamificationFeatures.mentoring,
       // upcomingEvents: computed(() => eventStore.upcomingEvents) // Supprimé car dupliqué
     };
   },
@@ -539,6 +545,9 @@ export default {
     },
     goToDocumentPFP() {
       this.$router.push("/documents_pfp");
+    },
+    goToMentoring() {
+      this.$router.push("/mentorat");
     },
     goToTools() {
       this.$router.push("/outils");
