@@ -21,3 +21,17 @@ export function toApiDate(value) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
+
+/**
+ * Résume l'occupation d'un événement à partir du nombre de places et du
+ * nombre de réponses « présent ». Sans nombre de places, il n'y a pas de limite.
+ */
+export function describePlaces({ capacity, going_count: goingCount } = {}) {
+  const taken = Math.max(0, Number(goingCount) || 0)
+  const total = Number(capacity)
+  if (!Number.isInteger(total) || total <= 0) {
+    return { limited: false, taken, total: null, remaining: null, full: false, label: String(taken) }
+  }
+  const remaining = Math.max(0, total - taken)
+  return { limited: true, taken, total, remaining, full: remaining === 0, label: `${taken}/${total}` }
+}

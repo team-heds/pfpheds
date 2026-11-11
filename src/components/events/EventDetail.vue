@@ -13,8 +13,13 @@
 
       <section v-if="event.type === 'alpinphysio'" class="attendance" aria-labelledby="attendance-title">
         <div><p class="kicker">Votre réponse</p><h3 id="attendance-title">Serez-vous présent·e ?</h3></div>
+        <p v-if="places.limited" class="places" :class="{ 'places--full': places.full }">
+          <i :class="places.full ? 'pi pi-lock' : 'pi pi-users'" aria-hidden="true" />
+          <span><strong>{{ places.label }}</strong> places prises<template v-if="places.full"> · complet</template><template v-else> · {{ places.remaining }} restante{{ places.remaining > 1 ? 's' : '' }}</template></span>
+        </p>
+        <p v-if="goingBlocked" class="places-hint">L’événement est complet. Vous pouvez répondre « peut-être » et réessayer plus tard si une place se libère.</p>
         <div class="response-actions">
-          <button v-for="option in responseOptions" :key="option.value" type="button" :class="{ selected: currentResponse === option.value }" :aria-pressed="currentResponse === option.value" :disabled="saving" @click="respond(option.value)">
+          <button v-for="option in responseOptions" :key="option.value" type="button" :class="{ selected: currentResponse === option.value }" :aria-pressed="currentResponse === option.value" :disabled="saving || (option.value === 'going' && goingBlocked)" @click="respond(option.value)">
             <i :class="option.icon" aria-hidden="true" />{{ option.label }}
           </button>
         </div>
@@ -38,7 +43,8 @@ import { computed, ref, watch } from 'vue'
 import Button from 'primevue/button'
 import { useConfirm } from 'primevue/useconfirm'
 import { supabase } from '@/supabase'
-import { setAttendance } from '@/service/alpinPhysioAdminService'
+import { getEventPlaces, setAttendance } from '@/service/alpinPhysioAdminService'
+import { describePlaces } from '@/utils/alpinPhysioEvents'
 import { gamificationFeatures } from '@/config/gamificationFeatures'
 import EventCheckinPanel from '@/components/events/EventCheckinPanel.vue'
 
@@ -62,7 +68,17 @@ const responseOptions = [
   { value: 'not_going', label: 'Non, absent·e', icon: 'pi pi-times' },
 ]
 
+const placesRow = ref(null)
+const places = computed(() => describePlaces(placesRow.value || {}))
+const goingBlocked = computed(() => places.value.full && currentResponse.value !== 'going')
+async function loadPlaces() {
+  if (props.event.type !== 'alpinphysio' || !props.event.id) { placesRow.value = null; return }
+  const rows = await getEventPlaces([props.event.id])
+  placesRow.value = rows.find((row) => row.event_id === props.event.id) || null
+}
+
 watch(() => props.event.current_response, (value) => { currentResponse.value = value || null })
+watch(() => props.event.id, loadPlaces, { immediate: true })
 const formatDateTime = (value) => value ? new Intl.DateTimeFormat('fr-CH', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(value)) : ''
 
 async function respond(response) {
@@ -78,8 +94,12 @@ async function respond(response) {
     currentResponse.value = response
     responseMessage.value = 'Votre réponse a bien été enregistrée.'
     emit('attendance-updated', { eventId: props.event.id, response })
-  } catch (error) { responseMessage.value = `Impossible d’enregistrer la réponse : ${error.message}` }
-  finally { saving.value = false }
+  } catch (error) {
+    responseMessage.value = error.hint === 'event_full' || /complet/i.test(error.message || '')
+      ? 'Cet événement est complet : votre réponse « présent » n’a pas pu être enregistrée.'
+      : `Impossible d’enregistrer la réponse : ${error.message}`
+  }
+  finally { saving.value = false; loadPlaces() }
 }
 
 function confirmDelete() {
@@ -93,5 +113,5 @@ async function share() {
 </script>
 
 <style scoped>
-.event-detail{max-width:680px;margin:auto;overflow:hidden;color:var(--text-color,#172123);background:var(--surface-card,#fff);border-radius:1rem}.event-image,.event-placeholder{width:100%;height:260px;display:block;object-fit:cover}.event-placeholder{display:grid;place-items:center;color:#168794;background:#eaf7f6;font-size:3rem}.event-body{padding:1.5rem}.event-heading h2{margin:.65rem 0 1.25rem;font-size:clamp(1.6rem,4vw,2.4rem);line-height:1.1;text-wrap:balance}.event-badge{display:inline-flex;padding:.3rem .6rem;color:#0d525a;background:#dff5f3;border-radius:999px;font-size:.72rem;font-weight:700}.event-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:0 0 1.25rem}.event-facts div{padding:1rem;background:var(--surface-ground,#f6f8f8);border-radius:.75rem}.event-facts dt{display:flex;align-items:center;gap:.45rem;color:#647477;font-size:.7rem;font-weight:700;text-transform:uppercase}.event-facts dd{margin:.45rem 0 0;font-size:.84rem;font-weight:600}.description{max-width:65ch;line-height:1.65}.attendance{margin-top:1.5rem;padding:1.25rem;background:#eaf7f6;border-radius:.9rem}.kicker{margin:0 0 .3rem;color:#168794;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.attendance h3{margin:0;font-size:1.1rem}.response-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-top:1rem}.response-actions button{min-height:48px;display:flex;align-items:center;justify-content:center;gap:.45rem;padding:.65rem;border:1px solid #bcd8d5;border-radius:.65rem;color:#183f43;background:#fff;font:inherit;font-size:.78rem;font-weight:700;cursor:pointer}.response-actions button.selected{color:#fff;background:#103b40;border-color:#103b40}.response-actions button:focus-visible{outline:3px solid #64d0d8;outline-offset:2px}.response-message{margin:.85rem 0 0;font-size:.78rem}.event-actions{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1.5rem}@media(max-width:560px){.event-image,.event-placeholder{height:210px}.event-body{padding:1rem}.event-facts,.response-actions{grid-template-columns:1fr}.event-actions :deep(button){width:100%}}
+.event-detail{max-width:680px;margin:auto;overflow:hidden;color:var(--text-color,#172123);background:var(--surface-card,#fff);border-radius:1rem}.event-image,.event-placeholder{width:100%;height:260px;display:block;object-fit:cover}.event-placeholder{display:grid;place-items:center;color:#168794;background:#eaf7f6;font-size:3rem}.event-body{padding:1.5rem}.event-heading h2{margin:.65rem 0 1.25rem;font-size:clamp(1.6rem,4vw,2.4rem);line-height:1.1;text-wrap:balance}.event-badge{display:inline-flex;padding:.3rem .6rem;color:#0d525a;background:#dff5f3;border-radius:999px;font-size:.72rem;font-weight:700}.event-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:0 0 1.25rem}.event-facts div{padding:1rem;background:var(--surface-ground,#f6f8f8);border-radius:.75rem}.event-facts dt{display:flex;align-items:center;gap:.45rem;color:#647477;font-size:.7rem;font-weight:700;text-transform:uppercase}.event-facts dd{margin:.45rem 0 0;font-size:.84rem;font-weight:600}.description{max-width:65ch;line-height:1.65}.attendance{margin-top:1.5rem;padding:1.25rem;background:#eaf7f6;border-radius:.9rem}.places{display:flex;align-items:center;gap:.5rem;margin:.75rem 0 0;color:#0d525a;font-size:.86rem}.places--full{color:#8a2424}.places-hint{margin:.4rem 0 0;color:#4d5f62;font-size:.8rem;line-height:1.5}.response-actions button:disabled{cursor:not-allowed;opacity:.55}.kicker{margin:0 0 .3rem;color:#168794;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.attendance h3{margin:0;font-size:1.1rem}.response-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-top:1rem}.response-actions button{min-height:48px;display:flex;align-items:center;justify-content:center;gap:.45rem;padding:.65rem;border:1px solid #bcd8d5;border-radius:.65rem;color:#183f43;background:#fff;font:inherit;font-size:.78rem;font-weight:700;cursor:pointer}.response-actions button.selected{color:#fff;background:#103b40;border-color:#103b40}.response-actions button:focus-visible{outline:3px solid #64d0d8;outline-offset:2px}.response-message{margin:.85rem 0 0;font-size:.78rem}.event-actions{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:1.5rem}@media(max-width:560px){.event-image,.event-placeholder{height:210px}.event-body{padding:1rem}.event-facts,.response-actions{grid-template-columns:1fr}.event-actions :deep(button){width:100%}}
 </style>
