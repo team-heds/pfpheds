@@ -93,6 +93,20 @@ export async function setAttendance(eventId, response, profile = {}) {
   return data
 }
 
+/**
+ * Places prises par événement (total seulement, jamais les réponses des
+ * autres). Renvoie une liste vide si la fonction n'est pas encore disponible.
+ */
+export async function getEventPlaces(eventIds) {
+  if (!eventIds?.length) return []
+  const { data, error } = await supabase.rpc('event_places', { p_event_ids: eventIds })
+  if (error) {
+    console.warn('[AlpinPhysio] Nombre de places indisponible.', error)
+    return []
+  }
+  return data || []
+}
+
 export async function getMyAttendance(eventIds) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user || !eventIds?.length) return []

@@ -39,7 +39,7 @@
               <time :datetime="event.start_date"><strong>{{ day(event.start_date) }}</strong><span>{{ month(event.start_date) }}</span></time>
               <span class="event-main"><strong>{{ event.title }}</strong><small>{{ event.lieu || 'Lieu à confirmer' }}</small></span>
               <span class="status" :class="`status--${event.status}`">{{ statusLabel(event.status) }}</span>
-              <span class="event-count"><strong>{{ event.going_count || 0 }}</strong><small>présents</small></span>
+              <span class="event-count" :class="{ 'event-count--full': describePlaces(event).full }"><strong>{{ describePlaces(event).label }}</strong><small>{{ describePlaces(event).full ? 'complet' : 'présents' }}</small></span>
               <i class="pi pi-chevron-right" aria-hidden="true" />
             </button>
           </div>
@@ -55,7 +55,7 @@
             <div v-if="filteredEvents.length" class="event-stack compact">
               <button v-for="event in filteredEvents" :key="event.id" type="button" class="event-row" :class="{ selected: eventForm.id === event.id }" @click="editEvent(event)">
                 <time :datetime="event.start_date"><strong>{{ day(event.start_date) }}</strong><span>{{ month(event.start_date) }}</span></time>
-                <span class="event-main"><strong>{{ event.title }}</strong><small>{{ formatDate(event.start_date) }} · {{ event.lieu || 'Lieu à confirmer' }}</small></span>
+                <span class="event-main"><strong>{{ event.title }}</strong><small>{{ formatDate(event.start_date) }} · {{ event.lieu || 'Lieu à confirmer' }}</small><small v-if="describePlaces(event).limited" class="places-line" :class="{ 'places-line--full': describePlaces(event).full }"><i class="pi pi-users" aria-hidden="true" /> {{ describePlaces(event).label }} places{{ describePlaces(event).full ? ' · complet' : '' }}</small></span>
                 <span class="status" :class="`status--${event.status}`">{{ statusLabel(event.status) }}</span>
               </button>
             </div>
@@ -72,7 +72,7 @@
               <label class="field"><span>Lieu</span><input v-model.trim="eventForm.lieu" placeholder="Verbier" /></label>
               <label class="field"><span>Point de rendez-vous</span><input v-model.trim="eventForm.meeting_point" placeholder="Entrée principale" /></label>
               <label class="field"><span>Date limite de réponse</span><input v-model="eventForm.registration_deadline" type="datetime-local" /></label>
-              <label class="field"><span>Nombre de places</span><input v-model.number="eventForm.capacity" type="number" min="1" inputmode="numeric" /></label>
+              <label class="field"><span>Nombre de places</span><input v-model.number="eventForm.capacity" type="number" min="1" inputmode="numeric" aria-describedby="capacity-help" /><small id="capacity-help" class="field-help">Laisser vide pour ne pas limiter. Une fois complet, la réponse « présent » est refusée.</small></label>
               <label class="field"><span>Email de contact</span><input v-model.trim="eventForm.contact_email" type="email" placeholder="alpinphysio@hevs.ch" /></label>
               <label class="field"><span>Adresse de l’image</span><input v-model.trim="eventForm.image_url" type="url" placeholder="https://…" /></label>
               <label class="field"><span>État</span><select v-model="eventForm.status"><option value="draft">Brouillon</option><option value="published">Publié</option><option value="cancelled">Annulé</option></select></label>
@@ -93,7 +93,7 @@
       <template v-else-if="section === 'attendance'">
         <OperationalEventPicker v-model="selectedEventId" :events="events" label="Événement suivi" @update:modelValue="loadOperations" />
         <section class="metric-grid metric-grid--three">
-          <article><span>Présents</span><strong>{{ attendanceCounts.going }}</strong><i class="pi pi-check-circle" /></article>
+          <article><span>Présents{{ selectedPlaces.full ? ' · complet' : '' }}</span><strong>{{ selectedPlaces.limited ? `${attendanceCounts.going}/${selectedPlaces.total}` : attendanceCounts.going }}</strong><i class="pi pi-check-circle" /></article>
           <article><span>Peut-être</span><strong>{{ attendanceCounts.maybe }}</strong><i class="pi pi-question-circle" /></article>
           <article><span>Absents</span><strong>{{ attendanceCounts.not_going }}</strong><i class="pi pi-times-circle" /></article>
         </section>
@@ -199,7 +199,7 @@ import OperationalEventPicker from '@/components/alpinphysio/OperationalEventPic
 import AlpinPhysioSiteEditor from '@/components/alpinphysio/AlpinPhysioSiteEditor.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
-import { toApiDate as apiDate, toLocalInputValue as localInput } from '@/utils/alpinPhysioEvents'
+import { describePlaces, toApiDate as apiDate, toLocalInputValue as localInput } from '@/utils/alpinPhysioEvents'
 import {
   addAlpinTeamMember, countMissingMaterials, deactivateAlpinTeamMember, deleteAlpinEvent, deleteMaterial,
   getSiteContent, listAlpinEvents, listAlpinTeam, listAttendance, listMaterials,
@@ -247,6 +247,7 @@ const metrics = computed(() => ({
   missing: missingMaterials.value,
 }))
 const attendanceCounts = computed(() => attendance.value.reduce((counts, item) => ({ ...counts, [item.response]: (counts[item.response] || 0) + 1 }), { going: 0, maybe: 0, not_going: 0 }))
+const selectedPlaces = computed(() => describePlaces({ capacity: events.value.find((event) => event.id === selectedEventId.value)?.capacity, going_count: attendanceCounts.value.going }))
 const readyMaterials = computed(() => materials.value.filter((item) => item.status === 'ready').length)
 
 const flash = (text, kind = 'success') => { notice.text = text; notice.kind = kind; window.setTimeout(() => { if (notice.text === text) notice.text = '' }, 5000) }
@@ -375,4 +376,5 @@ onMounted(reload)
 .material-check,.icon-button{background:var(--heds-navy-deep);border-color:var(--line)}.icon-button.danger{color:#ff8f8f}.avatar{color:var(--heds-navy);background:var(--heds-yellow)}
 .notice--success{color:#c8f7d9;background:#123d31}.notice--error{color:#ffc7c7;background:#3a1c27}.loading-state{color:#d4deea;background:var(--heds-navy-soft)}
 .panel-heading>a,.empty-state a{color:var(--heds-yellow)}th{color:#c4cfdd}th,td{border-color:var(--line)}
+.places-line i{font-size:.7rem}.event-main small.places-line--full{color:#ff8f8f}.event-count--full strong{color:#ff8f8f}.field-help{color:var(--muted);font-size:.72rem;line-height:1.4}
 </style>
