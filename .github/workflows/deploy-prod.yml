@@ -105,7 +105,7 @@ jobs:
         run: npm ci --prefix presentation
 
       - name: Install Playwright Chromium
-        run: npm exec --prefix presentation -- playwright install --with-deps chromium
+        run: bash scripts/ci/install-playwright-chromium.sh
 
       - name: Validate frontend environment
         env:
