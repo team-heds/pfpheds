@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
-import { toApiDate, toLocalInputValue } from '../../src/utils/alpinPhysioEvents'
+import { describePlaces, toApiDate, toLocalInputValue } from '../../src/utils/alpinPhysioEvents'
 
 const read = (file) => fs.readFileSync(path.resolve(process.cwd(), file), 'utf8')
 
@@ -62,5 +62,29 @@ describe('Alp’in Physio — tableau de bord', () => {
     const view = read('src/views/admin/alpinphysio/AlpinPhysioAdminView.vue')
     expect(service).toContain('export async function countMissingMaterials')
     expect(view).toContain('countMissingMaterials(upcomingEvents.value.map((event) => event.id))')
+  })
+})
+
+describe('Alp’in Physio — nombre de places', () => {
+  it('résume l’occupation d’un événement', () => {
+    expect(describePlaces({ capacity: 12, going_count: 8 })).toMatchObject({ limited: true, label: '8/12', remaining: 4, full: false })
+    expect(describePlaces({ capacity: 3, going_count: 3 })).toMatchObject({ full: true, remaining: 0, label: '3/3' })
+    expect(describePlaces({ capacity: 3, going_count: 5 })).toMatchObject({ full: true, remaining: 0 })
+  })
+
+  it('ne limite rien sans nombre de places', () => {
+    expect(describePlaces({ capacity: null, going_count: 40 })).toMatchObject({ limited: false, full: false, label: '40' })
+    expect(describePlaces({ capacity: '', going_count: undefined })).toMatchObject({ limited: false, taken: 0 })
+    expect(describePlaces()).toMatchObject({ limited: false, full: false })
+  })
+
+  it('est appliqué par la base et affiché aux étudiants sans exposer les réponses', () => {
+    const migration = read('supabase/migrations/20261111151000_alpinphysio_event_capacity.sql')
+    const detail = read('src/components/events/EventDetail.vue')
+    expect(migration).toContain('create or replace trigger event_registrations_enforce_capacity')
+    expect(migration).toContain("raise exception 'Cet événement est complet.'")
+    expect(migration).toContain('revoke all on function public.event_places(uuid[]) from public, anon')
+    expect(detail).toContain("option.value === 'going' && goingBlocked")
+    expect(detail).toContain('getEventPlaces([props.event.id])')
   })
 })
