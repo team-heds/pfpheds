@@ -17,6 +17,7 @@
       <MobileBottomNav v-if="showMobileBottomNav" />
       <VersionningComponent v-if="!isImmersiveRoute" />
       <PwaInstallPrompt />
+      <OfflineBanner />
       <!-- Intégration du widget ConvAI -->
       <!-- <ConvaiWidget /> -->
       <!-- Centre de notifications gamification -->
@@ -40,6 +41,7 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import VersionningComponent from './components/common/utils/VersionningComponent.vue'; // Import du nouveau composant
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
+import OfflineBanner from '@/components/common/utils/OfflineBanner.vue';
 import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
 import questExpirationService from '@/service/questExpirationService';
 import { mapState } from 'pinia';
@@ -58,6 +60,7 @@ export default {
     VersionningComponent,
     MobileBottomNav,
     PwaInstallPrompt,
+    OfflineBanner,
     GamificationNotification,
   },
   data() {
@@ -148,15 +151,21 @@ export default {
   position: relative;
   width: 100vw;
   height: 100vh;
+  /* Hauteur réellement visible : sur téléphone, 100vh passe sous la barre du navigateur. */
+  height: 100dvh;
   overflow: hidden; /* Keep for background */
   display: flex;
   flex-direction: column;
+  /* Application installée : le contenu reste sous l'encoche et hors des bords arrondis. */
+  padding-block-start: env(safe-area-inset-top, 0px);
+  padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
 }
 
 :global(html),
 :global(body) {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   margin: 0;
   padding: 0;
   overflow: hidden; /* Keep for background */

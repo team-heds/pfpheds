@@ -75,6 +75,9 @@ onUnmounted(unsubscribeFromMediaQuery);
   text-align: center;
   color: var(--text-color, #555);
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
   border-radius: 0.75rem;
   transition: color 150ms ease, background-color 150ms ease, transform 150ms ease;
   display: flex;
@@ -110,7 +113,9 @@ onUnmounted(unsubscribeFromMediaQuery);
 .nav-item__label--compact {
   display: none;
 }
-@media (max-width: 360px) {
+/* Cinq destinations : sous 430 px les libellés longs se chevauchaient
+   (« Mon espace », « Communautés »), on affiche donc leur forme courte. */
+@media (max-width: 430px) {
   .nav-item__label:not(.nav-item__label--compact) {
     display: none;
   }

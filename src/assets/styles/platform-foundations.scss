@@ -75,6 +75,31 @@ textarea {
   outline: none;
 }
 
+/* Après un changement de page, le titre reçoit le focus pour les lecteurs
+   d'écran. Ce n'est pas un élément actionnable : pas de cadre visible. */
+:is(h1, h2)[tabindex="-1"]:focus,
+:is(h1, h2)[tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
+/* Messages éphémères : jamais plus larges que l'écran ni sous l'encoche. */
+.p-toast {
+  max-inline-size: calc(100vw - 2rem);
+}
+
+.p-toast.p-toast-top-right,
+.p-toast.p-toast-top-left,
+.p-toast.p-toast-top-center {
+  inset-block-start: max(20px, calc(env(safe-area-inset-top, 0px) + .5rem)) !important;
+}
+
+@media (max-width: 40rem) {
+  .p-toast.p-toast-top-right,
+  .p-toast.p-toast-bottom-right {
+    inset-inline-end: 1rem !important;
+  }
+}
+
 .p-button,
 .p-inputtext,
 .p-dropdown,
