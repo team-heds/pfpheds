@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   features: { userJourney: true, badgesChallenges: true, gamesHub: true, houseQuiz: true },
   gamification: vi.fn(), history: vi.fn(), quests: vi.fn(), questStats: vi.fn(),
   allBadges: vi.fn(), earnedBadges: vi.fn(), challenges: vi.fn(), challengeStats: vi.fn(),
-  profile: vi.fn(), from: vi.fn(), push: vi.fn(), quizStatus: vi.fn(),
+  profile: vi.fn(), from: vi.fn(), push: vi.fn(), quizStatus: vi.fn(), loginStreak: vi.fn(),
 }))
 vi.mock('@/stores/authStore', () => ({ useAuthStore: () => mocks.auth }))
 vi.mock('@/config/gamificationFeatures', () => ({ gamificationFeatures: mocks.features }))
@@ -15,7 +15,7 @@ vi.mock('vue-router', () => ({ useRouter: () => ({ push: mocks.push, back: vi.fn
 vi.mock('@/components/common/utils/Navbar.vue', () => ({ default: { template: '<nav />' } }))
 vi.mock('@/supabase.js', () => ({ supabase: { from: mocks.from } }))
 vi.mock('@/service/gamificationServiceSupabase', () => ({
-  default: { getUserGamificationData: mocks.gamification, getMyHouseQuizStatus: mocks.quizStatus },
+  default: { getUserGamificationData: mocks.gamification, getMyHouseQuizStatus: mocks.quizStatus, getMyLoginStreak: mocks.loginStreak },
   HES_HOUSES: {
     harmonis: { name: 'Harmonis', color: '#2E8B57', motto: 'L’équilibre soigne', icon: 'pi pi-plus' },
     elaris: { name: 'Elaris', color: '#DC143C', motto: 'Clarifier, guider, apaiser', icon: 'pi pi-sun' },
@@ -57,6 +57,7 @@ describe('parcours du profil gamification', () => {
       const query = { select: () => query, eq: (_field, value) => { id = value; return query }, maybeSingle: () => mocks.profile(id) }
       return query
     })
+    mocks.loginStreak.mockResolvedValue(null)
     mocks.quests.mockResolvedValue([])
     mocks.questStats.mockResolvedValue({ totalQuests: 0, completedQuests: 0, totalXPFromQuests: 0 })
     mocks.history.mockResolvedValue(historyPage([]))
@@ -90,6 +91,35 @@ describe('parcours du profil gamification', () => {
     await button.trigger('click')
     await flushPromises()
   }
+
+  it('affiche la série de connexions, le prochain palier et les paliers obtenus sur son propre profil', async () => {
+    mocks.loginStreak.mockResolvedValue({
+      current: 12, best: 15, loggedInToday: true,
+      nextMilestone: { days: 30, xp: 100, daysRemaining: 18 },
+      milestones: [
+        { days: 7, xp: 20, reached: true },
+        { days: 30, xp: 100, reached: false },
+        { days: 100, xp: 300, reached: false },
+      ],
+    })
+    await open()
+    const streak = section('streak')
+    expect(streak.get('h2').text()).toBe('🔥 12 jours de suite')
+    expect(streak.text()).toContain('meilleure série : 15 jours')
+    expect(streak.text()).toContain('Encore 18 jours avant le palier des 30 jours (+100 XP)')
+    expect(streak.get('[role="progressbar"]').attributes()).toMatchObject({ 'aria-valuenow': '12', 'aria-valuemax': '30' })
+    expect(streak.findAll('.streak-milestones li').map(item => item.text())).toEqual(['7 jours+20 XP · obtenu', '30 jours+100 XP', '100 jours+300 XP'])
+  })
+
+  it('masque la série pour un compte non joueur et pour le profil d’un autre étudiant', async () => {
+    await open()
+    expect(wrapper.find('section[aria-labelledby="streak-title"]').exists()).toBe(false)
+    wrapper.unmount()
+    mocks.loginStreak.mockResolvedValue({ current: 3, best: 3, loggedInToday: true, nextMilestone: null, milestones: [] })
+    await open({ id: 'student-b' })
+    expect(mocks.loginStreak).toHaveBeenCalledTimes(1)
+    expect(wrapper.find('section[aria-labelledby="streak-title"]').exists()).toBe(false)
+  })
 
   it('présente l’identité, la maison, les XP et une prochaine quête active réellement en cours', async () => {
     mocks.quests.mockResolvedValue([
