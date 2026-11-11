@@ -96,13 +96,7 @@
                   <span>{{ settings.notifications.emailNotifications ? "Activées" : "Désactivées" }}</span>
                 </div>
               </div>
-              <div class="setting-item">
-                <label for="push-notifications-toggle">Notifications push :</label>
-                <div class="toggle-container">
-                  <input type="checkbox" id="push-notifications-toggle" v-model="settings.notifications.pushNotifications" />
-                  <span>{{ settings.notifications.pushNotifications ? "Activées" : "Désactivées" }}</span>
-                </div>
-              </div>
+              <PushOptIn purpose="quand il se passe quelque chose qui vous concerne (réservation de mentorat, par exemple)" />
             </div>
 
             <!-- Catégorie Données & Cache -->
@@ -166,12 +160,14 @@
   <script>
   import Navbar from '@/components/common/utils/Navbar.vue';
   import PageHeader from '@/components/common/layout/PageHeader.vue';
+  import PushOptIn from '@/components/push/PushOptIn.vue';
   
   export default {
     name: "SettingView",
     components: {
       Navbar,
-      PageHeader
+      PageHeader,
+      PushOptIn
     },
     data() {
       return {
