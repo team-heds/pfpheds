@@ -195,6 +195,9 @@ defineExpose({ focus, expand })
 
 <style scoped>
 .post-comments {
+  /* Ancre les libellés .sr-only : sans cela ils se placent par rapport à la page
+     entière et l'allongent d'une zone vide sous le fil. */
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;

@@ -63,6 +63,7 @@ const fullDate = computed(() => formatFullDate(props.comment.created_at))
 
 <style scoped>
 .comment {
+  position: relative; /* ancre les libellés .sr-only */
   display: flex;
   align-items: flex-start;
   gap: 0.6rem;
