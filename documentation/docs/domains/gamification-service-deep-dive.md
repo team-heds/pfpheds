@@ -54,6 +54,14 @@ Migration `20261111100000_gamification_login_streak.sql`.
 - Lecture côté client : RPC `get_my_login_streak()` → `gamificationServiceSupabase.getMyLoginStreak()`, affichée dans « Ma progression » ; mise en forme dans `src/utils/loginStreak.js`.
 - Test SQL : `supabase/tests/gamification_login_streak_isolation.sql` (transaction annulée).
 
+## Badges à seuil (total d'XP, niveau)
+
+Migration `20261111180000_unlock_threshold_badges_on_any_award.sql`.
+
+- `gamification_award_xp_internal`, par où passent tous les gains d'XP, vérifie les badges à seuil au moment où le total ou le niveau franchit le seuil (`gamification_private.unlock_threshold_badges`). Avant, seul le moteur d'actions (connexion, profil, publication) le faisait : un seuil franchi par un autre gain ne donnait jamais le badge.
+- Seul un franchissement compte : un total déjà au-dessus du seuil n'est pas récompensé après coup.
+- Test SQL : `supabase/tests/gamification_threshold_badges_isolation.sql` (transaction annulée).
+
 ## Domaine plus large
 
 Le service ne couvre pas tout le domaine engagement.
