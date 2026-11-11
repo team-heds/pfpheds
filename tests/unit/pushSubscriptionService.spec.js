@@ -172,6 +172,16 @@ describe('abonnement aux notifications push', () => {
     expect(backend.calls.some(([name]) => name === 'insert')).toBe(false)
   })
 
+  it('explique l’échec quand le navigateur ne peut pas créer l’abonnement', async () => {
+    device.permission = 'granted'
+    pushManager.subscribe.mockRejectedValueOnce(new Error('Registration failed - push service error'))
+    await expect(enablePushForCurrentUser()).rejects.toMatchObject({
+      code: 'subscribe_failed',
+      message: expect.stringContaining('Essayez avec Chrome'),
+    })
+    expect(backend.calls.some(([name]) => name === 'insert')).toBe(false)
+  })
+
   it('annule l’abonnement du navigateur si l’enregistrement échoue', async () => {
     device.permission = 'granted'
     backend.insertError = { message: 'row-level security' }

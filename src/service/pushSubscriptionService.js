@@ -139,10 +139,18 @@ export async function enablePushForCurrentUser() {
   // on repart d'un abonnement neuf, pour que cet appareil ne reçoive que les
   // notifications du compte connecté.
   if (subscription) await subscription.unsubscribe()
-  subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey()),
-  })
+  try {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey()),
+    })
+  } catch {
+    // Certains navigateurs exposent les notifications sans service d'envoi derrière.
+    throw fail(
+      'subscribe_failed',
+      'Ce navigateur n’a pas pu créer l’abonnement aux notifications. Essayez avec Chrome, Edge, Firefox ou Safari.',
+    )
+  }
 
   const keys = subscription.toJSON().keys || {}
   const { error } = await supabase.from('push_subscriptions').insert({
