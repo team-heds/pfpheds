@@ -21,15 +21,20 @@ vi.mock('@/service/gamificationServiceSupabase', () => ({
 import WordOfDayView from '@/views/apps/tools/WordOfDayView.vue'
 import GameView from '@/views/apps/tools/GameView.vue'
 import {
-  KEYBOARD_ROWS, describeAttempt, letterStates, normalizeLetter,
+  KEYBOARD_ROWS, describeAttempt, letterStates, nextWordLabel, normalizeLetter, weekRangeLabel, weeksLabel,
 } from '@/components/games/word-of-day/wordOfDay'
 
 const source = (path) => readFileSync(resolve(process.cwd(), path), 'utf8')
 const migration = source('supabase/migrations/20261111110000_gamification_word_of_day.sql')
+const weekMigration = source('supabase/migrations/20261112100000_gamification_word_of_week.sql')
 
 const state = (overrides = {}) => ({
   eligible: true,
-  play_date: '2026-11-11',
+  period: 'week',
+  play_date: '2026-11-09',
+  week_start: '2026-11-09',
+  week_end: '2026-11-15',
+  next_word_at: '2026-11-15T23:00:00+00:00',
   word_length: 5,
   max_attempts: 6,
   attempts: [],
@@ -40,7 +45,7 @@ const state = (overrides = {}) => ({
   ...overrides,
 })
 
-describe('mot du jour physio — liste de mots côté serveur', () => {
+describe('mot de la semaine physio — liste de mots côté serveur', () => {
   const rows = [...migration.matchAll(/^ {2}\('([^']+)', '((?:[^']|'')+)', '((?:[^']|'')+)', '((?:[^']|'')+)'\),?$/gm)]
     .map(([, word, display, definition, theme]) => ({ word, display, definition: definition.replace(/''/g, "'"), theme }))
 
@@ -73,7 +78,7 @@ describe('mot du jour physio — liste de mots côté serveur', () => {
   })
 })
 
-describe('mot du jour physio — garde-fous de la migration', () => {
+describe('mot de la semaine physio — garde-fous de la migration', () => {
   it('garde les tables hors de portée du navigateur, avec RLS', () => {
     for (const table of ['word_of_day_words', 'word_of_day_schedule', 'word_of_day_guesses']) {
       expect(migration).toContain(`alter table gamification_private.${table} enable row level security;`)
@@ -87,11 +92,34 @@ describe('mot du jour physio — garde-fous de la migration', () => {
     expect(migration).toContain('revoke all on function public.submit_my_word_of_day_guess(text) from public, anon;')
     expect(migration.match(/gamification_private\.is_rollout_member\(v_user_id\)/g)).toHaveLength(2)
     expect(migration).toContain("at time zone 'Europe/Zurich'")
-    expect(migration).toContain('v_amount := 10 + case when v_attempt_count + 1 <= 3 then 5 else 0 end;')
-    expect(migration).toContain("'word-of-day:' || v_today::text")
     expect(migration).toContain('public.gamification_award_xp_internal(')
-    // Le mot du jour ne passe pas par le moteur d'actions appelable depuis le navigateur.
+    // Le jeu ne passe pas par le moteur d'actions appelable depuis le navigateur.
     expect(migration).not.toContain('action_rules')
+    expect(weekMigration).not.toContain('action_rules')
+  })
+
+  it('passe à un mot par semaine sans rien supprimer ni ouvrir au navigateur', () => {
+    // Semaine du lundi au dimanche, heure de Zurich.
+    expect(weekMigration).toContain("select date_trunc('week', p_at at time zone 'Europe/Zurich')::date;")
+    // 30 XP, +15 XP en 3 essais ou moins, une clé d'événement par semaine.
+    expect(weekMigration).toContain('v_amount := 30 + case when v_attempt_count + 1 <= 3 then 15 else 0 end;')
+    expect(weekMigration).toContain("'word-of-week:' || v_week::text")
+    // Pas de second gain pour qui a déjà été payé cette semaine (anciens mots du jour compris).
+    expect(weekMigration).toContain("'word-of-day:' || (p_week + d)::text")
+    expect(weekMigration).toMatch(/and not exists \(\s+select 1 from public\.xp_history xh/)
+    // Le mot déjà tiré et les essais déjà joués sont repris à l'application.
+    expect(weekMigration.trim().endsWith('select gamification_private.word_of_day_adopt_daily_rows();')).toBe(true)
+    expect(weekMigration).not.toMatch(/\b(delete\s+from|drop\s+|truncate\s+)/i)
+    expect(weekMigration).not.toMatch(/grant\s+(select|insert|update|delete|all)\b/i)
+    expect(weekMigration.match(/grant execute on function/g)).toHaveLength(1)
+    expect(weekMigration).toContain('grant execute on function public.submit_my_word_of_day_guess(text) to authenticated;')
+    for (const helper of [
+      'word_of_day_week_start(timestamptz)', 'word_of_day_event_keys(date)', 'word_of_day_adopt_daily_rows()',
+      'word_of_day_ensure(date)', 'word_of_day_state(uuid)',
+    ]) {
+      expect(weekMigration).toContain(`revoke all on function gamification_private.${helper} from public, anon, authenticated;`)
+    }
+    expect(weekMigration).toMatch(/'solution', case\s+when v_status = 'in_progress' then null/)
   })
 
   it('ne révèle la solution qu’une fois la partie terminée', () => {
@@ -99,7 +127,7 @@ describe('mot du jour physio — garde-fous de la migration', () => {
   })
 })
 
-describe('mot du jour physio — aides d’affichage', () => {
+describe('mot de la semaine physio — aides d’affichage', () => {
   it('normalise les lettres saisies au clavier', () => {
     expect(normalizeLetter('é')).toBe('E')
     expect(normalizeLetter('ç')).toBe('C')
@@ -122,12 +150,24 @@ describe('mot du jour physio — aides d’affichage', () => {
       .toBe('Essai 2 : T bien placée, O mal placée, T absente, A mal placée, L mal placée')
   })
 
+  it('écrit la semaine en cours et le jour du mot suivant', () => {
+    expect(weekRangeLabel('2026-11-09')).toBe('du 9 au 15 novembre')
+    expect(weekRangeLabel('2026-11-30')).toBe('du 30 novembre au 6 décembre')
+    expect(weekRangeLabel('2026-12-28')).toBe('du 28 décembre au 3 janvier')
+    expect(nextWordLabel('2026-11-09')).toBe('lundi 16 novembre')
+    expect(nextWordLabel('2026-12-28')).toBe('lundi 4 janvier')
+    expect(weekRangeLabel('')).toBe('')
+    expect(nextWordLabel(undefined)).toBe('')
+    expect(weeksLabel(1)).toBe('1 semaine')
+    expect(weeksLabel(3)).toBe('3 semaines')
+  })
+
   it('propose les 26 lettres sur le clavier à l’écran', () => {
     expect([...KEYBOARD_ROWS.join('')].sort().join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
   })
 })
 
-describe('mot du jour physio — partie', () => {
+describe('mot de la semaine physio — partie', () => {
   let wrapper
   const render = async () => {
     wrapper = mount(WordOfDayView, {
@@ -155,18 +195,21 @@ describe('mot du jour physio — partie', () => {
     vi.restoreAllMocks()
   })
 
-  it('affiche la grille du jour, le récapitulatif personnel et les règles', async () => {
+  it('affiche la grille de la semaine, sa durée de validité, le récapitulatif personnel et les règles', async () => {
     await render()
-    expect(wrapper.get('h1').text()).toBe('Mot du jour physio')
+    expect(wrapper.get('h1').text()).toBe('Mot de la semaine physio')
     expect(wrapper.findAll('.wod-row')).toHaveLength(6)
     expect(wrapper.findAll('.wod-row')[0].findAll('.wod-tile')).toHaveLength(5)
-    expect(wrapper.get('.wod-game__head').text()).toContain('11 novembre')
+    expect(wrapper.get('#wod-game-title').text()).toBe('Semaine du 9 au 15 novembre')
+    expect(wrapper.get('.wod-game__validity').text()).toBe('Mot valable jusqu’à dimanche soir. Prochain mot : lundi 16 novembre.')
     expect(wrapper.get('.wod-game__head').text()).toContain('6 essais restants')
     const stats = wrapper.get('.wod-stats').text()
     expect(stats).toContain('Parties jouées4')
     expect(stats).toContain('Taux de réussite75 %')
-    expect(stats).toContain('Série en cours2 jours')
-    expect(wrapper.text()).toContain('10 XP si vous trouvez le mot, 5 XP de plus en 3 essais ou moins')
+    expect(stats).toContain('Série en cours2 semaines')
+    expect(wrapper.text()).toContain('30 XP si vous trouvez le mot, 15 XP de plus en 3 essais ou moins')
+    expect(wrapper.text()).toContain('Une partie par semaine')
+    expect(wrapper.text()).not.toMatch(/mot du jour|demain/i)
   })
 
   it('accepte le clavier physique et le clavier à l’écran, accents compris', async () => {
@@ -228,7 +271,7 @@ describe('mot du jour physio — partie', () => {
     mocks.submitMyWordOfDayGuess.mockResolvedValue(state({
       attempts: [{ guess: 'FEMUR', feedback: 'CCCCC' }],
       status: 'won',
-      xp_awarded: 15,
+      xp_awarded: 45,
       solution: { word: 'Fémur', definition: 'Os de la cuisse.', theme: 'Os et repères osseux' },
       stats: { played: 5, won: 4, win_rate: 80, current_streak: 3, best_streak: 3 },
     }))
@@ -238,12 +281,14 @@ describe('mot du jour physio — partie', () => {
 
     const result = wrapper.get('.wod-result')
     expect(result.text()).toContain('Trouvé en 1 essai')
-    expect(result.text()).toContain('+15 XP pour vous et pour votre maison')
+    expect(result.text()).toContain('+45 XP pour vous et pour votre maison')
     expect(result.text()).toContain('Fémur')
     expect(result.text()).toContain('Os de la cuisse.')
+    expect(result.text()).toContain('Le mot de la semaine')
+    expect(result.text()).toContain('Un nouveau mot vous attend lundi 16 novembre.')
     expect(wrapper.find('.wod-keyboard').exists()).toBe(false)
-    expect(wrapper.get('.wod-message').text()).toBe('Bravo, mot trouvé en 1 essai : Fémur. Vous gagnez 15 XP.')
-    expect(wrapper.get('.wod-stats').text()).toContain('Série en cours3 jours')
+    expect(wrapper.get('.wod-message').text()).toBe('Bravo, mot trouvé en 1 essai : Fémur. Vous gagnez 45 XP.')
+    expect(wrapper.get('.wod-stats').text()).toContain('Série en cours3 semaines')
 
     await press('a')
     await press('Enter')
@@ -258,7 +303,7 @@ describe('mot du jour physio — partie', () => {
     }))
     await render()
     const result = wrapper.get('.wod-result')
-    expect(result.text()).toContain('Ce sera pour demain')
+    expect(result.text()).toContain('Ce sera pour la semaine prochaine')
     expect(result.text()).toContain('Fémur')
     expect(result.text()).not.toContain('XP')
     expect(wrapper.get('.wod-game__head').text()).toContain('partie terminée')
@@ -267,13 +312,14 @@ describe('mot du jour physio — partie', () => {
   it('relit la partie auprès du serveur quand un essai est refusé', async () => {
     mocks.submitMyWordOfDayGuess.mockRejectedValue(new Error('Invalid guess'))
     await render()
-    mocks.getMyWordOfDay.mockResolvedValue(state({ play_date: '2026-11-12', word_length: 6 }))
+    mocks.getMyWordOfDay.mockResolvedValue(state({ play_date: '2026-11-16', week_start: '2026-11-16', week_end: '2026-11-22', word_length: 6 }))
     for (const letter of 'femur') await press(letter)
     await press('Enter')
 
     expect(mocks.getMyWordOfDay).toHaveBeenCalledTimes(2)
     expect(wrapper.findAll('.wod-row')[0].findAll('.wod-tile')).toHaveLength(6)
-    expect(wrapper.get('.wod-message').text()).toBe('Un nouveau mot du jour est disponible. La partie recommence.')
+    expect(wrapper.get('.wod-message').text()).toBe('Un nouveau mot de la semaine est disponible. La partie recommence.')
+    expect(wrapper.get('#wod-game-title').text()).toBe('Semaine du 16 au 22 novembre')
   })
 
   it('explique que le jeu est réservé aux joueurs', async () => {
@@ -288,7 +334,7 @@ describe('mot du jour physio — partie', () => {
   it('propose de réessayer quand le chargement échoue', async () => {
     mocks.getMyWordOfDay.mockRejectedValueOnce(new Error('réseau'))
     await render()
-    expect(wrapper.text()).toContain('Le mot du jour n’a pas pu être chargé')
+    expect(wrapper.text()).toContain('Le mot de la semaine n’a pas pu être chargé')
     await wrapper.findAll('button')
       .find((node) => node.attributes('label') === 'Réessayer' || node.text().includes('Réessayer'))
       .trigger('click')
@@ -297,7 +343,7 @@ describe('mot du jour physio — partie', () => {
   })
 })
 
-describe('mot du jour physio — activation', () => {
+describe('mot de la semaine physio — activation', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
     vi.resetModules()
@@ -306,9 +352,9 @@ describe('mot du jour physio — activation', () => {
 
   it('ajoute une entrée dans l’espace jeux, masquée quand le module est désactivé', async () => {
     let hub = mount(GameView, { global: { plugins: [[PrimeVue, { unstyled: true }]] } })
-    expect(hub.get('#word-of-day-title').text()).toBe('Mot du jour physio')
-    await hub.get('button[aria-label="Jouer au mot du jour physio"]').trigger('click')
-    expect(mocks.push).toHaveBeenCalledWith('/mot-du-jour')
+    expect(hub.get('#word-of-day-title').text()).toBe('Mot de la semaine physio')
+    await hub.get('button[aria-label="Jouer au mot de la semaine physio"]').trigger('click')
+    expect(mocks.push).toHaveBeenCalledWith('/mot-de-la-semaine')
     hub.unmount()
 
     Object.assign(mocks.features, { wordOfDay: false })
@@ -320,8 +366,10 @@ describe('mot du jour physio — activation', () => {
 
   it('protège la route par le réglage du module et l’authentification', () => {
     const routes = source('src/router/routes/apps.js')
-    expect(routes).toContain("path: '/mot-du-jour'")
-    expect(routes).toContain("name: 'WordOfDayView', beforeEnter: featureGuard('wordOfDay'), meta: { requiresAuth: true }")
+    expect(routes).toContain("path: '/mot-de-la-semaine'")
+    expect(routes).toContain("name: 'WordOfDayView', beforeEnter: featureGuard('wordOfDay'), meta: { requiresAuth: true, title: 'Mot de la semaine physio' }")
+    // L'ancienne adresse renvoie vers la nouvelle.
+    expect(routes).toContain("{ path: '/mot-du-jour', redirect: to => ({ path: '/mot-de-la-semaine', query: to.query, hash: to.hash }) }")
     expect(source('src/composables/useDynamicRoutes.js')).toContain("'WordOfDayView'")
     expect(source('src/views/apps/tools/GameView.vue')).toContain('v-if="gamificationFeatures.wordOfDay"')
   })
