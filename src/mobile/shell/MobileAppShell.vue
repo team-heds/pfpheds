@@ -29,14 +29,14 @@
       </router-view>
     </div>
 
-    <MobileTabBar v-if="chrome" :tabs="tabs" :active="store.activeTab" @select="selectTab" />
+    <MobileTabBar v-if="chrome" :tabs="tabs" :active="store.activeTab" :avatar-url="stories.ownAvatarUrl" @select="selectTab" />
 
     <TransitionGroup name="m-overlay" tag="div" class="m-shell__overlays" :duration="300">
       <component
         :is="overlay.definition.component"
         v-for="overlay in overlays"
         :key="overlay.id"
-        v-bind="overlay.props"
+        v-bind="{ ...overlay.definition.props, ...overlay.props }"
         @close="closeOverlay"
       />
     </TransitionGroup>
@@ -53,6 +53,7 @@ import MobilePage from '@/mobile/shell/MobilePage.vue'
 import HomeTab from '@/mobile/home/HomeTab.vue'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useMobileNotificationsStore } from '@/mobile/home/mobileNotificationsStore'
+import { useMobileStoriesStore } from '@/mobile/home/mobileStoriesStore'
 import { MOBILE_SHELL_KEY } from '@/mobile/shell/useMobileShell'
 import { OVERLAYS, canRestoreOverlay } from '@/mobile/shell/overlayRegistry'
 import { buildTabs, pageKey } from '@/mobile/shell/tabs'
@@ -67,6 +68,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const store = useMobileShellStore()
 const notifications = useMobileNotificationsStore()
+const stories = useMobileStoriesStore()
 const rootRef = ref(null)
 
 useKeyboardInset(rootRef)
@@ -109,7 +111,11 @@ const unmarkLeaving = (el) => {
 }
 
 // --- Synchronisation avec le routeur -------------------------------------
-watch(userId, (id) => store.setUser(id), { immediate: true })
+watch(userId, (id) => {
+  store.setUser(id)
+  // Photo de profil de l'onglet Profil.
+  if (id) void stories.loadOwnAvatar(id)
+}, { immediate: true })
 watch(
   () => [route.fullPath, userId.value],
   () => {
@@ -172,7 +178,7 @@ const title = computed(() => {
 const headerActions = computed(() => {
   if (nativeScreen.value === 'home') {
     return [
-      { key: 'compose', icon: 'plus', label: 'Créer une publication' },
+      { key: 'compose', icon: 'plus', label: 'Créer une publication', side: 'start' },
       { key: 'notifications', icon: 'bell', label: 'Notifications', badge: notifications.hasUnread },
     ]
   }

@@ -8,6 +8,7 @@ export const useMobileStoriesStore = defineStore('mobileStories', {
     stories: [],
     userId: null,
     ownAvatarUrl: null,
+    avatarUserId: null,
     loaded: false,
     error: '',
   }),
@@ -29,7 +30,8 @@ export const useMobileStoriesStore = defineStore('mobileStories', {
       }
     },
     async loadOwnAvatar(userId) {
-      if (!userId) return
+      if (!userId || (this.avatarUserId === userId && this.ownAvatarUrl)) return
+      this.avatarUserId = userId
       try {
         const { data } = await supabase
           .from('user_profiles')

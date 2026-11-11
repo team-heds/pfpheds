@@ -5,7 +5,7 @@ vi.mock('@/service/gamificationHistoryService', () => ({ getGamificationHistory:
 
 import { buildFeedFilters, collectHashtags, filterScope, FOR_YOU_FILTER } from '@/mobile/home/feedFilters'
 import { buildNotifications } from '@/mobile/home/notificationsService'
-import { extractEmbeds, initialsOf, mediaKind, plainTextExcerpt, splitPostMedia } from '@/mobile/home/postMedia'
+import { extractEmbeds, initialsOf, mediaKind, plainTextExcerpt, plainTextToPostHtml, splitPostMedia } from '@/mobile/home/postMedia'
 
 describe('filtres du fil mobile', () => {
   it('propose « Pour toi », puis les communautés, puis les hashtags', () => {
@@ -54,6 +54,14 @@ describe('médias d’une publication', () => {
     expect(initialsOf('eden.mahiet')).toBe('EM')
     expect(initialsOf('Antoine Quarroz')).toBe('AQ')
     expect(initialsOf('')).toBe('?')
+  })
+})
+
+describe('texte saisi au téléphone', () => {
+  it('devient des paragraphes, sans laisser passer de balise', () => {
+    expect(plainTextToPostHtml('Bonjour\nà tous\n\n\nSuite <b>ici</b> & là  ')).toBe('<p>Bonjour<br>à tous</p><p>Suite &lt;b&gt;ici&lt;/b&gt; &amp; là</p>')
+    expect(plainTextToPostHtml('   ')).toBe('')
+    expect(plainTextToPostHtml(null)).toBe('')
   })
 })
 

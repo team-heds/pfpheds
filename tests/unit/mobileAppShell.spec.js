@@ -24,7 +24,7 @@ describe('socle de l’application mobile', () => {
     const paths = new Set([...appRoutes, ...pagesRoutes, ...socialRoutes].map(route => route.path))
     const tabs = buildTabs('etudiant-test')
 
-    expect(tabs.map(tab => tab.label)).toEqual(['Accueil', 'Institutions', 'Recherche', 'Carte', 'Profil'])
+    expect(tabs.map(tab => tab.label)).toEqual(['Carte', 'Institutions', 'Accueil', 'Recherche', 'Profil'])
     for (const tab of tabs.slice(0, 4)) expect(paths.has(tab.root)).toBe(true)
     expect(tabs[4].root).toBe('/profile/etudiant-test')
   })

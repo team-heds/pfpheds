@@ -84,3 +84,23 @@ export function initialsOf(name) {
   if (!parts.length) return '?'
   return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase()
 }
+
+const escapeHtml = (value) => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+
+/**
+ * Texte saisi au téléphone (champ simple) → HTML attendu par le fil :
+ * un paragraphe par bloc, les retours à la ligne simples conservés.
+ */
+export function plainTextToPostHtml(text) {
+  return String(text || '')
+    .replace(/\r\n?/g, '\n')
+    .trim()
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p>${escapeHtml(block).replace(/\n/g, '<br>')}</p>`)
+    .join('')
+}

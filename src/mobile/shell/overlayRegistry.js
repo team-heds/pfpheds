@@ -8,8 +8,10 @@ export const OVERLAYS = {
     component: defineAsyncComponent(() => import('@/mobile/home/NotificationsScreen.vue')),
     restorable: true,
   },
+  // Création en plein écran : publication ou story, au choix.
   publier: {
-    component: defineAsyncComponent(() => import('@/mobile/home/ComposeSheet.vue')),
+    component: defineAsyncComponent(() => import('@/mobile/home/CreateScreen.vue')),
+    props: { mode: 'post' },
     restorable: true,
   },
   commentaires: {
@@ -19,7 +21,8 @@ export const OVERLAYS = {
     component: defineAsyncComponent(() => import('@/mobile/home/LikersSheet.vue')),
   },
   'nouvelle-story': {
-    component: defineAsyncComponent(() => import('@/mobile/home/AddStorySheet.vue')),
+    component: defineAsyncComponent(() => import('@/mobile/home/CreateScreen.vue')),
+    props: { mode: 'story' },
     restorable: true,
   },
   story: {

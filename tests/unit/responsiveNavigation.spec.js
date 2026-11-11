@@ -14,6 +14,7 @@ vi.mock('@/components/common/utils/PwaInstallPrompt.vue', () => ({ default: { te
 vi.mock('@/components/common/utils/VersionningComponent.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/gamification/notifications/GamificationNotification.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/mobile/home/HomeTab.vue', () => ({ default: { props: ['active'], template: '<section class="mobile-home-stub" />' } }))
+vi.mock('@/mobile/home/mobileStoriesStore', () => ({ useMobileStoriesStore: () => ({ ownAvatarUrl: null, loadOwnAvatar: vi.fn() }) }))
 vi.mock('@/mobile/home/mobileNotificationsStore', () => ({ useMobileNotificationsStore: () => ({ hasUnread: false }) }))
 vi.mock('@/service/questExpirationService', () => ({ default: { startPeriodicCheck: vi.fn(), stopPeriodicCheck: vi.fn() } }))
 
@@ -145,7 +146,7 @@ describe('responsive navigation contract', () => {
     vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
     await mountApp()
     expect(wrapper.findAll('nav.m-tabs')).toHaveLength(1)
-    expect(wrapper.findAll('nav.m-tabs button').map(button => button.text())).toEqual(['Accueil', 'Institutions', 'Recherche', 'Carte', 'Profil'])
+    expect(wrapper.findAll('nav.m-tabs button').map(button => button.attributes('aria-label'))).toEqual(['Carte', 'Institutions', 'Accueil', 'Recherche', 'Profil'])
     expect(wrapper.find('.m-shell .m-page main h1').text()).toBe('Page de test')
     expect(wrapper.find('.navbar-shell').exists()).toBe(false)
 
@@ -164,7 +165,7 @@ describe('responsive navigation contract', () => {
     await router.push('/mobile-outils')
     await flushPromises()
     expect(wrapper.findAll('nav.m-tabs')).toHaveLength(1)
-    expect(wrapper.get('nav.m-tabs [aria-current="page"]').text()).toBe('Recherche')
+    expect(wrapper.get('nav.m-tabs [aria-current="page"]').attributes('aria-label')).toBe('Recherche')
   })
 
   it('keeps the regular pages on a computer and on public pages, without the mobile shell', async () => {

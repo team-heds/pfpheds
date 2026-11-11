@@ -28,36 +28,39 @@
 
       <template v-else>
         <p v-if="store.partial" class="m-banner" role="status">Liste incomplète : une partie n’a pas pu être chargée.</p>
-        <ul class="m-notifs__list">
-          <li v-for="item in store.items" :key="item.id">
-            <component
-              :is="item.postId ? 'button' : 'div'"
-              :type="item.postId ? 'button' : undefined"
-              class="m-notifs__item"
-              :class="{ 'is-unread': isUnread(item) }"
-              @click="open(item)"
-            >
-              <span class="m-notifs__thumb" :class="`m-notifs__thumb--${item.kind}`" aria-hidden="true">
-                <img v-if="item.avatarUrl" :src="item.avatarUrl" alt="" loading="lazy" />
-                <MIcon v-else :name="item.icon" />
-              </span>
-              <span class="m-notifs__copy">
-                <span class="m-notifs__title">{{ item.title }}</span>
-                <span v-if="item.detail" class="m-notifs__detail">{{ item.detail }}</span>
-                <time class="m-notifs__time" :datetime="item.at">{{ formatRelativeTime(item.at) }}</time>
-              </span>
-              <span v-if="item.badge" class="m-notifs__badge">{{ item.badge }}</span>
-              <span v-if="isUnread(item)" class="m-notifs__dot"><span class="m-sr-only">Nouveau</span></span>
-            </component>
-          </li>
-        </ul>
+        <section v-for="group in groups" :key="group.key" class="m-notifs__group" :aria-labelledby="`m-notifs-${group.key}`">
+          <h2 :id="`m-notifs-${group.key}`" class="m-notifs__heading">{{ group.label }}</h2>
+          <ul class="m-notifs__list">
+            <li v-for="item in group.items" :key="item.id">
+              <component
+                :is="item.postId ? 'button' : 'div'"
+                :type="item.postId ? 'button' : undefined"
+                class="m-notifs__item"
+                @click="open(item)"
+              >
+                <span class="m-notifs__thumb" :class="`m-notifs__thumb--${item.kind}`" aria-hidden="true">
+                  <img v-if="item.avatarUrl" :src="item.avatarUrl" alt="" loading="lazy" />
+                  <MIcon v-else :name="item.icon" />
+                </span>
+                <span class="m-notifs__copy">
+                  <span class="m-notifs__title">{{ item.title }}</span>
+                  <span class="m-notifs__meta">
+                    <span v-if="item.detail && item.kind !== 'xp'" class="m-notifs__detail">{{ item.detail }}</span>
+                    <time :datetime="item.at">{{ formatRelativeTime(item.at) }}</time>
+                  </span>
+                </span>
+                <span v-if="item.badge" class="m-notifs__badge">{{ item.badge }}</span>
+              </component>
+            </li>
+          </ul>
+        </section>
       </template>
     </div>
   </MobileStackScreen>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 import MobileStackScreen from '@/mobile/ui/MobileStackScreen.vue'
 import MIcon from '@/mobile/ui/MIcon.vue'
 import PushOptIn from '@/components/push/PushOptIn.vue'
@@ -74,6 +77,10 @@ const shell = useMobileShell()
 // Ce qui était nouveau à l'ouverture reste marqué tant que l'écran est affiché.
 const seenAtOpen = store.unreadSince
 const isUnread = (item) => Date.parse(item.at) > seenAtOpen
+const groups = computed(() => [
+  { key: 'nouveau', label: 'Nouveau', items: store.items.filter(isUnread) },
+  { key: 'avant', label: 'Plus tôt', items: store.items.filter((item) => !isUnread(item)) },
+].filter((group) => group.items.length))
 
 const reload = () => store.load(authStore.user?.id)
 
@@ -90,26 +97,33 @@ onBeforeUnmount(() => store.markSeen())
 .m-notifs {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+}
+.m-notifs__heading {
+  margin: 10px 0 2px;
+  color: var(--m-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 .m-notifs__list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
+.m-notifs__list li + li {
+  border-top: 1px solid var(--m-line);
+}
 .m-notifs__item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  min-height: 64px;
-  padding: 12px;
+  min-height: 52px;
+  padding: 8px 0;
   border: 0;
-  border-radius: var(--m-radius);
-  background: var(--m-surface);
+  background: none;
   color: var(--m-fg);
   font: inherit;
   text-align: left;
@@ -124,17 +138,22 @@ button.m-notifs__item:active {
 button.m-notifs__item:focus-visible {
   outline: 2px solid var(--m-accent-text);
   outline-offset: 2px;
+  border-radius: 8px;
 }
 .m-notifs__thumb {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   overflow: hidden;
   border-radius: 50%;
-  background: var(--m-raised);
+  background: var(--m-surface);
   color: var(--m-accent-text);
+}
+.m-notifs__thumb :deep(.m-icon) {
+  width: 18px;
+  height: 18px;
 }
 .m-notifs__thumb--like {
   color: var(--m-like);
@@ -149,54 +168,59 @@ button.m-notifs__item:focus-visible {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 .m-notifs__title {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   line-height: 1.35;
 }
-.m-notifs__detail {
-  display: -webkit-box;
-  overflow: hidden;
-  font-size: 0.8125rem;
-  line-height: 1.35;
+.m-notifs__meta {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
   color: var(--m-muted);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+.m-notifs__detail {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.m-notifs__detail::after {
+  content: ' ·';
+}
+.m-notifs__meta time {
+  flex-shrink: 0;
 }
 .m-notifs__badge {
   flex-shrink: 0;
-  padding: 3px 9px;
-  border-radius: 99px;
-  background: var(--m-raised);
   color: var(--m-accent-text);
   font-size: 0.75rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.m-notifs__time {
-  font-size: 0.75rem;
-  color: var(--m-muted);
+.m-notifs__item--skeleton {
+  pointer-events: none;
 }
-.m-notifs__dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--m-accent);
+.m-notifs__thumb.m-skeleton {
+  background-color: transparent;
 }
 .m-skeleton--line {
   display: block;
-  height: 12px;
+  height: 10px;
   margin: 3px 0;
-  border-radius: 6px;
+  border-radius: 5px;
 }
-/* Bloc d'activation des notifications (composant partagé) : mise en colonne. */
+/* Bloc d'activation des notifications (composant partagé), en version compacte. */
 .m-notifs__push {
-  border-radius: var(--m-radius);
+  border-radius: 14px;
+  font-size: 0.8125rem;
+}
+.m-notifs__push :deep(.push-opt-in__title) {
+  font-size: 0.875rem;
 }
 .m-notifs__push :deep(.push-opt-in__action) {
   min-height: 44px;

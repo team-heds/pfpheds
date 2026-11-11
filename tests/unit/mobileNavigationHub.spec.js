@@ -170,7 +170,7 @@ describe('Mobile navigation hub interface', () => {
       props: { tabs: buildTabs('student-test'), active: tabForPath('/mobile-tools', { userId: 'student-test' }) },
     })
     expect(wrapper.findAll('button')).toHaveLength(5)
-    expect(wrapper.get('[aria-current="page"]').text()).toContain('Recherche')
-    expect(wrapper.findAll('button').at(4).text()).toContain('Profil')
+    expect(wrapper.get('[aria-current="page"]').attributes('aria-label')).toBe('Recherche')
+    expect(wrapper.findAll('button').at(4).attributes('aria-label')).toBe('Profil')
   })
 })

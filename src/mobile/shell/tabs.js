@@ -4,15 +4,16 @@
 
 export const MOBILE_BREAKPOINT_QUERY = '(max-width: 768px)'
 
-export const TAB_KEYS = ['home', 'institutions', 'search', 'map', 'profile']
+// Ordre de la barre du bas : la carte à gauche, l'accueil au milieu, le profil à droite.
+export const TAB_KEYS = ['map', 'institutions', 'home', 'search', 'profile']
 
 const TAB_DEFINITIONS = [
   {
-    key: 'home',
-    label: 'Accueil',
-    icon: 'home',
-    root: () => '/feed',
-    prefixes: ['/feed', '/hashtag', '/mention', '/communities', '/create'],
+    key: 'map',
+    label: 'Carte',
+    icon: 'map',
+    root: () => '/map',
+    prefixes: ['/map'],
   },
   {
     key: 'institutions',
@@ -25,6 +26,13 @@ const TAB_DEFINITIONS = [
     ],
   },
   {
+    key: 'home',
+    label: 'Accueil',
+    icon: 'home',
+    root: () => '/feed',
+    prefixes: ['/feed', '/hashtag', '/mention', '/communities', '/create'],
+  },
+  {
     key: 'search',
     label: 'Recherche',
     icon: 'search',
@@ -34,13 +42,6 @@ const TAB_DEFINITIONS = [
       '/quiz', '/mot-de-la-semaine', '/mentorat', '/challenges', '/quests',
       '/achievements', '/houses', '/scan', '/game', '/events',
     ],
-  },
-  {
-    key: 'map',
-    label: 'Carte',
-    icon: 'map',
-    root: () => '/map',
-    prefixes: ['/map'],
   },
   {
     key: 'profile',
@@ -66,7 +67,7 @@ export function buildTabs(userId = null) {
 }
 
 export function tabRoot(tabKey, userId = null) {
-  const tab = TAB_DEFINITIONS.find((item) => item.key === tabKey) || TAB_DEFINITIONS[0]
+  const tab = TAB_DEFINITIONS.find((item) => item.key === tabKey) || TAB_DEFINITIONS.find((item) => item.key === 'home')
   return tab.root(userId)
 }
 

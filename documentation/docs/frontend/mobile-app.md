@@ -17,13 +17,13 @@ Refaire un onglet pour le téléphone revient à écrire son écran dans `src/mo
 
 ## Onglets et état
 
-- `src/mobile/shell/tabs.js` : les cinq onglets (Accueil, Institutions, Recherche, Carte, Profil) et la règle qui range chaque adresse dans un onglet. Une adresse sans onglet attitré reste dans l'onglet courant.
+- `src/mobile/shell/tabs.js` : les cinq onglets, pictogrammes seuls, dans l'ordre Carte, Institutions, Accueil, Recherche, Profil (photo de profil sur le dernier) et la règle qui range chaque adresse dans un onglet. Une adresse sans onglet attitré reste dans l'onglet courant.
 - `src/mobile/shell/mobileShellStore.js` : onglet actif, pile d'écrans de chaque onglet, panneaux ouverts. Le magasin ne navigue pas : il indique où aller (`tabTarget`, `backTarget`) et se met à jour après chaque navigation (`syncRoute`).
 - Les pages restent en mémoire (`KeepAlive`, 8 au maximum) ; l'accueil reste monté. Chaque écran a sa propre zone de défilement, dont la position est gardée (`useKeptScroll`).
 
 ## Écrans empilés et panneaux du bas
 
-Les panneaux (`BottomSheet`) et écrans empilés (`MobileStackScreen`) sont déclarés dans `overlayRegistry.js` et ouverts avec `useMobileShell().open(nom, données)`. Leur nom est écrit dans l'ancre de l'adresse (`/feed#/commentaires`) : le bouton ou le geste retour du téléphone les ferme. Après un rechargement, seuls ceux marqués `restorable` se rouvrent.
+Les panneaux (`BottomSheet`) et écrans empilés (`MobileStackScreen`, avec une présentation `modal` plein écran pour la création de publication ou de story) sont déclarés dans `overlayRegistry.js` et ouverts avec `useMobileShell().open(nom, données)`. Leur nom est écrit dans l'ancre de l'adresse (`/feed#/commentaires`) : le bouton ou le geste retour du téléphone les ferme. Après un rechargement, seuls ceux marqués `restorable` se rouvrent.
 
 ## Règles d'interface
 

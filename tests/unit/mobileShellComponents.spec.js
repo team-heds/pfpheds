@@ -9,6 +9,9 @@ vi.mock('@/stores/authStore', () => ({ useAuthStore: () => auth.store }))
 vi.mock('@/mobile/home/HomeTab.vue', () => ({
   default: { name: 'HomeTab', props: ['active'], template: '<section class="home-stub">Fil</section>' },
 }))
+vi.mock('@/mobile/home/mobileStoriesStore', () => ({
+  useMobileStoriesStore: () => ({ ownAvatarUrl: null, loadOwnAvatar: vi.fn() }),
+}))
 vi.mock('@/mobile/home/mobileNotificationsStore', () => ({
   useMobileNotificationsStore: () => ({ hasUnread: false }),
 }))
@@ -62,16 +65,26 @@ async function mountShell(start = '/feed') {
   return { wrapper, router }
 }
 
-const tabButton = (wrapper, label) => wrapper.findAll('.m-tabs__item').find((button) => button.text() === label)
+const tabButton = (wrapper, label) => wrapper.get(`.m-tabs__item[aria-label="${label}"]`)
 const settle = async () => { await flushPromises(); await new Promise((resolve) => setTimeout(resolve, 0)); await flushPromises() }
 
 describe('barre d’onglets', () => {
-  it('affiche les cinq onglets, signale l’onglet actif et émet le choix', async () => {
+  it('affiche cinq pictogrammes nommés, signale l’onglet actif et émet le choix', async () => {
     const wrapper = mount(MobileTabBar, { props: { tabs: buildTabs(USER), active: 'search' } })
-    expect(wrapper.findAll('button').map((button) => button.text())).toEqual(['Accueil', 'Institutions', 'Recherche', 'Carte', 'Profil'])
-    expect(wrapper.get('[aria-current="page"]').text()).toBe('Recherche')
-    await wrapper.findAll('button')[3].trigger('click')
+    expect(wrapper.findAll('button').map((button) => button.attributes('aria-label'))).toEqual(['Carte', 'Institutions', 'Accueil', 'Recherche', 'Profil'])
+    expect(wrapper.findAll('button').every((button) => button.text() === '')).toBe(true)
+    expect(wrapper.get('[aria-current="page"]').attributes('aria-label')).toBe('Recherche')
+    await wrapper.findAll('button')[0].trigger('click')
     expect(wrapper.emitted('select')[0]).toEqual(['map'])
+  })
+
+  it('montre la photo de profil sur l’onglet Profil, et le pictogramme si elle manque', async () => {
+    const wrapper = mount(MobileTabBar, { props: { tabs: buildTabs(USER), active: 'home', avatarUrl: 'https://exemple.test/moi.jpg' } })
+    const profile = wrapper.get('[aria-label="Profil"]')
+    expect(profile.get('img').attributes('src')).toBe('https://exemple.test/moi.jpg')
+    await profile.get('img').trigger('error')
+    expect(profile.find('img').exists()).toBe(false)
+    expect(profile.find('svg').exists()).toBe(true)
   })
 })
 
@@ -119,9 +132,10 @@ describe('coque de l’application mobile', () => {
     expect(wrapper.find('.home-stub').exists()).toBe(true)
     expect(wrapper.find('[data-page="Feed"]').exists()).toBe(false)
     expect(wrapper.get('h1.m-header__title').text()).toBe('Accueil')
-    expect(wrapper.get('.m-tabs__item[aria-current="page"]').text()).toBe('Accueil')
-    expect(wrapper.find('[aria-label="Créer une publication"]').exists()).toBe(true)
-    expect(wrapper.find('[aria-label="Notifications"]').exists()).toBe(true)
+    expect(wrapper.get('.m-tabs__item[aria-current="page"]').attributes('aria-label')).toBe('Accueil')
+    // Comme convenu : « + » à gauche du titre, cloche à droite.
+    expect(wrapper.find('.m-header__side:not(.m-header__side--end) [aria-label="Créer une publication"]').exists()).toBe(true)
+    expect(wrapper.find('.m-header__side--end [aria-label="Notifications"]').exists()).toBe(true)
   })
 
   it('ouvre les autres onglets avec les pages existantes, sans les recharger au retour', async () => {

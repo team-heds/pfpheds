@@ -11,8 +11,8 @@ const route = (fullPath) => {
 
 describe('onglets de l’application mobile', () => {
   it('présente cinq onglets dans l’ordre convenu', () => {
-    expect(buildTabs(USER).map((tab) => tab.label)).toEqual(['Accueil', 'Institutions', 'Recherche', 'Carte', 'Profil'])
-    expect(buildTabs(USER).map((tab) => tab.root)).toEqual(['/feed', '/institution', '/mobile-search', '/map', `/profile/${USER}`])
+    expect(buildTabs(USER).map((tab) => tab.label)).toEqual(['Carte', 'Institutions', 'Accueil', 'Recherche', 'Profil'])
+    expect(buildTabs(USER).map((tab) => tab.root)).toEqual(['/map', '/institution', '/feed', '/mobile-search', `/profile/${USER}`])
   })
 
   it('range chaque adresse dans son onglet', () => {
