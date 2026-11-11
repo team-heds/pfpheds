@@ -11,8 +11,15 @@
     />
 
     <div class="m-shell__views">
-      <Transition :name="pageTransition" @before-leave="markLeaving" @before-enter="unmarkLeaving">
-        <HomeTab v-if="homeVisited" v-show="nativeScreen === 'home'" :active="nativeScreen === 'home'" />
+      <!-- Onglets conçus pour le téléphone : montés à la première visite, puis gardés. -->
+      <Transition
+        v-for="tab in nativeTabs"
+        :key="tab.key"
+        :name="pageTransition"
+        @before-leave="markLeaving"
+        @before-enter="unmarkLeaving"
+      >
+        <component :is="tab.component" v-if="visited.has(tab.key)" v-show="nativeScreen === tab.key" :active="nativeScreen === tab.key" />
       </Transition>
 
       <router-view v-slot="{ Component, route: viewRoute }">
@@ -21,8 +28,8 @@
             <MobilePage
               v-if="!nativeScreen && Component"
               :key="pageKey(viewRoute.fullPath)"
-              :component="Component"
-              :bare="!chrome"
+              :component="NATIVE_PAGES[viewRoute.name]?.component || Component"
+              :bare="!chrome || Boolean(NATIVE_PAGES[viewRoute.name])"
             />
           </KeepAlive>
         </Transition>
@@ -51,6 +58,8 @@ import MobileHeader from '@/mobile/shell/MobileHeader.vue'
 import MobileTabBar from '@/mobile/shell/MobileTabBar.vue'
 import MobilePage from '@/mobile/shell/MobilePage.vue'
 import HomeTab from '@/mobile/home/HomeTab.vue'
+import InstitutionsTab from '@/mobile/institutions/InstitutionsTab.vue'
+import InstitutionDetailScreen from '@/mobile/institutions/InstitutionDetailScreen.vue'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useMobileNotificationsStore } from '@/mobile/home/mobileNotificationsStore'
 import { useMobileStoriesStore } from '@/mobile/home/mobileStoriesStore'
@@ -60,8 +69,18 @@ import { buildTabs, pageKey } from '@/mobile/shell/tabs'
 import { useKeyboardInset } from '@/mobile/shell/useKeyboardInset'
 
 // Écrans conçus pour le téléphone, par nom de route. Une adresse absente de
-// cette table affiche la page existante dans le cadre de la coque.
-const NATIVE_SCREENS = { FeedView: 'home' }
+// ces tables affiche la page existante dans le cadre de la coque.
+// Onglets (gardés en mémoire) :
+const NATIVE_SCREENS = { FeedView: 'home', Institution: 'institutions' }
+const nativeTabs = [
+  { key: 'home', component: HomeTab },
+  { key: 'institutions', component: InstitutionsTab },
+]
+// Écrans empilés qui remplacent une page existante (titre fixe dans l'en-tête,
+// le nom de la page étant affiché dans l'écran lui-même) :
+const NATIVE_PAGES = {
+  InstitutionView: { component: InstitutionDetailScreen, title: 'Institution' },
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -82,10 +101,10 @@ const nativeScreen = computed(() => NATIVE_SCREENS[route.name] || null)
 const chrome = computed(() => route.meta?.mobileChrome !== 'none')
 const canGoBack = computed(() => store.canGoBack)
 
-// L'accueil reste monté une fois visité : on y revient sans rechargement.
-const homeVisited = ref(false)
+// Un onglet mobile reste monté une fois visité : on y revient sans rechargement.
+const visited = ref(new Set())
 watch(nativeScreen, (screen) => {
-  if (screen === 'home') homeVisited.value = true
+  if (screen && !visited.value.has(screen)) visited.value = new Set([...visited.value, screen])
 }, { immediate: true })
 
 const overlays = computed(() => store.overlays
@@ -172,7 +191,7 @@ watch(() => route.path, () => { liveTitle.value = '' })
 const title = computed(() => {
   const tab = tabs.value.find((item) => item.key === store.activeTab)
   if (nativeScreen.value || !store.canGoBack) return tab?.label || 'HEdS'
-  return route.meta?.title || liveTitle.value || tab?.label || 'HEdS'
+  return NATIVE_PAGES[route.name]?.title || route.meta?.title || liveTitle.value || tab?.label || 'HEdS'
 })
 
 const headerActions = computed(() => {
@@ -419,6 +438,65 @@ onBeforeUnmount(() => titleObserver?.disconnect())
   .m-shell .m-spinner {
     animation-duration: 3s;
   }
+}
+
+/* Ligne d'action : pictogramme, libellé et détail, flèche. */
+.m-shell .m-row-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--m-surface);
+  color: var(--m-fg);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.m-shell .m-row-link:active {
+  background: var(--m-raised);
+}
+.m-shell .m-row-link:focus-visible {
+  outline: 2px solid var(--m-accent-text);
+  outline-offset: 2px;
+}
+.m-shell .m-row-link > .m-icon:last-child {
+  width: 18px;
+  height: 18px;
+  color: var(--m-muted);
+}
+.m-shell .m-row-link__icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--m-raised);
+  color: var(--m-accent-text);
+}
+.m-shell .m-fiche .m-row-link__icon {
+  background: var(--m-surface);
+}
+.m-shell .m-row-link__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.m-shell .m-row-link__text small {
+  color: var(--m-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
 }
 
 /* Pas de zoom d'iOS à la saisie : 16 px au minimum dans tous les champs. */

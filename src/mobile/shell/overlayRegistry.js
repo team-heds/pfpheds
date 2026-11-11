@@ -25,6 +25,10 @@ export const OVERLAYS = {
     props: { mode: 'story' },
     restorable: true,
   },
+  filtres: {
+    component: defineAsyncComponent(() => import('@/mobile/institutions/InstitutionFiltersSheet.vue')),
+    restorable: true,
+  },
   story: {
     component: defineAsyncComponent(() => import('@/mobile/home/StoryViewerOverlay.vue')),
   },

@@ -9,6 +9,12 @@ vi.mock('@/stores/authStore', () => ({ useAuthStore: () => auth.store }))
 vi.mock('@/mobile/home/HomeTab.vue', () => ({
   default: { name: 'HomeTab', props: ['active'], template: '<section class="home-stub">Fil</section>' },
 }))
+vi.mock('@/mobile/institutions/InstitutionsTab.vue', () => ({
+  default: { name: 'InstitutionsTab', props: ['active'], template: '<section class="institutions-stub">Institutions</section>' },
+}))
+vi.mock('@/mobile/institutions/InstitutionDetailScreen.vue', () => ({
+  default: { name: 'InstitutionDetailScreen', template: '<article class="fiche-stub"><button class="open-comments">x</button></article>' },
+}))
 vi.mock('@/mobile/home/mobileStoriesStore', () => ({
   useMobileStoriesStore: () => ({ ownAvatarUrl: null, loadOwnAvatar: vi.fn() }),
 }))
@@ -47,6 +53,8 @@ function makeRouter() {
     routes: [
       { path: '/feed', name: 'FeedView', component: page('Feed') },
       { path: '/institution', name: 'Institution', component: page('Institutions') },
+      { path: '/institution/:id', name: 'InstitutionView', component: page('FicheOrdinateur') },
+      { path: '/documents_pfp', name: 'DocumentsPFP', component: page('Documents') },
       { path: '/mobile-search', name: 'MobileSearchView', component: page('Recherche') },
       { path: '/quiz', name: 'QuizListView', component: page('Quiz'), meta: { title: 'Quiz' } },
       { path: '/map', name: 'Map', component: page('Carte') },
@@ -140,13 +148,13 @@ describe('coque de l’application mobile', () => {
 
   it('ouvre les autres onglets avec les pages existantes, sans les recharger au retour', async () => {
     ({ wrapper, router } = await mountShell('/feed'))
-    await tabButton(wrapper, 'Institutions').trigger('click'); await settle()
-    expect(router.currentRoute.value.path).toBe('/institution')
-    expect(wrapper.find('[data-page="Institutions"]').exists()).toBe(true)
+    await tabButton(wrapper, 'Recherche').trigger('click'); await settle()
+    expect(router.currentRoute.value.path).toBe('/mobile-search')
+    expect(wrapper.find('[data-page="Recherche"]').exists()).toBe(true)
     expect(wrapper.find('.home-stub').isVisible()).toBe(false)
 
     await tabButton(wrapper, 'Carte').trigger('click'); await settle()
-    await tabButton(wrapper, 'Institutions').trigger('click'); await settle()
+    await tabButton(wrapper, 'Recherche').trigger('click'); await settle()
     await tabButton(wrapper, 'Accueil').trigger('click'); await settle()
     expect(wrapper.find('.home-stub').isVisible()).toBe(true)
     // Une seule création par page : les onglets sont gardés en mémoire.
@@ -170,13 +178,13 @@ describe('coque de l’application mobile', () => {
   })
 
   it('ouvre un panneau depuis un écran et le ferme au retour', async () => {
-    ({ wrapper, router } = await mountShell('/institution'))
+    ({ wrapper, router } = await mountShell('/documents_pfp'))
     await wrapper.get('.open-comments').trigger('click'); await settle()
     expect(router.currentRoute.value.hash).toBe('#/commentaires')
     expect(wrapper.get('.sheet-stub').text()).toBe('p9')
 
     router.back(); await settle()
-    expect(router.currentRoute.value.fullPath).toBe('/institution')
+    expect(router.currentRoute.value.fullPath).toBe('/documents_pfp')
     expect(wrapper.find('.sheet-stub').exists()).toBe(false)
   })
 
@@ -194,6 +202,25 @@ describe('coque de l’application mobile', () => {
     await settle()
     expect(router.currentRoute.value.fullPath).toBe('/feed')
     expect(wrapper.find('.sheet-stub').exists()).toBe(false)
+  })
+
+  it('affiche les écrans mobiles des institutions : onglet gardé en mémoire, fiche empilée', async () => {
+    ({ wrapper, router } = await mountShell('/institution'))
+    expect(wrapper.find('.institutions-stub').isVisible()).toBe(true)
+    expect(wrapper.find('[data-page="Institutions"]').exists()).toBe(false)
+    expect(wrapper.get('h1.m-header__title').text()).toBe('Institutions')
+
+    await router.push('/institution/7'); await settle()
+    expect(wrapper.find('.fiche-stub').exists()).toBe(true)
+    expect(wrapper.find('[data-page="FicheOrdinateur"]').exists()).toBe(false)
+    expect(wrapper.find('.institutions-stub').isVisible()).toBe(false)
+    // Le nom de l'institution est dans l'écran : l'en-tête garde un titre court, sans doublon.
+    expect(wrapper.get('.m-header__title').text()).toBe('Institution')
+    expect(wrapper.find('h1.m-header__title').exists()).toBe(false)
+
+    await wrapper.get('.m-header [aria-label="Retour"]').trigger('click'); await settle()
+    expect(router.currentRoute.value.path).toBe('/institution')
+    expect(wrapper.find('.institutions-stub').isVisible()).toBe(true)
   })
 
   it('laisse tout l’écran aux pages qui ont leur propre en-tête', async () => {
