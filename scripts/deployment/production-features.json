@@ -1,0 +1,11 @@
+{
+  "_note": "Modules de la plateforme activés en production. Appliqués par deploy.mjs à chaque build de prod ; une valeur posée dans .env.production.local reste prioritaire. Aucune donnée secrète ici.",
+  "VITE_GAMIFICATION_USER_UI": "true",
+  "VITE_GAMIFICATION_HOUSE_QUIZ": "true",
+  "VITE_GAMIFICATION_BADGES_CHALLENGES": "true",
+  "VITE_GAMIFICATION_GAMES_HUB": "true",
+  "VITE_GAMIFICATION_VENTRIGLISSE": "true",
+  "VITE_GAMIFICATION_DAILY_WHEEL": "false",
+  "VITE_GAMIFICATION_ROM_RUNNER": "false",
+  "VITE_GAMIFICATION_TOURNAMENTS": "false"
+}
