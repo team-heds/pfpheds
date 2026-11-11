@@ -21,6 +21,7 @@ const studyDestinations = [
 
 const toolDestinations = [
   { key: 'progression', to: '/gamification-profile', label: 'Ma progression', description: 'Retrouver votre maison, vos quêtes et vos réussites.', icon: 'pi pi-compass', feature: 'userJourney' },
+  { key: 'mentoring', to: '/mentorat', label: 'Mentorat', description: 'Proposer ou réserver un créneau d’entraide entre étudiants.', icon: 'pi pi-comments', feature: 'mentoring' },
   { key: 'notes', to: '/notes', label: 'Mes notes', description: 'Ouvrir vos carnets et vos pages.', icon: 'pi pi-book' },
   { key: 'tools', to: '/outils', label: 'Tous les outils', description: 'Retrouver les outils disponibles sur la plateforme.', icon: 'pi pi-th-large' },
   { key: 'quizzes', to: '/quiz', label: 'Quiz', description: 'Réviser avec les quiz de vos enseignants et suivre votre classement.', icon: 'pi pi-question-circle', feature: 'quizzes' },
