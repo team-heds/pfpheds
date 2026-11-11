@@ -1,10 +1,12 @@
 // Fonctions pures pour les images Alp'in Physio (sans accès réseau, testables).
+import optimizedImages from '@/data/alpinPhysioOptimizedImages.json'
 
 export const ALPIN_MEDIA_BUCKET = 'alpinphysio'
 export const ALPIN_LEGACY_IMAGE_ROOT = '/assets/images/heds/AlpinPhysioPhoto/'
 export const ALPIN_IMAGE_MAX_SIDE = 1600
 export const ALPIN_UPLOAD_MAX_BYTES = 5 * 1024 * 1024
 export const ALPIN_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const OPTIMIZED_IMAGES = new Set(optimizedImages.map((path) => path.normalize('NFC')))
 
 /**
  * Adresse affichable d'une image : une adresse complète (photo envoyée depuis
@@ -15,7 +17,10 @@ export function resolveAlpinImage(value) {
   const path = String(value ?? '').trim()
   if (!path) return ''
   if (/^(https?:)?\/\//i.test(path) || path.startsWith('/') || path.startsWith('blob:') || path.startsWith('data:image/')) return path
-  return `${ALPIN_LEGACY_IMAGE_ROOT}${path}`
+  // Les photos historiques ont une version allégée (WebP) préparée par
+  // scripts/optimize-alpinphysio-images.mjs : on la sert quand elle existe.
+  const suffix = OPTIMIZED_IMAGES.has(path.normalize('NFC')) ? '.webp' : ''
+  return `${ALPIN_LEGACY_IMAGE_ROOT}${path}${suffix}`
 }
 
 /** Dimensions réduites pour tenir dans un carré de `maxSide`, sans jamais agrandir. */
