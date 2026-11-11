@@ -58,6 +58,7 @@ const allOutils = [
   { to: '/lang-apps', icon: 'pi pi-globe', label: 'Apps langues' },
   { to: '/notes', icon: 'pi pi-book', label: 'Notes' },
   { to: '/game', icon: 'pi pi-star', label: 'Jeux' },
+  { to: '/quiz', icon: 'pi pi-question-circle', label: 'Quiz' },
   { to: '/tournois', icon: 'pi pi-trophy', label: 'Tournois' },
 ]
 
@@ -89,6 +90,7 @@ const outils = computed(() => {
   const enabledOutils = baseOutils.filter((outil) =>
     (outil.to !== '/tournois' || gamificationFeatures.tournaments)
     && (outil.to !== '/game' || gamificationFeatures.gamesHub)
+    && (outil.to !== '/quiz' || gamificationFeatures.quizzes)
   )
 
   if (!isMobile.value) {
