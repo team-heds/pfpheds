@@ -1467,4 +1467,28 @@ const saveProfileWithXP = async () => {
     font-size: 0.9rem;
   }
 }
+
+/* Téléphone : moins de cadres emboîtés, champs sur toute la largeur. */
+@media (max-width: 600px) {
+  .card-profile-responsive {
+    padding: 0.5rem 0;
+  }
+  .surfaces-card.info-grid {
+    padding: 0.75rem;
+    gap: 0.625rem;
+    border-radius: 1rem;
+  }
+  .info-item {
+    min-height: 4.25rem;
+    padding: 0.75rem;
+  }
+  .info-value.id {
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+  }
+  .save-btn {
+    width: 100%;
+    min-height: 3rem;
+  }
+}
 </style>

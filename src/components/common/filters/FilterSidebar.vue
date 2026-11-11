@@ -40,7 +40,21 @@
       </button>
     </div>
 
-    <div class="filter-groups">
+    <!-- Téléphone et tablette : les cases à cocher restent repliées tant qu'on ne les demande pas. -->
+    <button
+      type="button"
+      class="filter-toggle"
+      :aria-expanded="groupsExpanded ? 'true' : 'false'"
+      :aria-controls="`${idPrefix}-groups`"
+      @click="groupsExpanded = !groupsExpanded"
+    >
+      <i class="pi pi-sliders-h" aria-hidden="true" />
+      <span>{{ groupsExpanded ? 'Masquer les filtres' : 'Afficher les filtres' }}</span>
+      <span v-if="activeFilterChips.length" class="filter-toggle__count">{{ activeFilterChips.length }}</span>
+      <i :class="groupsExpanded ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="filter-toggle__chevron" aria-hidden="true" />
+    </button>
+
+    <div :id="`${idPrefix}-groups`" class="filter-groups" :class="{ 'filter-groups--collapsed': !groupsExpanded }">
       <section class="filter-section" role="group" :aria-labelledby="`${idPrefix}-cantons-title`">
         <h3 :id="`${idPrefix}-cantons-title`">Canton</h3>
         <ul class="filter-list">
@@ -86,7 +100,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
 import { INSTITUTION_CRITERIA, INSTITUTION_LANGUAGES, INSTITUTION_PFP_TYPES, normalizeInstitutionFilters } from '@/service/institutionFiltersService'
@@ -100,6 +114,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:filters', 'update:searchTerm', 'clear'])
+// Sans effet sur ordinateur, où la colonne de filtres est toujours ouverte.
+const groupsExpanded = ref(false)
 const criteriaOptions = INSTITUTION_CRITERIA
 const languageOptions = INSTITUTION_LANGUAGES
 const pfpOptions = INSTITUTION_PFP_TYPES
@@ -156,10 +172,20 @@ function removeFilter(group, value) {
 .filter-item { display:flex; align-items:center; gap:.5rem; min-height:2.25rem; }
 .filter-item label { color:var(--text-color); cursor:pointer; }
 .empty-option { grid-column:1/-1; color:var(--text-color-secondary); font-style:italic; }
+.filter-toggle { display:none; }
 @media (max-width:63.99rem) {
   .filter-sidebar { height:auto; max-height:none; margin-inline:0; padding:0; overflow:visible; overscroll-behavior:auto; }
   .filter-heading { position:static; box-shadow:none; }
   .filter-groups { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .filter-groups--collapsed { display:none; }
+  .filter-toggle { display:flex; align-items:center; gap:.6rem; width:100%; min-height:3rem; padding:.5rem 1.25rem; border:1px solid var(--surface-border); border-radius:1.2rem; background:var(--surface-card); color:var(--text-color); font:inherit; font-weight:600; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .filter-toggle:focus-visible { outline:2px solid var(--primary-color); outline-offset:2px; }
+  .filter-toggle > .pi:first-child { color:var(--primary-color); }
+  .filter-toggle__count { display:inline-grid; min-width:1.5rem; height:1.5rem; padding-inline:.35rem; place-items:center; border-radius:999px; background:var(--primary-color); color:var(--primary-color-text, #071426); font-size:.8rem; }
+  .filter-toggle__chevron { margin-left:auto; color:var(--text-color-secondary); }
+  .filter-item { min-height:2.75rem; }
+  .search-field { padding:.875rem 1rem; }
+  .filter-heading { padding:.875rem 1rem; }
 }
-@media (max-width:38rem) { .filter-heading { align-items:stretch; flex-direction:column; } .clear-button { width:100%; } .filter-groups { grid-template-columns:1fr; } }
+@media (max-width:38rem) { .filter-heading { align-items:center; } .filter-groups { grid-template-columns:1fr; } }
 </style>

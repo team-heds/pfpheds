@@ -844,5 +844,50 @@ const saveNewFile = async (newFile) => {
   .toggle-icon {
     font-size: 0.875rem;
   }
+
+  /* Téléphone : un seul défilement (celui de la page), noms de fichiers
+     lisibles sur deux lignes, cases et liens faciles à toucher. */
+  .scrollable-container {
+    height: auto;
+    overflow: visible;
+  }
+  .documents-container {
+    min-height: 0;
+  }
+  .documents-wrapper {
+    padding: 0 0 1rem;
+  }
+  .file-item-row {
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.25rem;
+  }
+  .file-item-row > input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0;
+    accent-color: var(--primary-color);
+  }
+  .file-link-wrapper {
+    min-height: 2.75rem;
+  }
+  .file-name-text {
+    display: -webkit-box;
+    overflow: hidden;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  .file-item-row:hover {
+    transform: none;
+  }
+  /* Le badge « Mode Lecture » est un repère de mise au point : inutile pour un étudiant. */
+  .admin-debug-badge:not(.is-admin) {
+    display: none;
+  }
 }
 </style>

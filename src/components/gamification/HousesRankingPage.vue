@@ -832,4 +832,19 @@ onUnmounted(() => { loadGeneration += 1 })
   }
 }
 
+
+/* Téléphone : un seul défilement, celui de la page (.content dans App.vue).
+   Un second bloc défilant de la hauteur de l'écran obligeait à faire défiler
+   deux zones imbriquées. */
+@media (max-width: 768px) {
+  .page-wrapper {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .houses-ranking-page {
+    min-height: 0;
+  }
+}
 </style>
