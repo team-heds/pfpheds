@@ -50,7 +50,7 @@
         </div>
         <div class="team-grid">
           <article v-for="member in committee" :key="member.name" class="member-card">
-            <figure><img :src="getImagePath(member.image)" :alt="`Portrait de ${member.name}`" loading="lazy" :style="{ objectPosition: member.position || 'center' }" /></figure>
+            <figure><img :src="getImagePath(member.image)" :alt="`Portrait de ${member.name}`" loading="lazy" decoding="async" :style="{ objectPosition: member.position || 'center' }" /></figure>
             <div class="member-copy"><p>{{ member.role }}</p><h3>{{ member.name }}</h3><details><summary>En savoir plus <i class="pi pi-plus" /></summary><p>{{ member.bio }}</p></details></div>
           </article>
         </div>
@@ -88,7 +88,7 @@
 
       <section id="gallery" class="gallery section" aria-labelledby="gallery-title">
         <div class="section-heading"><div><p class="eyebrow">{{ siteContent.galleryEyebrow }}</p><h2 id="gallery-title">{{ siteContent.galleryTitle }}</h2></div><div class="gallery-count">{{ currentSlide + 1 }} / {{ galleryPhotos.length }}</div></div>
-        <figure class="gallery-main"><img :src="activePhoto.src" :alt="activePhoto.alt" /><figcaption><span>{{ activePhoto.date }} · {{ activePhoto.location }}</span><h3>{{ activePhoto.title }}</h3><p>{{ activePhoto.description }}</p></figcaption><div class="gallery-controls"><button type="button" aria-label="Photo précédente" @click="previousSlide"><i class="pi pi-arrow-left" /></button><button type="button" aria-label="Photo suivante" @click="nextSlide"><i class="pi pi-arrow-right" /></button></div></figure>
+        <figure class="gallery-main"><img :src="activePhoto.src" :alt="activePhoto.alt" loading="lazy" decoding="async" /><figcaption><span>{{ activePhoto.date }} · {{ activePhoto.location }}</span><h3>{{ activePhoto.title }}</h3><p>{{ activePhoto.description }}</p></figcaption><div class="gallery-controls"><button type="button" aria-label="Photo précédente" @click="previousSlide"><i class="pi pi-arrow-left" /></button><button type="button" aria-label="Photo suivante" @click="nextSlide"><i class="pi pi-arrow-right" /></button></div></figure>
         <div class="gallery-strip" aria-label="Choisir une photo"><button v-for="(photo, index) in galleryPhotos" :key="photo.src" type="button" :class="{ active: index === currentSlide }" :aria-label="`Afficher ${photo.title}`" @click="currentSlide = index"><img :src="photo.src" alt="" loading="lazy" /><span>{{ photo.title }}</span></button></div>
       </section>
 
