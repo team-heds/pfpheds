@@ -17,6 +17,10 @@
       </section>
 
       <div v-else class="grid">
+        <div v-if="gamificationFeatures.wordOfDay" class="col-12">
+          <WordOfDayHubCard />
+        </div>
+
         <div v-if="gamificationFeatures.ventriglisse" class="col-12">
           <section class="ventriglisse-card" aria-labelledby="ventriglisse-title">
             <div class="ventriglisse-preview" aria-hidden="true">
@@ -90,6 +94,7 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import Navbar from '@/components/common/utils/Navbar.vue';
+import WordOfDayHubCard from '@/components/games/word-of-day/WordOfDayHubCard.vue';
 import DailyWheelWidget from '@/components/gamification/daily/DailyWheelWidget.vue';
 import Button from 'primevue/button';
 import { gamificationFeatures } from '@/config/gamificationFeatures';
@@ -97,7 +102,7 @@ import GamificationPageHeader from '@/components/gamification/GamificationPageHe
 import { computed } from 'vue';
 
 const router = useRouter();
-const hasGames = computed(() => gamificationFeatures.ventriglisse || gamificationFeatures.dailyWheel || gamificationFeatures.romRunner);
+const hasGames = computed(() => gamificationFeatures.wordOfDay || gamificationFeatures.ventriglisse || gamificationFeatures.dailyWheel || gamificationFeatures.romRunner);
 const goBack = () => router.push(gamificationFeatures.userJourney ? { name: 'GamificationProfileSelf' } : '/outils');
 </script>
 

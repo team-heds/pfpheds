@@ -13,7 +13,7 @@ describe('garde-fous des jeux', () => {
   it('désactive toutes les expériences non validées par défaut en production', () => {
     const environment = source('.env.production.example')
 
-    for (const key of ['GAMES_HUB', 'DAILY_WHEEL', 'ROM_RUNNER', 'TOURNAMENTS', 'VENTRIGLISSE']) {
+    for (const key of ['GAMES_HUB', 'DAILY_WHEEL', 'ROM_RUNNER', 'TOURNAMENTS', 'VENTRIGLISSE', 'WORD_OF_DAY']) {
       expect(environment).toContain(`VITE_GAMIFICATION_${key}=false`)
     }
   })

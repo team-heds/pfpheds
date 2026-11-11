@@ -616,6 +616,28 @@ class GamificationServiceSupabase {
     return data
   }
 
+  /**
+   * Mot du jour physio : partie du jour du compte connecté, décidée par le serveur.
+   * Tant que la partie continue, la réponse ne contient que la longueur du mot et les
+   * indices des essais déjà joués ; le mot et sa définition n'arrivent qu'à la fin.
+   */
+  async getMyWordOfDay() {
+    const { data, error } = await supabase.rpc('get_my_word_of_day')
+    if (error) throw error
+    return data || { eligible: false, reason: 'unavailable' }
+  }
+
+  /**
+   * Mot du jour physio : propose un essai. Le serveur compare, enregistre l'essai et
+   * attribue lui-même les XP si le mot est trouvé.
+   */
+  async submitMyWordOfDayGuess(guess) {
+    const { data, error } = await supabase.rpc('submit_my_word_of_day_guess', { p_guess: String(guess || '') })
+    if (error) throw error
+    if (data?.xp_awarded > 0) this.cache.clear()
+    return data
+  }
+
   async findBestAvailableHouse(quizResults, maxMembersPerHouse = 50) {
     try {
       // Obtenir le nombre actuel de membres par maison

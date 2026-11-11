@@ -167,6 +167,7 @@ export async function addDynamicRoutesToRouter(router) {
     'VotationView',
     'VotationViewPFP1B',
     'Ventriglisse3D',
+    'WordOfDayView',
     'GameView',
     'GameHub',
     'RomRunnerView',
