@@ -16,7 +16,7 @@
         <Card class="mb-4">
           <template #title>Mes communautés</template>
           <template #content>
-            <DataTable :value="myCommunities" :loading="loading" responsiveLayout="scroll" dataKey="id"
+            <DataTable :value="myCommunities" :loading="loading" responsiveLayout="stack" breakpoint="640px" dataKey="id"
               emptyMessage="Aucune communauté rejointe.">
               <Column field="name" header="Nom" sortable />
               <Column field="description" header="Description" />
@@ -53,7 +53,7 @@
         <Card>
           <template #title>Découvrir des communautés</template>
           <template #content>
-            <DataTable :value="discoverCommunities" :loading="loading" responsiveLayout="scroll" dataKey="id"
+            <DataTable :value="discoverCommunities" :loading="loading" responsiveLayout="stack" breakpoint="640px" dataKey="id"
               emptyMessage="Aucune communauté disponible.">
               <Column field="name" header="Nom" sortable />
               <Column field="description" header="Description" />
@@ -595,6 +595,55 @@ export default {
 
   .community-management__content {
     padding: 0.5rem 0;
+  }
+}
+
+/* Téléphone : chaque communauté devient une fiche (libellé + valeur par ligne)
+   au lieu d'un tableau deux fois plus large que l'écran. */
+@media (max-width: 640px) {
+  .community-management__header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .community-management__header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+  }
+  .community-management__header :deep(.p-button) {
+    width: 100%;
+  }
+  .community-management__content {
+    overflow-x: hidden;
+  }
+  .community-management__content :deep(.p-datatable .p-datatable-table),
+  .community-management__content :deep(.p-datatable .p-datatable-tbody) {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+  .community-management__content :deep(.p-datatable .p-datatable-tbody > tr) {
+    display: block;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--surface-border);
+  }
+  .community-management__content :deep(.p-datatable .p-datatable-tbody > tr > td) {
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    width: 100% !important;
+    min-width: 0 !important;
+    flex-wrap: wrap;
+    padding: 0.4rem 0;
+    border: 0;
+  }
+  .community-management__content :deep(.p-datatable .p-column-title) {
+    flex: 0 0 6.5rem;
+    color: var(--text-color-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .community-management__content :deep(.p-datatable .p-datatable-tbody > tr > td .p-button) {
+    min-height: 2.75rem;
   }
 }
 </style>
