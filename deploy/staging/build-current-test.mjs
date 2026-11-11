@@ -60,7 +60,8 @@ Object.assign(env, {
   VITE_GAMIFICATION_DAILY_WHEEL: 'false',
   VITE_GAMIFICATION_ROM_RUNNER: 'false',
   VITE_GAMIFICATION_TOURNAMENTS: 'false',
-  VITE_GAMIFICATION_VENTRIGLISSE: 'true'
+  VITE_GAMIFICATION_VENTRIGLISSE: 'true',
+  VITE_GAMIFICATION_EVENT_CHECKIN: 'true'
 })
 
 execFileSync('npm', ['run', 'build'], {
