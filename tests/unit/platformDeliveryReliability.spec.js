@@ -25,7 +25,11 @@ describe('platform delivery reliability contract', () => {
     expect(worker).toContain("const NAVIGATION_CACHE_PREFIX = 'navigation-pages-'")
     expect(worker).toContain('cacheName: NAVIGATION_CACHE')
     expect(worker).toContain('caches.delete(cacheName)')
-    expect(worker).not.toContain('self.skipWaiting()')
+    // La nouvelle version ne s'active jamais seule : uniquement à la demande
+    // de l'utilisateur (bandeau « Mettre à jour »), suivie d'un rechargement complet.
+    expect(worker.match(/self\.skipWaiting\(\)/g)).toHaveLength(1)
+    expect(worker).toContain("if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()")
+    expect(worker).not.toMatch(/addEventListener\('install'/)
     expect(worker).not.toContain('self.clients.claim()')
     expect(worker).not.toContain("cacheName: 'static-resources'")
     expect(main).not.toContain("navigator.serviceWorker.register('/sw.js')")
