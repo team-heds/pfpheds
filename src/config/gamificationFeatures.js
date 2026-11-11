@@ -6,6 +6,7 @@ export const gamificationFeatures = Object.freeze({
   badgesChallenges: isEnabled(import.meta.env.VITE_GAMIFICATION_BADGES_CHALLENGES),
   mentoring: isEnabled(import.meta.env.VITE_GAMIFICATION_MENTORING),
   gamesHub: isEnabled(import.meta.env.VITE_GAMIFICATION_GAMES_HUB),
+  quizzes: isEnabled(import.meta.env.VITE_GAMIFICATION_QUIZZES),
   dailyWheel: isEnabled(import.meta.env.VITE_GAMIFICATION_DAILY_WHEEL),
   romRunner: isEnabled(import.meta.env.VITE_GAMIFICATION_ROM_RUNNER),
   tournaments: isEnabled(import.meta.env.VITE_GAMIFICATION_TOURNAMENTS),
