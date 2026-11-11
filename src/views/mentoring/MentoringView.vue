@@ -155,6 +155,11 @@
             <span v-if="toConfirmCount" class="tab-badge" :aria-label="`${toConfirmCount} à confirmer`">{{ toConfirmCount }}</span>
           </template>
 
+          <PushOptIn
+            class="mentoring__push"
+            purpose="quand un de vos créneaux est réservé, annulé ou confirmé"
+          />
+
           <div v-if="loading" class="state" role="status">
             <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
             <p>Chargement de vos créneaux…</p>
@@ -489,6 +494,7 @@ import TabPanel from 'primevue/tabpanel'
 import TabView from 'primevue/tabview'
 import Textarea from 'primevue/textarea'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import PushOptIn from '@/components/push/PushOptIn.vue'
 import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useRoleStore } from '@/stores/role'
@@ -882,6 +888,8 @@ onMounted(loadAll)
   background: #f3c300;
   border-radius: 999px;
 }
+
+.mentoring__push { margin-bottom: 1.5rem; }
 
 /* Filtres */
 .filters {
