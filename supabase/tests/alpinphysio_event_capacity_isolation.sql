@@ -7,17 +7,35 @@ begin;
 
 select set_config('heds_test.cap_manager_uid',
   (select id::text from auth.users order by created_at, id limit 1), true);
+-- Les deux comptes « étudiants » ne doivent avoir aucun droit de gestion,
+-- sinon ils verraient légitimement les brouillons.
+create temporary table heds_test_cap_students on commit drop as
+select u.id
+from auth.users u
+left join public.user_profiles up on up.user_id = u.id
+where u.id <> current_setting('heds_test.cap_manager_uid')::uuid
+  and coalesce(up.role, '') not in ('admin', 'superadmin')
+  and not (coalesce(up.permissions, '[]'::jsonb) ?| array[
+    'admin', 'super.all', 'alpinphysio.events.manage', 'alpinphysio.attendance.manage',
+    'alpinphysio.material.manage', 'alpinphysio.site.manage'])
+  and not exists (
+    select 1 from public.user_track_roles r
+    where r.user_id = u.id and r.is_active
+  )
+order by u.created_at, u.id
+limit 2;
+
 select set_config('heds_test.cap_student_a_uid',
-  (select id::text from auth.users order by created_at, id offset 1 limit 1), true);
+  (select id::text from heds_test_cap_students limit 1), true);
 select set_config('heds_test.cap_student_b_uid',
-  (select id::text from auth.users order by created_at, id offset 2 limit 1), true);
+  (select id::text from heds_test_cap_students offset 1 limit 1), true);
 
 do $setup$
 declare
   manager_uid uuid := current_setting('heds_test.cap_manager_uid')::uuid;
 begin
   if current_setting('heds_test.cap_student_b_uid') is null or current_setting('heds_test.cap_student_b_uid') = '' then
-    raise exception 'Capacity test requires three auth users';
+    raise exception 'Capacity test requires one account plus two accounts without management rights';
   end if;
 
   insert into public.user_track_roles (user_id, track_id, role, is_active)
@@ -62,6 +80,10 @@ declare
   v_row record;
   v_visible integer;
 begin
+  if public.app_is_alpinphysio_manager() then
+    raise exception 'Test setup: student accounts must not be Alp''in managers';
+  end if;
+
   -- L'événement est complet : « présent » est refusé…
   begin
     insert into public.event_registrations (event_id, user_uid, response)
