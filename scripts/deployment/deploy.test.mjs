@@ -10,7 +10,7 @@ function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'heds-deploy-test-'))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   fs.mkdirSync(path.join(root, 'scripts/deployment'), { recursive: true })
-  for (const name of ['deploy.mjs', 'remote.sh']) {
+  for (const name of ['deploy.mjs', 'remote.sh', 'production-features.json']) {
     fs.copyFileSync(new URL(name, import.meta.url), path.join(root, 'scripts/deployment', name))
   }
   fs.symlinkSync(new URL('node_modules', source).pathname, path.join(root, 'node_modules'))
@@ -64,7 +64,33 @@ test('complete artifacts publish frontend and backend then probe public routes',
   for (const file of ['dist/index.html', 'dist/docs/index.html', 'dist/presentation/index.html']) {
     fs.writeFileSync(`${f.root}/${file}`, '<html></html>')
   }
-  fs.writeFileSync(`${f.root}/dist/assets/app.js`, 'https://api2.hedsvs.ch https://api2.hedsvs.ch/api')
+  fs.writeFileSync(`${f.root}/dist/assets/app.js`, 'https://api2.hedsvs.ch https://api2.hedsvs.ch/api userJourney:Ae("true")')
   assert.equal(f.run('--deploy').status, 0)
   assert.deepEqual(f.calls(), ['ssh', 'npm', 'tar', 'tar', 'ssh', 'scp', 'ssh', 'curl', 'curl', 'curl'])
 })
+
+test('production features are versioned and enable the gamification', () => {
+  const features = JSON.parse(fs.readFileSync(new URL('production-features.json', import.meta.url), 'utf8'))
+  assert.equal(features.VITE_GAMIFICATION_USER_UI, 'true')
+  assert.equal(features.VITE_GAMIFICATION_HOUSE_QUIZ, 'true')
+  assert.equal(features.VITE_GAMIFICATION_BADGES_CHALLENGES, 'true')
+  for (const [name, value] of Object.entries(features)) {
+    if (name.startsWith('VITE_')) assert.match(value, /^(true|false)$/)
+  }
+})
+
+test('a bundle without the gamification is never published', t => {
+  const f = fixture(t)
+  for (const folder of ['dist/docs', 'dist/presentation', 'dist/assets', 'backend']) {
+    fs.mkdirSync(`${f.root}/${folder}`, { recursive: true })
+  }
+  for (const file of ['dist/index.html', 'dist/docs/index.html', 'dist/presentation/index.html']) {
+    fs.writeFileSync(`${f.root}/${file}`, '<html></html>')
+  }
+  fs.writeFileSync(`${f.root}/dist/assets/app.js`, 'https://api2.hedsvs.ch https://api2.hedsvs.ch/api userJourney:Ae()')
+  const result = f.run('--deploy')
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, /Gamification désactivée/)
+  assert.ok(!f.calls().includes('scp'))
+})
+

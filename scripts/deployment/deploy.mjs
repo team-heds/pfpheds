@@ -22,6 +22,13 @@ function run(command, args, options = {}) {
 
 try {
   const env = { ...process.env, ...loadEnv('production', root, 'VITE_') }
+  // Modules activés en prod, versionnés : un déploiement depuis une autre machine ou session
+  // ne doit plus désactiver la gamification faute de fichier .env local.
+  const features = JSON.parse(fs.readFileSync(new URL('./production-features.json', import.meta.url), 'utf8'))
+  for (const [name, value] of Object.entries(features)) {
+    if (!name.startsWith('VITE_')) continue
+    if (!env[name]?.trim()) env[name] = value
+  }
   for (const name of ['VITE_SUPABASE_URL', 'VITE_SUPABASE_KEY', 'VITE_API_BASE_URL']) {
     if (!env[name]?.trim()) throw new Error(`Variable manquante : ${name}. Configurez .env.production.local.`)
   }
@@ -59,6 +66,10 @@ try {
     .map(name => fs.readFileSync(path.join('dist/assets', name), 'utf8')).join('\n')
   for (const name of ['VITE_SUPABASE_URL', 'VITE_API_BASE_URL']) {
     if (!assets.includes(env[name])) throw new Error(`${name} absent du bundle.`)
+  }
+  // Le module gamification doit être réellement activé dans le bundle publié.
+  if (env.VITE_GAMIFICATION_USER_UI === 'true' && !/userJourney:[\w$]+\("true"\)/.test(assets)) {
+    throw new Error('Gamification désactivée dans le bundle : vérifiez scripts/deployment/production-features.json.')
   }
   if (mode === '--build-only') process.exit(0)
 
