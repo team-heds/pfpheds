@@ -63,6 +63,14 @@ self.addEventListener('activate', (event) => {
   })())
 })
 
+// ── Mise à jour à la demande ──
+// Une nouvelle version reste en attente tant que l'utilisateur n'a pas touché
+// « Mettre à jour » dans l'application : la page est alors rechargée en entier,
+// ce qui évite tout mélange entre ancienne et nouvelle version.
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
+})
+
 // ── Push Notifications ──
 self.addEventListener('push', (event) => {
   let payload = {}

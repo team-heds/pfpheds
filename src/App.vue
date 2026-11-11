@@ -18,6 +18,7 @@
       <VersionningComponent v-if="!isImmersiveRoute" />
       <PwaInstallPrompt />
       <OfflineBanner />
+      <PwaUpdatePrompt />
       <!-- Intégration du widget ConvAI -->
       <!-- <ConvaiWidget /> -->
       <!-- Centre de notifications gamification -->
@@ -42,6 +43,7 @@ import VersionningComponent from './components/common/utils/VersionningComponent
 import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import OfflineBanner from '@/components/common/utils/OfflineBanner.vue';
+import PwaUpdatePrompt from '@/components/common/utils/PwaUpdatePrompt.vue';
 import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
 import questExpirationService from '@/service/questExpirationService';
 import { mapState } from 'pinia';
@@ -61,6 +63,7 @@ export default {
     MobileBottomNav,
     PwaInstallPrompt,
     OfflineBanner,
+    PwaUpdatePrompt,
     GamificationNotification,
   },
   data() {
