@@ -1,7 +1,7 @@
 <template>
   <div>
   <!-- Critères Validés (Agrégation) -->
-  <h5 class="mb-4 m-2">Critères Validéss</h5>
+  <h5 class="mb-4 m-2">Critères validés</h5>
   <div v-if="isStagesLoading" class="profile-section-state">
     <i class="pi pi-spin pi-spinner mr-2"></i>
     Chargement des stages et critères...
@@ -1518,9 +1518,27 @@ const getStageCardClass = (status) => {
     padding-left: 0.4rem !important;
     padding-right: 0.4rem !important;
   }
+  /* Téléphone : les critères tiennent sur trois colonnes compactes au lieu
+     d'une longue liste d'une carte par ligne. */
+  .grid.m-2 {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem !important;
+    padding: 0 !important;
+    margin: 0 0 1.25rem !important;
+  }
   .criteria-card {
-    min-width: 100px;
-    padding: 1rem 0.5rem;
+    width: 100% !important;
+    min-width: 0;
+    height: 4.25rem !important;
+    margin: 0;
+    padding: 0.4rem;
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+  }
+  .criteria-card i {
+    margin-top: 0.25rem !important;
+    font-size: 1.25rem !important;
   }
 }
 </style>
