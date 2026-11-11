@@ -436,16 +436,6 @@ const calculateHouse = async () => {
       selectedHouse.value = houses[bestAvailableHouse]
       isCalculating.value = false
       quizCompleted.value = true
-
-      // Préférence du quiz non retenue : la maison choisie est la moins remplie.
-      if (preferred !== bestAvailableHouse) {
-        toast.add({
-          severity: 'info',
-          summary: 'Équilibrage des maisons',
-          detail: `Pour garder des maisons de même taille, tu rejoins ${houses[bestAvailableHouse].name}.`,
-          life: 6000
-        })
-      }
     }, 2000)
   } catch (error) {
     console.error('❌ Erreur lors du calcul de la maison:', error)
