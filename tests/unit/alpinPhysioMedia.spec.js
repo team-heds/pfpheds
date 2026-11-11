@@ -9,8 +9,8 @@ const read = (file) => fs.readFileSync(path.resolve(process.cwd(), file), 'utf8'
 
 describe('Alp’in Physio — adresses des images', () => {
   it('garde les chemins historiques dans le dossier livré avec l’application', () => {
-    expect(resolveAlpinImage('JPhotos/Divers/photocomite/lea_volpe.jpeg'))
-      .toBe('/assets/images/heds/AlpinPhysioPhoto/JPhotos/Divers/photocomite/lea_volpe.jpeg')
+    expect(resolveAlpinImage('JPhotos/Divers/logosponsors/perskindol_2.jpg'))
+      .toBe('/assets/images/heds/AlpinPhysioPhoto/JPhotos/Divers/logosponsors/perskindol_2.jpg')
   })
 
   it('garde telle quelle une photo envoyée depuis l’ordinateur', () => {
@@ -73,5 +73,35 @@ describe('Alp’in Physio — choix des photos dans la gestion', () => {
 
   it('la page publique affiche les deux sortes d’adresses', () => {
     expect(read('src/views/associations/AlpinPhysioView.vue')).toContain('const getImagePath = resolveAlpinImage')
+  })
+})
+
+describe('Alp’in Physio — photos allégées de la page publique', () => {
+  const photoRoot = path.resolve(process.cwd(), 'public/assets/images/heds/AlpinPhysioPhoto')
+  const optimized = JSON.parse(read('src/data/alpinPhysioOptimizedImages.json'))
+
+  it('sert la version allégée quand elle existe', () => {
+    expect(resolveAlpinImage('JPhotos/Divers/photocomite/lea_volpe.jpeg'))
+      .toBe('/assets/images/heds/AlpinPhysioPhoto/JPhotos/Divers/photocomite/lea_volpe.jpeg.webp')
+  })
+
+  it('chaque photo listée existe en version d’origine et en version allégée, plus légère', () => {
+    expect(optimized.length).toBeGreaterThanOrEqual(15)
+    for (const relative of optimized) {
+      const original = path.join(photoRoot, relative)
+      const light = `${original}.webp`
+      expect(fs.existsSync(original), `original manquant : ${relative}`).toBe(true)
+      expect(fs.existsSync(light), `version allégée manquante : ${relative}`).toBe(true)
+      expect(fs.statSync(light).size).toBeLessThan(fs.statSync(original).size)
+      expect(fs.statSync(light).size).toBeLessThan(200 * 1024)
+    }
+  })
+
+  it('couvre les grandes photos du contenu par défaut', () => {
+    const content = read('src/data/alpinPhysioSiteContent.js')
+    for (const key of ['heroImage', 'aboutImage', 'contactImage']) {
+      const value = content.match(new RegExp(`${key}: '([^']+)'`))[1]
+      expect(optimized).toContain(value)
+    }
   })
 })
