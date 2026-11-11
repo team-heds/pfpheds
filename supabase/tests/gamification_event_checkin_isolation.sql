@@ -25,15 +25,18 @@ values
   ('72000000-0000-4000-8000-000000000004', 'checkin.student@example.invalid', 'Sam', 'Etudiant', 'Sam Etudiant', 'BA24', 'user', true),
   ('72000000-0000-4000-8000-000000000005', 'checkin.player2@example.invalid', 'Lea', 'Joueuse', 'Lea Joueuse', 'BA26', 'user', true)
 on conflict (user_id) do update
-  set role = excluded.role, is_active = true, forname = excluded.forname, family_name = excluded.family_name;
+  set role = excluded.role, is_active = true, forname = excluded.forname, family_name = excluded.family_name,
+      display_name = excluded.display_name, classe = excluded.classe;
 
 -- Récompenses actives, deux joueurs dans l'audience (valable en mode liste comme en mode « tous »).
 insert into gamification_private.rollout_config (singleton, rewards_enabled, audience_mode)
 values (true, true, 'allowlist')
 on conflict (singleton) do update set rewards_enabled = true, audience_mode = 'allowlist';
 
-insert into gamification_private.rollout_audience (user_id)
-values ('72000000-0000-4000-8000-000000000002'), ('72000000-0000-4000-8000-000000000005')
+insert into gamification_private.rollout_audience (user_id, added_by)
+values
+  ('72000000-0000-4000-8000-000000000002', '72000000-0000-4000-8000-000000000001'),
+  ('72000000-0000-4000-8000-000000000005', '72000000-0000-4000-8000-000000000001')
 on conflict (user_id) do nothing;
 
 insert into public.events (id, title, lieu, start_date, end_date, type, status, admin_uid)
