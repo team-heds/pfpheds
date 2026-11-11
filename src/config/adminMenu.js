@@ -66,6 +66,7 @@ export default [
       { label: 'Événements', icon: 'pi pi-calendar', to: '/admin/alpinphysio/events' },
       { label: 'Présences', icon: 'pi pi-users', to: '/admin/alpinphysio/presences' },
       { label: 'Matériel', icon: 'pi pi-box', to: '/admin/alpinphysio/materiel' },
+      { label: 'Demandes', icon: 'pi pi-inbox', to: '/admin/alpinphysio/demandes' },
       { label: 'Site vitrine', icon: 'pi pi-desktop', to: '/admin/alpinphysio/site' },
       { label: 'Équipe & accès', icon: 'pi pi-id-card', to: '/admin/alpinphysio/equipe' }
     ]
