@@ -51,6 +51,10 @@ Object.assign(env, {
   VITE_BACKEND_URL: 'https://test.hedsvs.ch',
   VITE_APP_ENV: 'staging',
   VITE_SUPABASE_REALTIME: 'false',
+  // Clé publique d'abonnement aux notifications (facultative). Sans elle, le bouton
+  // « Activer les notifications » reste masqué sur le site de test. Aucun service
+  // d'envoi ne tourne sur le test : seul l'abonnement peut y être essayé.
+  VITE_VAPID_PUBLIC: process.env.STAGING_VAPID_PUBLIC || values.STAGING_VAPID_PUBLIC || '',
   VITE_GAMIFICATION_USER_UI: 'true',
   VITE_GAMIFICATION_HOUSE_QUIZ: 'true',
   VITE_GAMIFICATION_BADGES_CHALLENGES: 'true',
