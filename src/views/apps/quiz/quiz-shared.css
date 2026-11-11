@@ -1,0 +1,185 @@
+/* Styles communs aux pages de quiz, limités à .quiz-page. Couleurs : variables du thème. */
+.quiz-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100%;
+  padding: 1rem 1rem 6rem;
+  color: var(--text-color);
+  background: transparent;
+}
+
+.quiz-page *,
+.quiz-page *::before,
+.quiz-page *::after {
+  box-sizing: border-box;
+}
+
+.quiz-page .quiz-shell {
+  width: min(100%, 1200px);
+  margin: 0 auto;
+}
+
+.quiz-page .quiz-shell--narrow {
+  width: min(100%, 820px);
+}
+
+.quiz-page h2,
+.quiz-page h3,
+.quiz-page p {
+  margin: 0;
+}
+
+.quiz-page .quiz-muted {
+  color: var(--text-color-secondary);
+  line-height: 1.55;
+}
+
+.quiz-page .quiz-panel {
+  padding: 1.25rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+  background: var(--surface-card);
+}
+
+.quiz-page .quiz-panel + .quiz-panel {
+  margin-top: 1rem;
+}
+
+.quiz-page .quiz-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.quiz-page .quiz-state > i {
+  margin-top: 0.2rem;
+  color: var(--primary-color);
+  font-size: 1.5rem;
+}
+
+.quiz-page .quiz-state h2 {
+  margin-bottom: 0.4rem;
+  font-size: 1.15rem;
+}
+
+.quiz-page .quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.quiz-page .quiz-actions .p-button,
+.quiz-page .quiz-touch {
+  min-height: 44px;
+}
+
+.quiz-page .quiz-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  color: var(--text-color-secondary);
+  font-size: 0.9rem;
+}
+
+.quiz-page .quiz-meta i {
+  margin-right: 0.35rem;
+}
+
+.quiz-page .quiz-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.quiz-page .quiz-field > label,
+.quiz-page .quiz-field > .quiz-label {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.quiz-page .quiz-field small {
+  color: var(--text-color-secondary);
+}
+
+.quiz-page .quiz-field .p-inputtext,
+.quiz-page .quiz-field .p-dropdown,
+.quiz-page .quiz-field .p-multiselect,
+.quiz-page .quiz-field .p-calendar {
+  width: 100%;
+}
+
+.quiz-page .quiz-table-wrap {
+  overflow-x: auto;
+}
+
+.quiz-page table.quiz-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.quiz-page .quiz-table th,
+.quiz-page .quiz-table td {
+  padding: 0.7rem 0.6rem;
+  border-bottom: 1px solid var(--surface-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.quiz-page .quiz-table th {
+  color: var(--text-color-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.quiz-page .quiz-table tr.is-me td {
+  background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  font-weight: 700;
+}
+
+.quiz-page .quiz-house {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.quiz-page .quiz-house__dot {
+  flex: 0 0 auto;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--house-dot, var(--surface-border));
+}
+
+.quiz-page :is(a, button, input, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.quiz-page .quiz-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .quiz-page {
+    padding: 0.75rem 0.75rem 6rem;
+  }
+
+  .quiz-page .quiz-panel {
+    padding: 1rem;
+  }
+
+  .quiz-page .quiz-actions .p-button {
+    flex: 1 1 100%;
+  }
+}
