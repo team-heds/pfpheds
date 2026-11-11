@@ -24,7 +24,8 @@ const normalizeBadge = (badge, earnedAt = null) => {
 const conditionLabels = {
   total_xp: 'XP cumulés',
   level: 'Niveau atteint',
-  action_count: 'Actions validées'
+  action_count: 'Actions validées',
+  login_streak: 'Jours de connexion de suite'
 }
 
 export const formatBadgeProgress = (badge) => {
