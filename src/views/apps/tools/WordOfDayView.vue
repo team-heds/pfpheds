@@ -3,8 +3,8 @@
     <Navbar />
     <main class="wod-content" style="--house-color: var(--primary-color, #f3c300)">
       <GamificationPageHeader
-        title="Mot du jour physio"
-        description="Un terme de physiothérapie ou d’anatomie à trouver en 6 essais. Le même mot pour tout le monde, chaque jour."
+        title="Mot de la semaine physio"
+        description="Un terme de physiothérapie ou d’anatomie à trouver en 6 essais. Le même mot pour tout le monde, du lundi au dimanche."
         eyebrow="Espace jeux"
         icon="pi pi-book"
         @back="router.push('/game')"
@@ -12,12 +12,12 @@
 
       <section v-if="phase === 'loading'" class="wod-panel wod-center" aria-busy="true">
         <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
-        <p role="status">Chargement du mot du jour…</p>
+        <p role="status">Chargement du mot de la semaine…</p>
       </section>
 
       <section v-else-if="phase === 'error'" class="wod-panel wod-center" aria-labelledby="wod-error-title">
         <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-        <h2 id="wod-error-title">Le mot du jour n’a pas pu être chargé</h2>
+        <h2 id="wod-error-title">Le mot de la semaine n’a pas pu être chargé</h2>
         <p>Vérifiez votre connexion, puis réessayez.</p>
         <Button label="Réessayer" icon="pi pi-refresh" class="wod-primary" @click="load" />
       </section>
@@ -25,15 +25,19 @@
       <section v-else-if="phase === 'restricted'" class="wod-panel wod-center" aria-labelledby="wod-restricted-title">
         <i class="pi pi-lock" aria-hidden="true"></i>
         <h2 id="wod-restricted-title">Jeu réservé aux joueurs</h2>
-        <p>Le mot du jour est ouvert aux étudiantes et étudiants qui participent à la gamification.</p>
+        <p>Le mot de la semaine est ouvert aux étudiantes et étudiants qui participent à la gamification.</p>
         <Button label="Revenir aux jeux" icon="pi pi-arrow-left" class="wod-primary" @click="router.push('/game')" />
       </section>
 
       <div v-else class="wod-layout">
         <section class="wod-panel wod-game" aria-labelledby="wod-game-title">
           <div class="wod-game__head">
-            <h2 id="wod-game-title">Partie du {{ playDateLabel }}</h2>
+            <h2 id="wod-game-title">Semaine {{ weekLabel }}</h2>
             <p>{{ game.word_length }} lettres · {{ remainingLabel }}</p>
+            <p class="wod-game__validity">
+              <i class="pi pi-calendar" aria-hidden="true"></i>
+              <span>Mot valable jusqu’à dimanche soir. Prochain mot : {{ nextWordLabel }}.</span>
+            </p>
           </div>
 
           <ol class="wod-board" :style="{ '--wod-length': game.word_length }" aria-label="Vos essais">
@@ -63,19 +67,19 @@
           <section v-if="finished" class="wod-result" :class="`is-${game.status}`" aria-labelledby="wod-result-title">
             <h3 id="wod-result-title">
               <i :class="game.status === 'won' ? 'pi pi-check-circle' : 'pi pi-info-circle'" aria-hidden="true"></i>
-              {{ game.status === 'won' ? `Trouvé en ${attemptsLabel(game.attempts.length)}` : 'Ce sera pour demain' }}
+              {{ game.status === 'won' ? `Trouvé en ${attemptsLabel(game.attempts.length)}` : 'Ce sera pour la semaine prochaine' }}
             </h3>
             <p v-if="game.xp_awarded > 0" class="wod-result__xp">
               +{{ game.xp_awarded }} XP pour vous et pour votre maison
             </p>
             <p v-else-if="game.status === 'won'" class="wod-result__xp">Mot trouvé. Aucun XP n’est attribué pour le moment.</p>
             <p class="wod-result__word">
-              <span class="wod-result__label">Le mot du jour</span>
+              <span class="wod-result__label">Le mot de la semaine</span>
               <strong lang="fr">{{ game.solution?.word }}</strong>
             </p>
             <p class="wod-result__definition">{{ game.solution?.definition }}</p>
             <p v-if="game.solution?.theme" class="wod-result__theme">{{ game.solution.theme }}</p>
-            <p class="wod-result__next">Un nouveau mot vous attend demain.</p>
+            <p class="wod-result__next">Un nouveau mot vous attend {{ nextWordLabel }}.</p>
           </section>
 
           <div v-else class="wod-keyboard" role="group" aria-label="Clavier du jeu">
@@ -123,8 +127,8 @@
             <dl class="wod-stats">
               <div><dt>Parties jouées</dt><dd>{{ stats.played }}</dd></div>
               <div><dt>Taux de réussite</dt><dd>{{ stats.win_rate }} %</dd></div>
-              <div><dt>Série en cours</dt><dd>{{ daysLabel(stats.current_streak) }}</dd></div>
-              <div><dt>Meilleure série</dt><dd>{{ daysLabel(stats.best_streak) }}</dd></div>
+              <div><dt>Série en cours</dt><dd>{{ weeksLabel(stats.current_streak) }}</dd></div>
+              <div><dt>Meilleure série</dt><dd>{{ weeksLabel(stats.best_streak) }}</dd></div>
             </dl>
           </section>
 
@@ -136,7 +140,7 @@
               <li><span class="wod-tile wod-tile--small is-present" aria-hidden="true"><span class="wod-tile__letter">B</span><i class="wod-tile__mark pi pi-arrows-h"></i></span>Dans le mot, mais ailleurs</li>
               <li><span class="wod-tile wod-tile--small is-absent" aria-hidden="true"><span class="wod-tile__letter">C</span><i class="wod-tile__mark pi pi-times"></i></span>Absente du mot</li>
             </ul>
-            <p class="wod-points">10 XP si vous trouvez le mot, 5 XP de plus en 3 essais ou moins. Les points comptent aussi pour votre maison.</p>
+            <p class="wod-points">Une partie par semaine : vous pouvez la commencer et la reprendre quand vous voulez jusqu’à dimanche soir. 30 XP si vous trouvez le mot, 15 XP de plus en 3 essais ou moins. Les points comptent aussi pour votre maison.</p>
           </section>
         </aside>
       </div>
@@ -152,7 +156,8 @@ import Navbar from '@/components/common/utils/Navbar.vue'
 import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
 import gamificationService from '@/service/gamificationServiceSupabase'
 import {
-  KEYBOARD_ROWS, MARKS, attemptsLabel, daysLabel, describeAttempt, letterStates, normalizeLetter,
+  KEYBOARD_ROWS, MARKS, attemptsLabel, describeAttempt, letterStates, nextWordLabel as formatNextWord,
+  normalizeLetter, weekRangeLabel, weeksLabel,
 } from '@/components/games/word-of-day/wordOfDay'
 
 const router = useRouter()
@@ -170,12 +175,10 @@ const stats = computed(() => ({
   played: 0, win_rate: 0, current_streak: 0, best_streak: 0, ...(game.value?.stats || {}),
 }))
 const keyboardMarks = computed(() => letterStates(game.value?.attempts))
-const playDateLabel = computed(() => {
-  const [year, month, day] = String(game.value?.play_date || '').split('-').map(Number)
-  if (!year) return 'jour'
-  return new Intl.DateTimeFormat('fr-CH', { day: 'numeric', month: 'long', timeZone: 'UTC' })
-    .format(new Date(Date.UTC(year, month - 1, day)))
-})
+// Lundi de la semaine en cours, fourni par le serveur (heure de Zurich).
+const weekStart = computed(() => game.value?.week_start || game.value?.play_date || '')
+const weekLabel = computed(() => weekRangeLabel(weekStart.value) || 'en cours')
+const nextWordLabel = computed(() => formatNextWord(weekStart.value) || 'lundi prochain')
 const remainingLabel = computed(() => {
   if (!game.value) return ''
   if (finished.value) return 'partie terminée'
@@ -254,7 +257,7 @@ const load = async () => {
     else if (game.value.attempts.length > 0) say(`Partie reprise : ${attemptsLabel(game.value.attempts.length)} déjà joué${game.value.attempts.length > 1 ? 's' : ''}.`)
     else say('Saisissez un mot, puis validez.')
   } catch (error) {
-    console.error('Mot du jour : chargement impossible', error)
+    console.error('Mot de la semaine : chargement impossible', error)
     phase.value = 'error'
   }
 }
@@ -287,13 +290,13 @@ const submit = async () => {
     draft.value = ''
     if (phase.value === 'ready') say(outcomeMessage(game.value))
   } catch (error) {
-    console.error('Mot du jour : essai refusé', error)
-    // Le serveur fait foi : on relit la partie (mot changé à minuit, partie déjà terminée…).
+    console.error('Mot de la semaine : essai refusé', error)
+    // Le serveur fait foi : on relit la partie (mot changé lundi à minuit, partie déjà terminée…).
     try {
       applyState(await gamificationService.getMyWordOfDay())
       if (phase.value === 'ready' && game.value.play_date !== previousDate) {
         draft.value = ''
-        say('Un nouveau mot du jour est disponible. La partie recommence.', true)
+        say('Un nouveau mot de la semaine est disponible. La partie recommence.', true)
       } else if (phase.value === 'ready' && finished.value) {
         draft.value = ''
         say(outcomeMessage(game.value))
@@ -302,7 +305,7 @@ const submit = async () => {
         shake()
       }
     } catch (reloadError) {
-      console.error('Mot du jour : relecture impossible', reloadError)
+      console.error('Mot de la semaine : relecture impossible', reloadError)
       say('Cet essai n’a pas pu être validé. Vérifiez votre connexion, puis réessayez.', true)
     }
   } finally {
@@ -380,6 +383,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .wod-game__head { width: 100%; }
 .wod-game__head h2 { margin-bottom: .2rem; }
 .wod-game__head p { margin: 0; font-variant-numeric: tabular-nums; }
+.wod-game__head .wod-game__validity { display: flex; gap: .45rem; align-items: baseline; margin-top: .45rem; color: var(--text-color-secondary, #b8c7d9); line-height: 1.45; }
 
 .wod-board {
   display: grid;

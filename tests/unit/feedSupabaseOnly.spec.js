@@ -24,7 +24,8 @@ describe('FeedView Supabase', () => {
     expect(source).toContain("table: 'post_media'")
     expect(source).toContain('ref="postsContainerRef"')
     expect(source).toContain("postsContainerRef.value?.addEventListener('scroll', handleScroll)")
-    expect(source).toContain('scroll-target="window"')
+    // Sur téléphone, c'est le bloc principal de la page qui défile, pas la fenêtre.
+    expect(source).toContain('scroll-target="page"')
   })
 
   it('publie depuis le bureau et le mobile par le même service, qui appelle la gamification POST', () => {

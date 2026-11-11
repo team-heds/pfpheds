@@ -21,6 +21,7 @@
           <p class="hero-lead">{{ siteContent.heroLead }}</p>
           <div class="hero-actions">
             <a class="button button--primary" href="#about" @click.prevent="scrollTo('about')">Découvrir <i class="pi pi-arrow-down" /></a>
+            <a class="button button--ghost" href="#partnership-request" @click.prevent="scrollTo('partnership-request')">Organiser un événement</a>
           </div>
         </div>
         <figure class="hero-photo">
@@ -50,7 +51,7 @@
         </div>
         <div class="team-grid">
           <article v-for="member in committee" :key="member.name" class="member-card">
-            <figure><img :src="getImagePath(member.image)" :alt="`Portrait de ${member.name}`" loading="lazy" :style="{ objectPosition: member.position || 'center' }" /></figure>
+            <figure><img :src="getImagePath(member.image)" :alt="`Portrait de ${member.name}`" loading="lazy" decoding="async" :style="{ objectPosition: member.position || 'center' }" /></figure>
             <div class="member-copy"><p>{{ member.role }}</p><h3>{{ member.name }}</h3><details><summary>En savoir plus <i class="pi pi-plus" /></summary><p>{{ member.bio }}</p></details></div>
           </article>
         </div>
@@ -73,11 +74,13 @@
           <div class="partnership-cta">
             <div><p class="eyebrow eyebrow--light">Intéressé par un Partenariat ?</p><h3>{{ siteContent.partnershipCtaTitle }}</h3></div>
             <div class="partnership-actions">
-              <a class="button button--outline-light" :href="`mailto:${siteContent.email}?subject=Demande%20du%20contrat%20de%20partenariat`" title="Demander le document par e-mail"><i class="pi pi-file-pdf" /> {{ siteContent.contractLabel }}</a>
-              <a class="button button--turquoise" href="mailto:alpinphysio@hevs.ch?subject=Proposition%20de%20collaboration">Nous contacter directement <i class="pi pi-arrow-up-right" /></a>
+              <a v-if="siteContent.contractUrl" class="button button--outline-light" :href="siteContent.contractUrl" target="_blank" rel="noopener noreferrer"><i class="pi pi-download" aria-hidden="true" /> {{ siteContent.contractLabel }} <span class="visually-hidden">(PDF, nouvel onglet)</span></a>
+              <a v-else class="button button--outline-light" :href="`mailto:${siteContent.email}?subject=Demande%20du%20contrat%20de%20partenariat`"><i class="pi pi-envelope" aria-hidden="true" /> Demander le contrat par e-mail</a>
+              <a class="button button--turquoise" href="#partnership-request" @click.prevent="scrollTo('partnership-request')">Faire une demande <i class="pi pi-arrow-down" aria-hidden="true" /></a>
             </div>
           </div>
         </div>
+        <AlpinPartnershipForm :email="siteContent.email" />
       </section>
 
       <section id="calendar" class="calendar section" aria-labelledby="calendar-title">
@@ -88,7 +91,7 @@
 
       <section id="gallery" class="gallery section" aria-labelledby="gallery-title">
         <div class="section-heading"><div><p class="eyebrow">{{ siteContent.galleryEyebrow }}</p><h2 id="gallery-title">{{ siteContent.galleryTitle }}</h2></div><div class="gallery-count">{{ currentSlide + 1 }} / {{ galleryPhotos.length }}</div></div>
-        <figure class="gallery-main"><img :src="activePhoto.src" :alt="activePhoto.alt" /><figcaption><span>{{ activePhoto.date }} · {{ activePhoto.location }}</span><h3>{{ activePhoto.title }}</h3><p>{{ activePhoto.description }}</p></figcaption><div class="gallery-controls"><button type="button" aria-label="Photo précédente" @click="previousSlide"><i class="pi pi-arrow-left" /></button><button type="button" aria-label="Photo suivante" @click="nextSlide"><i class="pi pi-arrow-right" /></button></div></figure>
+        <figure class="gallery-main"><img :src="activePhoto.src" :alt="activePhoto.alt" loading="lazy" decoding="async" /><figcaption><span>{{ activePhoto.date }} · {{ activePhoto.location }}</span><h3>{{ activePhoto.title }}</h3><p>{{ activePhoto.description }}</p></figcaption><div class="gallery-controls"><button type="button" aria-label="Photo précédente" @click="previousSlide"><i class="pi pi-arrow-left" /></button><button type="button" aria-label="Photo suivante" @click="nextSlide"><i class="pi pi-arrow-right" /></button></div></figure>
         <div class="gallery-strip" aria-label="Choisir une photo"><button v-for="(photo, index) in galleryPhotos" :key="photo.src" type="button" :class="{ active: index === currentSlide }" :aria-label="`Afficher ${photo.title}`" @click="currentSlide = index"><img :src="photo.src" alt="" loading="lazy" /><span>{{ photo.title }}</span></button></div>
       </section>
 
@@ -116,8 +119,10 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { getSiteContent, listAlpinEvents } from '@/service/alpinPhysioAdminService'
 import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
+import { resolveAlpinImage } from '@/utils/alpinPhysioMedia'
+import AlpinPartnershipForm from '@/components/alpinphysio/AlpinPartnershipForm.vue'
 
-const getImagePath = (path) => `/assets/images/heds/AlpinPhysioPhoto/${path}`
+const getImagePath = resolveAlpinImage
 const logoPath = getImagePath('JPhotos/Divers/logoalpin/ALPINPHYSIO-logo-bleu-impression_transparent.jpg')
 const logoMarkPath = getImagePath('JPhotos/Divers/logoalpin/alpinphysio-mark.jpg')
 const navigation = [{ id: 'about', label: 'Notre Histoire' }, { id: 'team', label: 'Notre Comité' }, { id: 'services', label: 'Nos Prestations' }, { id: 'calendar', label: 'Notre Calendrier' }, { id: 'gallery', label: 'Nos Moments' }]
@@ -1026,5 +1031,25 @@ onUnmounted(() => scrollRoot?.removeEventListener?.('scroll', updateNavigation))
   .hero-photo {
     animation: none;
   }
+}
+
+.hero-actions .button--ghost {
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.hero-actions .button--ghost:hover {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--aqua) 14%, transparent);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 </style>

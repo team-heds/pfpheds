@@ -416,6 +416,10 @@ const fetchUserProfile = async (userId) => {
   .main-content {
     padding: 0 0.2rem;
   }
+  /* La marge latérale vient déjà de la page : ne pas la doubler sur téléphone. */
+  .profileinfo-content {
+    padding-inline: 0;
+  }
 
   .profile-hero {
     flex-direction: column;

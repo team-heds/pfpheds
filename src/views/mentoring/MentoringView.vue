@@ -155,6 +155,11 @@
             <span v-if="toConfirmCount" class="tab-badge" :aria-label="`${toConfirmCount} à confirmer`">{{ toConfirmCount }}</span>
           </template>
 
+          <PushOptIn
+            class="mentoring__push"
+            purpose="quand un de vos créneaux est réservé, annulé ou confirmé"
+          />
+
           <div v-if="loading" class="state" role="status">
             <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
             <p>Chargement de vos créneaux…</p>
@@ -489,6 +494,7 @@ import TabPanel from 'primevue/tabpanel'
 import TabView from 'primevue/tabview'
 import Textarea from 'primevue/textarea'
 import Navbar from '@/components/common/utils/Navbar.vue'
+import PushOptIn from '@/components/push/PushOptIn.vue'
 import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useRoleStore } from '@/stores/role'
@@ -883,6 +889,8 @@ onMounted(loadAll)
   border-radius: 999px;
 }
 
+.mentoring__push { margin-bottom: 1.5rem; }
+
 /* Filtres */
 .filters {
   display: grid;
@@ -1257,5 +1265,16 @@ onMounted(loadAll)
 
 @media (prefers-reduced-motion: reduce) {
   .tag-toggle { transition: none; }
+}
+
+/* Téléphone : un seul défilement, celui de la page (.content dans App.vue).
+   Un second bloc défilant de la hauteur de l'écran obligeait à faire défiler
+   deux zones imbriquées. */
+@media (max-width: 768px) {
+  .page-wrapper {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
 }
 </style>

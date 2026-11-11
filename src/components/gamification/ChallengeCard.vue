@@ -3,7 +3,7 @@
     class="challenge-card" 
     role="button"
     tabindex="0"
-    :aria-label="`Voir le défi ${challenge.name}`"
+    :aria-label="challenge.actionUrl && !challenge.completed ? `Faire le défi ${challenge.name}` : `Voir le défi ${challenge.name}`"
     :class="[
       `difficulty-${challenge.difficulty.toLowerCase()}`,
       { 'completed': challenge.completed, 'near-completion': isNearCompletion }
@@ -103,6 +103,12 @@
         </div>
       </div>
       
+      <!-- Lien d'action : la carte mène à l'endroit où réaliser le défi -->
+      <div v-if="challenge.actionUrl && !challenge.completed" class="challenge-action">
+        <span>Faire ce défi</span>
+        <i class="pi pi-arrow-right" aria-hidden="true"></i>
+      </div>
+
       <!-- Time Remaining -->
       <div class="time-remaining" v-if="!challenge.completed">
         <i class="pi pi-clock"></i>
@@ -534,6 +540,20 @@ const formatCompletionDate = (dateString) => {
 }
 
 /* Time and Completion Info */
+.challenge-action {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  /* Couleur du texte, pas celle de la maison : lisible quelle que soit la maison. */
+  color: var(--challenge-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.challenge-action i {
+  font-size: 0.75rem;
+}
+
 .time-remaining,
 .completion-date {
   display: flex;

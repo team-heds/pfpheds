@@ -120,11 +120,63 @@ h1 {
   font-weight: 700;
 }
 
+/* Téléphone : une barre de titre d'application (retour rond + titre) au lieu
+   d'une grande carte qui occupait un tiers de l'écran. */
 @media (max-width: 640px) {
-  .game-header { align-items: stretch; flex-direction: column; padding: 1.1rem; }
-  .game-header__identity { align-items: flex-start; }
-  .game-header__icon { flex-basis: 2.75rem; width: 2.75rem; height: 2.75rem; }
-  .game-header__actions, :deep(.game-header__back) { width: 100%; }
-  :deep(.game-header__back) { justify-content: center; }
+  .game-header {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    /* !important : certaines pages redéfinissent le fond et les marges de la carte. */
+    padding: 0 !important;
+    color: var(--text-color);
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .game-header:not(:has(.game-header__back)) { grid-template-columns: minmax(0, 1fr); }
+  .game-header:not(:has(.game-header__back)) .game-header__identity { grid-column: 1; }
+  .game-header__identity { grid-column: 2; grid-row: 1; align-items: center; }
+  .game-header__icon,
+  .game-header__eyebrow { display: none; }
+  h1 { color: var(--text-color); font-size: 1.35rem; line-height: 1.2; }
+  .game-header__description {
+    display: -webkit-box;
+    margin-top: 0.2rem;
+    overflow: hidden;
+    color: var(--text-color-secondary);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  /* Les actions deviennent des éléments de la grille : le retour à gauche du
+     titre, les autres boutons sur une ligne entière en dessous. */
+  .game-header__actions { display: contents; }
+  .game-header__actions > :deep(*) { grid-column: 1 / -1; width: 100%; justify-content: center; }
+  .game-header__actions > :deep(.game-header__back) {
+    grid-column: 1;
+    grid-row: 1;
+    width: 2.75rem;
+    height: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+    color: var(--text-color);
+    border-color: var(--surface-border);
+    border-radius: 50%;
+  }
+  :deep(.game-header__back .p-button-icon) { margin: 0; }
+  :deep(.game-header__back .p-button-label) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 </style>
