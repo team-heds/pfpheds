@@ -20,6 +20,7 @@ export const defaultAlpinPhysioSiteContent = {
   partnershipTitle: `Comment Fonctionne un Partenariat avec Alp'in Physio ?`,
   partnershipCtaTitle: 'Contactez-nous dès maintenant pour organiser votre événement avec nos étudiants masseurs !',
   contractLabel: 'Contrat de partenariat (V_juin_2025)',
+  contractUrl: '',
   calendarEyebrow: 'Notre calendrier',
   calendarTitle: 'Rejoignez-nous lors de nos prochains événements',
   galleryEyebrow: 'Nos Moments',

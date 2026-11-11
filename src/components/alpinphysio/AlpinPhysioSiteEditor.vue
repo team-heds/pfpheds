@@ -59,6 +59,7 @@
           <FieldInput v-model="draft.partnershipTitle" label="Titre partenariat" />
           <FieldInput v-model="draft.partnershipCtaTitle" label="Appel à l’action" type="textarea" wide />
           <FieldInput v-model="draft.contractLabel" label="Libellé du contrat" wide />
+          <AlpinDocumentField v-model="draft.contractUrl" label="Contrat de partenariat (PDF)" hint="PDF de 5 Mo au maximum. Sans document, le bouton de la page publique propose de le demander par e-mail." wide />
         </div>
         <h3>Prestations</h3>
         <article v-for="(activity, index) in draft.activities" :key="`activity-${index}`" class="repeat-card">
@@ -134,6 +135,7 @@ import { reactive, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import FieldInput from '@/components/alpinphysio/FieldInput.vue'
 import AlpinImageField from '@/components/alpinphysio/AlpinImageField.vue'
+import AlpinDocumentField from '@/components/alpinphysio/AlpinDocumentField.vue'
 import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
 
 const props = defineProps({ content: { type: Object, required: true }, saving: Boolean })

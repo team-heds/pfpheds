@@ -21,6 +21,7 @@
           <p class="hero-lead">{{ siteContent.heroLead }}</p>
           <div class="hero-actions">
             <a class="button button--primary" href="#about" @click.prevent="scrollTo('about')">Découvrir <i class="pi pi-arrow-down" /></a>
+            <a class="button button--ghost" href="#partnership-request" @click.prevent="scrollTo('partnership-request')">Organiser un événement</a>
           </div>
         </div>
         <figure class="hero-photo">
@@ -73,11 +74,13 @@
           <div class="partnership-cta">
             <div><p class="eyebrow eyebrow--light">Intéressé par un Partenariat ?</p><h3>{{ siteContent.partnershipCtaTitle }}</h3></div>
             <div class="partnership-actions">
-              <a class="button button--outline-light" :href="`mailto:${siteContent.email}?subject=Demande%20du%20contrat%20de%20partenariat`" title="Demander le document par e-mail"><i class="pi pi-file-pdf" /> {{ siteContent.contractLabel }}</a>
-              <a class="button button--turquoise" href="mailto:alpinphysio@hevs.ch?subject=Proposition%20de%20collaboration">Nous contacter directement <i class="pi pi-arrow-up-right" /></a>
+              <a v-if="siteContent.contractUrl" class="button button--outline-light" :href="siteContent.contractUrl" target="_blank" rel="noopener noreferrer"><i class="pi pi-download" aria-hidden="true" /> {{ siteContent.contractLabel }} <span class="visually-hidden">(PDF, nouvel onglet)</span></a>
+              <a v-else class="button button--outline-light" :href="`mailto:${siteContent.email}?subject=Demande%20du%20contrat%20de%20partenariat`"><i class="pi pi-envelope" aria-hidden="true" /> Demander le contrat par e-mail</a>
+              <a class="button button--turquoise" href="#partnership-request" @click.prevent="scrollTo('partnership-request')">Faire une demande <i class="pi pi-arrow-down" aria-hidden="true" /></a>
             </div>
           </div>
         </div>
+        <AlpinPartnershipForm :email="siteContent.email" />
       </section>
 
       <section id="calendar" class="calendar section" aria-labelledby="calendar-title">
@@ -117,6 +120,7 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { getSiteContent, listAlpinEvents } from '@/service/alpinPhysioAdminService'
 import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
 import { resolveAlpinImage } from '@/utils/alpinPhysioMedia'
+import AlpinPartnershipForm from '@/components/alpinphysio/AlpinPartnershipForm.vue'
 
 const getImagePath = resolveAlpinImage
 const logoPath = getImagePath('JPhotos/Divers/logoalpin/ALPINPHYSIO-logo-bleu-impression_transparent.jpg')
@@ -1027,5 +1031,25 @@ onUnmounted(() => scrollRoot?.removeEventListener?.('scroll', updateNavigation))
   .hero-photo {
     animation: none;
   }
+}
+
+.hero-actions .button--ghost {
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.hero-actions .button--ghost:hover {
+  border-color: var(--ink);
+  background: color-mix(in srgb, var(--aqua) 14%, transparent);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 </style>

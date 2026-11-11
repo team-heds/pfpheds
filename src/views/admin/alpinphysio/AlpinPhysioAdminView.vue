@@ -31,6 +31,7 @@
           <article><span>Réponses « présent »</span><strong>{{ metrics.going }}</strong><i class="pi pi-users" /></article>
           <article><span>Réponses en attente</span><strong>{{ metrics.maybe }}</strong><i class="pi pi-clock" /></article>
           <article><span>Matériel manquant</span><strong>{{ metrics.missing }}</strong><i class="pi pi-box" /></article>
+          <RouterLink v-if="newRequests" class="metric-link" to="/admin/alpinphysio/demandes"><span>Nouvelles demandes de partenariat</span><strong>{{ newRequests }}</strong><i class="pi pi-inbox" /></RouterLink>
         </section>
         <section class="panel">
           <div class="panel-heading"><div><p class="eyebrow">Prochaines dates</p><h2>Événements à préparer</h2></div><RouterLink to="/admin/alpinphysio/events">Gérer les événements</RouterLink></div>
@@ -138,6 +139,10 @@
         <AlpinPhysioSiteEditor :content="siteForm" :saving="saving" @save="saveContent" />
       </template>
 
+      <template v-else-if="section === 'requests'">
+        <AlpinPartnershipRequests />
+      </template>
+
       <template v-else-if="section === 'team'">
         <section class="split-layout team-layout">
           <form class="panel editor" @submit.prevent="addTeamMember">
@@ -198,8 +203,10 @@ import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import OperationalEventPicker from '@/components/alpinphysio/OperationalEventPicker.vue'
 import AlpinPhysioSiteEditor from '@/components/alpinphysio/AlpinPhysioSiteEditor.vue'
 import AlpinImageField from '@/components/alpinphysio/AlpinImageField.vue'
+import AlpinPartnershipRequests from '@/components/alpinphysio/AlpinPartnershipRequests.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
+import { countNewPartnershipRequests } from '@/service/alpinPhysioPartnershipService'
 import { describePlaces, toApiDate as apiDate, toLocalInputValue as localInput } from '@/utils/alpinPhysioEvents'
 import {
   addAlpinTeamMember, countMissingMaterials, deactivateAlpinTeamMember, deleteAlpinEvent, deleteMaterial,
@@ -216,6 +223,7 @@ const sections = [
   { id: 'events', label: 'Événements', icon: 'pi pi-calendar', to: '/admin/alpinphysio/events' },
   { id: 'attendance', label: 'Présences', icon: 'pi pi-users', to: '/admin/alpinphysio/presences' },
   { id: 'materials', label: 'Matériel', icon: 'pi pi-box', to: '/admin/alpinphysio/materiel' },
+  { id: 'requests', label: 'Demandes', icon: 'pi pi-inbox', to: '/admin/alpinphysio/demandes' },
   { id: 'site', label: 'Site vitrine', icon: 'pi pi-desktop', to: '/admin/alpinphysio/site' },
   { id: 'team', label: 'Équipe & accès', icon: 'pi pi-id-card', to: '/admin/alpinphysio/equipe' },
 ]
@@ -230,6 +238,7 @@ const team = ref([])
 const teamEmail = ref('')
 const selectedEventId = ref(null)
 const missingMaterials = ref(0)
+const newRequests = ref(0)
 const notice = reactive({ text: '', kind: 'success' })
 const defaultEvent = () => ({ id: null, title: '', description: '', lieu: '', meeting_point: '', contact_email: 'alpinphysio@hevs.ch', start_date: '', end_date: '', registration_deadline: '', capacity: null, image_url: '', status: 'draft', show_on_public_site: true, show_in_feed: true })
 const eventForm = reactive(defaultEvent())
@@ -269,6 +278,7 @@ async function reload() {
     if (!selectedEventId.value && events.value.length) selectedEventId.value = upcomingEvents.value[0]?.id || events.value[0].id
     if (['dashboard', 'attendance', 'materials'].includes(section.value)) await loadOperations()
     if (section.value === 'dashboard') missingMaterials.value = await countMissingMaterials(upcomingEvents.value.map((event) => event.id))
+    if (section.value === 'dashboard') newRequests.value = await countNewPartnershipRequests()
     if (section.value === 'site') {
       const { content } = await getSiteContent()
       Object.assign(siteForm, cloneAlpinPhysioSiteContent(content || {}))
@@ -378,4 +388,5 @@ onMounted(reload)
 .notice--success{color:#c8f7d9;background:#123d31}.notice--error{color:#ffc7c7;background:#3a1c27}.loading-state{color:#d4deea;background:var(--heds-navy-soft)}
 .panel-heading>a,.empty-state a{color:var(--heds-yellow)}th{color:#c4cfdd}th,td{border-color:var(--line)}
 .places-line i{font-size:.7rem}.event-main small.places-line--full{color:#ff8f8f}.event-count--full strong{color:#ff8f8f}.field-help{color:var(--muted);font-size:.72rem;line-height:1.4}
+.metric-link{position:relative;grid-column:1/-1;display:flex;align-items:center;gap:1rem;min-height:64px;padding:1rem 1.25rem;color:#0b213f;background:var(--heds-yellow);border-radius:1rem;text-decoration:none}.metric-grid .metric-link span{color:#0b213f;font-size:.86rem;font-weight:700}.metric-grid .metric-link strong{margin:0 0 0 auto;font-size:1.6rem}.metric-link i{font-size:1.2rem}
 </style>
