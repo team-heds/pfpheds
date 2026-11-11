@@ -13,8 +13,11 @@ vi.mock('@/components/ui/buttons/SwitchColor.vue', () => ({ default: { template:
 vi.mock('@/components/common/utils/PwaInstallPrompt.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/common/utils/VersionningComponent.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/gamification/notifications/GamificationNotification.vue', () => ({ default: { template: '<div />' } }))
+vi.mock('@/mobile/home/HomeTab.vue', () => ({ default: { props: ['active'], template: '<section class="mobile-home-stub" />' } }))
+vi.mock('@/mobile/home/mobileNotificationsStore', () => ({ useMobileNotificationsStore: () => ({ hasUnread: false }) }))
 vi.mock('@/service/questExpirationService', () => ({ default: { startPeriodicCheck: vi.fn(), stopPeriodicCheck: vi.fn() } }))
 
+import { createPinia } from 'pinia'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import App from '@/App.vue'
 
@@ -132,22 +135,49 @@ describe('responsive navigation contract', () => {
     expect(stores.user.fetchProfile).not.toHaveBeenCalled()
   })
 
-  it('renders one global mobile navigation and derives its profile from the current auth identity', async () => {
-    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
-    wrapper = mount(App, { global: { plugins: [router] } })
+  const mountApp = async () => {
+    wrapper = mount(App, { global: { plugins: [router, createPinia()], stubs: { Transition: true, TransitionGroup: true } } })
     await flushPromises()
-    expect(wrapper.findAll('nav.mobile-bottom-nav')).toHaveLength(1)
-    expect(wrapper.findAll('nav.mobile-bottom-nav a')).toHaveLength(5)
-    expect(wrapper.get('nav.mobile-bottom-nav a[href="/profile/student-test"]').exists()).toBe(true)
+    return wrapper
+  }
+
+  it('renders the mobile app shell on a phone, with one tab bar tied to the current auth identity', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+    await mountApp()
+    expect(wrapper.findAll('nav.m-tabs')).toHaveLength(1)
+    expect(wrapper.findAll('nav.m-tabs button').map(button => button.text())).toEqual(['Accueil', 'Institutions', 'Recherche', 'Carte', 'Profil'])
+    expect(wrapper.find('.m-shell .m-page main h1').text()).toBe('Page de test')
+    expect(wrapper.find('.navbar-shell').exists()).toBe(false)
+
+    await wrapper.findAll('nav.m-tabs button')[4].trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/profile/student-test')
 
     stores.auth.user = { id: 'another-test-user' }
     await nextTick()
-    expect(wrapper.find('nav.mobile-bottom-nav a[href="/profile/student-test"]').exists()).toBe(false)
-    expect(wrapper.get('nav.mobile-bottom-nav a[href="/profile/another-test-user"]').exists()).toBe(true)
+    await wrapper.findAll('nav.m-tabs button')[0].trigger('click')
+    await flushPromises()
+    await wrapper.findAll('nav.m-tabs button')[4].trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/profile/another-test-user')
 
     await router.push('/mobile-outils')
-    await nextTick()
-    expect(wrapper.findAll('nav.mobile-bottom-nav')).toHaveLength(1)
-    expect(wrapper.get('nav.mobile-bottom-nav a[href="/mobile-outils"]').attributes('aria-current')).toBe('page')
+    await flushPromises()
+    expect(wrapper.findAll('nav.m-tabs')).toHaveLength(1)
+    expect(wrapper.get('nav.m-tabs [aria-current="page"]').text()).toBe('Recherche')
+  })
+
+  it('keeps the regular pages on a computer and on public pages, without the mobile shell', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+    await mountApp()
+    expect(wrapper.find('.m-shell').exists()).toBe(false)
+    expect(wrapper.get('main h1').text()).toBe('Page de test')
+    wrapper.unmount()
+
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+    stores.auth.user = null
+    await mountApp()
+    expect(wrapper.find('.m-shell').exists()).toBe(false)
+    expect(wrapper.get('main h1').text()).toBe('Page de test')
   })
 })

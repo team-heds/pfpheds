@@ -40,6 +40,7 @@ const sidebars = {
         'frontend/route-to-data-matrix',
         'frontend/ui',
         'frontend/pwa',
+        'frontend/mobile-app',
       ],
     },
     {
