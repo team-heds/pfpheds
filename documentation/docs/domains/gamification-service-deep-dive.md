@@ -44,6 +44,16 @@ Pour un utilisateur, le service expose un objet enrichi :
 - mapping maison par `house_id` ;
 - fallback propre si aucune donnée n'existe.
 
+## Série de connexions
+
+Migration `20261111100000_gamification_login_streak.sql`.
+
+- La série (jours de connexion consécutifs, fuseau Europe/Zurich) est calculée par le serveur à partir des lignes `LOGIN` de `xp_history` ; un jour manqué la remet à zéro.
+- Paliers : 7 jours = +20 XP, 30 jours = +100 XP, 100 jours = +300 XP, avec un badge par palier (« Flamme de 7 / 30 / 100 jours »). Un palier est payé une fois par année académique (1er septembre – 31 août) ; le suivi est dans `gamification_private.login_streak_milestones`.
+- Le bonus est attribué par un déclencheur différé sur `xp_history` (action `LOGIN_STREAK`, via `gamification_award_xp_internal`) : il compte pour le joueur et pour sa maison. Réservé aux joueurs (public de la gamification, hors maison `gamemaster`).
+- Lecture côté client : RPC `get_my_login_streak()` → `gamificationServiceSupabase.getMyLoginStreak()`, affichée dans « Ma progression » ; mise en forme dans `src/utils/loginStreak.js`.
+- Test SQL : `supabase/tests/gamification_login_streak_isolation.sql` (transaction annulée).
+
 ## Domaine plus large
 
 Le service ne couvre pas tout le domaine engagement.

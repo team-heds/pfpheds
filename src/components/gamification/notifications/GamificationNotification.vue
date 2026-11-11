@@ -80,6 +80,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import Button from 'primevue/button'
 import { supabase } from '@/supabase'
+import { loginStreakNotificationFromLog } from '@/utils/loginStreak'
 
 const props = defineProps({
   userId: {
@@ -133,6 +134,7 @@ const getNotificationIcon = (type) => {
     challenge: 'pi pi-trophy',
     house: 'pi pi-home',
     achievement: 'pi pi-crown',
+    streak: 'pi pi-bolt',
     default: 'pi pi-info-circle'
   }
   return icons[type] || icons.default
@@ -280,6 +282,19 @@ const processActivityLog = (log) => {
       notificationData.type = 'challenge'
       break
 
+    case 'LOGIN_STREAK': {
+      const streakNotification = loginStreakNotificationFromLog(log)
+      if (streakNotification) {
+        Object.assign(notificationData, streakNotification)
+        break
+      }
+      notificationData.title = 'Série de connexions'
+      notificationData.message = log.description || 'Palier de série atteint'
+      notificationData.type = 'streak'
+      notificationData.xpGain = Number(log.amount)
+      break
+    }
+
     default:
       notificationData.title = 'Points d\'expérience gagnés!'
       notificationData.message = log.description || 'Progression enregistrée'
@@ -356,7 +371,7 @@ watch(() => props.userId, (userId, previousUserId) => {
   subscribeToActivity()
 }, { flush: 'sync' })
 
-watch(() => props.realtimeEnabled, (enabled) => {
+watch(() => props.realtimeEnabled, () => {
   subscribeToActivity()
 })
 
@@ -433,6 +448,10 @@ onUnmounted(() => {
 
 .notification-house {
   --notification-accent: #fcb69f;
+}
+
+.notification-streak {
+  --notification-accent: #f59e0b;
 }
 
 .notification-icon {
