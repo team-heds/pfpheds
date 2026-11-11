@@ -21,18 +21,3 @@ export function toApiDate(value) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
-
-export function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-}
-
-/** Contenu de la publication du feed associée à un événement : le texte saisi n'est jamais interprété comme du HTML. */
-export function buildFeedPostContent(event, formattedDate) {
-  const location = event.lieu ? ` · ${escapeHtml(event.lieu)}` : ''
-  return `<p><strong>${escapeHtml(event.title)}</strong></p><p>${escapeHtml(formattedDate)}${location}</p><p>${escapeHtml(event.description)}</p><p><a href="/events">Répondre à l’événement</a></p>`
-}
