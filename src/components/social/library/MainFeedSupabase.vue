@@ -16,7 +16,7 @@
       <InfinityScroll
         v-else
         :loading="paginationLoading"
-        scroll-target="window"
+        scroll-target="page"
         @load-more="loadMorePosts"
       >
         <PostItem
@@ -26,6 +26,15 @@
           :currentUser="localCurrentUser"
         />
       </InfinityScroll>
+      <button
+        v-if="!communityId"
+        type="button"
+        class="feed-create-fab"
+        aria-label="Créer une publication"
+        @click="handleCreateClick"
+      >
+        <i class="pi pi-plus" aria-hidden="true"></i>
+      </button>
     </div>
     <template v-else>
       <FilterComponent
@@ -89,6 +98,7 @@ import {
 } from '@/stores/socialFeedStore'
 import { createFeedRealtimeController } from '@/service/feedRealtimeController'
 import { readFeedScroll, restoreFeedScroll } from '@/service/feedScrollService'
+import { findPageScroller, getScrollMetrics } from '@/utils/pageScroller'
 
 export default {
   name: 'MainFeedSupabase',
@@ -333,7 +343,8 @@ export default {
     const saveCurrentScroll = () => {
       const scrollTop = readFeedScroll({
         isMobile: isMobile.value,
-        container: postsContainerRef.value
+        container: postsContainerRef.value,
+        pageScroller: getPageScroller()
       })
       feedStore.saveScroll(activeScope.value, scrollTop)
     }
@@ -344,6 +355,7 @@ export default {
       restoreFeedScroll({
         isMobile: isMobile.value,
         container: postsContainerRef.value,
+        pageScroller: getPageScroller(),
         scrollTop
       })
       lastScrollTop.value = scrollTop
@@ -394,13 +406,18 @@ export default {
       showEditAndStories.value = scrollTop === 0
     }
 
+    // Sur téléphone, le fil défile dans le bloc principal de la page, pas dans la fenêtre.
+    let pageScroller = null
+    const getPageScroller = () => {
+      if (!pageScroller && mainFeedRef.value) pageScroller = findPageScroller(mainFeedRef.value)
+      return pageScroller
+    }
+    const listenToPageScroll = () => getPageScroller()?.addEventListener('scroll', handleWindowScroll, { passive: true })
+    const stopListeningToPageScroll = () => pageScroller?.removeEventListener('scroll', handleWindowScroll)
+
     const handleWindowScroll = () => {
-      const currentScroll = window.scrollY
-      if (currentScroll > lastScrollTop.value + 10) {
-        showHeaderIcons.value = false
-      } else if (currentScroll < lastScrollTop.value - 10) {
-        showHeaderIcons.value = true
-      }
+      // L'en-tête défile avec la page : le masquer en cours de route faisait sauter le fil.
+      const currentScroll = getScrollMetrics(getPageScroller()).scrollTop
       lastScrollTop.value = currentScroll
       feedStore.saveScroll(activeScope.value, currentScroll)
     }
@@ -408,21 +425,23 @@ export default {
     watch(isMobile, async (nextMobile, previousMobile) => {
       const scrollTop = readFeedScroll({
         isMobile: previousMobile,
-        container: postsContainerRef.value
+        container: postsContainerRef.value,
+        pageScroller: getPageScroller()
       })
       feedStore.saveScroll(activeScope.value, scrollTop)
-      window.removeEventListener('scroll', handleWindowScroll)
+      stopListeningToPageScroll()
       postsContainerRef.value?.removeEventListener('scroll', handleScroll)
 
       await nextTick()
       if (nextMobile) {
-        window.addEventListener('scroll', handleWindowScroll)
+        listenToPageScroll()
       } else {
         postsContainerRef.value?.addEventListener('scroll', handleScroll)
       }
       restoreFeedScroll({
         isMobile: nextMobile,
         container: postsContainerRef.value,
+        pageScroller: getPageScroller(),
         scrollTop
       })
       lastScrollTop.value = scrollTop
@@ -440,7 +459,7 @@ export default {
         await reloadPosts()
         await restoreCurrentScroll()
       }
-      if (isMobile.value) window.addEventListener('scroll', handleWindowScroll)
+      if (isMobile.value) listenToPageScroll()
       window.addEventListener('resize', handleResize)
       if (!isMobile.value) postsContainerRef.value?.addEventListener('scroll', handleScroll)
 
@@ -478,7 +497,7 @@ export default {
 
     onUnmounted(() => {
       saveCurrentScroll()
-      window.removeEventListener('scroll', handleWindowScroll)
+      stopListeningToPageScroll()
       window.removeEventListener('resize', handleResize)
       postsContainerRef.value?.removeEventListener('scroll', handleScroll)
       if (postsChannel) {
@@ -557,6 +576,37 @@ export default {
 
 .feed-stories {
   margin-bottom: 0.5rem;
+}
+/* Téléphone : bouton de publication toujours à portée du pouce, au-dessus de la barre du bas. */
+.feed-create-fab {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+  z-index: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: var(--primary-color-text, #071426);
+  box-shadow: 0 .5rem 1.25rem rgba(2, 12, 27, .45);
+  font-size: 1.25rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms ease;
+}
+.feed-create-fab:active {
+  transform: scale(0.94);
+}
+.feed-create-fab:focus-visible {
+  outline: 3px solid var(--text-color);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feed-create-fab { transition: none; }
 }
 .quick-post-bar {
   display: flex;

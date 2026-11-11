@@ -23,16 +23,14 @@ export default {
 
 <style scoped>
 .header-bar-mobile {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
+  /* Défile avec la page : une barre collante transparente passait par-dessus les publications. */
+  position: relative;
   z-index: 20;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 4vw 0 4vw;
-  height: 90px;
+  padding: 0;
+  height: 56px;
   width: 100%;
   max-width: 100vw;
   box-sizing: border-box;

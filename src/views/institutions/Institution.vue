@@ -406,6 +406,39 @@ export default {
   .content-section { padding-inline: 1rem; }
   .title { font-size: 2.25rem; }
   .subtitle { font-size: 1rem; }
-  .grid-container { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .grid-container { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+
+  /* Téléphone : une liste compacte (vignette à gauche, texte à droite) au
+     lieu de grandes cartes d'un écran chacune. */
+  .institution-center-scrollable,
+  .content-section { padding: 0; }
+  .institution-center-scrollable { padding-bottom: 1rem; }
+  .page-header { margin-bottom: 1rem; text-align: left; }
+  .title { margin: 0.25rem 0; font-size: 1.75rem; }
+  .subtitle { margin: 0; font-size: 0.9rem; }
+  .mobile-filters { margin-bottom: 1rem; }
+  .institution-card {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    align-items: start;
+    column-gap: 0.75rem;
+    max-width: none;
+    height: auto;
+    padding: 0.75rem;
+  }
+  .institution-card :deep(.p-card-header),
+  .institution-card :deep(.p-card-body),
+  .institution-card :deep(.p-card-content) { display: contents; }
+  .card-header { grid-column: 1; grid-row: 1 / span 2; }
+  .card-image { width: 5.5rem; height: 5.5rem; margin: 0; border-radius: 0.75rem; }
+  .card-tag { top: 0.25rem; left: 0.25rem; font-size: 0.7rem; }
+  .card-title { grid-column: 2; margin: 0; font-size: 1rem; line-height: 1.3; text-align: left; overflow-wrap: anywhere; }
+  .institution-card :deep(.p-card-subtitle) { grid-column: 2; margin: 0.25rem 0 0; }
+  .card-subtitle { text-align: left; }
+  .card-subtitle p { margin: 0; }
+  .card-description { display: none; }
+  .button-container { grid-column: 1 / -1; justify-content: flex-start; gap: 0.5rem; margin-top: 0.75rem; }
+  .action-button { flex: 1 1 0; min-height: 2.75rem; margin: 0; }
+  .external-link { flex: 1 1 0; justify-content: center; min-height: 2.75rem; border: 1px solid var(--surface-border); border-radius: 0.5rem; }
 }
 </style>

@@ -7,8 +7,14 @@
 </template>
 
 <script>
+import { findPageScroller, getScrollMetrics } from '@/utils/pageScroller'
+
+// Charge la suite un peu avant d'atteindre le bas, pour un défilement sans arrêt.
+const LOAD_MORE_MARGIN = 400
+
 export default {
   name: 'InfiniteScroll',
+  emits: ['load-more'],
   props: {
     loading: {
       type: Boolean,
@@ -17,37 +23,28 @@ export default {
     scrollTarget: {
       type: String,
       default: 'parent',
-      validator: (value) => ['parent', 'window'].includes(value)
+      validator: (value) => ['parent', 'window', 'page'].includes(value)
     }
   },
   mounted() {
-    this.getScrollTarget()?.addEventListener('scroll', this.onScroll)
+    // « page » : le bloc qui défile réellement autour du fil (sur téléphone,
+    // ce n'est pas la fenêtre). La cible est mémorisée pour être retirée ensuite.
+    this.scrollElement = this.getScrollTarget()
+    this.scrollElement?.addEventListener('scroll', this.onScroll, { passive: true })
   },
   beforeUnmount() {
-    this.getScrollTarget()?.removeEventListener('scroll', this.onScroll)
+    this.scrollElement?.removeEventListener('scroll', this.onScroll)
+    this.scrollElement = null
   },
   methods: {
     getScrollTarget() {
-      return this.scrollTarget === 'window' ? window : this.$el.parentNode
+      if (this.scrollTarget === 'window') return window
+      if (this.scrollTarget === 'page') return findPageScroller(this.$el)
+      return this.$el.parentNode
     },
-    onScroll(e) {
-      let scrollTop
-      let clientHeight
-      let scrollHeight
-
-      if (this.scrollTarget === 'window') {
-        const documentElement = document.documentElement
-        scrollTop = window.scrollY || documentElement.scrollTop || 0
-        clientHeight = window.innerHeight || documentElement.clientHeight
-        scrollHeight = documentElement.scrollHeight
-      } else {
-        const el = e.target
-        scrollTop = el.scrollTop
-        clientHeight = el.clientHeight
-        scrollHeight = el.scrollHeight
-      }
-
-      if (scrollTop + clientHeight >= scrollHeight - 50 && !this.loading) {
+    onScroll() {
+      const { scrollTop, clientHeight, scrollHeight } = getScrollMetrics(this.scrollElement)
+      if (scrollTop + clientHeight >= scrollHeight - LOAD_MORE_MARGIN && !this.loading) {
         this.$emit('load-more')
       }
     }

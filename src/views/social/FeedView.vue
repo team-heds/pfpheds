@@ -158,7 +158,9 @@ export default {
   .main-feed {
     height: auto;
     overflow: visible;
-    padding-inline: clamp(0.5rem, 3vw, 1rem);
+    /* La marge latérale vient déjà de .content (App.vue) : en ajouter ici
+       décalait le fil et coupait les publications à droite sur téléphone. */
+    padding-inline: 0;
   }
 }
 </style>
