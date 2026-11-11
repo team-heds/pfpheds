@@ -124,7 +124,8 @@ if (process.argv.includes('--production')) {
     VITE_GAMIFICATION_DAILY_WHEEL: 'false',
     VITE_GAMIFICATION_ROM_RUNNER: 'false',
     VITE_GAMIFICATION_TOURNAMENTS: 'false',
-    VITE_GAMIFICATION_VENTRIGLISSE: 'false'
+    VITE_GAMIFICATION_VENTRIGLISSE: 'false',
+    VITE_GAMIFICATION_WORD_OF_DAY: 'false'
   })
 }
 execFileSync('npm', ['run', 'build'], { cwd: directory, env, stdio: 'inherit' })
