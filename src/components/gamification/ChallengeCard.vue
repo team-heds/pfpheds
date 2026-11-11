@@ -104,7 +104,7 @@
       </div>
       
       <!-- Lien d'action : la carte mène à l'endroit où réaliser le défi -->
-      <div v-if="challenge.actionUrl && !challenge.completed" class="challenge-action" :style="{ color: houseColor }">
+      <div v-if="challenge.actionUrl && !challenge.completed" class="challenge-action">
         <span>Faire ce défi</span>
         <i class="pi pi-arrow-right" aria-hidden="true"></i>
       </div>
@@ -544,6 +544,8 @@ const formatCompletionDate = (dateString) => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  /* Couleur du texte, pas celle de la maison : lisible quelle que soit la maison. */
+  color: var(--challenge-text);
   font-size: 0.875rem;
   font-weight: 600;
 }

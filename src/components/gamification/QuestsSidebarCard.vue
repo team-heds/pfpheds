@@ -103,7 +103,7 @@
               <i class="pi pi-star-fill"></i>
               {{ challenge.reward.xp }} XP
             </span>
-            <span v-else-if="challenge.actionUrl && !challenge.completed" class="challenge-go" :style="{ color: houseColor }">
+            <span v-else-if="challenge.actionUrl && !challenge.completed" class="challenge-go">
               Y aller
             </span>
           </div>
@@ -592,6 +592,8 @@ onBeforeUnmount(() => {
 }
 
 .challenge-go {
+  /* Couleur du texte, pas celle de la maison : lisible quelle que soit la maison. */
+  color: var(--text-color);
   font-size: 0.75rem;
   font-weight: 600;
 }

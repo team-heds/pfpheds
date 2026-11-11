@@ -87,6 +87,11 @@ describe('défis — lien d’action facultatif', () => {
 
     let card = mount(ChallengeCard, { props: { challenge: challenge() } })
     expect(card.get('.challenge-action').text()).toBe('Faire ce défi')
+    // Le lien garde la couleur du texte : il reste lisible quelle que soit la maison.
+    expect(card.get('.challenge-action').attributes('style')).toBeUndefined()
+    expect(source('src/components/gamification/ChallengeCard.vue')).toMatch(/\.challenge-action \{[^}]*color: var\(--challenge-text\);/)
+    expect(source('src/components/gamification/QuestsSidebarCard.vue')).toContain('class="challenge-go">')
+    expect(source('src/components/gamification/QuestsSidebarCard.vue')).toMatch(/\.challenge-go \{[^}]*color: var\(--text-color\);/)
     expect(card.get('.challenge-card').attributes('aria-label')).toBe('Faire le défi Mot de la semaine')
     expect(card.text()).not.toContain('XP')
 
