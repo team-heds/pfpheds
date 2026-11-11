@@ -4,6 +4,7 @@ export const GAMIFICATION_HISTORY_PAGE_SIZE = 10
 
 const ACTION_PRESENTATION = Object.freeze({
   LOGIN: { label: 'Connexion quotidienne', detail: 'Votre connexion du jour a été récompensée.', icon: 'pi pi-sign-in' },
+  LOGIN_STREAK: { label: 'Série de connexions', detail: 'Un palier de jours de connexion consécutifs a été atteint.', icon: 'pi pi-bolt' },
   PROFILE_UPDATE: { label: 'Profil complété', detail: 'La mise à jour de votre profil a été récompensée.', icon: 'pi pi-user-edit' },
   POST: { label: 'Publication créée', detail: 'Une nouvelle publication a été récompensée.', icon: 'pi pi-send' },
   BADGE_UNLOCK: { label: 'Badge obtenu', detail: 'Un objectif de badge a été atteint.', icon: 'pi pi-shield' },

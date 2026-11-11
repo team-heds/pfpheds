@@ -52,6 +52,27 @@
           </div>
         </section>
 
+        <section v-if="!isViewingOtherUser && loginStreak" class="streak-panel" aria-labelledby="streak-title">
+          <div class="streak-panel__current">
+            <h2 id="streak-title"><span class="streak-flame" aria-hidden="true">🔥</span> {{ streakLabel(loginStreak.current) }}</h2>
+            <p>Série de connexions · meilleure série : {{ formatStreakDays(loginStreak.best) }}</p>
+            <p v-if="!loginStreak.loggedInToday && loginStreak.current > 0" class="streak-panel__hint">La connexion d’aujourd’hui n’est pas encore comptée : la série continue dès qu’elle l’est.</p>
+            <p v-else-if="loginStreak.current === 0" class="streak-panel__hint">Connectez-vous chaque jour pour lancer une série.</p>
+          </div>
+          <div class="streak-panel__next">
+            <p class="streak-panel__goal">{{ nextMilestoneLabel(loginStreak) }}</p>
+            <div v-if="loginStreak.nextMilestone" class="level-progress streak-progress" role="progressbar" aria-label="Progression vers le prochain palier de série" aria-valuemin="0" :aria-valuemax="loginStreak.nextMilestone.days" :aria-valuenow="Math.min(loginStreak.current, loginStreak.nextMilestone.days)" :aria-valuetext="`${formatStreakDays(loginStreak.current)} sur ${loginStreak.nextMilestone.days}`">
+              <span :style="{ transform: `scaleX(${nextMilestoneProgress(loginStreak) / 100})` }"></span>
+            </div>
+            <ul class="streak-milestones" aria-label="Paliers de l’année académique">
+              <li v-for="milestone in loginStreak.milestones" :key="milestone.days" :class="{ 'is-reached': milestone.reached }">
+                <i :class="milestone.reached ? 'pi pi-check-circle' : 'pi pi-circle'" aria-hidden="true"></i>
+                <span><strong>{{ milestone.days }} jours</strong><small>+{{ milestone.xp }} XP{{ milestone.reached ? ' · obtenu' : '' }}</small></span>
+              </li>
+            </ul>
+          </div>
+        </section>
+
         <section class="quick-stats" aria-label="Résumé de l’activité">
           <div><span>{{ sectionLoading.quests || sectionErrors.quests ? '—' : activeQuests.length }}</span><p>Quêtes actives</p></div>
           <div><span>{{ sectionLoading.quests || sectionErrors.quests ? '—' : questStats.completedQuests || 0 }}</span><p>Quêtes terminées</p></div>
@@ -193,6 +214,7 @@ import ChallengeCard from '@/components/gamification/ChallengeCard.vue'
 import DetailModal from '@/components/gamification/DetailModal.vue'
 import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
 import { getReadableTextColor } from '@/utils/colorContrast'
+import { formatStreakDays, nextMilestoneLabel, nextMilestoneProgress, streakLabel } from '@/utils/loginStreak'
 import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
 import FondElaris from '@/assets/maisons/FondElaris.png'
 import FondDoloris from '@/assets/maisons/FondDoloris.png'
@@ -227,6 +249,7 @@ const historyTotal = ref(0)
 const historyHasMore = ref(false)
 const historyLoading = ref(false)
 const historyError = ref(null)
+const loginStreak = ref(null)
 const sectionErrors = ref({ quests: null, badges: null, challenges: null })
 const sectionLoading = ref({ quests: false, badges: false, challenges: false })
 const currentTime = ref(Date.now())
@@ -381,6 +404,23 @@ const loadQuestsData = async (userId = displayUserId.value, generation = profile
   }
 }
 
+// Série de connexions : uniquement pour son propre profil (la RPC ne lit que le compte connecté).
+const loadLoginStreak = async (userId = displayUserId.value, generation = profileGeneration) => {
+  if (!userId || isViewingOtherUser.value || typeof gamificationServiceSupabase.getMyLoginStreak !== 'function') return
+  try {
+    const streak = await gamificationServiceSupabase.getMyLoginStreak()
+    if (isCurrent(userId, generation)) loginStreak.value = streak
+  } catch {
+    // Série indisponible : le reste de la page reste utilisable, la carte est simplement masquée.
+    if (isCurrent(userId, generation)) loginStreak.value = null
+  }
+}
+const onLoginStreakUpdated = (event) => {
+  const detail = event?.detail
+  if (!detail?.streak || isViewingOtherUser.value || detail.userId !== displayUserId.value) return
+  loginStreak.value = detail.streak
+}
+
 const loadUserStats = async () => {
   const generation = ++profileGeneration
   historyGeneration++
@@ -399,6 +439,7 @@ const loadUserStats = async () => {
   historyHasMore.value = false
   historyLoading.value = false
   historyError.value = null
+  loginStreak.value = null
   showDetailModal.value = false
   modalItem.value = null
   sectionErrors.value = { quests: null, badges: null, challenges: null }
@@ -424,7 +465,7 @@ const loadUserStats = async () => {
       maison: gamificationData?.house_name || gamificationData?.maison || null
     }
     loading.value = false
-    await Promise.all([loadQuestsData(userId, generation), loadBadgesData(userId, generation), loadChallengesData(userId, generation), loadHistory(true, generation)])
+    await Promise.all([loadQuestsData(userId, generation), loadBadgesData(userId, generation), loadChallengesData(userId, generation), loadHistory(true, generation), loadLoginStreak(userId, generation)])
   } catch (loadError) {
     if (!isCurrent(userId, generation)) return
     console.error('Erreur lors du chargement du profil gamification:', loadError)
@@ -441,12 +482,14 @@ const goTo = (path) => router.push(path)
 
 watch([displayUserId, () => authStore.user?.id], () => loadUserStats(), { flush: 'sync' })
 onMounted(() => {
+  window.addEventListener('gamification:login-streak', onLoginStreakUpdated)
   loadUserStats()
   clock = setInterval(() => { currentTime.value = Date.now() }, 60000)
 })
 onBeforeUnmount(() => {
   profileGeneration++
   historyGeneration++
+  window.removeEventListener('gamification:login-streak', onLoginStreakUpdated)
   clearInterval(clock)
 })
 </script>
@@ -489,6 +532,19 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--text-color); ou
 .quick-stats div:nth-child(-n+2) { border-bottom: 1px solid var(--surface-border, #26364d); }
 .quick-stats span { display: block; font-size: 1.65rem; font-weight: 800; }
 .quick-stats p { margin-top: .2rem; color: var(--text-color-secondary); font-size: .86rem; }
+.streak-panel { display: grid; gap: 1.25rem; margin-top: 1rem; padding: clamp(1.15rem, 3vw, 2rem); border: 1px solid var(--surface-border); border-radius: 16px; background: var(--surface-card); }
+.streak-panel h2 { margin: 0 0 .35rem; font-size: clamp(1.5rem, 5vw, 2.1rem); line-height: 1.15; letter-spacing: -.02em; }
+.streak-panel p { margin: 0; color: var(--text-color-secondary); line-height: 1.55; }
+.streak-panel__hint { margin-top: .5rem !important; }
+.streak-panel__goal { color: var(--text-color) !important; font-weight: 700; }
+.streak-progress { margin: .75rem 0 1rem; }
+.streak-milestones { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin: 0; padding: 0; list-style: none; }
+.streak-milestones li { display: flex; align-items: center; gap: .55rem; color: var(--text-color-secondary); }
+.streak-milestones li > i { font-size: 1.1rem; }
+.streak-milestones li.is-reached { color: var(--text-color); }
+.streak-milestones li.is-reached > i { color: var(--primary-color, #f3c300); }
+.streak-milestones strong, .streak-milestones small { display: block; }
+.streak-milestones small { font-size: .82rem; }
 .next-step { margin: 1.5rem 0; padding: clamp(1.15rem, 3vw, 2rem); border: 1px solid var(--surface-border); border-radius: 16px; background: var(--surface-card); }
 .next-step__heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .next-step__heading h2 { margin: 0; font-size: 1.1rem; }
@@ -564,6 +620,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--text-color); ou
   .gamification-profile-page { padding: 1.5rem 1.5rem 7rem; }
   .profile-summary { grid-template-columns: minmax(0,1.35fr) minmax(280px,.75fr); }
   .identity-panel, .progress-panel { padding: 2rem; }
+  .streak-panel { grid-template-columns: minmax(0,1fr) minmax(0,1.15fr); align-items: center; gap: 2rem; }
   .quick-stats { grid-template-columns: repeat(4,minmax(0,1fr)); }
   .quick-stats div { border-right: 1px solid var(--surface-border, #26364d) !important; border-bottom: 0 !important; }
   .quick-stats div:last-child { border-right: 0 !important; }
