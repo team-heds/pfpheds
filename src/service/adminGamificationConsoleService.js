@@ -4,6 +4,7 @@ export const GAMIFICATION_ACTION_LABELS = Object.freeze({
   LOGIN: 'Connexion quotidienne',
   POST: 'Publication créée',
   PROFILE_UPDATE: 'Profil mis à jour',
+  EVENT_CHECKIN: 'Présence à un événement',
 })
 
 export const GAMIFICATION_WINDOW_LABELS = Object.freeze({
