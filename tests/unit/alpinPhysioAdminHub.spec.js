@@ -26,7 +26,6 @@ describe('Alp’in Physio administration hub', () => {
     expect(service).toContain("from('events')")
     expect(service).toContain("from('event_registrations')")
     expect(service).toContain("from('event_material_items')")
-    expect(service).toContain("from('posts')")
     expect(service).not.toMatch(/firebase|firestore/i)
     expect(detail).not.toMatch(/firebase|firestore/i)
   })
@@ -40,13 +39,6 @@ describe('Alp’in Physio administration hub', () => {
     expect(migration).toContain("track_id = 'ALPIN'")
     expect(migration).toContain("role = 'COORDINATOR'")
     expect(migration).toContain('create policy alpin_site_public_read')
-  })
-
-  it('synchronizes only published events to the feed', () => {
-    const service = read('src/service/alpinPhysioAdminService.js')
-    expect(service).toContain("event.status !== 'published' || !event.show_in_feed")
-    expect(service).toContain("upsert(post, { onConflict: 'event_id' })")
-    expect(service).toContain('event_id: event.id')
   })
 
   it('keeps the complete public content editable from the administration', () => {

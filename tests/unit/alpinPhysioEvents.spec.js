@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
-import { buildFeedPostContent, escapeHtml, toApiDate, toLocalInputValue } from '../../src/utils/alpinPhysioEvents'
+import { toApiDate, toLocalInputValue } from '../../src/utils/alpinPhysioEvents'
 
 const read = (file) => fs.readFileSync(path.resolve(process.cwd(), file), 'utf8')
 
@@ -33,14 +33,26 @@ describe('Alp’in Physio — dates des événements', () => {
 })
 
 describe('Alp’in Physio — publication dans le feed', () => {
+  const migration = read('supabase/migrations/20261111150000_alpinphysio_feed_sync.sql')
+  const service = read('src/service/alpinPhysioAdminService.js')
+
+  it('est tenue à jour par la base, plus par le navigateur', () => {
+    expect(service).not.toContain("from('posts')")
+    expect(migration).toContain('create or replace trigger alpinphysio_event_feed_post_sync')
+    expect(migration).toContain('security definer')
+    expect(migration).toContain("new.status is distinct from 'published'")
+    expect(migration).toContain('on conflict (event_id) do update')
+  })
+
   it('échappe le texte saisi par les responsables', () => {
-    expect(escapeHtml(`<img src=x onerror="alert('x')">`)).toBe('&lt;img src=x onerror=&quot;alert(&#39;x&#39;)&quot;&gt;')
-    const content = buildFeedPostContent({ title: '<script>x</script>', lieu: 'Zinal & <b>co</b>', description: null }, '23 novembre 2026')
-    expect(content).not.toContain('<script>')
-    expect(content).not.toContain('<b>')
-    expect(content).toContain('&lt;script&gt;x&lt;/script&gt;')
-    expect(content).toContain('Zinal &amp; &lt;b&gt;co&lt;/b&gt;')
-    expect(content).toContain('<a href="/events">')
+    for (const field of ['new.title', 'new.lieu', 'new.description']) {
+      expect(migration).toContain(`public.alpinphysio_html_escape(${field})`)
+    }
+  })
+
+  it('ne réattribue pas un événement modifié par un autre responsable', () => {
+    expect(service).toContain("insert({ ...payload, admin_uid: userId })")
+    expect(service).toContain("update(payload).eq('id', input.id)")
   })
 })
 
