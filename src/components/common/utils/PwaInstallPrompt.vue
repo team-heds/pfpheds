@@ -1,10 +1,15 @@
 <template>
   <transition name="slide-up">
     <aside v-if="showPrompt" class="pwa-install-prompt" aria-label="Installer l’application HEdS">
-      <div class="pwa-install-content">
-        <img :src="hedsIcon" alt="HEdS" class="pwa-logo" />
-        <span class="pwa-text">{{ message }}</span>
-        <button type="button" class="pwa-add-btn" @click="installPwa">Installer</button>
+      <div class="pwa-install-content" :class="{ 'pwa-install-content--guide': iosGuide }">
+        <img :src="hedsIcon" alt="" class="pwa-logo" />
+        <span v-if="iosGuide" class="pwa-text">
+          Pour installer HEdS : touchez
+          <i class="pi pi-upload" aria-hidden="true"></i>
+          <strong>Partager</strong>, puis <strong>« Sur l’écran d’accueil »</strong>.
+        </span>
+        <span v-else class="pwa-text">{{ message }}</span>
+        <button v-if="!iosGuide" type="button" class="pwa-add-btn" @click="installPwa">Installer</button>
         <button type="button" class="pwa-close-btn" aria-label="Fermer l’invitation" @click="dismissPrompt">
           <i class="pi pi-times" aria-hidden="true"></i>
         </button>
@@ -16,6 +21,7 @@
 <script setup>
 import { ref, onBeforeUnmount, onMounted, watch } from 'vue';
 import hedsIcon from '@/assets/images/hespicto.png'
+import { isIosDevice, isStandaloneDisplay, markInstallPromptDismissed, wasInstallPromptDismissed } from '@/utils/pwaInstall'
 
 const props = defineProps({
   forceVisible: { type: Boolean, default: false },
@@ -23,23 +29,41 @@ const props = defineProps({
 })
 const emit = defineEmits(['install', 'dismiss'])
 const showPrompt = ref(props.forceVisible);
+// iOS ne propose pas d'installation en un geste : on explique le chemin par le menu Partager.
+const iosGuide = ref(false);
 let deferredPrompt = null;
 
 function handleInstallPrompt(e) {
   e.preventDefault();
+  if (isStandaloneDisplay() || wasInstallPromptDismissed()) return;
   deferredPrompt = e;
   showPrompt.value = true;
 }
 
+function handleInstalled() {
+  showPrompt.value = false;
+  deferredPrompt = null;
+}
+
 onMounted(() => {
   window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+  window.addEventListener('appinstalled', handleInstalled);
+  if (!props.forceVisible && isIosDevice() && !isStandaloneDisplay() && !wasInstallPromptDismissed()) {
+    iosGuide.value = true;
+    showPrompt.value = true;
+  }
 });
 
-onBeforeUnmount(() => window.removeEventListener('beforeinstallprompt', handleInstallPrompt))
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+  window.removeEventListener('appinstalled', handleInstalled);
+})
 watch(() => props.forceVisible, (visible) => { showPrompt.value = visible })
 
 function dismissPrompt() {
   showPrompt.value = false
+  // L'invitation ne revient pas à chaque ouverture : elle se représente après un délai.
+  markInstallPromptDismissed()
   emit('dismiss')
 }
 
@@ -47,9 +71,10 @@ function installPwa() {
   emit('install')
   if (deferredPrompt) {
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(() => {
+    deferredPrompt.userChoice.then(({ outcome } = {}) => {
       showPrompt.value = false;
       deferredPrompt = null;
+      if (outcome === 'dismissed') markInstallPromptDismissed();
     });
   }
 }
@@ -113,14 +138,14 @@ function installPwa() {
   background: transparent;
   color: var(--text-color-secondary);
   border: none;
-  font-size: 1.6rem;
+  font-size: 1.1rem;
   line-height: 1;
-  margin-left: 0.4rem;
   cursor: pointer;
   transition: color .15s, background .15s;
   border-radius: 50%;
-  width: 2rem;
-  height: 2rem;
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,7 +163,18 @@ function installPwa() {
   opacity: 0;
   transform: translateY(80px);
 }
+.pwa-text .pi { margin-inline: .15rem; color: var(--primary-color); }
+/* Sur téléphone, l'invitation se place au-dessus de la barre de navigation au lieu de la recouvrir. */
+@media (max-width: 768px) {
+  .pwa-install-prompt {
+    bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+  }
+}
 @media (max-width: 600px) {
+  .pwa-install-content--guide.pwa-install-content {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+  }
   .pwa-install-content {
     display: grid;
     grid-template-columns: auto 1fr auto;

@@ -8,29 +8,47 @@ export const CHALLENGE_DIFFICULTY = {
 
 const difficultyFor = (target) => target >= 1000 ? 'LEGENDARY' : target >= 100 ? 'HARD' : target >= 10 ? 'MEDIUM' : 'EASY'
 // Actions réellement comptées par le moteur serveur (daily_login, update_profile, create_post) et anciens types.
-const icons = { daily_login: '📅', update_profile: '👤', create_post: '✍️', xp_gain: '⭐', login_streak: '📅', quiz_complete: '📚', badge_unlock: '🏅', social_interaction: '🤝', exploration: '🗺️' }
-const categories = { daily_login: 'engagement', update_profile: 'progression', create_post: 'social', xp_gain: 'progression', login_streak: 'engagement', quiz_complete: 'apprentissage', badge_unlock: 'collection', social_interaction: 'social', exploration: 'exploration' }
+const icons = { word_of_week: '🔤', daily_login: '📅', update_profile: '👤', create_post: '✍️', xp_gain: '⭐', login_streak: '📅', quiz_complete: '📚', badge_unlock: '🏅', social_interaction: '🤝', exploration: '🗺️' }
+const categories = { word_of_week: 'apprentissage', daily_login: 'engagement', update_profile: 'progression', create_post: 'social', xp_gain: 'progression', login_streak: 'engagement', quiz_complete: 'apprentissage', badge_unlock: 'collection', social_interaction: 'social', exploration: 'exploration' }
 const inclusiveEndDate = (value) => (
   /^\d{4}-\d{2}-\d{2}$/.test(value || '') ? `${value}T23:59:59.999` : value
 )
 
+// Lien d'action facultatif d'un défi : uniquement une adresse interne de la plateforme
+// (« /mot-de-la-semaine »), jamais un site externe.
+export const challengeActionUrl = (value) => {
+  const url = typeof value === 'string' ? value.trim() : ''
+  return /^\/[A-Za-z0-9][A-Za-z0-9/_.?=&#-]*$/.test(url) ? url : null
+}
+
+const CHALLENGE_COLUMNS = 'id,name,description,target_value,action_type,xp_reward,badge_reward,week_number,year,start_date,end_date,is_active,status,created_at,reward_badge:badges(id,name,is_active)'
+// Tant que la colonne action_url n'existe pas en base (migration pas encore appliquée),
+// les défis se chargent sans lien plutôt que d'échouer.
+const withActionUrl = async (run) => {
+  const first = await run(true)
+  if (first.error && /action_url/.test(`${first.error.message || ''} ${first.error.details || ''}`)) return run(false)
+  return first
+}
+
 const normalizeChallenge = (challenge, progress = null) => {
   if (!challenge) return null
   const target = Number(challenge.target_value || 0)
-  return { ...challenge, challengeId: challenge.id, challengeName: challenge.name, type: challenge.action_type, difficulty: difficultyFor(target), target, reward: { xp: Number(challenge.xp_reward || 0), badge: challenge.badge_reward || null, badgeName: challenge.reward_badge?.name || null, title: null }, icon: icons[String(challenge.action_type || '').toLowerCase()] || '🎯', category: categories[String(challenge.action_type || '').toLowerCase()] || 'progression', weekNumber: challenge.week_number, startDate: challenge.start_date, endDate: inclusiveEndDate(challenge.end_date), progress: Number(progress?.current_value || 0), completed: Boolean(progress?.completed), completedAt: progress?.completed_at || null, completed_at: progress?.completed_at || null }
+  return { ...challenge, challengeId: challenge.id, challengeName: challenge.name, type: challenge.action_type, difficulty: difficultyFor(target), target, reward: { xp: Number(challenge.xp_reward || 0), badge: challenge.badge_reward || null, badgeName: challenge.reward_badge?.name || null, title: null }, icon: icons[String(challenge.action_type || '').toLowerCase()] || '🎯', category: categories[String(challenge.action_type || '').toLowerCase()] || 'progression', weekNumber: challenge.week_number, actionUrl: challengeActionUrl(challenge.action_url), startDate: challenge.start_date, endDate: inclusiveEndDate(challenge.end_date), progress: Number(progress?.current_value || 0), completed: Boolean(progress?.completed), completedAt: progress?.completed_at || null, completed_at: progress?.completed_at || null }
 }
 
 const getActiveChallenges = async () => {
   const today = new Date().toISOString().slice(0, 10)
-  const { data, error } = await supabase.from('challenges').select('id,name,description,target_value,action_type,xp_reward,badge_reward,week_number,year,start_date,end_date,is_active,status,created_at,reward_badge:badges(id,name,is_active)').eq('is_active', true).eq('status', 'active').or(`start_date.is.null,start_date.lte.${today}`).or(`end_date.is.null,end_date.gte.${today}`).order('start_date', { ascending: true })
+  const { data, error } = await withActionUrl((linked) => supabase.from('challenges').select(linked ? `${CHALLENGE_COLUMNS},action_url` : CHALLENGE_COLUMNS).eq('is_active', true).eq('status', 'active').or(`start_date.is.null,start_date.lte.${today}`).or(`end_date.is.null,end_date.gte.${today}`).order('start_date', { ascending: true }))
   if (error) throw error
   return data || []
 }
 
 const getUserProgress = async (userId, completed = null) => {
-  let query = supabase.from('user_challenge_progress').select('challenge_id,current_value,completed,completed_at,challenge:challenges(id,name,description,target_value,action_type,xp_reward,badge_reward,week_number,year,start_date,end_date,is_active,status,created_at,reward_badge:badges(id,name,is_active))').eq('user_id', userId)
-  if (completed !== null) query = query.eq('completed', completed)
-  const { data, error } = await query.order('completed_at', { ascending: false, nullsFirst: false })
+  const { data, error } = await withActionUrl((linked) => {
+    let query = supabase.from('user_challenge_progress').select(`challenge_id,current_value,completed,completed_at,challenge:challenges(${linked ? `${CHALLENGE_COLUMNS},action_url` : CHALLENGE_COLUMNS})`).eq('user_id', userId)
+    if (completed !== null) query = query.eq('completed', completed)
+    return query.order('completed_at', { ascending: false, nullsFirst: false })
+  })
   if (error) throw error
   return data || []
 }
@@ -85,4 +103,4 @@ export const updateChallengeProgress = serverManagedOnly
 export const completeChallenge = serverManagedOnly
 export const generateWeeklyChallenges = serverManagedOnly
 
-export default { CHALLENGE_TYPES, CHALLENGE_DIFFICULTY, getUserActiveChallenges, getUserChallengeHistory, getUserChallengeStats, updateChallengeProgress, completeChallenge, generateWeeklyChallenges }
+export default { CHALLENGE_TYPES, CHALLENGE_DIFFICULTY, challengeActionUrl, getUserActiveChallenges, getUserChallengeHistory, getUserChallengeStats, updateChallengeProgress, completeChallenge, generateWeeklyChallenges }

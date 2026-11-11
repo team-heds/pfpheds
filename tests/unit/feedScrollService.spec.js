@@ -21,4 +21,18 @@ describe('feedScrollService', () => {
 
     expect(windowObject.scrollTo).toHaveBeenCalledWith({ top: 240, behavior: 'auto' })
   })
+
+  it('utilise le bloc principal de la page quand c’est lui qui défile sur téléphone', () => {
+    const pageScroller = document.createElement('div')
+    const windowObject = { scrollY: 0, scrollTo: vi.fn() }
+    pageScroller.scrollTop = 1800
+
+    const saved = readFeedScroll({ isMobile: true, pageScroller, windowObject })
+    pageScroller.scrollTop = 0
+    restoreFeedScroll({ isMobile: true, pageScroller, scrollTop: saved, windowObject })
+
+    expect(saved).toBe(1800)
+    expect(pageScroller.scrollTop).toBe(1800)
+    expect(windowObject.scrollTo).not.toHaveBeenCalled()
+  })
 })

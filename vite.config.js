@@ -142,25 +142,21 @@ export default defineConfig({
       manifest: {
         name: 'HEdS',
         short_name: 'HEdS',
-        description: 'Progressive Web App pour PFPHEDS',
+        description: 'Plateforme de formation pratique de la Haute Ecole de Santé : fil d’actualité, stages, documents et progression.',
+        lang: 'fr',
         theme_color: '#0B213F',
         background_color: '#0B213F',
         display: 'standalone',
         start_url: '.',
+        // Chaque fichier a réellement la taille annoncée : Android refuse
+        // l'installation quand une icône ne correspond pas à sa déclaration.
         icons: [
-          {
-            src: '/assets/images/hespicto.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/assets/images/hespicto.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['icons/*.png'],
       devOptions: {
         enabled: false,
         suppressLogs: true
