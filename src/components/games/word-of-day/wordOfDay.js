@@ -1,6 +1,6 @@
-// Mot du jour physio : aides d'affichage. Aucune règle de jeu ici : le mot, la validation
-// des essais et les points sont décidés par le serveur (voir la migration
-// 20261111110000_gamification_word_of_day.sql).
+// Mot de la semaine physio : aides d'affichage. Aucune règle de jeu ici : le mot, la
+// validation des essais et les points sont décidés par le serveur (voir les migrations
+// 20261111110000_gamification_word_of_day.sql et 20261112100000_gamification_word_of_week.sql).
 
 // Disposition du clavier suisse romand (QWERTZ).
 export const KEYBOARD_ROWS = Object.freeze(['QWERTZUIOP', 'ASDFGHJKL', 'YXCVBNM'])
@@ -48,4 +48,31 @@ export const describeAttempt = (attempt, index) => {
 
 export const attemptsLabel = (count) => (count > 1 ? `${count} essais` : `${count} essai`)
 
-export const daysLabel = (count) => (count > 1 ? `${count} jours` : `${count} jour`)
+export const weeksLabel = (count) => (count > 1 ? `${count} semaines` : `${count} semaine`)
+
+// Dates du calendrier (AAAA-MM-JJ) fournies par le serveur : traitées en UTC pour que
+// l'affichage ne dépende jamais du fuseau de l'appareil.
+const parseDay = (value) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value ?? ''))
+  if (!match) return null
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])))
+  return Number.isNaN(date.getTime()) ? null : date
+}
+const addDays = (date, days) => new Date(date.getTime() + days * 86400000)
+const formatDay = (date, options) => new Intl.DateTimeFormat('fr-CH', { timeZone: 'UTC', ...options }).format(date)
+
+// « du 9 au 15 novembre », ou « du 30 novembre au 6 décembre » à cheval sur deux mois.
+export const weekRangeLabel = (weekStart) => {
+  const start = parseDay(weekStart)
+  if (!start) return ''
+  const end = addDays(start, 6)
+  const sameMonth = start.getUTCMonth() === end.getUTCMonth()
+  const from = formatDay(start, sameMonth ? { day: 'numeric' } : { day: 'numeric', month: 'long' })
+  return `du ${from} au ${formatDay(end, { day: 'numeric', month: 'long' })}`
+}
+
+// Jour d'arrivée du mot suivant : « lundi 16 novembre ».
+export const nextWordLabel = (weekStart) => {
+  const start = parseDay(weekStart)
+  return start ? formatDay(addDays(start, 7), { weekday: 'long', day: 'numeric', month: 'long' }) : ''
+}

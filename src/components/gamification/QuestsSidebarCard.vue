@@ -79,16 +79,17 @@
       </Button>
     </div>
 
-    <!-- Défis en cours : suivi quand aucune quête n'est ouverte -->
-    <div v-if="!loading && newQuests.length === 0 && activeChallenges.length > 0" class="challenges-list">
+    <!-- Défis en cours : tous quand aucune quête n'est ouverte, sinon seulement le
+         premier défi à faire qui mène quelque part (jeu, quiz…) -->
+    <div v-if="!loading && displayedChallenges.length > 0" class="challenges-list">
       <p class="section-label">Défis en cours</p>
       <button
-        v-for="challenge in activeChallenges.slice(0, 3)"
+        v-for="challenge in displayedChallenges"
         :key="challenge.id"
         type="button"
         class="quest-item"
-        :aria-label="`Voir le défi ${challenge.name}, ${challenge.progress} sur ${challenge.target}`"
-        @click="goToChallenges"
+        :aria-label="`${challenge.actionUrl && !challenge.completed ? 'Faire' : 'Voir'} le défi ${challenge.name}, ${Math.min(challenge.progress, challenge.target)} sur ${challenge.target}`"
+        @click="openChallenge(challenge)"
       >
         <div class="quest-icon challenge-icon" aria-hidden="true">{{ challenge.icon }}</div>
         <div class="quest-content">
@@ -98,9 +99,12 @@
           </div>
           <div class="quest-meta">
             <span class="challenge-count">{{ Math.min(challenge.progress, challenge.target) }}/{{ challenge.target }}</span>
-            <span class="xp-reward" :style="{ color: houseColor }">
+            <span v-if="challenge.reward?.xp > 0" class="xp-reward" :style="{ color: houseColor }">
               <i class="pi pi-star-fill"></i>
-              {{ challenge.reward?.xp || 0 }} XP
+              {{ challenge.reward.xp }} XP
+            </span>
+            <span v-else-if="challenge.actionUrl && !challenge.completed" class="challenge-go" :style="{ color: houseColor }">
+              Y aller
             </span>
           </div>
           <div class="mini-progress">
@@ -197,8 +201,10 @@ const loadFollowUp = async () => {
       : Promise.resolve([]),
     Promise.resolve().then(() => userQuestsService.getUpcomingQuests(1)).catch(() => [])
   ])
-  // Défis à faire d'abord, réussis ensuite.
-  activeChallenges.value = [...challenges].sort((a, b) => Number(a.completed) - Number(b.completed))
+  // Défis à faire d'abord (ceux qui mènent quelque part en tête), réussis ensuite.
+  activeChallenges.value = [...challenges].sort((a, b) => (
+    Number(a.completed) - Number(b.completed) || Number(Boolean(b.actionUrl)) - Number(Boolean(a.actionUrl))
+  ))
   upcomingQuest.value = upcoming[0] || null
 }
 
@@ -293,6 +299,20 @@ const goToQuests = () => {
 
 const goToChallenges = () => {
   router.push({ name: 'ChallengesPage' })
+}
+
+// Avec des quêtes ouvertes, la place est comptée : on garde un seul défi, celui qui reste
+// à faire et qui a un lien (par exemple le mot de la semaine).
+const displayedChallenges = computed(() => (
+  newQuests.value.length === 0
+    ? activeChallenges.value.slice(0, 3)
+    : activeChallenges.value.filter((challenge) => challenge.actionUrl && !challenge.completed).slice(0, 1)
+))
+
+// Un défi à faire qui porte un lien mène directement à l'endroit où le réaliser.
+const openChallenge = (challenge) => {
+  if (challenge?.actionUrl && !challenge.completed) router.push(challenge.actionUrl)
+  else goToChallenges()
 }
 
 // Lifecycle
@@ -568,6 +588,11 @@ onBeforeUnmount(() => {
 .challenge-count {
   color: var(--text-color-secondary);
   font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.challenge-go {
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
