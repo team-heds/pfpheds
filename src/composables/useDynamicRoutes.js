@@ -172,7 +172,11 @@ export async function addDynamicRoutesToRouter(router) {
     'GameHub',
     'RomRunnerView',
     'TournoisView',
-    'TournoiDetailsView'
+    'TournoiDetailsView',
+    'QuizListView',
+    'QuizPlayView',
+    'QuizManageView',
+    'QuizEditorView'
   ];
 
   dynamicRoutes.forEach((route) => {
