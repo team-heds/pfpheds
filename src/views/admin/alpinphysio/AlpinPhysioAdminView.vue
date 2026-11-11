@@ -74,7 +74,7 @@
               <label class="field"><span>Date limite de réponse</span><input v-model="eventForm.registration_deadline" type="datetime-local" /></label>
               <label class="field"><span>Nombre de places</span><input v-model.number="eventForm.capacity" type="number" min="1" inputmode="numeric" aria-describedby="capacity-help" /><small id="capacity-help" class="field-help">Laisser vide pour ne pas limiter. Une fois complet, la réponse « présent » est refusée.</small></label>
               <label class="field"><span>Email de contact</span><input v-model.trim="eventForm.contact_email" type="email" placeholder="alpinphysio@hevs.ch" /></label>
-              <label class="field"><span>Adresse de l’image</span><input v-model.trim="eventForm.image_url" type="url" placeholder="https://…" /></label>
+              <AlpinImageField v-model="eventForm.image_url" label="Photo de l’événement" folder="events" wide />
               <label class="field"><span>État</span><select v-model="eventForm.status"><option value="draft">Brouillon</option><option value="published">Publié</option><option value="cancelled">Annulé</option></select></label>
               <div class="field field--wide toggles">
                 <label><input v-model="eventForm.show_on_public_site" type="checkbox" />Afficher sur la vitrine publique</label>
@@ -197,6 +197,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import OperationalEventPicker from '@/components/alpinphysio/OperationalEventPicker.vue'
 import AlpinPhysioSiteEditor from '@/components/alpinphysio/AlpinPhysioSiteEditor.vue'
+import AlpinImageField from '@/components/alpinphysio/AlpinImageField.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
 import { describePlaces, toApiDate as apiDate, toLocalInputValue as localInput } from '@/utils/alpinPhysioEvents'

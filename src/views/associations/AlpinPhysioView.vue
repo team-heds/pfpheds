@@ -116,8 +116,9 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { getSiteContent, listAlpinEvents } from '@/service/alpinPhysioAdminService'
 import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
+import { resolveAlpinImage } from '@/utils/alpinPhysioMedia'
 
-const getImagePath = (path) => `/assets/images/heds/AlpinPhysioPhoto/${path}`
+const getImagePath = resolveAlpinImage
 const logoPath = getImagePath('JPhotos/Divers/logoalpin/ALPINPHYSIO-logo-bleu-impression_transparent.jpg')
 const logoMarkPath = getImagePath('JPhotos/Divers/logoalpin/alpinphysio-mark.jpg')
 const navigation = [{ id: 'about', label: 'Notre Histoire' }, { id: 'team', label: 'Notre Comité' }, { id: 'services', label: 'Nos Prestations' }, { id: 'calendar', label: 'Notre Calendrier' }, { id: 'gallery', label: 'Nos Moments' }]
