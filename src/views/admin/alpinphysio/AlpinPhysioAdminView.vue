@@ -199,8 +199,9 @@ import OperationalEventPicker from '@/components/alpinphysio/OperationalEventPic
 import AlpinPhysioSiteEditor from '@/components/alpinphysio/AlpinPhysioSiteEditor.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { cloneAlpinPhysioSiteContent } from '@/data/alpinPhysioSiteContent'
+import { toApiDate as apiDate, toLocalInputValue as localInput } from '@/utils/alpinPhysioEvents'
 import {
-  addAlpinTeamMember, deactivateAlpinTeamMember, deleteAlpinEvent, deleteMaterial,
+  addAlpinTeamMember, countMissingMaterials, deactivateAlpinTeamMember, deleteAlpinEvent, deleteMaterial,
   getSiteContent, listAlpinEvents, listAlpinTeam, listAttendance, listMaterials,
   saveAlpinEvent, saveMaterial, saveSiteContent,
 } from '@/service/alpinPhysioAdminService'
@@ -227,6 +228,7 @@ const materials = ref([])
 const team = ref([])
 const teamEmail = ref('')
 const selectedEventId = ref(null)
+const missingMaterials = ref(0)
 const notice = reactive({ text: '', kind: 'success' })
 const defaultEvent = () => ({ id: null, title: '', description: '', lieu: '', meeting_point: '', contact_email: 'alpinphysio@hevs.ch', start_date: '', end_date: '', registration_deadline: '', capacity: null, image_url: '', status: 'draft', show_on_public_site: true, show_in_feed: true })
 const eventForm = reactive(defaultEvent())
@@ -242,13 +244,11 @@ const metrics = computed(() => ({
   upcoming: upcomingEvents.value.length,
   going: upcomingEvents.value.reduce((sum, event) => sum + Number(event.going_count || 0), 0),
   maybe: upcomingEvents.value.reduce((sum, event) => sum + Number(event.maybe_count || 0), 0),
-  missing: materials.value.filter((item) => item.status === 'missing').length,
+  missing: missingMaterials.value,
 }))
 const attendanceCounts = computed(() => attendance.value.reduce((counts, item) => ({ ...counts, [item.response]: (counts[item.response] || 0) + 1 }), { going: 0, maybe: 0, not_going: 0 }))
 const readyMaterials = computed(() => materials.value.filter((item) => item.status === 'ready').length)
 
-const localInput = (value) => value ? new Date(value).toISOString().slice(0, 16) : ''
-const apiDate = (value) => value ? new Date(value).toISOString() : null
 const flash = (text, kind = 'success') => { notice.text = text; notice.kind = kind; window.setTimeout(() => { if (notice.text === text) notice.text = '' }, 5000) }
 const day = (value) => new Intl.DateTimeFormat('fr-CH', { day: '2-digit' }).format(new Date(value))
 const month = (value) => new Intl.DateTimeFormat('fr-CH', { month: 'short' }).format(new Date(value)).replace('.', '').toUpperCase()
@@ -266,6 +266,7 @@ async function reload() {
     events.value = await listAlpinEvents()
     if (!selectedEventId.value && events.value.length) selectedEventId.value = upcomingEvents.value[0]?.id || events.value[0].id
     if (['dashboard', 'attendance', 'materials'].includes(section.value)) await loadOperations()
+    if (section.value === 'dashboard') missingMaterials.value = await countMissingMaterials(upcomingEvents.value.map((event) => event.id))
     if (section.value === 'site') {
       const { content } = await getSiteContent()
       Object.assign(siteForm, cloneAlpinPhysioSiteContent(content || {}))
