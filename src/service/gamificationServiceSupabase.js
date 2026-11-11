@@ -617,7 +617,8 @@ class GamificationServiceSupabase {
   }
 
   /**
-   * Mot du jour physio : partie du jour du compte connecté, décidée par le serveur.
+   * Mot de la semaine physio : partie de la semaine du compte connecté, décidée par le
+   * serveur (les appels gardent leur nom d'origine « word_of_day »).
    * Tant que la partie continue, la réponse ne contient que la longueur du mot et les
    * indices des essais déjà joués ; le mot et sa définition n'arrivent qu'à la fin.
    */
@@ -628,7 +629,7 @@ class GamificationServiceSupabase {
   }
 
   /**
-   * Mot du jour physio : propose un essai. Le serveur compare, enregistre l'essai et
+   * Mot de la semaine physio : propose un essai. Le serveur compare, enregistre l'essai et
    * attribue lui-même les XP si le mot est trouvé.
    */
   async submitMyWordOfDayGuess(guess) {

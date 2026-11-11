@@ -6,18 +6,18 @@
       <span>T</span>
     </div>
     <div class="wod-card__copy">
-      <h2 id="word-of-day-title">Mot du jour physio</h2>
-      <p>Un terme de physiothérapie ou d’anatomie à trouver en 6 essais. Le même mot pour tout le monde, chaque jour.</p>
+      <h2 id="word-of-day-title">Mot de la semaine physio</h2>
+      <p>Un terme de physiothérapie ou d’anatomie à trouver en 6 essais. Le même mot pour tout le monde, du lundi au dimanche soir.</p>
       <div class="wod-card__tags" aria-label="Caractéristiques du jeu">
-        <span>1 mot par jour</span><span>6 essais</span><span>Jusqu’à 15 XP</span>
+        <span>1 mot par semaine</span><span>6 essais</span><span>Jusqu’à 45 XP</span>
       </div>
     </div>
     <Button
       label="Jouer"
       icon="pi pi-play"
       class="wod-card__play"
-      aria-label="Jouer au mot du jour physio"
-      @click="router.push('/mot-du-jour')"
+      aria-label="Jouer au mot de la semaine physio"
+      @click="router.push('/mot-de-la-semaine')"
     />
   </section>
 </template>
