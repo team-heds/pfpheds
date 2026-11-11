@@ -486,16 +486,21 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 @media (max-width: 640px) {
   .wod-root { padding-top: 0; }
-  .wod-content { padding: 1rem .75rem 2rem; }
+  /* La page a déjà ses marges latérales sur téléphone : on n'en rajoute pas. */
+  .wod-content { padding: 1rem 0 2rem; }
   /* Sur téléphone, la grille et le clavier tiennent ensemble à l'écran. */
   :deep(.game-header) { margin-bottom: .75rem; padding: .85rem; gap: .75rem; }
   :deep(.game-header__description) { display: none; }
-  .wod-game { gap: .75rem; }
+  .wod-game { gap: .75rem; padding-inline: .5rem; }
   .wod-tile__mark { top: 2px; right: 2px; font-size: .45rem; }
   .wod-tile--small .wod-tile__mark { font-size: .5rem; }
   .wod-panel { padding: 1rem .75rem; }
+  /* Cases un peu plus petites : la grille et le clavier restent visibles ensemble. */
+  .wod-board { width: min(100%, calc(var(--wod-length) * 3.4rem)); }
   .wod-board, .wod-row { gap: .25rem; }
   .wod-tile { border-radius: 8px; }
+  /* Le clavier prend toute la largeur du panneau pour des touches plus faciles à viser. */
+  .wod-keyboard { justify-self: start; width: calc(100% + .5rem); margin-inline: -.25rem; }
   .wod-keyboard__row { gap: .2rem; }
   .wod-key--wide span { display: none; }
   .wod-key--wide { font-size: 1rem; }
