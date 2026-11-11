@@ -12,6 +12,9 @@ export default [
   { path: '/files', component: () => import('@/views/apps/files/FilesView.vue'), name: 'FilesView', meta: { requiresAuth: true } },
   { path: '/mail', component: () => import('@/views/apps/mail/Index.vue'), name: 'MailIndex', meta: { requiresAuth: true } },
   { path: '/notes', component: () => import('@/views/apps/notes/NotesWorkspaceView.vue'), name: 'NotesWorkspaceView', meta: { requiresAuth: true } },
+  // Scan d'un QR code de la plateforme (présence à un événement). Le lien du QR mène ici :
+  // sans session, on passe par la connexion puis on revient valider le code.
+  { path: '/scan', component: () => import('@/views/apps/scan/ScanCodeView.vue'), name: 'ScanCode', beforeEnter: featureGuard('eventCheckin'), meta: { requiresAuth: true, loginRedirect: true, title: 'Présences' } },
   { path: '/events', component: () => import('@/views/apps/events/EventManagementView.vue'), name: 'EventManagementView', meta: { requiresAuth: true } },
   { path: '/event-management', component: () => import('@/views/apps/events/EventManagementView.vue'), name: 'EventManagement', meta: { requiresAuth: true } },
   { path: '/tools', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },

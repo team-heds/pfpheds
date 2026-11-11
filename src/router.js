@@ -133,6 +133,10 @@ if (!roleStore.initialized) {
   if (!access.allowed) {
     if (access.reason === 'authentication') {
       console.warn('❌ Accès refusé: authentification requise pour cette page');
+      // Lien reçu de l'extérieur (QR code scanné) : revenir sur la page après la connexion.
+      if (to.matched.some(record => record.meta.loginRedirect)) {
+        return next({ path: '/home', query: { redirect: to.fullPath } });
+      }
       return next('/');
     }
 

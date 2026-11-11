@@ -74,6 +74,7 @@
     "firebase": "^12.17.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
+    "jsqr": "^1.4.0",
     "leaflet": "^1.9.4",
     "marked": "^4.3.0",
     "pinia": "^3.0.3",

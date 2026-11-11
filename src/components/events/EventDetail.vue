@@ -21,6 +21,8 @@
         <p v-if="responseMessage" class="response-message" role="status">{{ responseMessage }}</p>
       </section>
 
+      <EventCheckinPanel v-if="checkinEnabled && event.id" :event="event" />
+
       <div class="event-actions">
         <Button v-if="event.type !== 'alpinphysio'" icon="pi pi-user-plus" :label="isUserRegistered ? 'Se désinscrire' : 'S’inscrire'" rounded @click="$emit('register', event)" />
         <Button v-if="canManageEvent" icon="pi pi-pencil" label="Modifier" severity="warning" rounded @click="$emit('edit', event)" />
@@ -37,6 +39,10 @@ import Button from 'primevue/button'
 import { useConfirm } from 'primevue/useconfirm'
 import { supabase } from '@/supabase'
 import { setAttendance } from '@/service/alpinPhysioAdminService'
+import { gamificationFeatures } from '@/config/gamificationFeatures'
+import EventCheckinPanel from '@/components/events/EventCheckinPanel.vue'
+
+const checkinEnabled = gamificationFeatures.eventCheckin
 
 const props = defineProps({ event: { type: Object, required: true }, userId: { type: String, required: true }, userProfile: { type: Object, default: null } })
 const emit = defineEmits(['register', 'edit', 'delete', 'attendance-updated'])
