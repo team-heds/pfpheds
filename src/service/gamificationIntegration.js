@@ -11,6 +11,7 @@
  * @exports {GamificationIntegration} gamificationIntegration - Instance singleton
  */
 import gamificationServiceSupabase from './gamificationServiceSupabase'
+import { todaysStreakNotifications } from '../utils/loginStreak.js'
 
 class GamificationIntegration {
   constructor() {
@@ -114,12 +115,40 @@ class GamificationIntegration {
    * Déclenche les événements pour une connexion utilisateur
    */
   async onLogin(userId, loginData = {}) {
-    return await this.processUserAction(userId, 'LOGIN', {
+    const result = await this.processUserAction(userId, 'LOGIN', {
       loginTime: loginData.loginTime || Date.now(),
       loginMethod: loginData.loginMethod || 'unknown',
       deviceType: loginData.deviceType || 'unknown',
       ...loginData
     })
+
+    // Une nouvelle connexion quotidienne peut faire passer un palier de série.
+    if (result?.success && !result.duplicate && result.xpGained > 0) {
+      await this.announceLoginStreakMilestones(userId)
+    }
+    return result
+  }
+
+  /**
+   * Annonce les paliers de série passés aujourd'hui. Le serveur a déjà attribué
+   * l'XP et le badge ; ici on ne fait qu'afficher la notification.
+   */
+  async announceLoginStreakMilestones(userId) {
+    try {
+      if (typeof window === 'undefined' || typeof gamificationServiceSupabase.getMyLoginStreak !== 'function') return []
+      const streak = await gamificationServiceSupabase.getMyLoginStreak()
+      const notifications = todaysStreakNotifications(streak, userId)
+      notifications.forEach((detail) => {
+        window.dispatchEvent(new CustomEvent('gamification:notification', { detail }))
+      })
+      if (streak) {
+        window.dispatchEvent(new CustomEvent('gamification:login-streak', { detail: { userId, streak } }))
+      }
+      return notifications
+    } catch (error) {
+      console.warn('Série de connexions non annoncée:', error?.message || error)
+      return []
+    }
   }
 
   /**

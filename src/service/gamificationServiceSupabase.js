@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../supabase.js'
+import { normalizeLoginStreak } from '../utils/loginStreak.js'
 
 // Configuration des maisons HES (compatible avec hesHousesService)
 export const HES_HOUSES = {
@@ -519,6 +520,22 @@ class GamificationServiceSupabase {
     } catch (error) {
       console.error('Erreur lors de l\'ajout d\'XP:', error)
       throw error
+    }
+  }
+
+  /**
+   * Série de connexions du compte connecté (calculée par le serveur).
+   * Renvoie `null` pour un compte non joueur, ou si la série n'est pas disponible.
+   */
+  async getMyLoginStreak({ strict = false } = {}) {
+    try {
+      const { data, error } = await this.supabase.rpc('get_my_login_streak')
+      if (error) throw error
+      return normalizeLoginStreak(data)
+    } catch (error) {
+      if (strict) throw error
+      console.warn('Série de connexions indisponible:', error?.message || error)
+      return null
     }
   }
 
