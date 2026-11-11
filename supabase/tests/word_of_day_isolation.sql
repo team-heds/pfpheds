@@ -217,6 +217,39 @@ begin
 end
 $grants$;
 
+-- Défi hebdomadaire « Mot de la semaine » (à lancer après
+-- 20261112110000_gamification_challenge_action_link.sql) : lien d'action interne, aucune
+-- récompense propre. Partie Reprise a déjà trouvé le mot : son défi se coche à la reprise.
+do $challenge$
+declare
+  v_week date := gamification_private.word_of_day_week_start();
+  v_rejected boolean := false;
+begin
+  insert into public.challenges (id, name, description, action_type, target_value, xp_reward, start_date, end_date, is_active, status, action_url)
+  values ('73000000-0000-4000-8000-0000000000c1', 'Test mot de la semaine', 'Test', 'word_of_week', 1, 0, v_week, v_week + 6, true, 'active', '/mot-de-la-semaine');
+
+  if not coalesce((gamification_private.validate_lifecycle_entity('challenge', '73000000-0000-4000-8000-0000000000c1') ->> 'valid')::boolean, false) then
+    raise exception 'the weekly word challenge must be a valid challenge';
+  end if;
+
+  -- Le lien d'un défi ne peut être qu'une adresse interne.
+  begin
+    update public.challenges set action_url = 'https://exemple.invalid/jeu'
+    where id = '73000000-0000-4000-8000-0000000000c1';
+  exception when check_violation then
+    v_rejected := true;
+  end;
+  if not v_rejected then raise exception 'an external action link was accepted'; end if;
+
+  if gamification_private.word_of_day_mark_challenge('73000000-0000-4000-8000-000000000005', v_week) <> 1 then
+    raise exception 'the challenge was not ticked for a player who already found the word';
+  end if;
+  if has_function_privilege('authenticated', 'gamification_private.word_of_day_mark_challenge(uuid, date)', 'execute') then
+    raise exception 'authenticated must not tick the challenge directly';
+  end if;
+end
+$challenge$;
+
 -- Joueur Un : deux semaines gagnées auparavant, une partie abandonnée il y a quatre semaines.
 insert into gamification_private.word_of_day_guesses (user_id, play_date, attempt_no, guess, feedback, is_correct)
 values
@@ -444,6 +477,29 @@ $already_paid$;
 
 reset role;
 
+-- Défi : coché pour qui a trouvé le mot (Un, Deux, Déjà Payé, Partie Reprise), jamais
+-- pour les autres, et sans aucun XP de défi.
+do $challenge_progress$
+declare
+  v_done integer;
+  v_rows integer;
+begin
+  select count(*) filter (where completed and current_value = 1), count(*) into v_done, v_rows
+  from public.user_challenge_progress
+  where challenge_id = '73000000-0000-4000-8000-0000000000c1';
+  if v_done <> 4 or v_rows <> 4 then
+    raise exception 'expected 4 ticked challenges, found % of % rows', v_done, v_rows;
+  end if;
+  if exists (
+    select 1 from public.xp_history
+    where user_id::text like '73000000-0000-4000-8000-00000000000%'
+      and (action = 'CHALLENGE_COMPLETE' or event_key like 'challenge:%')
+  ) then
+    raise exception 'the weekly word challenge must not pay XP';
+  end if;
+end
+$challenge_progress$;
+
 do $ledger_no_double_pay$
 declare
   v_rows integer;
@@ -523,6 +579,12 @@ begin
     where user_id = '73000000-0000-4000-8000-000000000003'
   ) then
     raise exception 'a lost game must not award XP';
+  end if;
+  if exists (
+    select 1 from public.user_challenge_progress
+    where user_id = '73000000-0000-4000-8000-000000000003'
+  ) then
+    raise exception 'a lost game must not tick the challenge';
   end if;
 end
 $ledger_end$;

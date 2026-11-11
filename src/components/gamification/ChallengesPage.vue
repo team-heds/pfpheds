@@ -77,7 +77,7 @@
               :key="challenge.id"
               :challenge="challenge"
               :house-color="houseColor"
-              @click="showChallengeModal(challenge)"
+              @click="openChallenge(challenge)"
               class="active-challenge"
             />
           </div>
@@ -284,6 +284,13 @@ const getProgressPercentage = (challenge) => {
 const showChallengeModal = (challenge) => {
   selectedChallenge.value = challenge
   showModal.value = true
+}
+
+// Un défi à faire qui porte un lien (jeu, quiz…) mène directement à l'endroit où le
+// réaliser ; les autres ouvrent leur fiche.
+const openChallenge = (challenge) => {
+  if (challenge?.actionUrl && !challenge.completed) router.push(challenge.actionUrl)
+  else showChallengeModal(challenge)
 }
 
 const formatHistoryDate = (dateString) => {

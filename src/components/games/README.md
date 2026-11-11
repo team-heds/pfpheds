@@ -43,7 +43,14 @@ les fichiers, les tables et les appels au serveur ont gardé leur nom `word_of_d
   `supabase/migrations/20261111110000_gamification_word_of_day.sql` ; un mot se retire
   en base avec `is_active = false` ;
 - le passage à la semaine est fait par
-  `supabase/migrations/20261112100000_gamification_word_of_week.sql`.
+  `supabase/migrations/20261112100000_gamification_word_of_week.sql` ;
+- le jeu apparaît dans les défis (« Quêtes et défis » de l’accueil et page des défis) : un
+  défi « Mot de la semaine » par semaine, créé par
+  `scripts/supabase/gamification-defi-mot-de-la-semaine.sql`, sans récompense propre
+  (`xp_reward = 0`), dont la carte mène au jeu grâce au lien facultatif des défis
+  (`challenges.action_url`, adresse interne, utilisable par n’importe quel défi). Il se
+  coche côté serveur quand le mot est trouvé
+  (`supabase/migrations/20261112110000_gamification_challenge_action_link.sql`).
 
 L’activation est contrôlée par `VITE_GAMIFICATION_WORD_OF_DAY` (carte dans l’espace
 jeux, donc aussi `VITE_GAMIFICATION_GAMES_HUB`).
