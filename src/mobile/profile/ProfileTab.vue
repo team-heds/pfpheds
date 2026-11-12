@@ -10,11 +10,6 @@
     <template v-else>
       <!-- Identité et maison -->
       <div class="m-profile__identity" :style="house ? { '--house': house.color } : null" :class="{ 'has-house': house }">
-        <!-- Image de la maison en bandeau, avec son blason -->
-        <div v-if="house" class="m-profile__banner">
-          <img :src="house.banner" :alt="`Blason de la maison ${house.name}`" class="m-profile__banner-img" />
-          <span class="m-profile__banner-fade" aria-hidden="true"></span>
-        </div>
         <div class="m-profile__who">
           <button type="button" class="m-profile__avatar" aria-label="Changer ma photo de profil" @click="shell.open('reglages')">
             <img v-if="avatarUrl && !avatarFailed" :src="avatarUrl" alt="" @error="avatarFailed = true" />
@@ -25,8 +20,46 @@
             <p v-else class="m-profile__name">{{ name }}</p>
             <p class="m-profile__sub">{{ subtitle }}</p>
           </div>
+          <!-- Blason de la maison, en petit -->
+          <img v-if="house" :src="house.crest" :alt="`Blason de la maison ${house.name}`" class="m-profile__crest" />
         </div>
 
+      </div>
+
+      <!-- Deux vues : la formation pratique et la progression (gamification) -->
+      <div v-if="journey" class="m-profile__switch" role="tablist" aria-label="Vues du profil">
+        <button
+          v-for="view in VIEWS"
+          :id="`m-profile-tab-${view.key}`"
+          :key="view.key"
+          type="button"
+          role="tab"
+          :aria-selected="store.view === view.key ? 'true' : 'false'"
+          :aria-controls="`m-profile-panel-${view.key}`"
+          @click="store.view = view.key"
+        >{{ view.label }}</button>
+      </div>
+
+      <!-- Formation pratique : stages, dossier, documents -->
+      <div v-show="!journey || store.view === 'pfp'" id="m-profile-panel-pfp" class="m-profile__panel" role="tabpanel" aria-labelledby="m-profile-tab-pfp">
+        <section aria-labelledby="m-profile-stages">
+          <div class="m-profile__heading"><h2 id="m-profile-stages">Mes stages</h2></div>
+          <MyStagesView class="m-profile__stages" :active="active && (!journey || store.view === 'pfp')" />
+        </section>
+        <div class="m-profile__links">
+          <button v-for="link in pfpLinks" :key="link.key" type="button" class="m-row-link" @click="link.run()">
+            <span class="m-row-link__icon" aria-hidden="true"><MIcon :name="link.icon" /></span>
+            <span class="m-row-link__text">
+              <span>{{ link.label }}</span>
+              <small v-if="link.detail">{{ link.detail }}</small>
+            </span>
+            <MIcon name="next" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Progression : niveau, série, défis, badges -->
+      <div v-if="journey" v-show="store.view === 'progress'" id="m-profile-panel-progress" class="m-profile__panel" role="tabpanel" aria-labelledby="m-profile-tab-progress">
         <div v-if="level" class="m-profile__level">
           <div class="m-profile__level-line">
             <span>Niveau {{ level.level }}<template v-if="level.name"> · {{ level.name }}</template></span>
@@ -36,81 +69,77 @@
             <span :style="{ width: `${level.percent}%` }"></span>
           </div>
         </div>
-      </div>
 
-      <button v-if="showHouseQuiz" type="button" class="m-profile__quiz" @click="router.push('/hes-house-quiz')">
-        <span>
-          <strong>Découvre ta maison</strong>
-          <small>Passe le quiz pour rejoindre Harmonis, Elaris, Doloris ou Solencia.</small>
-        </span>
-        <MIcon name="next" />
-      </button>
+        <button v-if="showHouseQuiz" type="button" class="m-profile__quiz" @click="router.push('/hes-house-quiz')">
+          <span>
+            <strong>Découvre ta maison</strong>
+            <small>Passe le quiz pour rejoindre Harmonis, Elaris, Doloris ou Solencia.</small>
+          </span>
+          <MIcon name="next" />
+        </button>
 
-      <!-- Chiffres -->
-      <div v-if="journey" class="m-profile__stats">
-        <div class="m-profile__stat">
-          <strong>{{ level ? formatNumber(level.xp) : '–' }}</strong>
-          <span>XP</span>
+        <!-- Chiffres -->
+        <div v-if="journey" class="m-profile__stats">
+          <div class="m-profile__stat">
+            <strong>{{ level ? formatNumber(level.xp) : '–' }}</strong>
+            <span>XP</span>
+          </div>
+          <div class="m-profile__stat m-profile__stat--accent">
+            <strong>{{ store.streak ? store.streak.current : '–' }}</strong>
+            <span>{{ store.streak?.current === 1 ? 'jour de suite' : 'jours de suite' }}</span>
+          </div>
+          <div class="m-profile__stat">
+            <strong>{{ collections ? store.badges.length : '–' }}</strong>
+            <span>{{ store.badges.length === 1 ? 'badge' : 'badges' }}</span>
+          </div>
         </div>
-        <div class="m-profile__stat m-profile__stat--accent">
-          <strong>{{ store.streak ? store.streak.current : '–' }}</strong>
-          <span>{{ store.streak?.current === 1 ? 'jour de suite' : 'jours de suite' }}</span>
-        </div>
-        <div class="m-profile__stat">
-          <strong>{{ collections ? store.badges.length : '–' }}</strong>
-          <span>{{ store.badges.length === 1 ? 'badge' : 'badges' }}</span>
-        </div>
-      </div>
 
-      <p v-if="store.streak" class="m-profile__streak">
-        <MIcon name="flame" />
-        <span>{{ nextMilestoneLabel(store.streak) }}</span>
-      </p>
+        <p v-if="store.streak" class="m-profile__streak">
+          <MIcon name="flame" />
+          <span>{{ nextMilestoneLabel(store.streak) }}</span>
+        </p>
 
-      <!-- Défis -->
-      <section v-if="collections" aria-labelledby="m-profile-challenges">
-        <div class="m-profile__heading">
-          <h2 id="m-profile-challenges">Mes défis</h2>
-          <button type="button" class="m-profile__all" @click="router.push('/challenges')">Tout voir</button>
-        </div>
-        <p v-if="store.loaded && !challenges.length" class="m-profile__empty">Aucun défi en cours pour le moment.</p>
-        <ul v-else class="m-profile__challenges">
-          <li v-for="item in challenges" :key="item.challenge.id">
-            <button type="button" class="m-profile__challenge" @click="router.push('/challenges')">
-              <span class="m-profile__challenge-line">
-                <span class="m-profile__challenge-name">{{ item.challenge.name || item.challenge.challengeName }}</span>
-                <span class="m-profile__pill" :class="{ 'is-done': item.state.completed }">{{ item.state.completed ? 'Terminé' : item.state.label }}</span>
+        <!-- Défis -->
+        <section v-if="collections" aria-labelledby="m-profile-challenges">
+          <div class="m-profile__heading">
+            <h2 id="m-profile-challenges">Mes défis</h2>
+            <button type="button" class="m-profile__all" @click="router.push('/challenges')">Tout voir</button>
+          </div>
+          <p v-if="store.loaded && !challenges.length" class="m-profile__empty">Aucun défi en cours pour le moment.</p>
+          <ul v-else class="m-profile__challenges">
+            <li v-for="item in challenges" :key="item.challenge.id">
+              <button type="button" class="m-profile__challenge" @click="router.push('/challenges')">
+                <span class="m-profile__challenge-line">
+                  <span class="m-profile__challenge-name">{{ item.challenge.name || item.challenge.challengeName }}</span>
+                  <span class="m-profile__pill" :class="{ 'is-done': item.state.completed }">{{ item.state.completed ? 'Terminé' : item.state.label }}</span>
+                </span>
+                <span class="m-profile__bar m-profile__bar--thin" aria-hidden="true"><span :style="{ width: `${item.state.percent}%` }"></span></span>
+                <span v-if="item.challenge.reward?.xp" class="m-profile__challenge-xp">+{{ item.challenge.reward.xp }} XP</span>
+              </button>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Badges -->
+        <section v-if="collections" aria-labelledby="m-profile-badges">
+          <div class="m-profile__heading">
+            <h2 id="m-profile-badges">Mes badges</h2>
+            <button type="button" class="m-profile__all" @click="router.push('/achievements')">Tout voir</button>
+          </div>
+          <p v-if="store.loaded && !store.badges.length" class="m-profile__empty">Pas encore de badge : relève un défi pour gagner le premier.</p>
+          <ul v-else class="m-profile__badges">
+            <li v-for="badge in store.badges" :key="badge.id" class="m-profile__badge">
+              <span class="m-profile__badge-icon" :style="{ color: badge.color }" aria-hidden="true">
+                <i v-if="badgeIcon(badge).className" :class="badgeIcon(badge).className"></i>
+                <template v-else>{{ badgeIcon(badge).text }}</template>
               </span>
-              <span class="m-profile__bar m-profile__bar--thin" aria-hidden="true"><span :style="{ width: `${item.state.percent}%` }"></span></span>
-              <span v-if="item.challenge.reward?.xp" class="m-profile__challenge-xp">+{{ item.challenge.reward.xp }} XP</span>
-            </button>
-          </li>
-        </ul>
-      </section>
+              <span class="m-profile__badge-name">{{ badge.name }}</span>
+            </li>
+          </ul>
+        </section>
 
-      <!-- Badges -->
-      <section v-if="collections" aria-labelledby="m-profile-badges">
-        <div class="m-profile__heading">
-          <h2 id="m-profile-badges">Mes badges</h2>
-          <button type="button" class="m-profile__all" @click="router.push('/achievements')">Tout voir</button>
-        </div>
-        <p v-if="store.loaded && !store.badges.length" class="m-profile__empty">Pas encore de badge : relève un défi pour gagner le premier.</p>
-        <ul v-else class="m-profile__badges">
-          <li v-for="badge in store.badges" :key="badge.id" class="m-profile__badge">
-            <span class="m-profile__badge-icon" :style="{ color: badge.color }" aria-hidden="true">
-              <i v-if="badgeIcon(badge).className" :class="badgeIcon(badge).className"></i>
-              <template v-else>{{ badgeIcon(badge).text }}</template>
-            </span>
-            <span class="m-profile__badge-name">{{ badge.name }}</span>
-          </li>
-        </ul>
-      </section>
-
-      <!-- Mon espace -->
-      <section aria-labelledby="m-profile-space">
-        <div class="m-profile__heading"><h2 id="m-profile-space">Mon espace</h2></div>
         <div class="m-profile__links">
-          <button v-for="link in links" :key="link.key" type="button" class="m-row-link" @click="link.run()">
+          <button v-for="link in progressLinks" :key="link.key" type="button" class="m-row-link" @click="link.run()">
             <span class="m-row-link__icon" aria-hidden="true"><MIcon :name="link.icon" /></span>
             <span class="m-row-link__text">
               <span>{{ link.label }}</span>
@@ -119,7 +148,7 @@
             <MIcon name="next" />
           </button>
         </div>
-      </section>
+      </div>
     </template>
   </section>
 </template>
@@ -141,6 +170,7 @@ import { useMobileStoriesStore } from '@/mobile/home/mobileStoriesStore'
 import { initialsOf } from '@/mobile/home/postMedia'
 import { useMobileInstitutionsStore } from '@/mobile/institutions/mobileInstitutionsStore'
 import { useMobileProfileStore } from '@/mobile/profile/mobileProfileStore'
+import MyStagesView from '@/mobile/institutions/MyStagesView.vue'
 import { badgeIcon, displayNameOf, featuredChallenges, formatNumber, houseOf, levelSummary } from '@/mobile/profile/profileHelpers'
 
 const props = defineProps({
@@ -186,13 +216,20 @@ const subtitle = computed(() => {
 const showHouseQuiz = computed(() => journey && store.loaded && !house.value && quizOpen.value)
 const challenges = computed(() => featuredChallenges(store.challenges))
 
-const links = computed(() => [
+const VIEWS = [
+  { key: 'pfp', label: 'Formation pratique' },
+  { key: 'progress', label: 'Progression' },
+]
+const settingsLink = { key: 'settings', icon: 'settings', label: 'Réglages', detail: 'Photo, notifications, thème, déconnexion', run: () => shell.open('reglages') }
+const pfpLinks = [
+  { key: 'documents', icon: 'folder', label: 'Documents PFP', detail: 'Guides, formulaires et évaluations', run: () => { institutionsView.view = 'documents'; router.push('/institution') } },
+  settingsLink,
+]
+const progressLinks = [
   gamificationFeatures.mentoring && { key: 'mentoring', icon: 'users', label: 'Mes créneaux de mentorat', detail: 'Créneaux proposés ou réservés', run: () => router.push('/mentorat') },
-  { key: 'stages', icon: 'building', label: 'Mes stages', detail: 'Places attribuées et résultats', run: () => { institutionsView.view = 'stages'; router.push('/institution') } },
-  { key: 'record', icon: 'file', label: 'Mon dossier de formation', detail: 'Informations, critères et documents à déposer', run: () => shell.open('mon-dossier') },
-  journey && { key: 'history', icon: 'star', label: 'Ma progression en détail', detail: 'Historique des points, quêtes et objectifs', run: () => router.push('/gamification-profile') },
-  { key: 'settings', icon: 'settings', label: 'Réglages', detail: 'Photo, notifications, thème, déconnexion', run: () => shell.open('reglages') },
-].filter(Boolean))
+  { key: 'history', icon: 'star', label: 'Ma progression en détail', detail: 'Historique des points, quêtes et objectifs', run: () => router.push('/gamification-profile') },
+  settingsLink,
+].filter(Boolean)
 
 const reload = (force = false) => store.load(userId.value, { force })
 
@@ -236,48 +273,15 @@ onMounted(() => reload())
   background: var(--m-surface);
 }
 .m-profile__identity.has-house {
-  padding-top: 0;
-  overflow: hidden;
   border-color: var(--house);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--house) 18%, var(--m-surface)) 0%, var(--m-surface) 60%);
 }
-/* Image de la maison en entier (blason compris), fondue vers la carte en bas. */
-.m-profile__banner {
-  position: relative;
-  aspect-ratio: 3 / 2;
-  max-height: 230px;
-  margin: 0 -16px -44px;
-}
-.m-profile__banner-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
-.m-profile__banner-fade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 72%, var(--m-surface) 100%);
-}
-/* Avec une maison : la photo chevauche le bandeau à gauche, le nom passe dessous. */
-.m-profile__identity.has-house .m-profile__who {
-  position: relative;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-.m-profile__identity.has-house .m-profile__avatar {
-  width: 76px;
-  height: 76px;
-  border-width: 4px;
-  box-shadow: 0 4px 14px rgba(2, 8, 18, 0.45);
-}
-.m-profile__who {
-  position: relative;
-  align-items: flex-end;
-}
-.m-profile__identity.has-house .m-profile__avatar {
-  box-shadow: 0 4px 14px rgba(2, 8, 18, 0.45);
+.m-profile__crest {
+  flex-shrink: 0;
+  width: auto;
+  height: 56px;
+  margin-left: auto;
+  filter: drop-shadow(0 3px 6px rgba(2, 8, 18, 0.35));
 }
 .m-profile__who {
   display: flex;
@@ -311,6 +315,7 @@ onMounted(() => reload())
   outline-offset: 2px;
 }
 .m-profile__names {
+  flex: 1;
   min-width: 0;
 }
 .m-profile__name {
@@ -553,6 +558,59 @@ onMounted(() => reload())
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+.m-profile__switch {
+  display: flex;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--m-surface);
+}
+.m-profile__switch button {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--m-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.m-profile__switch button[aria-selected='true'] {
+  background: var(--m-raised);
+  color: var(--m-fg);
+  font-weight: 600;
+}
+.m-profile__switch button:focus-visible {
+  outline: 2px solid var(--m-accent-text);
+  outline-offset: -2px;
+}
+.m-profile__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.m-profile__level {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--m-surface);
+}
+/* « Mes stages » repris de l'onglet Institutions, sans sa propre zone de défilement. */
+.m-profile__stages {
+  position: static;
+}
+.m-profile__stages :deep(.m-stages) {
+  padding-top: 0;
+}
+.m-profile__stages :deep(.m-state) {
+  padding: 20px 12px;
+  border-radius: 18px;
+  background: var(--m-surface);
+}
+.m-profile__stages :deep(.m-stages__links) {
+  margin-top: 8px;
 }
 .m-profile__links {
   display: flex;

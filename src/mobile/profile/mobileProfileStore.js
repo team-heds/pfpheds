@@ -20,6 +20,8 @@ const settle = async (label, promise, fallback) => {
  */
 export const useMobileProfileStore = defineStore('mobileProfile', {
   state: () => ({
+    /** Vue ouverte dans l'onglet : 'pfp' (formation pratique) ou 'progress'. */
+    view: 'pfp',
     userId: null,
     profile: null,
     stats: null,
