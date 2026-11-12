@@ -143,7 +143,12 @@ describe('responsive navigation contract', () => {
 
   const mountApp = async () => {
     wrapper = mount(App, { global: { plugins: [router, createPinia()], stubs: { Transition: true, TransitionGroup: true } } })
-    await flushPromises()
+    // La coque et ses onglets sont chargés à la demande : on attend leur arrivée.
+    for (let round = 0; round < 40; round += 1) {
+      await flushPromises()
+      await new Promise((resolve) => setTimeout(resolve, 25))
+      if (!window.matchMedia('(max-width: 768px)').matches || !stores.auth.user || wrapper.find('nav.m-tabs').exists()) break
+    }
     return wrapper
   }
 

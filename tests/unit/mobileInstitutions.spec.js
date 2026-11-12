@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/supabase.js', () => ({ supabase: {} }))
 
 import InstitutionCard from '@/mobile/institutions/InstitutionCard.vue'
-import { indexPlacesById } from '@/mobile/institutions/myStagesService'
+import { CRITERIA, indexPlacesById, splitCriteria } from '@/mobile/institutions/myStagesService'
 import { useMobileInstitutionsStore } from '@/mobile/institutions/mobileInstitutionsStore'
 import {
   activeFilterChips,
@@ -115,6 +115,14 @@ describe('mes stages (mobile)', () => {
     expect(formatStagePeriod({ year: '2026-2027' })).toBe('2026-2027')
     expect(formatStagePeriod({})).toBe('')
     expect(formatStagePeriod({ startDate: '2027-02-02', endDate: '2027-03-13' })).toMatch(/2.*févr.*–.*13.*mars.*2027/)
+  })
+
+  it('sépare les critères validés de ceux qui restent à valider', () => {
+    const { validated, remaining } = splitCriteria({ MSQ: true, FR: true, AIGU: false })
+    expect(validated.map((item) => item.key)).toEqual(['MSQ', 'FR'])
+    expect(remaining.map((item) => item.key)).toEqual(['SYSINT', 'NEUROGER', 'AIGU', 'REHAB', 'AMBU', 'DE'])
+    expect(splitCriteria().validated).toEqual([])
+    expect(CRITERIA.find((item) => item.key === 'DE').label).toBe('Stage en allemand')
   })
 
   it('retrouve une place par identifiant texte ou nombre', () => {

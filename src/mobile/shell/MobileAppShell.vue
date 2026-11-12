@@ -51,18 +51,12 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import MobileHeader from '@/mobile/shell/MobileHeader.vue'
 import MobileTabBar from '@/mobile/shell/MobileTabBar.vue'
 import MobilePage from '@/mobile/shell/MobilePage.vue'
-import HomeTab from '@/mobile/home/HomeTab.vue'
-import InstitutionsTab from '@/mobile/institutions/InstitutionsTab.vue'
-import MapTab from '@/mobile/map/MapTab.vue'
-import SearchTab from '@/mobile/search/SearchTab.vue'
-import ProfileTab from '@/mobile/profile/ProfileTab.vue'
-import InstitutionDetailScreen from '@/mobile/institutions/InstitutionDetailScreen.vue'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useMobileNotificationsStore } from '@/mobile/home/mobileNotificationsStore'
 import { useMobileStoriesStore } from '@/mobile/home/mobileStoriesStore'
@@ -70,6 +64,15 @@ import { MOBILE_SHELL_KEY } from '@/mobile/shell/useMobileShell'
 import { OVERLAYS, canRestoreOverlay } from '@/mobile/shell/overlayRegistry'
 import { buildTabs, pageKey } from '@/mobile/shell/tabs'
 import { useKeyboardInset } from '@/mobile/shell/useKeyboardInset'
+
+// Chaque onglet n'est téléchargé qu'à sa première ouverture : le démarrage
+// ne charge que la coque et l'onglet affiché.
+const HomeTab = defineAsyncComponent(() => import('@/mobile/home/HomeTab.vue').then((module) => module.default))
+const InstitutionsTab = defineAsyncComponent(() => import('@/mobile/institutions/InstitutionsTab.vue').then((module) => module.default))
+const MapTab = defineAsyncComponent(() => import('@/mobile/map/MapTab.vue').then((module) => module.default))
+const SearchTab = defineAsyncComponent(() => import('@/mobile/search/SearchTab.vue').then((module) => module.default))
+const ProfileTab = defineAsyncComponent(() => import('@/mobile/profile/ProfileTab.vue').then((module) => module.default))
+const InstitutionDetailScreen = defineAsyncComponent(() => import('@/mobile/institutions/InstitutionDetailScreen.vue').then((module) => module.default))
 
 // Écrans conçus pour le téléphone, par nom de route. Une adresse absente de
 // ces tables affiche la page existante dans le cadre de la coque.

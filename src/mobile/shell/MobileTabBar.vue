@@ -41,7 +41,9 @@ watch(() => props.avatarUrl, () => {
 .m-tabs {
   display: flex;
   flex-shrink: 0;
-  padding: 4px max(8px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+  /* Sous les icônes, juste la place de la barre d'accueil de l'iPhone (pas toute
+     la zone sûre, qui laissait un grand vide). */
+  padding: 4px max(8px, env(safe-area-inset-right, 0px)) max(4px, calc(env(safe-area-inset-bottom, 0px) - 14px)) max(8px, env(safe-area-inset-left, 0px));
   border-top: 1px solid var(--m-line);
   background: var(--m-surface);
 }
