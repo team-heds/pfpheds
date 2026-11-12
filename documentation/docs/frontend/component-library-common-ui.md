@@ -50,7 +50,6 @@ Usage :
 - `GlobalSearch.vue`
 - `HeaderIcons.vue`
 - `Loader.vue`
-- `MobileBottomNav.vue`
 - `Navbar.vue`
 - `PwaInstallPrompt.vue`
 - `SearchResults.vue`

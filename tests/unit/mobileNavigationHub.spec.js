@@ -11,7 +11,8 @@ vi.mock('@/supabase', () => ({ supabase: {} }))
 vi.mock('@/components/common/utils/Navbar.vue', () => ({ default: { template: '<header />' } }))
 
 import MobileToolsView from '@/views/apps/tools/MobileToolsView.vue'
-import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue'
+import MobileTabBar from '@/mobile/shell/MobileTabBar.vue'
+import { buildTabs, tabForPath } from '@/mobile/shell/tabs'
 import { getNavigationDestinations, getVotationDestination } from '@/composables/useNavigationDestinations'
 import appRoutes from '@/router/routes/apps'
 import adminRoutes from '@/router/routes/admin'
@@ -163,13 +164,13 @@ describe('Mobile navigation hub interface', () => {
     expect(storeState.role.init).not.toHaveBeenCalled()
   })
 
-  it('keeps the five mobile destinations and highlights both hub URLs', async () => {
-    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+  it('shows the five tabs of the mobile app and highlights the hub inside the search tab', async () => {
     await router.push('/mobile-tools')
-    wrapper = mount(MobileBottomNav, { global: { plugins: [router] } })
-    expect(wrapper.findAll('a')).toHaveLength(5)
-    expect(wrapper.get('a[href="/mobile-outils"]').attributes('aria-current')).toBe('page')
-    expect(wrapper.get('a[href="/mobile-outils"]').text()).toContain('Mon espace')
-    expect(wrapper.get('a[href="/profile/student-test"]').text()).toContain('Profil')
+    wrapper = mount(MobileTabBar, {
+      props: { tabs: buildTabs('student-test'), active: tabForPath('/mobile-tools', { userId: 'student-test' }) },
+    })
+    expect(wrapper.findAll('button')).toHaveLength(5)
+    expect(wrapper.get('[aria-current="page"]').attributes('aria-label')).toBe('Recherche')
+    expect(wrapper.findAll('button').at(4).attributes('aria-label')).toBe('Profil')
   })
 })

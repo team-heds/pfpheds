@@ -10,11 +10,13 @@
 
 
     <!-- Layout de l'application -->
-    <div id="main-content" class="content" tabindex="-1">
+    <div id="main-content" class="content" :class="{ 'content--mobile-app': mobileAppActive }" tabindex="-1">
       <Toast />
       <ConfirmDialog />
-      <router-view />
-      <MobileBottomNav v-if="showMobileBottomNav" />
+      <!-- Téléphone, connecté : application mobile (coque et onglets).
+           Sinon : les pages habituelles, inchangées. -->
+      <MobileAppShell v-if="mobileAppActive" />
+      <router-view v-else />
       <VersionningComponent v-if="!isImmersiveRoute" />
       <PwaInstallPrompt />
       <OfflineBanner />
@@ -40,7 +42,8 @@ import ConfirmDialog from 'primevue/confirmdialog';
 // import ConvaiWidget from '@/components/ui/ConvaiWidget.vue';
 // import Loader from '@/components/common/utils/Loader.vue'; // Import du composant Loader
 import VersionningComponent from './components/common/utils/VersionningComponent.vue'; // Import du nouveau composant
-import MobileBottomNav from '@/components/common/utils/MobileBottomNav.vue';
+import MobileAppShell from '@/mobile/shell/MobileAppShell.vue';
+import { useMobileViewport } from '@/mobile/shell/useMobileViewport';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import OfflineBanner from '@/components/common/utils/OfflineBanner.vue';
 import PwaUpdatePrompt from '@/components/common/utils/PwaUpdatePrompt.vue';
@@ -60,11 +63,14 @@ export default {
     ConfirmDialog,
     // ConvaiWidget,
     VersionningComponent,
-    MobileBottomNav,
+    MobileAppShell,
     PwaInstallPrompt,
     OfflineBanner,
     PwaUpdatePrompt,
     GamificationNotification,
+  },
+  setup() {
+    return { isMobileViewport: useMobileViewport() };
   },
   data() {
     return {
@@ -82,8 +88,15 @@ export default {
     realtimeEnabled() {
       return runtimeFeatures.supabaseRealtime;
     },
-    showMobileBottomNav() {
-      return this.$route.meta?.hideMobileNav !== true;
+    // L'application mobile remplace les pages d'ordinateur sur téléphone, une fois connecté.
+    // Les pages publiques (connexion, pages plein écran) gardent leur affichage propre.
+    mobileAppActive() {
+      const meta = this.$route.meta || {};
+      return this.isMobileViewport
+        && Boolean(this.gamificationUserId)
+        && this.gamificationUserId !== 'guest-user'
+        && meta.hideMobileNav !== true
+        && meta.immersive !== true;
     },
     isImmersiveRoute() {
       return this.$route.meta?.immersive === true;
@@ -221,6 +234,15 @@ export default {
   padding: var(--content-pad);
 }
 
+/* Application mobile : la coque occupe tout l'espace et gère son propre défilement. */
+.content.content--mobile-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 .app-shell--immersive {
   background: #ffffff;
 }
@@ -236,8 +258,5 @@ export default {
     display: none;
   }
 
-  .content {
-    padding-block-end: calc(var(--content-pad) + 4.5rem + env(safe-area-inset-bottom, 0px));
-  }
 }
 </style>
