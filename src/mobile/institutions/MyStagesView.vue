@@ -58,7 +58,7 @@
         </span>
         <MIcon name="next" />
       </button>
-      <button v-if="userId" type="button" class="m-row-link" @click="router.push(`/profile/${userId}`)">
+      <button v-if="userId" type="button" class="m-row-link" @click="shell.open('mon-dossier')">
         <span class="m-row-link__icon" aria-hidden="true"><MIcon name="file" /></span>
         <span class="m-row-link__text">
           <span>Mon dossier de stage</span>
@@ -81,12 +81,14 @@ import { usePlacesStore } from '@/stores/placesStore'
 import { getVotationDestination } from '@/composables/useNavigationDestinations'
 import { PROFILE_CRITERIA_KEYS } from '@/utils/profileStages'
 import { useKeptScroll } from '@/mobile/shell/useKeptScroll'
+import { useMobileShell } from '@/mobile/shell/useMobileShell'
 import { fetchMyStages } from '@/mobile/institutions/myStagesService'
 import { formatStagePeriod, stageStatus } from '@/mobile/institutions/institutionHelpers'
 
 const props = defineProps({ active: { type: Boolean, default: false } })
 
 const router = useRouter()
+const shell = useMobileShell()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 const institutionsStore = useInstitutionsStore()

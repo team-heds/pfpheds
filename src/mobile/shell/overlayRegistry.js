@@ -29,6 +29,14 @@ export const OVERLAYS = {
     component: defineAsyncComponent(() => import('@/mobile/institutions/InstitutionFiltersSheet.vue')),
     restorable: true,
   },
+  reglages: {
+    component: defineAsyncComponent(() => import('@/mobile/profile/SettingsScreen.vue')),
+    restorable: true,
+  },
+  'mon-dossier': {
+    component: defineAsyncComponent(() => import('@/mobile/profile/MyRecordScreen.vue')),
+    restorable: true,
+  },
   story: {
     component: defineAsyncComponent(() => import('@/mobile/home/StoryViewerOverlay.vue')),
   },

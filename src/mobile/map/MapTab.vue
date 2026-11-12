@@ -426,6 +426,7 @@ watch(() => mapStore.focusRequest, () => {
 })
 
 onMounted(async () => {
+  window.addEventListener('heds:theme-change', detectTheme)
   detectTheme()
   createMap()
   await load()
@@ -437,6 +438,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('heds:theme-change', detectTheme)
   map?.remove()
   map = null
   markers.clear()

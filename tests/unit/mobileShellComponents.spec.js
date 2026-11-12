@@ -9,6 +9,9 @@ vi.mock('@/stores/authStore', () => ({ useAuthStore: () => auth.store }))
 vi.mock('@/mobile/home/HomeTab.vue', () => ({
   default: { name: 'HomeTab', props: ['active'], template: '<section class="home-stub">Fil</section>' },
 }))
+vi.mock('@/mobile/profile/ProfileTab.vue', () => ({
+  default: { name: 'ProfileTab', props: ['active'], template: '<section class="profile-stub">Profil</section>' },
+}))
 vi.mock('@/mobile/search/SearchTab.vue', () => ({
   default: {
     name: 'SearchTab',
@@ -157,20 +160,32 @@ describe('coque de l’application mobile', () => {
     expect(wrapper.find('.m-header__side--end [aria-label="Notifications"]').exists()).toBe(true)
   })
 
-  it('ouvre les autres onglets avec les pages existantes, sans les recharger au retour', async () => {
+  it('garde en mémoire les pages existantes ouvertes dans un onglet, sans les recharger au retour', async () => {
+    ({ wrapper, router } = await mountShell('/feed'))
+    await router.push('/quiz'); await settle()
+    expect(wrapper.find('[data-page="Quiz"]').exists()).toBe(true)
+    expect(wrapper.find('.home-stub').isVisible()).toBe(false)
+
+    await tabButton(wrapper, 'Accueil').trigger('click'); await settle()
+    expect(wrapper.find('.home-stub').isVisible()).toBe(true)
+    await tabButton(wrapper, 'Recherche').trigger('click'); await settle()
+    expect(router.currentRoute.value.path).toBe('/quiz')
+    // Une seule création : la page est restée en mémoire.
+    expect(mounts).toBe(1)
+  })
+
+  it('réserve l’écran mobile du profil à son propre profil', async () => {
     ({ wrapper, router } = await mountShell('/feed'))
     await tabButton(wrapper, 'Profil').trigger('click'); await settle()
     expect(router.currentRoute.value.path).toBe(`/profile/${USER}`)
-    expect(wrapper.find('[data-page="Profil"]').exists()).toBe(true)
-    expect(wrapper.find('.home-stub').isVisible()).toBe(false)
+    expect(wrapper.find('.profile-stub').isVisible()).toBe(true)
+    expect(wrapper.find('[data-page="Profil"]').exists()).toBe(false)
+    expect(wrapper.find('.m-header [aria-label="Réglages"]').exists()).toBe(true)
 
-    await router.push('/quiz'); await settle()
-    await tabButton(wrapper, 'Profil').trigger('click'); await settle()
-    await tabButton(wrapper, 'Accueil').trigger('click'); await settle()
-    await tabButton(wrapper, 'Profil').trigger('click'); await settle()
-    expect(wrapper.find('.home-stub').isVisible()).toBe(false)
-    // Une seule création par page : les onglets sont gardés en mémoire.
-    expect(mounts).toBe(2)
+    await router.push('/profile/quelquun-d-autre'); await settle()
+    expect(wrapper.find('[data-page="Profil"]').exists()).toBe(true)
+    expect(wrapper.find('.profile-stub').isVisible()).toBe(false)
+    expect(wrapper.find('.m-header [aria-label="Retour"]').exists()).toBe(true)
   })
 
   it('empile un écran avec bouton retour, et l’onglet retrouve cet écran', async () => {

@@ -61,6 +61,7 @@ import HomeTab from '@/mobile/home/HomeTab.vue'
 import InstitutionsTab from '@/mobile/institutions/InstitutionsTab.vue'
 import MapTab from '@/mobile/map/MapTab.vue'
 import SearchTab from '@/mobile/search/SearchTab.vue'
+import ProfileTab from '@/mobile/profile/ProfileTab.vue'
 import InstitutionDetailScreen from '@/mobile/institutions/InstitutionDetailScreen.vue'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useMobileNotificationsStore } from '@/mobile/home/mobileNotificationsStore'
@@ -78,6 +79,7 @@ const nativeTabs = [
   { key: 'home', component: HomeTab },
   { key: 'institutions', component: InstitutionsTab },
   { key: 'search', component: SearchTab },
+  { key: 'profile', component: ProfileTab },
   // La carte occupe tout l'écran : pas d'en-tête, ses commandes flottent dessus.
   { key: 'map', component: MapTab, header: false },
 ]
@@ -102,7 +104,11 @@ const userId = computed(() => {
   return id && id !== 'guest-user' ? id : null
 })
 const tabs = computed(() => buildTabs(userId.value))
-const nativeScreen = computed(() => NATIVE_SCREENS[route.name] || null)
+const nativeScreen = computed(() => {
+  // Seul son propre profil a l'écran mobile ; celui d'une autre personne garde la page existante.
+  if (route.name === 'Profile') return userId.value && route.params.id === userId.value ? 'profile' : null
+  return NATIVE_SCREENS[route.name] || null
+})
 const chrome = computed(() => route.meta?.mobileChrome !== 'none')
 const canGoBack = computed(() => store.canGoBack)
 const showHeader = computed(() => nativeTabs.find((tab) => tab.key === nativeScreen.value)?.header !== false)
@@ -215,7 +221,7 @@ const headerActions = computed(() => {
 function onHeaderAction(key) {
   if (key === 'compose') openOverlay('publier')
   else if (key === 'notifications') openOverlay('notifications')
-  else if (key === 'settings') router.push('/settings')
+  else if (key === 'settings') openOverlay('reglages')
 }
 
 // --- Thème -----------------------------------------------------------------
@@ -227,6 +233,7 @@ const detectTheme = () => {
   lightTheme.value = Boolean(light && !light.disabled && light.media !== 'not all')
 }
 watch(() => route.fullPath, detectTheme)
+window.addEventListener('heds:theme-change', detectTheme)
 
 onMounted(() => {
   detectTheme()
@@ -237,7 +244,10 @@ onMounted(() => {
     titleObserver.observe(titleElement, { childList: true, characterData: true, subtree: true })
   }
 })
-onBeforeUnmount(() => titleObserver?.disconnect())
+onBeforeUnmount(() => {
+  titleObserver?.disconnect()
+  window.removeEventListener('heds:theme-change', detectTheme)
+})
 </script>
 
 <style>

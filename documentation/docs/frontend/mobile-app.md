@@ -10,7 +10,7 @@ Sous 768 px de large et une fois connecté, `src/App.vue` affiche `MobileAppShel
 
 Mobile et ordinateur utilisent **les mêmes routes**. La coque regarde la route courante :
 
-- si un écran mobile existe pour cette route, elle l'affiche : onglets gardés en mémoire (table `NATIVE_SCREENS` de `MobileAppShell.vue` : `FeedView` → `HomeTab`, `Institution` → `InstitutionsTab`, `Map` → `MapTab`, `MobileSearchView` → `SearchTab`) ou écrans empilés (table `NATIVE_PAGES` : `InstitutionView` → `InstitutionDetailScreen`) ;
+- si un écran mobile existe pour cette route, elle l'affiche : onglets gardés en mémoire (table `NATIVE_SCREENS` de `MobileAppShell.vue` : `FeedView` → `HomeTab`, `Institution` → `InstitutionsTab`, `Map` → `MapTab`, `MobileSearchView` → `SearchTab`, `Profile` → `ProfileTab` pour son propre profil uniquement) ou écrans empilés (table `NATIVE_PAGES` : `InstitutionView` → `InstitutionDetailScreen`) ;
 - sinon elle affiche la page existante dans son cadre (`MobilePage`), avec titre et bouton retour.
 
 Refaire un onglet pour le téléphone revient à écrire son écran dans `src/mobile/<onglet>/` et à l'ajouter à cette table.
@@ -43,6 +43,10 @@ Les panneaux (`BottomSheet`) et écrans empilés (`MobileStackScreen`, avec une 
 
 `src/mobile/search/SearchTab.vue` : champ de recherche (personnes et modules via `globalSearchService`, institutions, pages), tuiles d'accès rapide selon les réglages de gamification (`buildQuickTiles`), classement des maisons (table `houses`) et autres accès de la personne (`useNavigationDestinations`). Les modules ouverts depuis une tuile (défis, mot de la semaine, quiz, mentorat, présences) sont les pages existantes, affichées en écran empilé ; la coque masque leur titre et leur flèche de retour en double (`.game-header`).
 
+## Onglet Profil
+
+`src/mobile/profile/` : identité et maison, niveau, série, défis, badges (`mobileProfileStore`, qui réutilise `gamificationServiceSupabase`, `challengesService`, `badgesService`), puis les accès personnels. « Réglages » (photo de profil, notifications, thème clair ou sombre, déconnexion) et « Mon dossier » (le dossier de formation existant, `ProfileInfo`) sont des écrans empilés. Le profil d'une autre personne garde la page existante.
+
 ## Tests
 
-`tests/unit/mobileShellStore.spec.js`, `mobileShellComponents.spec.js`, `mobileHomeHelpers.spec.js`, `mobileInstitutions.spec.js`, `mobileMap.spec.js`, `mobileSearch.spec.js`, `responsiveNavigation.spec.js`.
+`tests/unit/mobileShellStore.spec.js`, `mobileShellComponents.spec.js`, `mobileHomeHelpers.spec.js`, `mobileInstitutions.spec.js`, `mobileMap.spec.js`, `mobileSearch.spec.js`, `mobileProfile.spec.js`, `responsiveNavigation.spec.js`.
