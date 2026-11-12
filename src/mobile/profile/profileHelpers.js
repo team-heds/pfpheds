@@ -1,14 +1,25 @@
 import { getLevelInfo, getLevelProgress, getXPToNextLevel } from '@/config/levelsConfig'
+// Versions allégées (environ 100 Ko) des images des maisons, pour le téléphone.
+import FondHarmonis from '@/assets/maisons/mobile/FondHarmonis.jpg'
+import FondElaris from '@/assets/maisons/mobile/FondElaris.jpg'
+import FondDoloris from '@/assets/maisons/mobile/FondDoloris.jpg'
+import FondSolencia from '@/assets/maisons/mobile/FondSolencia.jpg'
+import FondMaitreDuJeu from '@/assets/maisons/mobile/FondMaitreDuJeu.jpg'
+import BlasonHarmonis from '@/assets/maisons/mobile/BlasonHarmonis.png'
+import BlasonElaris from '@/assets/maisons/mobile/BlasonElaris.png'
+import BlasonDoloris from '@/assets/maisons/mobile/BlasonDoloris.png'
+import BlasonSolencia from '@/assets/maisons/mobile/BlasonSolencia.png'
+import BlasonMaitreDuJeu from '@/assets/maisons/mobile/BlasonMaitreDuJeu.png'
 
 const HOUSES = {
-  harmonis: { name: 'Harmonis', color: '#2E8B57' },
-  elaris: { name: 'Elaris', color: '#DC143C' },
-  doloris: { name: 'Doloris', color: '#FFD700' },
-  solencia: { name: 'Solencia', color: '#4169E1' },
-  gamemaster: { name: 'Maître du jeu', color: '#9333ea' },
+  harmonis: { name: 'Harmonis', color: '#2E8B57', banner: FondHarmonis, crest: BlasonHarmonis },
+  elaris: { name: 'Elaris', color: '#DC143C', banner: FondElaris, crest: BlasonElaris },
+  doloris: { name: 'Doloris', color: '#FFD700', banner: FondDoloris, crest: BlasonDoloris },
+  solencia: { name: 'Solencia', color: '#4169E1', banner: FondSolencia, crest: BlasonSolencia },
+  gamemaster: { name: 'Maître du jeu', color: '#9333ea', banner: FondMaitreDuJeu, crest: BlasonMaitreDuJeu },
 }
 
-/** Maison d'une personne à partir du nom enregistré : { key, name, color } ou null. */
+/** Maison d'une personne à partir du nom enregistré : { key, name, color, banner, crest } ou null. */
 export function houseOf(value) {
   const text = String(value || '').trim().toLowerCase()
   if (!text) return null

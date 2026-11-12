@@ -12,6 +12,8 @@ import { applyScheme, currentScheme } from '@/mobile/profile/theme'
 describe('profil mobile : identité et maison', () => {
   it('reconnaît la maison, quelle que soit son écriture', () => {
     expect(houseOf('Solencia')).toMatchObject({ key: 'solencia', name: 'Solencia' })
+    expect(houseOf('Solencia').banner).toMatch(/FondSolencia/)
+    expect(houseOf('elaris').crest).toMatch(/BlasonElaris/)
     expect(houseOf(' harmonis ')).toMatchObject({ key: 'harmonis' })
     expect(houseOf('GameMaster').name).toBe('Maître du jeu')
     expect(houseOf('')).toBeNull()

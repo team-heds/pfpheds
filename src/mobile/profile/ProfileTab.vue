@@ -10,6 +10,11 @@
     <template v-else>
       <!-- Identité et maison -->
       <div class="m-profile__identity" :style="house ? { '--house': house.color } : null" :class="{ 'has-house': house }">
+        <!-- Image de la maison en bandeau, avec son blason -->
+        <div v-if="house" class="m-profile__banner">
+          <img :src="house.banner" :alt="`Blason de la maison ${house.name}`" class="m-profile__banner-img" />
+          <span class="m-profile__banner-fade" aria-hidden="true"></span>
+        </div>
         <div class="m-profile__who">
           <button type="button" class="m-profile__avatar" aria-label="Changer ma photo de profil" @click="shell.open('reglages')">
             <img v-if="avatarUrl && !avatarFailed" :src="avatarUrl" alt="" @error="avatarFailed = true" />
@@ -175,7 +180,7 @@ const subtitle = computed(() => {
   const parts = []
   const cohort = userStore.profile?.pfp_cohort || userStore.profile?.cohort || userStore.profile?.classe
   if (cohort) parts.push(cohort)
-  if (house.value) parts.push(`maison ${house.value.name}`)
+  if (house.value) parts.unshift(`Maison ${house.value.name}`)
   return parts.join(' · ') || authStore.user?.email || ''
 })
 const showHouseQuiz = computed(() => journey && store.loaded && !house.value && quizOpen.value)
@@ -231,7 +236,48 @@ onMounted(() => reload())
   background: var(--m-surface);
 }
 .m-profile__identity.has-house {
+  padding-top: 0;
+  overflow: hidden;
   border-color: var(--house);
+}
+/* Image de la maison en entier (blason compris), fondue vers la carte en bas. */
+.m-profile__banner {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  max-height: 230px;
+  margin: 0 -16px -44px;
+}
+.m-profile__banner-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.m-profile__banner-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 72%, var(--m-surface) 100%);
+}
+/* Avec une maison : la photo chevauche le bandeau à gauche, le nom passe dessous. */
+.m-profile__identity.has-house .m-profile__who {
+  position: relative;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.m-profile__identity.has-house .m-profile__avatar {
+  width: 76px;
+  height: 76px;
+  border-width: 4px;
+  box-shadow: 0 4px 14px rgba(2, 8, 18, 0.45);
+}
+.m-profile__who {
+  position: relative;
+  align-items: flex-end;
+}
+.m-profile__identity.has-house .m-profile__avatar {
+  box-shadow: 0 4px 14px rgba(2, 8, 18, 0.45);
 }
 .m-profile__who {
   display: flex;
@@ -282,6 +328,7 @@ onMounted(() => reload())
 }
 .m-profile__sub {
   margin: 2px 0 0;
+  font-weight: 500;
   color: var(--m-muted);
   font-size: 0.8125rem;
   overflow-wrap: anywhere;
