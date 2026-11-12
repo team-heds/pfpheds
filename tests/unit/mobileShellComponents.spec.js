@@ -83,12 +83,18 @@ async function mountShell(start = '/feed') {
   await router.push(start)
   await router.isReady()
   const wrapper = mount(MobileAppShell, { global: { plugins: [router], stubs: { Transition: true, TransitionGroup: true } }, attachTo: document.body })
-  await flushPromises()
+  await settle()
   return { wrapper, router }
 }
 
 const tabButton = (wrapper, label) => wrapper.get(`.m-tabs__item[aria-label="${label}"]`)
-const settle = async () => { await flushPromises(); await new Promise((resolve) => setTimeout(resolve, 0)); await flushPromises() }
+// Les onglets sont chargés à la demande : on laisse les imports se résoudre.
+const settle = async () => {
+  for (let round = 0; round < 4; round += 1) {
+    await flushPromises()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  }
+}
 
 describe('barre d’onglets', () => {
   it('affiche cinq pictogrammes nommés, signale l’onglet actif et émet le choix', async () => {

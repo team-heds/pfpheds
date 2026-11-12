@@ -1,6 +1,6 @@
 <!-- src/App.vue -->
 <template>
-  <div class="app-shell" :class="{ 'app-shell--immersive': isImmersiveRoute }">
+  <div class="app-shell" :class="{ 'app-shell--immersive': isImmersiveRoute, 'app-shell--mobile-app': mobileAppActive }">
     <a class="skip-link" href="#main-content">Aller au contenu principal</a>
     <!-- Cercles de fond -->
     <div v-if="!isImmersiveRoute" class="background-container">
@@ -42,7 +42,9 @@ import ConfirmDialog from 'primevue/confirmdialog';
 // import ConvaiWidget from '@/components/ui/ConvaiWidget.vue';
 // import Loader from '@/components/common/utils/Loader.vue'; // Import du composant Loader
 import VersionningComponent from './components/common/utils/VersionningComponent.vue'; // Import du nouveau composant
-import MobileAppShell from '@/mobile/shell/MobileAppShell.vue';
+import { defineAsyncComponent } from 'vue';
+// L'application mobile n'est chargée que sur téléphone : l'ordinateur ne la télécharge pas.
+const MobileAppShell = defineAsyncComponent(() => import('@/mobile/shell/MobileAppShell.vue').then((module) => module.default));
 import { useMobileViewport } from '@/mobile/shell/useMobileViewport';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import OfflineBanner from '@/components/common/utils/OfflineBanner.vue';
@@ -232,6 +234,16 @@ export default {
   flex-grow: 1; /* Take remaining space */
   overflow-y: auto; /* Allow scrolling */
   padding: var(--content-pad);
+}
+
+/* Application mobile : ancrée aux quatre bords de l'écran. Sur iPhone, en
+   application installée, 100dvh s'arrête parfois avant le bas de l'écran et
+   laissait un espace sous la barre d'onglets. */
+.app-shell.app-shell--mobile-app {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
 }
 
 /* Application mobile : la coque occupe tout l'espace et gère son propre défilement. */
