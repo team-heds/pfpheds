@@ -45,7 +45,7 @@ Les panneaux (`BottomSheet`) et écrans empilés (`MobileStackScreen`, avec une 
 
 ## Onglet Profil
 
-`src/mobile/profile/` : carte d'identité (photo, nom, petit blason de la maison), puis deux vues : « Formation pratique » (mes stages, repris de l'onglet Institutions, dossier, documents) et « Progression » (niveau, série, défis, badges (`mobileProfileStore`, qui réutilise `gamificationServiceSupabase`, `challengesService`, `badgesService`), puis les accès personnels. « Réglages » (photo de profil, notifications, thème clair ou sombre, déconnexion) et « Mon dossier » (le dossier de formation existant, `ProfileInfo`) sont des écrans empilés. Le profil d'une autre personne garde la page existante.
+`src/mobile/profile/` : carte d'identité (photo, nom), puis deux vues : « Formation pratique » (mes stages, repris de l'onglet Institutions, dossier, documents) et « Progression » (maison avec son blason, niveau, série, défis, badges (`mobileProfileStore`, qui réutilise `gamificationServiceSupabase`, `challengesService`, `badgesService`), puis les accès personnels. « Réglages » (photo de profil, notifications, thème clair ou sombre, déconnexion) et « Mon dossier » (le dossier de formation existant, `ProfileInfo`) sont des écrans empilés. Le profil d'une autre personne garde la page existante.
 
 ## Tests
 

@@ -9,7 +9,7 @@
 
     <template v-else>
       <!-- Identité et maison -->
-      <div class="m-profile__identity" :style="house ? { '--house': house.color } : null" :class="{ 'has-house': house }">
+      <div class="m-profile__identity">
         <div class="m-profile__who">
           <button type="button" class="m-profile__avatar" aria-label="Changer ma photo de profil" @click="shell.open('reglages')">
             <img v-if="avatarUrl && !avatarFailed" :src="avatarUrl" alt="" @error="avatarFailed = true" />
@@ -20,8 +20,6 @@
             <p v-else class="m-profile__name">{{ name }}</p>
             <p class="m-profile__sub">{{ subtitle }}</p>
           </div>
-          <!-- Blason de la maison, en petit -->
-          <img v-if="house" :src="house.crest" :alt="`Blason de la maison ${house.name}`" class="m-profile__crest" />
         </div>
 
       </div>
@@ -60,14 +58,24 @@
 
       <!-- Progression : niveau, série, défis, badges -->
       <div v-if="journey" v-show="store.view === 'progress'" id="m-profile-panel-progress" class="m-profile__panel" role="tabpanel" aria-labelledby="m-profile-tab-progress">
-        <div v-if="level" class="m-profile__level">
-          <div class="m-profile__level-line">
-            <span>Niveau {{ level.level }}<template v-if="level.name"> · {{ level.name }}</template></span>
-            <span class="m-profile__level-xp">{{ level.isMax ? 'Niveau maximum' : `encore ${formatNumber(level.toNext)} XP` }}</span>
+        <!-- Maison (blason) et niveau -->
+        <div v-if="level || house" class="m-profile__level" :class="{ 'has-house': house }" :style="house ? { '--house': house.color } : null">
+          <div v-if="house" class="m-profile__house">
+            <img :src="house.crest" alt="" class="m-profile__crest" />
+            <div>
+              <p class="m-profile__house-label">Ma maison</p>
+              <p class="m-profile__house-name">{{ house.name }}</p>
+            </div>
           </div>
-          <div class="m-profile__bar" role="progressbar" :aria-valuenow="level.percent" aria-valuemin="0" aria-valuemax="100" aria-label="Avancée vers le niveau suivant">
-            <span :style="{ width: `${level.percent}%` }"></span>
-          </div>
+          <template v-if="level">
+            <div class="m-profile__level-line">
+              <span>Niveau {{ level.level }}<template v-if="level.name"> · {{ level.name }}</template></span>
+              <span class="m-profile__level-xp">{{ level.isMax ? 'Niveau maximum' : `encore ${formatNumber(level.toNext)} XP` }}</span>
+            </div>
+            <div class="m-profile__bar" role="progressbar" :aria-valuenow="level.percent" aria-valuemin="0" aria-valuemax="100" aria-label="Avancée vers le niveau suivant">
+              <span :style="{ width: `${level.percent}%` }"></span>
+            </div>
+          </template>
         </div>
 
         <button v-if="showHouseQuiz" type="button" class="m-profile__quiz" @click="router.push('/hes-house-quiz')">
@@ -210,7 +218,6 @@ const subtitle = computed(() => {
   const parts = []
   const cohort = userStore.profile?.pfp_cohort || userStore.profile?.cohort || userStore.profile?.classe
   if (cohort) parts.push(cohort)
-  if (house.value) parts.unshift(`Maison ${house.value.name}`)
   return parts.join(' · ') || authStore.user?.email || ''
 })
 const showHouseQuiz = computed(() => journey && store.loaded && !house.value && quizOpen.value)
@@ -272,16 +279,34 @@ onMounted(() => reload())
   border-radius: 20px;
   background: var(--m-surface);
 }
-.m-profile__identity.has-house {
-  border-color: var(--house);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--house) 18%, var(--m-surface)) 0%, var(--m-surface) 60%);
+.m-profile__level.has-house {
+  border: 1px solid var(--house);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--house) 18%, var(--m-surface)) 0%, var(--m-surface) 65%);
+}
+.m-profile__house {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 .m-profile__crest {
   flex-shrink: 0;
   width: auto;
-  height: 56px;
-  margin-left: auto;
+  height: 64px;
   filter: drop-shadow(0 3px 6px rgba(2, 8, 18, 0.35));
+}
+.m-profile__house-label {
+  margin: 0;
+  color: var(--m-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.m-profile__house-name {
+  margin: 2px 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
 }
 .m-profile__who {
   display: flex;
