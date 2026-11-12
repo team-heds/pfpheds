@@ -14,6 +14,7 @@ vi.mock('@/components/common/utils/PwaInstallPrompt.vue', () => ({ default: { te
 vi.mock('@/components/common/utils/VersionningComponent.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/components/gamification/notifications/GamificationNotification.vue', () => ({ default: { template: '<div />' } }))
 vi.mock('@/mobile/home/HomeTab.vue', () => ({ default: { props: ['active'], template: '<section class="mobile-home-stub" />' } }))
+vi.mock('@/mobile/map/MapTab.vue', () => ({ default: { props: ['active'], template: '<section />' } }))
 vi.mock('@/mobile/institutions/InstitutionsTab.vue', () => ({ default: { props: ['active'], template: '<section />' } }))
 vi.mock('@/mobile/institutions/InstitutionDetailScreen.vue', () => ({ default: { template: '<article />' } }))
 vi.mock('@/mobile/home/mobileStoriesStore', () => ({ useMobileStoriesStore: () => ({ ownAvatarUrl: null, loadOwnAvatar: vi.fn() }) }))

@@ -9,6 +9,9 @@ vi.mock('@/stores/authStore', () => ({ useAuthStore: () => auth.store }))
 vi.mock('@/mobile/home/HomeTab.vue', () => ({
   default: { name: 'HomeTab', props: ['active'], template: '<section class="home-stub">Fil</section>' },
 }))
+vi.mock('@/mobile/map/MapTab.vue', () => ({
+  default: { name: 'MapTab', props: ['active'], template: '<section class="map-stub">Carte</section>' },
+}))
 vi.mock('@/mobile/institutions/InstitutionsTab.vue', () => ({
   default: { name: 'InstitutionsTab', props: ['active'], template: '<section class="institutions-stub">Institutions</section>' },
 }))
@@ -153,7 +156,7 @@ describe('coque de l’application mobile', () => {
     expect(wrapper.find('[data-page="Recherche"]').exists()).toBe(true)
     expect(wrapper.find('.home-stub').isVisible()).toBe(false)
 
-    await tabButton(wrapper, 'Carte').trigger('click'); await settle()
+    await tabButton(wrapper, 'Profil').trigger('click'); await settle()
     await tabButton(wrapper, 'Recherche').trigger('click'); await settle()
     await tabButton(wrapper, 'Accueil').trigger('click'); await settle()
     expect(wrapper.find('.home-stub').isVisible()).toBe(true)
@@ -221,6 +224,20 @@ describe('coque de l’application mobile', () => {
     await wrapper.get('.m-header [aria-label="Retour"]').trigger('click'); await settle()
     expect(router.currentRoute.value.path).toBe('/institution')
     expect(wrapper.find('.institutions-stub').isVisible()).toBe(true)
+  })
+
+  it('affiche la carte en plein écran, sans en-tête, et y garde la fiche ouverte depuis la carte', async () => {
+    ({ wrapper, router } = await mountShell('/map'))
+    expect(wrapper.find('.map-stub').isVisible()).toBe(true)
+    expect(wrapper.find('.m-header').exists()).toBe(false)
+    expect(wrapper.find('.m-tabs').exists()).toBe(true)
+
+    await router.push('/institution/7'); await settle()
+    expect(wrapper.get('.m-tabs__item[aria-current="page"]').attributes('aria-label')).toBe('Carte')
+    expect(wrapper.find('.fiche-stub').exists()).toBe(true)
+    await wrapper.get('.m-header [aria-label="Retour"]').trigger('click'); await settle()
+    expect(router.currentRoute.value.path).toBe('/map')
+    expect(wrapper.find('.map-stub').isVisible()).toBe(true)
   })
 
   it('laisse tout l’écran aux pages qui ont leur propre en-tête', async () => {

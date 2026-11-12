@@ -14,6 +14,9 @@ const TAB_DEFINITIONS = [
     icon: 'map',
     root: () => '/map',
     prefixes: ['/map'],
+    // Une fiche d'institution ouverte depuis la carte reste dans l'onglet Carte :
+    // le retour ramène à la carte, pas à la liste des institutions.
+    adopts: ['/institution'],
   },
   {
     key: 'institutions',
@@ -77,6 +80,8 @@ export function tabRoot(tabKey, userId = null) {
  */
 export function tabForPath(path, { currentTab = 'home', userId = null } = {}) {
   const cleanPath = String(path || '/').split(/[?#]/)[0]
+  const current = TAB_DEFINITIONS.find((tab) => tab.key === currentTab)
+  if (current?.adopts?.some((prefix) => cleanPath.startsWith(`${prefix}/`))) return current.key
   for (const tab of TAB_DEFINITIONS) {
     if (cleanPath === tab.root(userId)) return tab.key
     if (tab.prefixes.some((prefix) => matchesPrefix(cleanPath, prefix))) return tab.key

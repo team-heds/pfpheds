@@ -38,6 +38,11 @@
             Site web
           </a>
         </div>
+        <button v-if="institution && onMap" type="button" class="m-row-link" @click="showOnMap">
+          <span class="m-row-link__icon" aria-hidden="true"><MIcon name="map" /></span>
+          <span class="m-row-link__text"><span>Voir sur la carte</span></span>
+          <MIcon name="next" />
+        </button>
 
         <section v-if="hasOffer" class="m-fiche__card" aria-labelledby="m-fiche-offre">
           <h2 id="m-fiche-offre" class="m-fiche__title">Ce que propose l’institution</h2>
@@ -109,13 +114,15 @@
 
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import MIcon from '@/mobile/ui/MIcon.vue'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import { openPfpDocument } from '@/service/pfpDocumentMediaService'
 import { institutionImageOf, showInstitutionPlaceholder } from '@/utils/institutionImage'
+import { useMobileMapStore } from '@/mobile/map/mobileMapStore'
+import { institutionKey, institutionLatLng } from '@/mobile/map/mapHelpers'
 import {
   CRITERIA_LABELS,
   LANGUAGE_LABELS,
@@ -127,6 +134,8 @@ import {
 } from '@/mobile/institutions/institutionHelpers'
 
 const route = useRoute()
+const router = useRouter()
+const mapStore = useMobileMapStore()
 const toast = useToast()
 const institutionsStore = useInstitutionsStore()
 const placesStore = usePlacesStore()
@@ -148,6 +157,12 @@ const offer = computed(() => summarizeOffer(places.value))
 const hasOffer = computed(() => offer.value.pfp.length || offer.value.criteria.length || offer.value.languages.length)
 const hasContact = computed(() => Boolean(institution.value?.NomChef || institution.value?.MailChef || institution.value?.PhoneChef))
 const files = computed(() => buildInstitutionFiles(institution.value, places.value))
+const onMap = computed(() => Boolean(institutionLatLng(institution.value)))
+
+function showOnMap() {
+  mapStore.focus(institutionKey(institution.value))
+  router.push('/map')
+}
 
 // Description longue : repliée, avec « Voir plus ».
 const descriptionRef = ref(null)

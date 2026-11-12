@@ -1,7 +1,7 @@
 <template>
   <div ref="rootRef" class="m-shell" :class="{ 'm-shell--light': lightTheme }">
     <MobileHeader
-      v-if="chrome"
+      v-if="chrome && showHeader"
       :title="title"
       :can-go-back="canGoBack"
       :heading="Boolean(nativeScreen)"
@@ -59,6 +59,7 @@ import MobileTabBar from '@/mobile/shell/MobileTabBar.vue'
 import MobilePage from '@/mobile/shell/MobilePage.vue'
 import HomeTab from '@/mobile/home/HomeTab.vue'
 import InstitutionsTab from '@/mobile/institutions/InstitutionsTab.vue'
+import MapTab from '@/mobile/map/MapTab.vue'
 import InstitutionDetailScreen from '@/mobile/institutions/InstitutionDetailScreen.vue'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useMobileNotificationsStore } from '@/mobile/home/mobileNotificationsStore'
@@ -71,10 +72,12 @@ import { useKeyboardInset } from '@/mobile/shell/useKeyboardInset'
 // Écrans conçus pour le téléphone, par nom de route. Une adresse absente de
 // ces tables affiche la page existante dans le cadre de la coque.
 // Onglets (gardés en mémoire) :
-const NATIVE_SCREENS = { FeedView: 'home', Institution: 'institutions' }
+const NATIVE_SCREENS = { FeedView: 'home', Institution: 'institutions', Map: 'map' }
 const nativeTabs = [
   { key: 'home', component: HomeTab },
   { key: 'institutions', component: InstitutionsTab },
+  // La carte occupe tout l'écran : pas d'en-tête, ses commandes flottent dessus.
+  { key: 'map', component: MapTab, header: false },
 ]
 // Écrans empilés qui remplacent une page existante (titre fixe dans l'en-tête,
 // le nom de la page étant affiché dans l'écran lui-même) :
@@ -100,6 +103,7 @@ const tabs = computed(() => buildTabs(userId.value))
 const nativeScreen = computed(() => NATIVE_SCREENS[route.name] || null)
 const chrome = computed(() => route.meta?.mobileChrome !== 'none')
 const canGoBack = computed(() => store.canGoBack)
+const showHeader = computed(() => nativeTabs.find((tab) => tab.key === nativeScreen.value)?.header !== false)
 
 // Un onglet mobile reste monté une fois visité : on y revient sans rechargement.
 const visited = ref(new Set())

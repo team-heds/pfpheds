@@ -34,6 +34,12 @@ describe('onglets de l’application mobile', () => {
     expect(tabForPath('/documentsxyz', { currentTab: 'map' })).toBe('map')
   })
 
+  it('garde dans l’onglet Carte une fiche d’institution ouverte depuis la carte', () => {
+    expect(tabForPath('/institution/7', { currentTab: 'map' })).toBe('map')
+    expect(tabForPath('/institution/7', { currentTab: 'home' })).toBe('institutions')
+    expect(tabForPath('/institution', { currentTab: 'map' })).toBe('institutions')
+  })
+
   it('ignore l’ancre pour identifier une page', () => {
     expect(pageKey('/feed#/commentaires')).toBe('/feed')
     expect(pageKey('/quiz?theme=epaule#/x')).toBe('/quiz?theme=epaule')
