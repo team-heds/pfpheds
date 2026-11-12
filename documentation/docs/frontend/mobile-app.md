@@ -10,7 +10,7 @@ Sous 768 px de large et une fois connecté, `src/App.vue` affiche `MobileAppShel
 
 Mobile et ordinateur utilisent **les mêmes routes**. La coque regarde la route courante :
 
-- si un écran mobile existe pour cette route, elle l'affiche : onglets gardés en mémoire (table `NATIVE_SCREENS` de `MobileAppShell.vue` : `FeedView` → `HomeTab`, `Institution` → `InstitutionsTab`, `Map` → `MapTab`) ou écrans empilés (table `NATIVE_PAGES` : `InstitutionView` → `InstitutionDetailScreen`) ;
+- si un écran mobile existe pour cette route, elle l'affiche : onglets gardés en mémoire (table `NATIVE_SCREENS` de `MobileAppShell.vue` : `FeedView` → `HomeTab`, `Institution` → `InstitutionsTab`, `Map` → `MapTab`, `MobileSearchView` → `SearchTab`) ou écrans empilés (table `NATIVE_PAGES` : `InstitutionView` → `InstitutionDetailScreen`) ;
 - sinon elle affiche la page existante dans son cadre (`MobilePage`), avec titre et bouton retour.
 
 Refaire un onglet pour le téléphone revient à écrire son écran dans `src/mobile/<onglet>/` et à l'ajouter à cette table.
@@ -39,6 +39,10 @@ Les panneaux (`BottomSheet`) et écrans empilés (`MobileStackScreen`, avec une 
 
 `src/mobile/map/MapTab.vue` : carte Leaflet (fond OpenStreetMap) en plein écran, sans en-tête (`header: false` dans `nativeTabs`). Recherche et filtres flottent en haut ; les filtres sont ceux de l'onglet Institutions (`mobileInstitutionsStore`). Un appui sur un repère fait monter une fiche avec « Voir la fiche » et « Itinéraire ». La position de la personne n'est demandée qu'à l'appui sur le bouton. Une fiche ouverte depuis la carte reste dans l'onglet Carte (`adopts` dans `tabs.js`). « Voir sur la carte » (fiche d'institution) passe par `mobileMapStore`.
 
+## Onglet Recherche
+
+`src/mobile/search/SearchTab.vue` : champ de recherche (personnes et modules via `globalSearchService`, institutions, pages), tuiles d'accès rapide selon les réglages de gamification (`buildQuickTiles`), classement des maisons (table `houses`) et autres accès de la personne (`useNavigationDestinations`). Les modules ouverts depuis une tuile (défis, mot de la semaine, quiz, mentorat, présences) sont les pages existantes, affichées en écran empilé ; la coque masque leur titre et leur flèche de retour en double (`.game-header`).
+
 ## Tests
 
-`tests/unit/mobileShellStore.spec.js`, `mobileShellComponents.spec.js`, `mobileHomeHelpers.spec.js`, `mobileInstitutions.spec.js`, `mobileMap.spec.js`, `responsiveNavigation.spec.js`.
+`tests/unit/mobileShellStore.spec.js`, `mobileShellComponents.spec.js`, `mobileHomeHelpers.spec.js`, `mobileInstitutions.spec.js`, `mobileMap.spec.js`, `mobileSearch.spec.js`, `responsiveNavigation.spec.js`.

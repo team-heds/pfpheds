@@ -60,6 +60,7 @@ import MobilePage from '@/mobile/shell/MobilePage.vue'
 import HomeTab from '@/mobile/home/HomeTab.vue'
 import InstitutionsTab from '@/mobile/institutions/InstitutionsTab.vue'
 import MapTab from '@/mobile/map/MapTab.vue'
+import SearchTab from '@/mobile/search/SearchTab.vue'
 import InstitutionDetailScreen from '@/mobile/institutions/InstitutionDetailScreen.vue'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useMobileNotificationsStore } from '@/mobile/home/mobileNotificationsStore'
@@ -72,10 +73,11 @@ import { useKeyboardInset } from '@/mobile/shell/useKeyboardInset'
 // Écrans conçus pour le téléphone, par nom de route. Une adresse absente de
 // ces tables affiche la page existante dans le cadre de la coque.
 // Onglets (gardés en mémoire) :
-const NATIVE_SCREENS = { FeedView: 'home', Institution: 'institutions', Map: 'map' }
+const NATIVE_SCREENS = { FeedView: 'home', Institution: 'institutions', Map: 'map', MobileSearchView: 'search' }
 const nativeTabs = [
   { key: 'home', component: HomeTab },
   { key: 'institutions', component: InstitutionsTab },
+  { key: 'search', component: SearchTab },
   // La carte occupe tout l'écran : pas d'en-tête, ses commandes flottent dessus.
   { key: 'map', component: MapTab, header: false },
 ]
@@ -206,7 +208,6 @@ const headerActions = computed(() => {
     ]
   }
   if (store.canGoBack) return []
-  if (store.activeTab === 'search') return [{ key: 'space', icon: 'grid', label: 'Mon espace' }]
   if (store.activeTab === 'profile') return [{ key: 'settings', icon: 'settings', label: 'Réglages' }]
   return []
 })
@@ -214,7 +215,6 @@ const headerActions = computed(() => {
 function onHeaderAction(key) {
   if (key === 'compose') openOverlay('publier')
   else if (key === 'notifications') openOverlay('notifications')
-  else if (key === 'space') router.push('/mobile-outils')
   else if (key === 'settings') router.push('/settings')
 }
 
@@ -520,6 +520,37 @@ onBeforeUnmount(() => titleObserver?.disconnect())
 }
 .m-shell .m-page > * {
   max-width: 100%;
+}
+/* Modules de gamification ouverts en écran empilé : l'en-tête de la coque porte
+   déjà le titre et le retour. Le titre de la page reste lisible par les lecteurs
+   d'écran (et sert au titre de l'en-tête), sa seconde flèche de retour disparaît. */
+.m-shell .m-page .game-header {
+  position: relative;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+.m-shell .m-page .game-header {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.m-shell .m-page .game-header__identity {
+  grid-column: 1 !important;
+}
+.m-shell .m-page .game-header__description {
+  display: block !important;
+  overflow: visible !important;
+}
+.m-shell .m-page .game-header__back {
+  display: none !important;
+}
+.m-shell .m-page .game-header h1 {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
 }
 
 /* Transitions entre écrans d'un même onglet (glissement) ou entre onglets (fondu). */

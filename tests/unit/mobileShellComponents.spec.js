@@ -9,6 +9,14 @@ vi.mock('@/stores/authStore', () => ({ useAuthStore: () => auth.store }))
 vi.mock('@/mobile/home/HomeTab.vue', () => ({
   default: { name: 'HomeTab', props: ['active'], template: '<section class="home-stub">Fil</section>' },
 }))
+vi.mock('@/mobile/search/SearchTab.vue', () => ({
+  default: {
+    name: 'SearchTab',
+    props: ['active'],
+    template: '<section class="search-stub"><button class="open-comments" @click="shell.open(\'commentaires\', { post: { id: \'p9\' } })">Recherche</button></section>',
+    setup: () => ({ shell: useMobileShell() }),
+  },
+}))
 vi.mock('@/mobile/map/MapTab.vue', () => ({
   default: { name: 'MapTab', props: ['active'], template: '<section class="map-stub">Carte</section>' },
 }))
@@ -151,15 +159,16 @@ describe('coque de l’application mobile', () => {
 
   it('ouvre les autres onglets avec les pages existantes, sans les recharger au retour', async () => {
     ({ wrapper, router } = await mountShell('/feed'))
-    await tabButton(wrapper, 'Recherche').trigger('click'); await settle()
-    expect(router.currentRoute.value.path).toBe('/mobile-search')
-    expect(wrapper.find('[data-page="Recherche"]').exists()).toBe(true)
+    await tabButton(wrapper, 'Profil').trigger('click'); await settle()
+    expect(router.currentRoute.value.path).toBe(`/profile/${USER}`)
+    expect(wrapper.find('[data-page="Profil"]').exists()).toBe(true)
     expect(wrapper.find('.home-stub').isVisible()).toBe(false)
 
+    await router.push('/quiz'); await settle()
     await tabButton(wrapper, 'Profil').trigger('click'); await settle()
-    await tabButton(wrapper, 'Recherche').trigger('click'); await settle()
     await tabButton(wrapper, 'Accueil').trigger('click'); await settle()
-    expect(wrapper.find('.home-stub').isVisible()).toBe(true)
+    await tabButton(wrapper, 'Profil').trigger('click'); await settle()
+    expect(wrapper.find('.home-stub').isVisible()).toBe(false)
     // Une seule création par page : les onglets sont gardés en mémoire.
     expect(mounts).toBe(2)
   })

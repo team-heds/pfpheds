@@ -40,6 +40,11 @@ const PATHS = {
   chevron: 'M6 9l6 6 6-6',
   check: 'M5 12l5 5 9-10',
   cal: 'M4 6h16v15H4zM4 10h16M8 3v4M16 3v4',
+  target: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 8a4 4 0 100 8 4 4 0 000-8z',
+  letters: 'M4 18l4-12 4 12M5.5 14h5M15 18v-7a3 3 0 016 0v7M15 14h6',
+  quiz: 'M12 3a9 9 0 100 18 9 9 0 000-18zM9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1-1.5 2M12 17v0',
+  qr: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2M20 14v6h-6v-2',
+  trophy: 'M8 4h8v6a4 4 0 01-8 0V4zM8 6H4v1a4 4 0 004 4M16 6h4v1a4 4 0 01-4 4M12 14v4M8 21h8',
   trash: 'M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13',
 }
 
