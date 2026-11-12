@@ -1,7 +1,9 @@
 <template>
-  <section class="m-map" aria-labelledby="m-map-title">
+  <section class="m-map" :class="{ 'm-map--dark-tiles': !lightTiles }" aria-labelledby="m-map-title">
     <h1 id="m-map-title" class="m-sr-only">Carte des institutions</h1>
-    <div ref="canvasRef" class="m-map__canvas" :class="{ 'm-map__canvas--dark': !lightTiles }"></div>
+    <!-- Pas de :class ici : Vue écraserait les classes que Leaflet pose sur ce conteneur
+         (la carte devenait vide au passage en thème clair). -->
+    <div ref="canvasRef" class="m-map__canvas"></div>
 
     <!-- Barre flottante : recherche, filtres rapides -->
     <div class="m-map__top">
@@ -462,7 +464,7 @@ onBeforeUnmount(() => {
   font-family: inherit;
 }
 /* Thème sombre : le fond de carte est assombri pour s'accorder à l'application. */
-.m-map__canvas--dark :deep(.leaflet-tile-pane) {
+.m-map--dark-tiles .m-map__canvas :deep(.leaflet-tile-pane) {
   filter: invert(1) hue-rotate(180deg) saturate(0.4) brightness(0.95) contrast(0.9);
 }
 .m-map__canvas :deep(.leaflet-control-attribution) {

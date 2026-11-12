@@ -64,7 +64,7 @@
               </p>
             </div>
           </div>
-          <div id="map" style="height: 400px; border-radius: 1%;"></div>
+          <InstitutionLocationMap :institution="institutionDetails" :map-link="institutionMapLink" />
         </div>
       </div>
     </div>
@@ -73,19 +73,21 @@
 
 <script setup>
 import { institutionImageOf, showInstitutionPlaceholder } from '@/utils/institutionImage'
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+import InstitutionLocationMap from '@/components/map/InstitutionLocationMap.vue'
 
 const route = useRoute()
 const router = useRouter()
 const institutionsStore = useInstitutionsStore()
 
 const institutionDetails = ref(null)
-const map = ref(null)
-const marker = ref(null)
+// Grande carte centrée sur cette institution.
+const institutionMapLink = computed(() => {
+  const id = institutionDetails.value?.InstitutionId ?? institutionDetails.value?.id
+  return id != null ? { name: 'Map', query: { institution: String(id) } } : ''
+})
 const isLoading = ref(true)
 
 const institutionId = computed(() => route.params.id)
@@ -94,10 +96,6 @@ const primaryImage = computed(() => institutionImageOf(institutionDetails.value)
 
 onMounted(async () => {
   await fetchInstitutionDetails()
-})
-
-onUnmounted(() => {
-  destroyMap()
 })
 
 watch(institutionId, async (newId) => {
@@ -115,11 +113,6 @@ async function fetchInstitutionDetails() {
     
     if (institution) {
       institutionDetails.value = institution
-      
-      // Initialiser la carte si coordonnées disponibles
-      if (institution.Latitude && institution.Longitude) {
-        await initMap(parseFloat(institution.Latitude), parseFloat(institution.Longitude))
-      }
     } else {
       router.push({ name: 'Error404' })
     }
@@ -131,46 +124,6 @@ async function fetchInstitutionDetails() {
   }
 }
 
-async function initMap(lat, lng) {
-  // Détruire la carte existante
-  destroyMap()
-  
-  // Attendre que le DOM soit prêt
-  await new Promise(resolve => setTimeout(resolve, 100))
-  
-  const mapElement = document.getElementById('map')
-  if (!mapElement) return
-  
-  try {
-    map.value = L.map('map', {
-      center: [lat, lng],
-      zoom: 13,
-      scrollWheelZoom: false
-    })
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map.value)
-    
-    marker.value = L.marker([lat, lng], {
-      title: institutionDetails.value?.Name || 'Institution',
-      riseOnHover: true
-    }).addTo(map.value)
-  } catch (error) {
-    console.error('❌ Erreur initialisation carte:', error)
-  }
-}
-
-function destroyMap() {
-  if (marker.value) {
-    marker.value.remove()
-    marker.value = null
-  }
-  if (map.value) {
-    map.value.remove()
-    map.value = null
-  }
-}
 </script>
 
 <style scoped>
