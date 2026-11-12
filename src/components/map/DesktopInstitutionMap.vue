@@ -188,12 +188,12 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
-import { useLayout } from '@/layout/composables/layout'
+import { useMapTheme } from './useMapTheme'
 import {
   filterInstitutions,
   getAvailableCantons,
@@ -226,12 +226,11 @@ const PFP_TYPES = INSTITUTION_PFP_TYPES
 const UNCLUSTER_ZOOM = 15
 const CLUSTER_RADIUS = 52
 
+const route = useRoute()
 const router = useRouter()
 const institutionsStore = useInstitutionsStore()
 const placesStore = usePlacesStore()
-const { layoutConfig } = useLayout()
-
-const dark = computed(() => layoutConfig.colorScheme.value !== 'light')
+const { dark } = useMapTheme()
 const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
 const canvasRef = ref(null)
@@ -519,6 +518,13 @@ function zoomToShow(entry) {
   return crowded ? UNCLUSTER_ZOOM : zoom
 }
 
+/** /map?institution=ID (lien « Voir sur la carte » des fiches) : ouvre directement cette institution. */
+function focusFromRoute() {
+  const wanted = String(route.query.institution || '')
+  if (!wanted || !entries.value.some((entry) => entry.key === wanted)) return
+  select(wanted, { fly: true, scrollList: true })
+}
+
 function selectFirstResult() {
   const first = results.value[0]
   if (first) select(first.key, { fly: true, scrollList: true })
@@ -577,6 +583,7 @@ async function load(force = false) {
     map?.invalidateSize()
     drawMarkers()
     fitAll({ animate: false })
+    focusFromRoute()
   } catch (error) {
     console.error('Erreur lors du chargement de la carte des institutions:', error)
     loadError.value = true
@@ -591,6 +598,7 @@ watch(mappable, () => {
   if (!mappable.value.some((entry) => view.contains(entry.latLng))) fitAll()
 })
 watch([selectedKey, hoverKey], refreshMarkerStates)
+watch(() => route.query.institution, () => { if (ready.value) focusFromRoute() })
 
 onMounted(() => {
   createMap()
