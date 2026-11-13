@@ -1,5 +1,5 @@
 <template>
-  <AdminLayout wide>
+  <AdminLayout wide full-width>
     <div class="vue-ensemble-page p-4">
       <div class="breadcrumb-section mb-3">
         <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary"><i class="pi pi-home mr-1"></i>Formation Pratique</router-link>

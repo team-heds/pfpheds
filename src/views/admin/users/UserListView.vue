@@ -1,5 +1,5 @@
 <template>
-  <AdminLayout wide>
+  <AdminLayout wide full-width>
     <template #header>
       <AdminPageHeader
         title="Liste des utilisateurs"
