@@ -1,5 +1,5 @@
 <template>
-  <AdminLayout>
+  <AdminLayout wide>
     <template #header>
       <PageHeader title="Gestion des Routes Dynamiques View" subtitle="Éditez les routes de l'application" icon="pi pi-sitemap" />
     </template>

@@ -1,5 +1,5 @@
 <template>
-  <AdminLayout>
+  <AdminLayout wide>
     <div class="offre-page p-4">
       <div class="surface-card p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between">

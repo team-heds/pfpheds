@@ -1,3 +1,9 @@
 .layout-content-wrapper {
     padding: 2rem;
 }
+
+.layout-content {
+    width: min(100%, 120rem);
+    box-sizing: border-box;
+    margin-inline: auto;
+}

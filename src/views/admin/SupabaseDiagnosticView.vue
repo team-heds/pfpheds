@@ -1,6 +1,6 @@
 <template>
-  <div class="diagnostic-page">
-    <Navbar />
+  <AdminLayout>
+    <div class="diagnostic-page">
     
     <div class="diagnostic-container">
       <div class="diagnostic-header">
@@ -165,13 +165,14 @@
         </template>
       </Card>
     </div>
-  </div>
+    </div>
+  </AdminLayout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { supabase } from '@/supabase'
-import Navbar from '@/components/common/utils/Navbar.vue'
+import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Message from 'primevue/message'

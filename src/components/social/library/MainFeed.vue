@@ -809,14 +809,8 @@ export default {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 880px;
-  margin-left: auto;
-  margin-right: auto;
-}
-@media (max-width: 900px) {
-  .main-feed {
-    max-width: 98vw;
-  }
+  max-width: 120rem;
+  margin-inline: auto;
 }
 .posts-container {
   height: 100vh;

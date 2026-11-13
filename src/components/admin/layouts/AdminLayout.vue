@@ -159,6 +159,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', handleEscape))
 }
 
 .admin-layout {
+  width: min(100%, 120rem);
+  box-sizing: border-box;
+  margin-inline: auto;
   display: grid;
   grid-template-columns: minmax(16rem, 18.75rem) minmax(0, 1fr);
   gap: var(--space-6, 1.5rem);
