@@ -21,6 +21,16 @@ Refaire un onglet pour le téléphone revient à écrire son écran dans `src/mo
 - `src/mobile/shell/mobileShellStore.js` : onglet actif, pile d'écrans de chaque onglet, panneaux ouverts. Le magasin ne navigue pas : il indique où aller (`tabTarget`, `backTarget`) et se met à jour après chaque navigation (`syncRoute`).
 - Les pages restent en mémoire (`KeepAlive`, 8 au maximum) ; l'accueil reste monté. Chaque écran a sa propre zone de défilement, dont la position est gardée (`useKeptScroll`).
 
+## Barre d'onglets
+
+La barre passe par-dessus le bas des écrans, ancrée au bord ; son fond couvre la zone de la barre d'accueil de l'iPhone (`--m-safe-bottom`). Chaque zone qui défile garde en bas la place de la barre (`--m-tabbar-space`), si bien que rien ne saute quand elle se cache. Elle se cache :
+
+- en descendant de plus de 48 px dans les listes racines (fil, institutions, recherche : `useHideOnScroll`), et revient dès qu'on remonte ou en haut de la liste (`scrollHider.js`) ;
+- pendant une tâche plein écran : route marquée `meta.mobileImmersive` (scanner, partie de quiz) ou écran qui appelle `useMobileImmersive` (duel en cours, mot de la semaine non terminé) ;
+- quand le clavier est ouvert.
+
+Elle reste visible sur la carte. Règles complètes : `mobile-app-rules.md`.
+
 ## Écrans empilés et panneaux du bas
 
 Les panneaux (`BottomSheet`) et écrans empilés (`MobileStackScreen`, avec une présentation `modal` plein écran pour la création de publication ou de story) sont déclarés dans `overlayRegistry.js` et ouverts avec `useMobileShell().open(nom, données)`. Leur nom est écrit dans l'ancre de l'adresse (`/feed#/commentaires`) : le bouton ou le geste retour du téléphone les ferme. Après un rechargement, seuls ceux marqués `restorable` se rouvrent.

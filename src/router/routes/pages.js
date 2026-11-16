@@ -1,7 +1,9 @@
+// Pages remplacées par un écran mobile : chargées seulement quand elles s'affichent.
+import { loadWhenShown } from '@/router/loadWhenShown'
 // Routes pages principales & navigation
 export default [
-  { path: '/map', component: () => import('@/views/home/MapView.vue'), name: 'Map', meta: { requiresAuth: true } },
-  { path: '/institution', component: () => import('@/views/institutions/Institution.vue'), name: 'Institution', meta: { requiresAuth: true } },
+  { path: '/map', component: loadWhenShown(() => import('@/views/home/MapView.vue'), 'MapView'), name: 'Map', meta: { requiresAuth: true } },
+  { path: '/institution', component: loadWhenShown(() => import('@/views/institutions/Institution.vue'), 'Institution'), name: 'Institution', meta: { requiresAuth: true } },
   { path: '/place', component: () => import('@/views/institutions/PlaceListView.vue'), name: 'Place', meta: { requiresAuth: true } },
   { path: '/terms_of_use', component: () => import('@/views/home/TermsView.vue'), name: 'TermsOfUse', meta: { requiresAuth: true } },
   { path: '/info_externe', component: () => import('@/views/home/InfoExterneView.vue'), name: 'InfoExterne', meta: { requiresAuth: true } },

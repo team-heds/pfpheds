@@ -125,6 +125,7 @@ import { gamificationFeatures } from '@/config/gamificationFeatures'
 import { institutionImageOf, INSTITUTION_PLACEHOLDER } from '@/utils/institutionImage'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useKeptScroll } from '@/mobile/shell/useKeptScroll'
+import { useHideOnScroll } from '@/mobile/shell/useHideOnScroll'
 import { useMobileInstitutionsStore } from '@/mobile/institutions/mobileInstitutionsStore'
 import {
   buildQuickTiles,
@@ -151,6 +152,8 @@ const { scrollTopSignal } = storeToRefs(useMobileShellStore())
 const scrollerRef = ref(null)
 const inputRef = ref(null)
 const kept = useKeptScroll(scrollerRef, () => props.active)
+// Longue liste : la barre d'onglets se cache en descendant, revient en remontant.
+useHideOnScroll(scrollerRef, () => props.active)
 
 const hasPath = (path) => {
   const resolved = router.resolve(path)
@@ -295,7 +298,7 @@ onBeforeUnmount(() => clearTimeout(debounce))
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 0 16px 24px;
+  padding: 0 16px calc(24px + var(--m-tabbar-space, 0px));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;

@@ -216,11 +216,11 @@ import DetailModal from '@/components/gamification/DetailModal.vue'
 import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
 import { getReadableTextColor } from '@/utils/colorContrast'
 import { formatStreakDays, nextMilestoneLabel, nextMilestoneProgress, streakLabel } from '@/utils/loginStreak'
-import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
-import FondElaris from '@/assets/maisons/FondElaris.png'
-import FondDoloris from '@/assets/maisons/FondDoloris.png'
-import FondSolencia from '@/assets/maisons/FondSolencia.png'
-import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
+import FondHarmonis from '@/assets/maisons/web/FondHarmonis.jpg'
+import FondElaris from '@/assets/maisons/web/FondElaris.jpg'
+import FondDoloris from '@/assets/maisons/web/FondDoloris.jpg'
+import FondSolencia from '@/assets/maisons/web/FondSolencia.jpg'
+import MaitreDuJeuFond from '@/assets/maisons/web/MaitreDuJeuFond.jpg'
 
 const props = defineProps({ id: { type: String, default: null } })
 const router = useRouter()

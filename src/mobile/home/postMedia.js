@@ -51,13 +51,16 @@ export function extractEmbeds(content) {
   if (!content) return []
   const embeds = []
   const seen = new Set()
-  const add = (kind, src) => {
+  const add = (kind, src, extra = {}) => {
     if (seen.has(src)) return
     seen.add(src)
-    embeds.push({ kind, src })
+    embeds.push({ kind, src, ...extra })
   }
-  for (const match of content.matchAll(/https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/g)) {
-    add('youtube', `https://www.youtube.com/embed/${match[1]}`)
+  for (const match of content.matchAll(/https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/g)) {
+    // Aperçu léger (image) : le lecteur YouTube (environ 1 Mo) ne se charge qu'à l'appui.
+    add('youtube', `https://www.youtube-nocookie.com/embed/${match[1]}?autoplay=1&playsinline=1`, {
+      thumbnail: `https://i.ytimg.com/vi/${match[1]}/hqdefault.jpg`,
+    })
   }
   for (const match of content.matchAll(/https?:\/\/open\.spotify\.com\/(track|album|playlist|artist)\/([a-zA-Z0-9]+)/g)) {
     add('spotify', `https://open.spotify.com/embed/${match[1]}/${match[2]}`)

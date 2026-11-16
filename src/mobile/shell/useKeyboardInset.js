@@ -5,14 +5,16 @@ import { onBeforeUnmount, onMounted } from 'vue'
  * `--m-keyboard` de l'élément donné. Sur iPhone le clavier recouvre la page
  * sans la redimensionner : les panneaux du bas s'en servent pour rester visibles.
  */
-export function useKeyboardInset(elementRef, win = typeof window !== 'undefined' ? window : null) {
+export function useKeyboardInset(elementRef, win = typeof window !== 'undefined' ? window : null, onChange = () => {}) {
   const viewport = win?.visualViewport
   if (!viewport) return
 
   const update = () => {
     const inset = Math.max(0, Math.round(win.innerHeight - viewport.height - viewport.offsetTop))
     // En dessous de 80 px ce n'est pas un clavier (barre du navigateur qui se replie).
-    elementRef.value?.style.setProperty('--m-keyboard', `${inset > 80 ? inset : 0}px`)
+    const open = inset > 80
+    elementRef.value?.style.setProperty('--m-keyboard', `${open ? inset : 0}px`)
+    onChange(open)
   }
 
   onMounted(() => {

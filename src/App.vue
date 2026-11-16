@@ -125,6 +125,14 @@ export default {
     }
   },
   watch: {
+    // Sous la barre d'onglets, aucune bande d'une autre couleur : la page prend
+    // la couleur de la barre, et ne rebondit plus (seul l'écran courant défile).
+    mobileAppActive: {
+      immediate: true,
+      handler(active) {
+        document.documentElement.classList.toggle('m-app', Boolean(active));
+      },
+    },
     // Connexion du jour : comptée à l'ouverture, même si la session est restée active.
     gamificationUserId: {
       immediate: true,
@@ -248,6 +256,15 @@ export default {
   inset: 0;
   width: auto;
   height: auto;
+  /* Zone de l'encoche (padding du haut) : couleur de l'en-tête. */
+  background: var(--surface-ground);
+  overscroll-behavior: none;
+}
+
+:global(html.m-app),
+:global(html.m-app body) {
+  background: var(--surface-card);
+  overscroll-behavior: none;
 }
 
 /* Application mobile : la coque occupe tout l'espace et gère son propre défilement. */

@@ -149,6 +149,7 @@ import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
   boundsFor,
+  homeBounds,
   distanceKm,
   formatDistance,
   mappableInstitutions,
@@ -276,9 +277,9 @@ function drawMarkers() {
   }
 }
 
-function fitAll(animate = false) {
+function fitAll(animate = false, { home = false } = {}) {
   if (!map) return
-  const bounds = boundsFor(items.value.map((item) => item.latLng))
+  const bounds = home ? homeBounds(items.value) : boundsFor(items.value.map((item) => item.latLng))
   if (bounds) map.fitBounds(bounds, { paddingTopLeft: [28, 150], paddingBottomRight: [28, 40], maxZoom: 13, animate })
   else map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate })
 }
@@ -406,7 +407,8 @@ function applyFocus() {
 
 watch(items, () => {
   drawMarkers()
-  if (!selectedKey.value && !mapStore.focusKey) fitAll(true)
+  // Sans filtre, la carte reste sur le Valais ; avec un filtre, elle montre tous les résultats.
+  if (!selectedKey.value && !mapStore.focusKey) fitAll(true, { home: filterCount.value === 0 })
 })
 watch(selectedKey, (key, previous) => {
   markers.get(previous)?.setIcon(pinIcon(false))
@@ -436,7 +438,7 @@ onMounted(async () => {
   map?.invalidateSize()
   drawMarkers()
   if (mapStore.focusKey) applyFocus()
-  else fitAll(false)
+  else fitAll(false, { home: true })
 })
 
 onBeforeUnmount(() => {
@@ -477,6 +479,9 @@ onBeforeUnmount(() => {
 }
 .m-map__canvas :deep(.leaflet-control-attribution a) {
   color: inherit;
+}
+.m-map__canvas :deep(.leaflet-bottom) {
+  bottom: var(--m-tabbar-space, 0px);
 }
 .m-map__canvas :deep(.leaflet-bottom.leaflet-right) {
   right: auto;
@@ -767,7 +772,7 @@ onBeforeUnmount(() => {
 .m-map__side {
   position: absolute;
   right: 12px;
-  bottom: 18px;
+  bottom: calc(18px + var(--m-tabbar-space, 0px));
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -785,7 +790,7 @@ onBeforeUnmount(() => {
 .m-map__card {
   position: absolute;
   right: 10px;
-  bottom: 10px;
+  bottom: calc(10px + var(--m-tabbar-space, 0px));
   left: 10px;
   z-index: 3;
   padding: 8px 14px 14px;
