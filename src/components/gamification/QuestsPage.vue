@@ -1064,5 +1064,28 @@ onBeforeUnmount(() => {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.5rem;
   }
+
+  /* Les deux onglets tiennent dans la largeur du téléphone, sans défilement de côté. */
+  .quest-tabs {
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .quest-tab {
+    flex: 1 1 auto;
+    gap: 0.3rem;
+    padding: 0.55rem 0.4rem;
+    font-size: 0.8125rem;
+  }
+
+  .quest-tab > .pi {
+    display: none;
+  }
+
+  .quest-tab__count {
+    min-width: 1.25rem;
+    padding: 0.1rem 0.3rem;
+    font-size: 0.6875rem;
+  }
 }
 </style>
