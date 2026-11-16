@@ -67,11 +67,20 @@ html.m-app .p-dialog-mask .p-dialog .p-dialog-header-icon:focus:not(:focus-visib
   box-shadow: none !important;
   outline: none !important;
 }
+/* Sur un écran tactile, le navigateur affiche quand même l'anneau de ce focus
+   automatique : on le retire de la croix (la fenêtre reste annoncée par son titre). */
+@media (pointer: coarse) {
+  html.m-app .p-dialog-mask .p-dialog .p-dialog-header-close:focus {
+    box-shadow: none !important;
+    outline: none !important;
+  }
+}
 html.m-app .p-dialog-mask .p-dialog .p-dialog-content h2 {
   font-size: 1.25rem !important;
   line-height: 1.3 !important;
 }
-html.m-app .p-dialog-mask .p-dialog .p-dialog-content h3 {
+html.m-app .p-dialog-mask .p-dialog .p-dialog-content h3,
+html.m-app .p-dialog-mask .p-dialog .p-dialog-content h4 {
   font-size: 1.0625rem !important;
   line-height: 1.35 !important;
 }
