@@ -24,65 +24,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { useLayout } from "@/layout/composables/layout";
+// Bouton de thème de la barre d'ordinateur : passe du sombre au clair et
+// inversement, avec le même réglage que l'application mobile (themeService).
+import { useTheme } from '@/theme/useTheme';
 
-const { layoutConfig } = useLayout();
-const isDimTheme = ref(layoutConfig.colorScheme.value === "dim");
-
-const getThemeLinks = () => Array.from(
-  document.querySelectorAll('link[data-theme-link="heds"]')
-);
-
-const detectCurrentScheme = () => {
-  const themeLinks = getThemeLinks();
-  const activeLink = themeLinks.find((link) => link.media !== 'not all' && !link.disabled);
-  if (activeLink?.dataset.themeScheme) return activeLink.dataset.themeScheme;
-
-  // Vite bundles the default dim stylesheet into the main CSS in production.
-  // In that case only the optional light override remains as a <link> element.
-  return themeLinks.some((link) => link.dataset.themeScheme === 'light') ? 'dim' : null;
-};
-
-onMounted(() => {
-  const actual = detectCurrentScheme();
-  if (actual) {
-    layoutConfig.colorScheme.value = actual;
-    isDimTheme.value = actual === 'dim';
-  }
-});
-
-const toggleTheme = () => {
-  const newScheme = isDimTheme.value ? "light" : "dim";
-  if (changeColorScheme(newScheme)) {
-    isDimTheme.value = newScheme === "dim";
-  }
-};
-
-const changeColorScheme = (newColorScheme) => {
-  const themeLinks = getThemeLinks();
-  const targetLink = themeLinks.find(
-    (link) => link.dataset.themeScheme === newColorScheme
-  );
-
-  const usesBundledDimTheme = newColorScheme === 'dim'
-    && themeLinks.some((link) => link.dataset.themeScheme === 'light');
-
-  if (!targetLink && !usesBundledDimTheme) {
-    console.error(`Thème HEdS introuvable: ${newColorScheme}`);
-    return false;
-  }
-
-  themeLinks.forEach((link) => {
-    const isActive = link === targetLink;
-    link.disabled = !isActive;
-    link.media = isActive ? 'all' : 'not all';
-  });
-
-  layoutConfig.colorScheme.value = newColorScheme;
-  return true;
-};
-
+const { isDark: isDimTheme, toggle: toggleTheme } = useTheme();
 </script>
 
 <style scoped>

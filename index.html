@@ -95,8 +95,39 @@
   <link href="/layout/styles/preloading/preloading.css" rel="stylesheet"/>
   <link id="theme-link" data-theme-link="heds" data-theme-scheme="dim" rel="stylesheet" href="./src/assets/theme/theme-dim/heds/theme.css" />
   <link data-theme-link="heds" data-theme-scheme="light" rel="stylesheet" href="./src/assets/theme/theme-light/heds/theme.css" media="not all" />
+  <script>
+    // Thème choisi (src/theme/themeService.js, même clé et même logique), appliqué
+    // avant le premier rendu : sombre par défaut, clair, ou automatique.
+    (function () {
+      var choice = 'dim';
+      try { choice = localStorage.getItem('heds.theme') || 'dim'; } catch (e) {}
+      if (choice !== 'light' && choice !== 'auto') choice = 'dim';
+      var scheme = choice === 'auto'
+        ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dim')
+        : choice;
+      var root = document.documentElement;
+      root.setAttribute('data-theme', scheme);
+      root.style.colorScheme = scheme === 'light' ? 'light' : 'dark';
+      var links = document.querySelectorAll('link[data-theme-link="heds"]');
+      for (var i = 0; i < links.length; i++) {
+        var active = links[i].getAttribute('data-theme-scheme') === scheme;
+        links[i].disabled = !active;
+        links[i].media = active ? 'all' : 'not all';
+      }
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', scheme === 'light' ? '#ffffff' : '#0B213F');
+    })();
+  </script>
 </head>
 <body>
+  <script>
+    // En production, la feuille principale (qui contient le thème sombre) est
+    // ajoutée à la fin de <head> : la feuille claire doit passer après elle.
+    if (document.documentElement.getAttribute('data-theme') === 'light') {
+      var lightSheet = document.querySelector('link[data-theme-link="heds"][data-theme-scheme="light"]');
+      if (lightSheet) document.head.appendChild(lightSheet);
+    }
+  </script>
   <noscript>
     <strong>We're sorry but pfpheds doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
   </noscript>

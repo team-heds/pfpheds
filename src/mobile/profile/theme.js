@@ -1,25 +1,11 @@
-// Thème clair ou sombre : deux feuilles de style, dont une seule est active.
-// Même mécanisme que le bouton de thème de la barre d'ordinateur.
+// Thème de l'application mobile : relais vers le service unique de la plateforme
+// (src/theme/themeService.js), partagé avec les boutons d'ordinateur, les
+// graphiques et la carte.
+import { currentScheme, setPreference } from '@/theme/themeService'
 
-const links = (doc) => Array.from(doc.querySelectorAll('link[data-theme-link="heds"]'))
+export { currentScheme }
 
-export function currentScheme(doc = document) {
-  const light = links(doc).find((link) => link.dataset.themeScheme === 'light')
-  return light && !light.disabled && light.media !== 'not all' ? 'light' : 'dim'
-}
-
-/** Active le thème demandé ; retourne le thème réellement en service. */
-export function applyScheme(scheme, doc = document, win = window) {
-  const all = links(doc)
-  const target = all.find((link) => link.dataset.themeScheme === scheme)
-  // En production le thème sombre est intégré à la feuille principale :
-  // il suffit alors de désactiver la feuille claire.
-  if (!target && scheme !== 'dim') return currentScheme(doc)
-  all.forEach((link) => {
-    const active = link === target
-    link.disabled = !active
-    link.media = active ? 'all' : 'not all'
-  })
-  win.dispatchEvent(new CustomEvent('heds:theme-change', { detail: { scheme } }))
-  return currentScheme(doc)
+/** Enregistre et applique un choix : « dim », « light » ou « auto ». Retourne le thème affiché. */
+export function applyScheme(preference) {
+  return setPreference(preference)
 }

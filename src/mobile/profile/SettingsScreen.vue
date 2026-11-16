@@ -72,6 +72,7 @@
             {{ option.label }}
           </button>
         </div>
+        <p v-if="scheme === 'auto'" class="m-settings__theme-hint">Le thème suit le réglage clair ou sombre du téléphone.</p>
       </section>
 
       <section aria-labelledby="m-settings-more">
@@ -114,7 +115,7 @@ import { useMobileStoriesStore } from '@/mobile/home/mobileStoriesStore'
 import { initialsOf } from '@/mobile/home/postMedia'
 import { useMobileProfileStore } from '@/mobile/profile/mobileProfileStore'
 import { displayNameOf } from '@/mobile/profile/profileHelpers'
-import { applyScheme, currentScheme } from '@/mobile/profile/theme'
+import { useTheme } from '@/theme/useTheme'
 import { profileInfoForm, recordProfileUpdate, saveProfileInfo } from '@/mobile/profile/profileInfo'
 import { PROFILE_LANGUAGE_OPTIONS, SWISS_CANTON_OPTIONS } from '@/domain/profile/profilePreferences'
 import packageInfo from '../../../package.json'
@@ -122,6 +123,7 @@ import packageInfo from '../../../package.json'
 const THEMES = [
   { key: 'dim', label: 'Sombre', icon: 'moon' },
   { key: 'light', label: 'Clair', icon: 'sun' },
+  { key: 'auto', label: 'Auto', icon: 'contrast' },
 ]
 
 const emit = defineEmits(['close'])
@@ -186,9 +188,10 @@ async function saveInfo() {
 }
 
 // --- Thème ---------------------------------------------------------------------
-const scheme = ref(currentScheme())
+// Réglage partagé avec l'ordinateur ; « Auto » suit le réglage du téléphone.
+const { preference: scheme, setPreference } = useTheme()
 function setScheme(next) {
-  scheme.value = applyScheme(next)
+  setPreference(next)
 }
 
 // --- Déconnexion ---------------------------------------------------------------
@@ -337,6 +340,11 @@ input:focus-visible + .m-settings__upload {
   font: inherit;
   font-size: 0.875rem;
   cursor: pointer;
+}
+.m-settings__theme-hint {
+  margin: 8px 4px 0;
+  color: var(--m-muted);
+  font-size: 0.8125rem;
 }
 .m-settings__themes button[aria-checked='true'] {
   background: var(--m-raised);

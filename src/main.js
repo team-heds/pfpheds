@@ -23,6 +23,8 @@ import 'primeflex/primeflex.css';
 import '@/assets/styles/platform-foundations.scss';
 import '@/assets/styles/si-admin-system.scss';
 import { hideAppSplash } from '@/utils/appSplash';
+import { initTheme } from '@/theme/themeService';
+import { useTheme } from '@/theme/useTheme';
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -59,6 +61,10 @@ app.directive('ripple', Ripple);
 app.directive('styleclass', StyleClass);
 
 async function bootstrap() {
+  // Thème choisi (déjà posé par index.html) : feuilles dans le bon ordre, suivi du système.
+  initTheme();
+  // Garde le réglage de mise en page des anciennes pages accordé au thème.
+  useTheme();
   const authStore = useAuthStore();
   const userStore = useUserStore();
 

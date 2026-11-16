@@ -2,6 +2,7 @@
 import { ref, watch, computed } from 'vue';
 import { usePrimeVue } from 'primevue/config';
 import { useLayout } from '@/layout/composables/layout';
+import { useTheme } from '@/theme/useTheme';
 
 defineProps({
     simple: {
@@ -15,7 +16,10 @@ const rippleActive = computed(() => $primevue.config.ripple);
 const inputStyle = computed(() => $primevue.config.inputStyle || 'outlined') ;
 
 const { setScale, layoutConfig, layoutState, onConfigSidebarToggle } = useLayout();
-const colorScheme = ref(layoutConfig.colorScheme.value);
+// Thème : même réglage que la barre d'ordinateur et l'application mobile.
+const theme = useTheme();
+const colorScheme = ref(theme.scheme.value);
+watch(theme.scheme, (value) => { colorScheme.value = value; });
 const componentThemes = ref([
     { name: 'indigo', color: '#6366F1' },
     { name: 'blue', color: '#3B82F6' },
@@ -37,16 +41,9 @@ watch(layoutConfig.menuMode, (newVal) => {
 const onConfigButtonClick = () => {
     onConfigSidebarToggle();
 };
-const changeColorScheme = (colorScheme) => {
-    const themeLink = document.getElementById('theme-link');
-    const themeLinkHref = themeLink.getAttribute('href');
-    const currentColorScheme = 'theme-' + layoutConfig.colorScheme.value.toString();
-    const newColorScheme = 'theme-' + colorScheme;
-    const newHref = themeLinkHref.replace(currentColorScheme, newColorScheme);
-
-    replaceLink(themeLink, newHref, () => {
-        layoutConfig.colorScheme.value = colorScheme;
-    });
+// « dark » n'existe pas sur la plateforme : il devient le thème sombre.
+const changeColorScheme = (value) => {
+    theme.setPreference(value === 'light' ? 'light' : 'dim');
 };
 const changeTheme = (theme) => {
     const themeLink = document.getElementById('theme-link');
