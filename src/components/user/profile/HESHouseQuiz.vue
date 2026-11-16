@@ -158,6 +158,7 @@
 </template>
 
 <script setup>
+import { HOUSE_TEXTS, houseDescription, houseMotto } from '@/domain/gamification/houseTexts'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
@@ -197,33 +198,29 @@ const quizAvailable = computed(() => quizStatusLoaded.value && quizOpen.value &&
 const houses = {
   harmonis: {
     name: 'Harmonis',
-    motto: "L'équilibre soigne",
-    description:
-      "Tu es quelqu'un de stable, paisible et centré. Tu cherches l'harmonie autour de toi, tu aides les autres à se sentir bien sans faire de bruit. Tu sais que l'équilibre soigne.",
+    motto: HOUSE_TEXTS.harmonis.motto,
+    description: HOUSE_TEXTS.harmonis.description,
     color: '#2E8B57',
     icon: 'pi pi-circle'
   },
   elaris: {
     name: 'Elaris',
-    motto: 'Clarifier, guider, apaiser',
-    description:
-      'Tu es clair dans tes idées, tu aimes guider les autres et voir au-delà des apparences. Tu éclaires les chemins, tu transmets des idées avec calme et assurance.',
+    motto: HOUSE_TEXTS.elaris.motto,
+    description: HOUSE_TEXTS.elaris.description,
     color: '#DC143C',
     icon: 'pi pi-sun'
   },
   doloris: {
     name: 'Doloris',
-    motto: "Comprendre la douleur, c'est soigner",
-    description:
-      "Tu ressens profondément ce que les autres vivent. Tu as de la compassion, tu veux comprendre avant d'agir. Tu ne fais pas les choses à moitié.",
+    motto: HOUSE_TEXTS.doloris.motto,
+    description: HOUSE_TEXTS.doloris.description,
     color: '#FFD700',
     icon: 'pi pi-heart'
   },
   solencia: {
     name: 'Solencia',
-    motto: 'Apaiser pour mieux guérir',
-    description:
-      'Tu es doux, apaisant, et tu offres ta présence aux autres dans les moments difficiles. Tu sais écouter, rassurer et consoler.',
+    motto: HOUSE_TEXTS.solencia.motto,
+    description: HOUSE_TEXTS.solencia.description,
     color: '#4169E1',
     icon: 'pi pi-moon'
   }
@@ -550,12 +547,12 @@ const getHouseIcon = (houseName) => {
 
 const getHouseMotto = (houseName) => {
   const house = Object.values(houses).find((h) => h.name === houseName)
-  return house?.motto || "L'équilibre soigne"
+  return house?.motto || houseMotto(houseName)
 }
 
 const getHouseDescription = (houseName) => {
   const house = Object.values(houses).find((h) => h.name === houseName)
-  return house?.description || 'Votre maison vous correspond parfaitement.'
+  return house?.description || houseDescription(houseName) || 'Votre maison vous correspond parfaitement.'
 }
 
 // Actions de navigation

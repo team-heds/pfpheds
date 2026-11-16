@@ -43,6 +43,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { HOUSE_TEXTS } from '@/domain/gamification/houseTexts';
 import { useRouter } from 'vue-router'
 
 // Import des images de fond des maisons
@@ -111,31 +112,31 @@ const houseConfig = {
   harmonis: {
     color: '#2E8B57',
     icon: 'pi pi-circle',
-    motto: 'L\'équilibre soigne',
+    motto: HOUSE_TEXTS.harmonis.motto,
     background: FondHarmonis
   },
   elaris: {
     color: '#DC143C',
     icon: 'pi pi-sun',
-    motto: 'Clarifier, guider, apaiser',
+    motto: HOUSE_TEXTS.elaris.motto,
     background: FondElaris
   },
   doloris: {
     color: '#FFD700',
     icon: 'pi pi-heart',
-    motto: 'Comprendre la douleur, c\'est soigner',
+    motto: HOUSE_TEXTS.doloris.motto,
     background: FondDoloris
   },
   solencia: {
     color: '#4169E1',
     icon: 'pi pi-moon',
-    motto: 'Apaiser pour mieux guérir',
+    motto: HOUSE_TEXTS.solencia.motto,
     background: FondSolencia
   },
   gamemaster: {
     color: '#9333ea',
     icon: 'pi pi-crown',
-    motto: 'Voir tout, gérer tout',
+    motto: HOUSE_TEXTS.gamemaster.motto,
     background: MaitreDuJeuFond
   }
 }
