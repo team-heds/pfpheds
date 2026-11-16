@@ -47,6 +47,10 @@ Les fenêtres PrimeVue (`Dialog`, `ConfirmDialog`) des pages affichées dans le 
 
 Les messages PrimeVue (`Toast`) s'affichent en bandeau compact juste au-dessus de la barre d'onglets, sur toute la largeur (`mobileToasts.css`), au lieu de couvrir le titre de l'écran.
 
+## Écrans Maisons
+
+`/houses/ranking` et `/houses/:houseName/stats` s'affichent avec des écrans conçus pour le téléphone (`src/mobile/houses/`), déclarés dans `NATIVE_PAGES` ; l'ordinateur garde `HousesRankingPage.vue` et `HouseStatsPage.vue`, téléchargées seulement si elles s'affichent. Le classement met en tête « Ta maison » (rang, niveau, XP avant le niveau suivant, écart avec la maison devant), puis les quatre maisons ; toucher une maison ouvre sa fiche (bannière, devise, niveau, membres, XP par membre, description, membres les plus actifs quand le détail est visible). La maison de la personne vient de son compte ou, à défaut, de ses données de progression (`fetchUserHouseKey`). États : squelettes, erreur avec « Réessayer », hors ligne avec rechargement au retour du réseau, sans message flottant.
+
 ## Application installée : portrait, démarrage, connexion
 
 - **Portrait** : le manifeste déclare `orientation: 'portrait'` (Android). iOS l'ignore : dans l'application installée (`display-mode: standalone`), un téléphone en paysage (`pointer: coarse` et hauteur ≤ 500 px) voit l'écran « Tourne ton téléphone » (`#rotate-hint` dans `index.html`), posé par-dessus l'application sans la démonter. `MOBILE_BREAKPOINT_QUERY` inclut le paysage du téléphone : l'application mobile reste montée et rien de ce qui est saisi n'est perdu. Ajouter la classe `allow-landscape` sur `<html>` lève l'écran (photo ou vidéo plein écran).
