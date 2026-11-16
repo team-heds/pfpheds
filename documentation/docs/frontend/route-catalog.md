@@ -42,7 +42,6 @@ Vues principales:
 - `home/MapView.vue`
 - `institutions/Institution.vue`
 - `institutions/PlaceListView.vue`
-- `home/FaqView.vue`
 - `home/TermsView.vue`
 - `home/InfoExterneView.vue`
 - `home/HistoryView.vue`
