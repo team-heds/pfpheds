@@ -1,0 +1,74 @@
+/* Messages de confirmation et d'erreur (PrimeVue Toast) sur téléphone : bandeau
+   compact juste au-dessus de la barre d'onglets, sur toute la largeur, au lieu
+   d'une grande carte en haut à droite qui cache le titre de l'écran.
+   Limité à html.m-app (application mobile active, sous 768 px). */
+
+html.m-app .p-toast {
+  top: auto !important;
+  right: 12px !important;
+  bottom: calc(57px + env(safe-area-inset-bottom, 0px) + 8px) !important;
+  left: 12px !important;
+  width: auto !important;
+  max-width: none !important;
+  transform: none !important;
+}
+
+html.m-app .p-toast .p-toast-message {
+  margin: 8px 0 0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html.m-app .p-toast .p-toast-message .p-toast-message-content {
+  align-items: center !important;
+  min-height: 52px;
+  padding: 8px 4px 8px 12px !important;
+  border-width: 0 0 0 4px !important;
+}
+
+html.m-app .p-toast .p-toast-message .p-toast-message-content .p-toast-message-icon,
+html.m-app .p-toast .p-toast-message .p-toast-message-content .p-toast-message-icon.p-icon {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 20px !important;
+}
+
+html.m-app .p-toast .p-toast-message .p-toast-message-content .p-toast-message-text {
+  margin: 0 0 0 10px !important;
+  line-height: 1.35;
+}
+
+html.m-app .p-toast .p-toast-message .p-toast-message-content .p-toast-summary {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+html.m-app .p-toast .p-toast-message .p-toast-message-content .p-toast-detail {
+  margin: 2px 0 0 !important;
+  font-size: 0.8125rem !important;
+}
+
+/* Croix de fermeture : cible tactile de 44 px. */
+html.m-app .p-toast .p-toast-message .p-toast-icon-close {
+  flex-shrink: 0;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+}
+
+/* Arrive par le bas. */
+html.m-app .p-toast .p-toast-message-enter-from {
+  opacity: 0;
+  transform: translateY(16px);
+}
+html.m-app .p-toast .p-toast-message-enter-active {
+  transition: transform 220ms cubic-bezier(0, 0, 0.2, 1), opacity 220ms ease !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html.m-app .p-toast .p-toast-message-enter-active,
+  html.m-app .p-toast .p-toast-message-leave-active {
+    transition: none !important;
+  }
+}

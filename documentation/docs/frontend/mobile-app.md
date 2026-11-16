@@ -35,6 +35,18 @@ Elle reste visible sur la carte. Règles complètes : `mobile-app-rules.md`.
 
 Les panneaux (`BottomSheet`) et écrans empilés (`MobileStackScreen`, avec une présentation `modal` plein écran pour la création de publication ou de story) sont déclarés dans `overlayRegistry.js` et ouverts avec `useMobileShell().open(nom, données)`. Leur nom est écrit dans l'ancre de l'adresse (`/feed#/commentaires`) : le bouton ou le geste retour du téléphone les ferme. Après un rechargement, seuls ceux marqués `restorable` se rouvrent.
 
+### Retour par glissement depuis le bord gauche
+
+Dans l'application installée sur iPhone (`navigator.standalone`), qui n'a ni bouton retour du navigateur ni geste du système, glisser depuis les 24 px du bord gauche ramène à l'écran précédent (`useEdgeSwipeBack.js`, décision du geste dans `edgeSwipe.js`). L'écran suit le doigt ; au-delà d'un tiers de la largeur ou sur un lancer rapide, il part vers la droite, sinon il revient en place. Le geste vaut pour les écrans empilés et les écrans plein écran non modaux, jamais à la racine d'un onglet, sur un panneau du bas, sur la carte ni dans une zone qui défile de côté (`data-no-edge-swipe` pour en exclure une). Dans Safari et sur Android, le système gère déjà ce geste : il n'est pas doublé.
+
+### Fenêtres des pages existantes
+
+Les fenêtres PrimeVue (`Dialog`, `ConfirmDialog`) des pages affichées dans le cadre de la coque deviennent des panneaux du bas : pleine largeur, poignée, 90 % de l'écran au plus, zone sûre du bas (`mobileDialogs.css`). `useDialogsAsSheets.js` inscrit chaque fenêtre ouverte dans l'ancre (`#/fenetre`) : le retour du téléphone la ferme sans quitter la page, et on peut la tirer vers le bas par son en-tête.
+
+### Messages
+
+Les messages PrimeVue (`Toast`) s'affichent en bandeau compact juste au-dessus de la barre d'onglets, sur toute la largeur (`mobileToasts.css`), au lieu de couvrir le titre de l'écran.
+
 ## Règles d'interface
 
 - Couleurs : variables `--m-*` définies sur `.m-shell`, dérivées du thème PrimeVue (clair et sombre).

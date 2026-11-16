@@ -73,6 +73,10 @@ import { MOBILE_SHELL_KEY } from '@/mobile/shell/useMobileShell'
 import { OVERLAYS, canRestoreOverlay } from '@/mobile/shell/overlayRegistry'
 import { buildTabs, pageKey } from '@/mobile/shell/tabs'
 import { useKeyboardInset } from '@/mobile/shell/useKeyboardInset'
+import { useEdgeSwipeBack } from '@/mobile/shell/useEdgeSwipeBack'
+import { useDialogsAsSheets } from '@/mobile/shell/useDialogsAsSheets'
+import '@/mobile/shell/mobileDialogs.css'
+import '@/mobile/shell/mobileToasts.css'
 
 // Chaque onglet n'est téléchargé qu'à sa première ouverture : le démarrage
 // ne charge que la coque et l'onglet affiché.
@@ -220,6 +224,24 @@ function selectTab(key) {
 }
 
 provide(MOBILE_SHELL_KEY, { open: openOverlay, close: closeOverlay, goBack })
+
+// Fenêtres des pages existantes : panneaux du bas, fermés par le retour du téléphone.
+useDialogsAsSheets({ open: openOverlay, close: closeOverlay, overlayNames: () => store.overlayNames })
+
+// --- Retour par glissement depuis le bord gauche (application installée sur iPhone)
+// Sur un panneau du bas, le geste ne fait rien : on le ferme en le glissant vers le bas.
+const topOverlayScreen = () => {
+  const layers = rootRef.value?.querySelectorAll('.m-shell__overlays > *')
+  const top = layers?.[layers.length - 1]
+  return top?.matches?.('.m-screen:not(.m-screen--modal)') ? top : null
+}
+const currentPageElement = () => [...(rootRef.value?.querySelectorAll('.m-shell__views > .m-page') || [])]
+  .find((el) => !el.hasAttribute('aria-hidden') && el.style.display !== 'none') || null
+useEdgeSwipeBack(rootRef, {
+  enabled: () => (store.overlays.length ? Boolean(topOverlayScreen()) : store.canGoBack && !nativeScreen.value),
+  target: () => (store.overlays.length ? topOverlayScreen() : currentPageElement()),
+  onBack: goBack,
+})
 
 // --- En-tête ---------------------------------------------------------------
 // Les pages existantes annoncent leur titre dans l'onglet du navigateur une
@@ -604,6 +626,27 @@ onBeforeUnmount(() => {
   overflow: hidden !important;
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
+}
+
+/* Pages existantes : titres de section à la taille d'une application (certains
+   montaient à 32 px, plus gros que le titre de l'en-tête). */
+.m-shell .m-page:not(.m-page--bare) h2 {
+  font-size: 1.25rem !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+}
+.m-shell .m-page:not(.m-page--bare) h3 {
+  font-size: 1.0625rem !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}
+/* Pas de texte sélectionné ni de menu d'aperçu au toucher long sur les boutons. */
+.m-shell button,
+.m-shell [role='button'],
+.m-shell [role='tab'] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* Transitions entre écrans d'un même onglet (glissement) ou entre onglets (fondu). */
