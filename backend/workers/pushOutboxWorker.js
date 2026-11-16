@@ -1,6 +1,7 @@
 // server/workers/pushOutboxWorker.js
 const webpush = require('web-push')
 const { createClient } = require('@supabase/supabase-js')
+const { purgeExpiredStories } = require('./storiesCleanup')
 
 const {
   SUPABASE_URL,
@@ -11,7 +12,8 @@ const {
   // réglages worker
   PUSH_WORKER_BATCH = '50',           // nb max jobs par cycle
   PUSH_WORKER_INTERVAL_MS = '10000',  // 10s entre cycles si daemon
-  PUSH_WORKER_BROADCAST_LIMIT = '500' // limite de subs en broadcast par job (pagination simple)
+  PUSH_WORKER_BROADCAST_LIMIT = '500', // limite de subs en broadcast par job (pagination simple)
+  STORIES_CLEANUP_INTERVAL_MS = '3600000' // effacement des stories expirées : toutes les heures
 } = process.env
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
@@ -187,6 +189,19 @@ if (require.main === module) {
     }
   }
   loop()
+
+  // Stories expirées : médias effacés du disque puis lignes supprimées (première passe après 1 min).
+  const cleanup = async () => {
+    try {
+      const r = await purgeExpiredStories(supabase)
+      if (r.expired) console.log('[storiesCleanup] passe :', r)
+    } catch (e) {
+      console.error('[storiesCleanup] erreur :', e.message || e)
+    } finally {
+      setTimeout(cleanup, parseInt(STORIES_CLEANUP_INTERVAL_MS, 10))
+    }
+  }
+  setTimeout(cleanup, 60 * 1000)
 }
 
 module.exports = { runOnce }
