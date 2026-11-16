@@ -70,6 +70,24 @@ describe('socialFeedStore', () => {
     vi.clearAllMocks()
   })
 
+  it('affiche le nom complet du profil plutôt que le nom enregistré avec la publication', async () => {
+    const store = useSocialFeedStore()
+    queueSuccessfulPage(
+      [{ ...makeRow('post-nom'), author_name: 'prenom.nom' }],
+      [],
+      [{ user_id: 'user-1', avatar_url: null, display_name: '', forname: 'Prénom', family_name: 'Nom' }]
+    )
+    await store.loadScope(rootScope)
+    expect(store.getEntry(rootScope).posts[0].Author).toBe('Prénom Nom')
+  })
+
+  it('garde le nom enregistré quand le profil n’a pas de nom', async () => {
+    const store = useSocialFeedStore()
+    queueSuccessfulPage([{ ...makeRow('post-sans-nom'), author_name: 'prenom.nom' }], [], [{ user_id: 'user-1', avatar_url: null }])
+    await store.loadScope(rootScope)
+    expect(store.getEntry(rootScope).posts[0].Author).toBe('prenom.nom')
+  })
+
   it('conserve les publications visibles lorsqu’une actualisation échoue', async () => {
     const store = useSocialFeedStore()
     queueSuccessfulPage([
