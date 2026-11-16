@@ -22,6 +22,7 @@ import '@/assets/styles/styles.scss';
 import 'primeflex/primeflex.css';
 import '@/assets/styles/platform-foundations.scss';
 import '@/assets/styles/si-admin-system.scss';
+import { hideAppSplash } from '@/utils/appSplash';
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -102,6 +103,7 @@ async function bootstrap() {
     waitForRouter: () => router.isReady(),
     mount: () => {
       app.mount('#app');
+      hideAppSplash();
       void pageNavigation.refresh();
     },
     onError: showBootstrapFailure,

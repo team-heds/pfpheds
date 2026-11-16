@@ -2,7 +2,9 @@
 // dans un onglet. Mobile et ordinateur partagent les mêmes adresses : seule la
 // présentation change.
 
-export const MOBILE_BREAKPOINT_QUERY = '(max-width: 768px)'
+// Un téléphone tourné en paysage dépasse 768 px de large : il reste dans
+// l'application mobile (sinon elle serait démontée et la saisie perdue).
+export const MOBILE_BREAKPOINT_QUERY = '(max-width: 768px), (pointer: coarse) and (max-height: 500px)'
 
 // Ordre de la barre du bas : la carte à gauche, l'accueil au milieu, le profil à droite.
 export const TAB_KEYS = ['map', 'institutions', 'home', 'search', 'profile']
