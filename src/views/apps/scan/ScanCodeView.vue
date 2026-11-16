@@ -3,14 +3,16 @@
   <main class="scan-page" data-page-scroll>
     <div class="scan-shell">
       <GamificationPageHeader
-        title="Présences"
-        description="Scannez le QR code affiché pendant un événement pour enregistrer votre présence."
+        :title="treasureEnabled ? 'Scanner un QR code' : 'Présences'"
+        :description="treasureEnabled
+          ? 'Scannez le QR code d’un événement pour enregistrer votre présence, ou celui d’une étape de la chasse au trésor.'
+          : 'Scannez le QR code affiché pendant un événement pour enregistrer votre présence.'"
         icon="pi pi-qrcode"
         @back="goBack"
       />
 
       <section class="scan-panel" aria-labelledby="scan-title">
-        <h2 id="scan-title">Enregistrer ma présence</h2>
+        <h2 id="scan-title">{{ treasureEnabled ? 'Scanner' : 'Enregistrer ma présence' }}</h2>
 
         <div v-if="checking" class="scan-result" role="status" aria-busy="true">
           <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
@@ -38,7 +40,14 @@
                 @click="restart"
               />
               <Button
-                v-if="outcome.success && profileEnabled"
+                v-if="outcome.huntId && treasureEnabled"
+                label="Voir la chasse"
+                icon="pi pi-map"
+                text
+                @click="router.push(`${TREASURE_HUNT_PATH}/${outcome.huntId}`)"
+              />
+              <Button
+                v-if="outcome.success && profileEnabled && !outcome.huntId"
                 label="Voir ma progression"
                 icon="pi pi-compass"
                 text
@@ -51,7 +60,7 @@
         <template v-else>
           <QrCodeScanner v-if="cameraOpen" @decoded="onDecoded" />
           <div v-else class="scan-start">
-            <p>Ouvrez l’appareil photo et visez le QR code projeté par l’organisateur.</p>
+            <p>{{ treasureEnabled ? 'Ouvrez l’appareil photo et visez le QR code de l’événement ou de l’étape.' : 'Ouvrez l’appareil photo et visez le QR code projeté par l’organisateur.' }}</p>
             <Button label="Scanner un QR code" icon="pi pi-camera" size="large" @click="cameraOpen = true" />
           </div>
 
@@ -129,10 +138,12 @@ import {
   isValidShortCode,
   redeemScanCode,
 } from '@/service/eventCheckinService'
+import { TREASURE_HUNT_PATH } from '@/service/treasureHuntService'
 
 const route = useRoute()
 const router = useRouter()
 const profileEnabled = gamificationFeatures.userJourney
+const treasureEnabled = gamificationFeatures.treasureHunt
 
 const cameraOpen = ref(route.query.camera === '1')
 const checking = ref(false)
@@ -179,7 +190,7 @@ async function validate(rawCode) {
 function onDecoded(text) {
   // Un QR code étranger (affiche, site web) ne ferme pas l'appareil photo.
   if (!extractScanCode(text)) {
-    scanHint.value = 'Ce QR code n’est pas un code de la plateforme. Visez celui de l’événement.'
+    scanHint.value = 'Ce QR code n’est pas un code de la plateforme.'
     return
   }
   validate(text)

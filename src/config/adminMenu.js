@@ -148,6 +148,7 @@ export default [
           { label: 'Gestion Badges', icon: 'pi pi-shield', to: '/admin/gamification/badges' },
           { label: 'Gestion Utilisateurs', icon: 'pi pi-users', to: '/admin/gamification/users' },
           { label: 'Gestion Maisons', icon: 'pi pi-home', to: '/admin/gamification/houses' },
+          ...(gamificationFeatures.treasureHunt ? [{ label: 'Chasse au trésor', icon: 'pi pi-map', to: '/chasse-au-tresor/gestion' }] : []),
           { label: 'Analytics & Statistiques', icon: 'pi pi-chart-line', to: '/admin/gamification/analytics' }
         ]
       }] : [])

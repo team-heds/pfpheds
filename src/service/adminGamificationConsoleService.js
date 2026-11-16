@@ -5,6 +5,8 @@ export const GAMIFICATION_ACTION_LABELS = Object.freeze({
   POST: 'Publication créée',
   PROFILE_UPDATE: 'Profil mis à jour',
   EVENT_CHECKIN: 'Présence à un événement',
+  TREASURE_HUNT: 'Chasse au trésor',
+  TREASURE_HUNT_COMPLETE: 'Chasse au trésor terminée',
 })
 
 export const GAMIFICATION_WINDOW_LABELS = Object.freeze({

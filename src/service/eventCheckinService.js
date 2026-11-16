@@ -1,7 +1,8 @@
 import { supabase } from '@/supabase'
+import { describeTreasureResult, isTreasureResult, retryHint } from '@/service/treasureHuntService'
 
-// Scan de codes de la plateforme. Aujourd'hui : présence à un événement. Le même
-// parcours (lien /scan?c=…, RPC redeem_scan_code) servira à la chasse au trésor.
+// Scan de codes de la plateforme : présence à un événement et chasse au trésor, par le
+// même parcours (lien /scan?c=…, RPC redeem_scan_code).
 // Le navigateur ne décide de rien : il transmet le code, le serveur valide et attribue.
 
 export const SCAN_ROUTE_PATH = '/scan'
@@ -61,7 +62,7 @@ const RESULT_MESSAGES = Object.freeze({
     severity: 'error',
     icon: 'pi pi-times-circle',
     title: 'Code non reconnu',
-    detail: 'Ce code ne correspond à aucun événement. Vérifiez la saisie ou scannez à nouveau le QR code.',
+    detail: 'Ce code ne correspond à aucun QR code de la plateforme. Vérifiez la saisie ou scannez à nouveau le QR code.',
   },
   event_not_started: {
     severity: 'warn',
@@ -112,6 +113,11 @@ export function describeScanResult(result) {
   const status = result?.status || 'error'
   const eventTitle = result?.event?.title || ''
 
+  if (isTreasureResult(result)) {
+    const treasure = describeTreasureResult(result)
+    if (treasure) return treasure
+  }
+
   if (status === 'ok') {
     const xp = Number(result.xp_gained) || 0
     return {
@@ -129,7 +135,8 @@ export function describeScanResult(result) {
   }
 
   const message = RESULT_MESSAGES[status] || RESULT_MESSAGES.error
-  return { status, success: status === 'already', ...message, eventTitle, xp: 0 }
+  const detail = status === 'rate_limited' && result?.retry_at ? retryHint(result.retry_at) : message.detail
+  return { status, success: status === 'already', ...message, detail, eventTitle, xp: 0 }
 }
 
 async function callRpc(name, params) {
