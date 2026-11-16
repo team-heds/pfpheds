@@ -1,5 +1,7 @@
 import { profileAccessGuard } from '@/router/guards/profileAccessGuard'
 import { gamificationFeatures } from '@/config/gamificationFeatures'
+// Pages remplacées par un écran mobile : chargées seulement quand elles s'affichent.
+import { loadWhenShown } from '@/router/loadWhenShown'
 
 const badgesChallengesGuard = () => (
   gamificationFeatures.userJourney && gamificationFeatures.badgesChallenges
@@ -9,7 +11,7 @@ const badgesChallengesGuard = () => (
 
 // Routes profils, utilisateurs & gamification
 export default [
-  { path: '/profile/:id', component: () => import('@/views/users/ProfileView.vue'), name: 'Profile', beforeEnter: profileAccessGuard, meta: { requiresAuth: true } },
+  { path: '/profile/:id', component: loadWhenShown(() => import('@/views/users/ProfileView.vue'), 'ProfileView'), name: 'Profile', beforeEnter: profileAccessGuard, meta: { requiresAuth: true } },
   { path: '/profilAdmin/:id', component: () => import('@/views/admin/ProfileAdminView.vue'), name: 'ProfileAdmin', beforeEnter: profileAccessGuard, meta: { requiresAuth: true, need: ['admin', 'house_coach'] } },
   { path: '/settings', component: () => import('@/views/users/SettingsView.vue'), name: 'SettingView', meta: { requiresAuth: true } },
   { path: '/hes-house-quiz', component: () => import('@/views/users/HESHouseQuizView.vue'), name: 'HESHouseQuizView', meta: { requiresAuth: true, title: 'Quiz des maisons' } },

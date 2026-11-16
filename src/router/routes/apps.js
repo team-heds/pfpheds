@@ -1,4 +1,6 @@
 import { gamificationFeatures } from '@/config/gamificationFeatures'
+// Pages remplacées par un écran mobile : chargées seulement quand elles s'affichent.
+import { loadWhenShown } from '@/router/loadWhenShown'
 
 const featureGuard = (feature) => () => (
   gamificationFeatures[feature] ? true : { path: '/outils', replace: true }
@@ -57,7 +59,7 @@ export default [
   // Mobile spécifique
   { path: '/create', component: () => import('@/components/social/library/CreateContentMobile.vue'), name: 'CreateContentMobile', meta: { mobileOnly: true, mobileChrome: 'none' } },
   { path: '/mobile-outils', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsView', meta: { requiresAuth: true, mobileOnly: true, title: 'Mon espace' } },
-  { path: '/mobile-search', component: () => import('@/views/apps/tools/MobileSearchView.vue'), name: 'MobileSearchView', meta: { requiresAuth: true, mobileOnly: true, title: 'Recherche' } },
+  { path: '/mobile-search', component: loadWhenShown(() => import('@/views/apps/tools/MobileSearchView.vue'), 'MobileSearchView'), name: 'MobileSearchView', meta: { requiresAuth: true, mobileOnly: true, title: 'Recherche' } },
   { path: '/list', component: () => import('@/components/media/audio/ListComponent.vue'), name: 'ListComponent', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
 
   // Routes spéciales

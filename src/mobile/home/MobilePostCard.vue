@@ -34,14 +34,20 @@
         </button>
       </div>
 
+      <!-- Contenus intégrés : un aperçu léger d'abord, le lecteur seulement à l'appui. -->
       <div v-for="embed in embeds" :key="embed.src" class="m-post__embed" :class="`m-post__embed--${embed.kind}`">
         <iframe
+          v-if="openedEmbeds.has(embed.src)"
           :src="embed.src"
           :title="embedTitle(embed.kind)"
-          loading="lazy"
-          allow="encrypted-media; picture-in-picture"
+          allow="autoplay; encrypted-media; picture-in-picture"
           allowfullscreen
         ></iframe>
+        <button v-else type="button" class="m-post__embed-cover" :aria-label="`Lire : ${embedTitle(embed.kind)}`" @click="openEmbed(embed)">
+          <img v-if="embed.thumbnail" :src="embed.thumbnail" alt="" loading="lazy" decoding="async" />
+          <span class="m-post__embed-play" aria-hidden="true"><MIcon name="play" /></span>
+          <span class="m-post__embed-label">{{ embedTitle(embed.kind) }}</span>
+        </button>
       </div>
 
       <div v-if="visuals.length" class="m-post__media" :class="{ 'm-post__media--many': visuals.length > 1 }">
@@ -135,6 +141,10 @@ const avatarFailed = ref(false)
 const initials = computed(() => initialsOf(authorName.value))
 const safeContent = computed(() => sanitizeHtml(props.post.Content || ''))
 const embeds = computed(() => extractEmbeds(props.post.Content))
+const openedEmbeds = ref(new Set())
+const openEmbed = (embed) => {
+  openedEmbeds.value = new Set([...openedEmbeds.value, embed.src])
+}
 const media = computed(() => splitPostMedia(props.post.media))
 const visuals = computed(() => media.value.visuals)
 const files = computed(() => media.value.files)
@@ -360,6 +370,58 @@ button.m-post__author:focus-visible {
   width: 100%;
   border: 0;
   background: var(--m-raised);
+}
+.m-post__embed-cover {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 120px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: var(--m-raised);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.m-post__embed--youtube .m-post__embed-cover {
+  aspect-ratio: 16 / 9;
+}
+.m-post__embed-cover img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.m-post__embed-play {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(2, 8, 18, 0.7);
+}
+.m-post__embed-play :deep(.m-icon) {
+  width: 28px;
+  height: 28px;
+  margin-left: 3px;
+  fill: #fff;
+}
+.m-post__embed-label {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(2, 8, 18, 0.65);
+  font-size: 0.75rem;
+}
+.m-post__embed-cover:focus-visible {
+  outline: 2px solid var(--m-accent-text);
+  outline-offset: -2px;
 }
 .m-post__embed--youtube iframe {
   aspect-ratio: 16 / 9;

@@ -46,7 +46,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 // Import de l'image de fond Game Master
-import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
+import MaitreDuJeuFond from '@/assets/maisons/web/MaitreDuJeuFond.jpg'
 
 const props = defineProps({
   niveau: {

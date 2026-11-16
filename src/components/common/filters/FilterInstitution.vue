@@ -78,6 +78,7 @@
 
 <script>
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useInstitutionsStore } from '@/stores/institutionsStore';
 
 export default {

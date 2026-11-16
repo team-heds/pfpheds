@@ -180,9 +180,6 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('vue') && !id.includes('primevue') && !id.includes('devtools')) {
-              return 'vendor'
-            }
             if (id.includes('primevue') || id.includes('primeicons')) {
               return 'primevue'
             }
@@ -212,6 +209,12 @@ export default defineConfig({
             }
             if (id.includes('leaflet')) {
               return 'leaflet'
+            }
+            // Cœur de Vue seulement. Une règle « le nom contient vue » rangeait aussi
+            // vue-chartjs et @tiptap/vue-3 ici : chaque page téléchargeait alors les
+            // graphiques et l'éditeur de texte au démarrage.
+            if (/[\\/]node_modules[\\/](vue|@vue|vue-router|pinia|vue-demi)[\\/]/.test(id)) {
+              return 'vendor'
             }
           }
         },
