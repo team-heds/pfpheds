@@ -97,7 +97,7 @@ with launch as (select current_setting('gamification.launch_date')::date as d),
 catalog(name, description, action_type, target_value, xp_reward) as (
   values
     ('Profil à jour',
-     'Complète ou mets à jour ton profil (photo, présentation, coordonnées).',
+     'Complète ou mets à jour ton profil : photo, ville, langue ou canton d''origine.',
      'update_profile', 1, 25),
     ('Présence régulière',
      'Connecte-toi à la plateforme 5 jours différents.',
