@@ -157,7 +157,7 @@
                     </span>
                     <span class="duel-correction__who">
                       <span v-if="item.mine?.selected?.includes(option.id)" class="duel-chip">Vous</span>
-                      <span v-if="item.opponent?.selected?.includes(option.id)" class="duel-chip duel-chip--other">{{ firstName(detail.opponent?.name) }}</span>
+                      <span v-if="item.opponent?.selected?.includes(option.id)" class="duel-chip duel-chip--other">Adversaire</span>
                     </span>
                   </li>
                 </ul>
@@ -166,7 +166,7 @@
                     Vous : {{ answerVerdict(item.mine) }}
                   </span>
                   <span v-if="item.opponent" :class="item.opponent.is_correct ? 'is-ok' : 'is-ko'">
-                    {{ firstName(detail.opponent?.name) }} : {{ answerVerdict(item.opponent) }}
+                    Adversaire : {{ answerVerdict(item.opponent) }}
                   </span>
                 </p>
                 <p v-if="item.explanation" class="duel-correction__explanation">{{ item.explanation }}</p>
@@ -438,10 +438,6 @@ const searchStatus = computed(() => {
   if (searchResults.value.length === 0) return 'Aucun joueur trouvé.'
   return `${searchResults.value.length} joueur${searchResults.value.length > 1 ? 's' : ''} trouvé${searchResults.value.length > 1 ? 's' : ''}.`
 })
-
-function firstName(name) {
-  return String(name || 'Adversaire').split(' ')[0]
-}
 
 function answerVerdict(answer) {
   if (!answer) return 'pas de réponse'
