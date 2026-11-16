@@ -31,7 +31,7 @@
     </template>
 
     <!-- Publication : un grand champ de texte, comme dans une messagerie. -->
-    <div v-show="tab === 'post'" id="m-create-panel-post" class="m-create__post" role="tabpanel" aria-labelledby="m-create-tab-post">
+    <div v-show="tab === 'post'" id="m-create-panel-post" class="m-create__post" :class="{ 'has-media': media.length }" role="tabpanel" aria-labelledby="m-create-tab-post">
       <div class="m-create__author">
         <img v-if="stories.ownAvatarUrl" :src="stories.ownAvatarUrl" alt="" class="m-create__avatar" />
         <span v-else class="m-create__avatar m-create__avatar--initials" aria-hidden="true">{{ initialsOf(authorName) }}</span>
@@ -183,9 +183,17 @@ const messages = computed(() => [...fileErrors.value, publishError.value].filter
 function autoGrow() {
   const el = textRef.value
   if (!el) return
+  // Mesure sans l'étirement flex : sinon la hauteur mesurée est celle de tout
+  // l'écran, figée en ligne, et l'aperçu des photos passe sous la barre d'outils.
   el.style.height = 'auto'
-  el.style.height = `${el.scrollHeight}px`
+  el.style.flexGrow = '0'
+  const height = el.scrollHeight
+  el.style.flexGrow = ''
+  el.style.height = `${height}px`
 }
+
+// Une photo ajoutée ou retirée change la place disponible : on remesure le champ.
+watch(() => media.value.length, () => nextTick(autoGrow))
 
 let mediaKey = 0
 function onFilesChosen(event) {
@@ -376,6 +384,12 @@ onBeforeUnmount(() => media.value.forEach(revoke))
   font-size: 1.125rem;
   line-height: 1.5;
   resize: none;
+}
+/* Avec une photo jointe, le champ ne s'étire plus jusqu'en bas de l'écran :
+   l'aperçu reste visible juste sous le texte au lieu de passer sous la barre
+   d'outils (recette du 16.11). */
+.m-create__post.has-media .m-create__text {
+  flex-grow: 0;
 }
 .m-create__text::placeholder {
   color: var(--m-muted);
