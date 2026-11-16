@@ -73,7 +73,9 @@ const props = defineProps({
 })
 
 // Définition d'un avatar par défaut
-const defaultAvatar = '@/assets/images/avatar/01.jpg';
+// Import (et non chaîne « @/… ») : sinon l'image n'est jamais trouvée et le
+// navigateur affiche une image cassée avec le texte « Avatar ».
+import defaultAvatar from '@/assets/images/avatar/01.jpg';
 
 // Réactive l'objet utilisateur
 const user = ref({

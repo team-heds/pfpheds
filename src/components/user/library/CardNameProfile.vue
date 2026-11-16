@@ -218,7 +218,9 @@ import {
   SWISS_CANTON_OPTIONS,
 } from '@/domain/profile/profilePreferences'
 
-const defaultAvatar = '@/assets/images/avatar/01.jpg';
+// Import (et non chaîne « @/… ») : sinon l'image n'est jamais trouvée et le
+// navigateur affiche une image cassée avec le texte « Avatar ».
+import defaultAvatar from '@/assets/images/avatar/01.jpg';
 const toast = useToast();
 
 const SHOW_GAMIFICATION_UI = gamificationFeatures.userJourney;
