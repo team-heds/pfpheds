@@ -50,6 +50,8 @@ const PATHS = {
   camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 11a3 3 0 100 6 3 3 0 000-6z',
   sun: 'M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.500 1.500M17.500 17.500L19 19M19 5l-1.500 1.500M6.500 17.500L5 19',
   moon: 'M20 14.500A8 8 0 019.500 4 8 8 0 1020 14.500z',
+  // Thème automatique : cercle à moitié plein.
+  contrast: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 3v18M12 7h4M12 11h6M12 15h5',
   logout: 'M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10',
   play: 'M7 4l13 8-13 8z',
   trash: 'M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13',

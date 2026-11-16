@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useLayout } from '@/layout/composables/layout';
+import { useTheme } from '@/theme/useTheme';
 
 defineProps({
   simple: {
@@ -13,7 +14,10 @@ defineProps({
 const { layoutConfig, layoutState, onConfigSidebarToggle } = useLayout();
 
 // Référence pour le schéma de couleur actuel
-const colorScheme = ref(layoutConfig.colorScheme.value);
+// Thème : même réglage que la barre d'ordinateur et l'application mobile.
+const theme = useTheme();
+const colorScheme = ref(theme.scheme.value);
+watch(theme.scheme, (value) => { colorScheme.value = value; });
 
 // Observer les changements de menu et ajuster l'état
 watch(layoutConfig.menuMode, (newVal) => {
@@ -29,38 +33,7 @@ const onConfigButtonClick = () => {
 
 // Changer le schéma de couleur (light ou dim)
 const changeColorScheme = (newColorScheme) => {
-  const themeLink = document.getElementById('theme-link');
-  if (!themeLink) return;
-
-  const currentTheme = layoutConfig.colorScheme.value; // "light" ou "dim"
-  const newHref = themeLink.getAttribute('href').replace(currentTheme, newColorScheme);
-
-  replaceLink(themeLink, newHref, () => {
-    layoutConfig.colorScheme.value = newColorScheme;
-    colorScheme.value = newColorScheme;
-  });
-};
-
-// Remplacer dynamiquement le fichier CSS du thème
-const replaceLink = (linkElement, href, onComplete) => {
-  if (!linkElement || !href) return;
-
-  const id = linkElement.getAttribute('id');
-  const cloneLinkElement = linkElement.cloneNode(true);
-
-  cloneLinkElement.setAttribute('href', href);
-  cloneLinkElement.setAttribute('id', `${id}-clone`);
-
-  linkElement.parentNode.insertBefore(cloneLinkElement, linkElement.nextSibling);
-
-  cloneLinkElement.addEventListener('load', () => {
-    linkElement.remove();
-    const element = document.getElementById(id); // Re-check
-    element && element.remove();
-
-    cloneLinkElement.setAttribute('id', id);
-    if (onComplete) onComplete();
-  });
+  theme.setPreference(newColorScheme === 'light' ? 'light' : 'dim');
 };
 </script>
 
