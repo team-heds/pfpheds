@@ -37,7 +37,7 @@ import {
 import QuizDuelPlay from '@/views/apps/quiz/QuizDuelPlay.vue'
 
 const source = (path) => readFileSync(resolve(process.cwd(), path), 'utf8')
-const migrationPath = 'supabase/migrations/20261116130000_gamification_quiz_duel.sql'
+const migrationPath = 'supabase/migrations/20261116163000_gamification_quiz_duel.sql'
 const migration = source(migrationPath)
 const functionBody = (name) => {
   const start = migration.indexOf(`create or replace function ${name}(`)
@@ -93,7 +93,7 @@ describe('duel de quiz : garanties de la migration', () => {
 
   it('est additive : aucune instruction destructive, aucune exception de garde-fou', () => {
     expect(findDestructiveStatements(migration)).toEqual([])
-    expect(source('supabase/schema-guard-allowlist.json')).not.toContain('20261116130000_gamification_quiz_duel')
+    expect(source('supabase/schema-guard-allowlist.json')).not.toContain('20261116163000_gamification_quiz_duel')
   })
 
   it('ne redéfinit aucune fonction existante', () => {
