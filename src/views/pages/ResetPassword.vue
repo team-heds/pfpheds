@@ -714,6 +714,64 @@ label {
   }
 }
 
+/* Téléphone : écran d'application plein écran, sans carte, bouton principal
+   collé en bas dans la zone du pouce, au-dessus de la barre d'accueil. */
+@media (max-width: 768px) {
+  .reset-page {
+    min-height: 100dvh;
+    padding: calc(1.5rem + env(safe-area-inset-top, 0px)) 1.5rem 0;
+    place-items: stretch;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .reset-shell {
+    width: 100%;
+    max-width: 26.25rem;
+    margin: 0 auto;
+    align-content: start;
+  }
+
+  .reset-card {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin: 0 -1.5rem;
+    padding: 0.75rem 1.5rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    background: var(--app-color-page, var(--surface-ground, #0b213f));
+  }
+
+  :deep(.p-button) {
+    min-height: 3.25rem;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+
+  :deep(.p-button:not(.p-button-text):hover:not(:disabled)) {
+    transform: none;
+    box-shadow: var(--app-shadow-sm, 0 0.25rem 0.75rem rgba(2, 12, 27, 0.12));
+  }
+
+  :deep(.p-password .p-icon),
+  :deep(.p-password i) {
+    padding: 0.75rem;
+    margin-top: -1.25rem;
+    right: 0.25rem;
+  }
+
+  .reset-support {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    font-size: 0.8125rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :deep(.p-button) {
     transition: none;

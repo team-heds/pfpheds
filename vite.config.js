@@ -147,6 +147,8 @@ export default defineConfig({
         theme_color: '#0B213F',
         background_color: '#0B213F',
         display: 'standalone',
+        // Android : l'application installée reste à la verticale.
+        orientation: 'portrait',
         start_url: '.',
         // Chaque fichier a réellement la taille annoncée : Android refuse
         // l'installation quand une icône ne correspond pas à sa déclaration.

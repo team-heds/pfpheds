@@ -1,5 +1,21 @@
 <template>
-  <div class="flex flex-column lg:flex-row justify-content-center align-items-center h-screen bg-surface-ground px-2 lg:px-0">
+  <!-- Téléphone : écran de connexion d'application. L'ordinateur garde sa page. -->
+  <MobileLoginScreen
+    v-if="isPhone"
+    :email="email"
+    :password="password"
+    :loading="loading"
+    :reset-loading="resetLoading"
+    :email-message="emailMessage"
+    :password-message="passwordMessage"
+    :form-message="formMessage"
+    :reset-status="resetStatus"
+    @update:email="val => { email = val; emailMessage = ''; formMessage = '' }"
+    @update:password="val => { password = val; passwordMessage = ''; formMessage = '' }"
+    @submit="submitFormSupabase"
+    @reset="resetPassword"
+  />
+  <div v-else class="flex flex-column lg:flex-row justify-content-center align-items-center h-screen bg-surface-ground px-2 lg:px-0">
     <!-- Conteneur principal -->
     <div class="flex flex-column lg:flex-row w-full max-w-7xl rounded-md overflow-hidden">
       <!-- Section gauche - Logo -->
@@ -55,6 +71,8 @@ import { validateEmail, validatePassword } from '@/composables/useInputValidatio
 import { getPostLoginRedirect } from '@/config/adminRedirects'
 import Toast from 'primevue/toast'
 import AuthForm from '@/components/common/forms/AuthForm.vue'
+import MobileLoginScreen from '@/mobile/auth/MobileLoginScreen.vue'
+import { useMobileViewport } from '@/mobile/shell/useMobileViewport'
 import gamificationIntegration from '@/service/gamificationIntegration'
 import { recordDailyVisit } from '@/utils/dailyVisit'
 import { gamificationFeatures } from '@/config/gamificationFeatures'
@@ -72,6 +90,28 @@ const route = useRoute()
 const toast = useToast()
 const authStore = useAuthStore()
 const roleStore = useRoleStore()
+const isPhone = useMobileViewport()
+// Téléphone : les messages s'affichent sous les champs, pas en bandeau flottant.
+const emailMessage = ref('')
+const passwordMessage = ref('')
+const formMessage = ref('')
+const resetStatus = ref(null)
+// Messages du service d'authentification, parfois en anglais.
+const AUTH_MESSAGES = {
+  'Invalid login credentials': 'Adresse e-mail ou mot de passe incorrect.',
+  'Email not confirmed': 'Adresse e-mail pas encore confirmée : ouvre le lien reçu par e-mail.',
+  'Failed to fetch': 'Pas de connexion. Vérifie le réseau, puis réessaie.',
+}
+const authMessage = (text) => AUTH_MESSAGES[text] || text
+const notify = (message, target = 'form') => {
+  if (!isPhone.value) {
+    toast.add(message)
+    return
+  }
+  const text = message.detail || message.summary
+  if (target === 'reset') resetStatus.value = { type: message.severity === 'success' ? 'success' : 'error', text }
+  else formMessage.value = text
+}
 const loginLimiter = useRateLimit({ maxAttempts: 5, lockoutDuration: 60_000 })
 const resetLimiter = useRateLimit({ maxAttempts: 3, lockoutDuration: 120_000 })
 
@@ -82,8 +122,14 @@ const submitFormSupabase = async () => {
   const pwdCheck = validatePassword(password.value)
   emailError.value = !emailCheck.valid
   passwordError.value = !pwdCheck.valid
-  
+  formMessage.value = ''
+
   if (emailError.value || passwordError.value) {
+    if (isPhone.value) {
+      emailMessage.value = emailCheck.valid ? '' : emailCheck.message
+      passwordMessage.value = pwdCheck.valid ? '' : pwdCheck.message
+      return
+    }
     toast.add({ 
       severity: 'warn', 
       summary: 'Champs invalides', 
@@ -96,12 +142,12 @@ const submitFormSupabase = async () => {
   // Rate limiting
   if (loginLimiter.isLocked()) {
     const sec = loginLimiter.getLockoutRemaining()
-    toast.add({ severity: 'error', summary: 'Trop de tentatives', detail: `Veuillez patienter ${sec}s avant de réessayer.`, life: 5000 })
+    notify({ severity: 'error', summary: 'Trop de tentatives', detail: `Veuillez patienter ${sec}s avant de réessayer.`, life: 5000 })
     return
   }
   if (!loginLimiter.recordAttempt()) {
     const sec = loginLimiter.getLockoutRemaining()
-    toast.add({ severity: 'error', summary: 'Trop de tentatives', detail: `Compte temporairement bloqué. Réessayez dans ${sec}s.`, life: 5000 })
+    notify({ severity: 'error', summary: 'Trop de tentatives', detail: `Compte temporairement bloqué. Réessayez dans ${sec}s.`, life: 5000 })
     return
   }
 
@@ -125,12 +171,15 @@ const submitFormSupabase = async () => {
       })
     }
     
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Connexion réussie', 
-      detail: 'Bienvenue ! Redirection en cours...', 
-      life: 3000 
-    })
+    // Sur téléphone, l'application s'ouvre directement : le bouton montre déjà l'attente.
+    if (!isPhone.value) {
+      toast.add({ 
+        severity: 'success', 
+        summary: 'Connexion réussie', 
+        detail: 'Bienvenue ! Redirection en cours...', 
+        life: 3000 
+      })
+    }
     
     const permissions = await roleStore.loadPermissions(authStore.session)
     const requestedRedirect = typeof route.query.redirect === 'string'
@@ -139,13 +188,14 @@ const submitFormSupabase = async () => {
       ? route.query.redirect
       : null
     const redirectPath = requestedRedirect || getPostLoginRedirect(permissions)
-    setTimeout(() => router.replace(redirectPath), 1500)
+    if (isPhone.value) await router.replace(redirectPath)
+    else setTimeout(() => router.replace(redirectPath), 1500)
   } catch (error) {
     console.error('Supabase login error:', error)
-    toast.add({ 
+    notify({ 
       severity: 'error', 
       summary: 'Erreur de connexion', 
-      detail: error.message || 'Une erreur est survenue.', 
+      detail: authMessage(error.message) || 'Une erreur est survenue.', 
       life: 4000 
     })
   } finally {
@@ -154,28 +204,31 @@ const submitFormSupabase = async () => {
 }
 
 // Méthode de réinitialisation du mot de passe
-const resetPassword = async () => {
+const resetPassword = async (requestedEmail) => {
   // Garde anti-double-soumission : un deuxième clic pendant l'envoi générerait
   // un second lien de récupération qui invaliderait immédiatement le premier
   // (jeton à usage unique côté GoTrue), rendant le premier email inutilisable.
   if (resetLoading.value) return
 
+  // Sur téléphone, l'adresse vient du panneau « Mot de passe oublié ».
+  if (typeof requestedEmail === 'string') email.value = requestedEmail.trim()
+  resetStatus.value = null
   const emailCheck = validateEmail(email.value)
   emailError.value = !emailCheck.valid
 
   if (emailError.value) {
-    toast.add({
+    notify({
       severity: 'warn',
       summary: 'Email requis',
       detail: emailCheck.message,
       life: 3000
-    })
+    }, 'reset')
     return
   }
 
   if (resetLimiter.isLocked()) {
     const sec = resetLimiter.getLockoutRemaining()
-    toast.add({ severity: 'error', summary: 'Trop de tentatives', detail: `Veuillez patienter ${sec}s.`, life: 5000 })
+    notify({ severity: 'error', summary: 'Trop de tentatives', detail: `Veuillez patienter ${sec}s.`, life: 5000 }, 'reset')
     return
   }
   resetLimiter.recordAttempt()
@@ -183,25 +236,25 @@ const resetPassword = async () => {
   resetLoading.value = true
   try {
     await authStore.resetPasswordSupabase(email.value)
-    toast.add({
+    notify({
       severity: 'success',
       summary: 'Email envoyé',
       detail: 'Un lien de réinitialisation a été envoyé à votre adresse email. N\'utilisez que le dernier email reçu et cliquez une seule fois sur le lien.',
       life: 6000
-    })
+    }, 'reset')
   } catch (error) {
     const rateLimited = error?.code === 'password_recovery_rate_limited'
     console.error('[AUTH] Password recovery request failed.', {
       category: rateLimited ? 'rate_limited' : 'unavailable'
     })
-    toast.add({
+    notify({
       severity: 'error',
       summary: rateLimited ? 'Trop de tentatives' : 'Service indisponible',
       detail: rateLimited
         ? 'Veuillez patienter avant de demander un nouveau lien.'
         : 'La demande n’a pas pu être prise en compte. Réessayez dans quelques instants.',
       life: 4000
-    })
+    }, 'reset')
   } finally {
     resetLoading.value = false
   }
