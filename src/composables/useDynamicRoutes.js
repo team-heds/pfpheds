@@ -176,7 +176,8 @@ export async function addDynamicRoutesToRouter(router) {
     'QuizListView',
     'QuizPlayView',
     'QuizManageView',
-    'QuizEditorView'
+    'QuizEditorView',
+    'QuizDuelView'
   ];
 
   dynamicRoutes.forEach((route) => {

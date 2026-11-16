@@ -42,7 +42,7 @@ const TAB_DEFINITIONS = [
     root: () => '/mobile-search',
     prefixes: [
       '/mobile-search', '/mobile-outils', '/mobile-tools', '/outils', '/tools',
-      '/quiz', '/mot-de-la-semaine', '/mentorat', '/challenges', '/quests',
+      '/quiz', '/duels', '/mot-de-la-semaine', '/mentorat', '/challenges', '/quests',
       '/achievements', '/houses', '/scan', '/game', '/events',
     ],
   },
