@@ -20,7 +20,7 @@ export default [
   { path: '/gamification-profile', component: () => import('@/components/gamification/GamificationProfilePage.vue'), name: 'GamificationProfileSelf', beforeEnter: () => gamificationFeatures.userJourney ? true : { name: 'QuestsPage' }, meta: { requiresAuth: true, title: 'Ma progression' } },
   { path: '/gamification-profile/:id', component: () => import('@/components/gamification/GamificationProfilePage.vue'), name: 'GamificationProfilePage', props: true, beforeEnter: profileAccessGuard, meta: { requiresAuth: true } },
   { path: '/achievements', component: () => import('@/components/gamification/AchievementsPage.vue'), name: 'AchievementsPage', beforeEnter: badgesChallengesGuard, meta: { requiresAuth: true } },
-  { path: '/challenges', component: () => import('@/components/gamification/ChallengesPage.vue'), name: 'ChallengesPage', beforeEnter: badgesChallengesGuard, meta: { requiresAuth: true } },
+  { path: '/challenges', component: loadWhenShown(() => import('@/components/gamification/ChallengesPage.vue'), 'ChallengesPage'), name: 'ChallengesPage', beforeEnter: badgesChallengesGuard, meta: { requiresAuth: true } },
   { path: '/mentorat', component: () => import('@/views/mentoring/MentoringView.vue'), name: 'MentoringView', beforeEnter: () => gamificationFeatures.mentoring ? true : { path: '/outils', replace: true }, meta: { requiresAuth: true, title: 'Mentorat' } },
   { path: '/quests', component: () => import('@/components/gamification/QuestsPage.vue'), name: 'QuestsPage', meta: { requiresAuth: true } },
   { path: '/gamification/quests', redirect: { name: 'QuestsPage' } },

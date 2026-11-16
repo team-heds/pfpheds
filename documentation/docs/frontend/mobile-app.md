@@ -65,6 +65,10 @@ Les messages PrimeVue (`Toast`) s'affichent en bandeau compact juste au-dessus d
 
 `src/mobile/search/SearchTab.vue` : champ de recherche (personnes et modules via `globalSearchService`, institutions, pages), tuiles d'accès rapide selon les réglages de gamification (`buildQuickTiles`), classement des maisons (table `houses`) et autres accès de la personne (`useNavigationDestinations`). Les modules ouverts depuis une tuile (défis, mot de la semaine, quiz, mentorat, présences) sont les pages existantes, affichées en écran empilé ; la coque masque leur titre et leur flèche de retour en double (`.game-header`).
 
+## Écran Défis
+
+`/challenges` s'affiche avec un écran conçu pour le téléphone (`src/mobile/challenges/`), déclaré dans `NATIVE_PAGES` ; l'ordinateur garde `ChallengesPage.vue`, téléchargée seulement si elle s'affiche (`loadWhenShown`). L'écran montre le résumé de la période, les défis de la période (à faire en tête, les plus avancés d'abord) et les derniers défis réussis. Toucher un défi à faire qui porte un lien ouvre le jeu ; les autres ouvrent leur fiche en panneau du bas (`#/defi`). États : squelettes au premier chargement, liste vide avec « Actualiser », erreur avec « Réessayer », hors ligne avec rechargement automatique au retour du réseau. Revenir sur l'écran après une minute recharge les défis.
+
 ## Onglet Profil
 
 `src/mobile/profile/` : carte d'identité (photo, nom), puis deux vues : « Formation pratique » (mes stages, repris de l'onglet Institutions, dossier, documents) et « Progression » (maison avec son blason, niveau, série, défis, badges (`mobileProfileStore`, qui réutilise `gamificationServiceSupabase`, `challengesService`, `badgesService`), puis les accès personnels. « Réglages » (photo de profil, notifications, thème clair ou sombre, déconnexion) et « Mon dossier » (le dossier de formation existant, `ProfileInfo`) sont des écrans empilés. Le profil d'une autre personne garde la page existante.

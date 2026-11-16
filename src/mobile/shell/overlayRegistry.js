@@ -44,6 +44,9 @@ export const OVERLAYS = {
   story: {
     component: defineAsyncComponent(() => import('@/mobile/home/StoryViewerOverlay.vue')),
   },
+  defi: {
+    component: defineAsyncComponent(() => import('@/mobile/challenges/ChallengeSheet.vue')),
+  },
   fenetre: {
     component: DialogPlaceholder,
   },
