@@ -18,7 +18,7 @@
       <MobileAppShell v-if="mobileAppActive" />
       <router-view v-else />
       <VersionningComponent v-if="!isImmersiveRoute" />
-      <PwaInstallPrompt />
+      <PwaInstallPrompt v-if="installPromptAllowed" />
       <OfflineBanner />
       <PwaUpdatePrompt />
       <!-- Intégration du widget ConvAI -->
@@ -57,6 +57,7 @@ import { gamificationFeatures } from '@/config/gamificationFeatures';
 import { runtimeFeatures } from '@/config/runtimeFeatures';
 import gamificationIntegration from '@/service/gamificationIntegration';
 import { recordDailyVisit } from '@/utils/dailyVisit';
+import { isInstallPromptAllowed } from '@/utils/pwaInstall';
 
 export default {
   name: "App",
@@ -102,6 +103,9 @@ export default {
     },
     isImmersiveRoute() {
       return this.$route.meta?.immersive === true;
+    },
+    installPromptAllowed() {
+      return isInstallPromptAllowed(this.gamificationUserId, this.$route.meta);
     },
     showHeaderIconsMobile() {
       const routeName = this.$route.name;
