@@ -1,14 +1,20 @@
-// Écran de chargement d'index.html (#app-splash) : il couvre la page jusqu'au
-// premier rendu de l'application, puis s'efface en fondu court (aucun fondu si
-// la personne a demandé moins de mouvement).
+// Écran de chargement d'index.html (#app-splash), seulement dans l'application
+// installée : il couvre la page jusqu'au premier rendu, puis s'efface en fondu
+// court (aucun fondu si la personne a demandé moins de mouvement). Dans un
+// navigateur, la feuille de style le garde masqué : on le retire tout de suite.
 
 const FADE_MS = 200
+
+/** Application installée (écran d'accueil), et non un onglet de navigateur. */
+export function isInstalledApp(win = typeof window === 'undefined' ? null : window) {
+  return Boolean(win?.matchMedia?.('(display-mode: standalone)').matches || win?.navigator?.standalone === true)
+}
 
 export function hideAppSplash({ doc = typeof document === 'undefined' ? null : document, win = typeof window === 'undefined' ? null : window } = {}) {
   const splash = doc?.getElementById('app-splash')
   if (!splash) return false
   const reduced = Boolean(win?.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
-  if (reduced) {
+  if (reduced || !isInstalledApp(win)) {
     splash.remove()
     return true
   }
