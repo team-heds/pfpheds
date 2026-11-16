@@ -51,10 +51,10 @@ describe('duel de quiz : activation', () => {
     vi.resetModules()
   })
 
-  it('reste désactivé par défaut et en production, activé sur le site de test', () => {
+  it('reste désactivé par défaut, activé en production et sur le site de test', () => {
     expect(source('.env.production.example')).toContain('VITE_GAMIFICATION_QUIZ_DUEL=false')
     expect(source('.env.supabase.example')).toContain('VITE_GAMIFICATION_QUIZ_DUEL=false')
-    expect(JSON.parse(source('scripts/deployment/production-features.json')).VITE_GAMIFICATION_QUIZ_DUEL).toBe('false')
+    expect(JSON.parse(source('scripts/deployment/production-features.json')).VITE_GAMIFICATION_QUIZ_DUEL).toBe('true')
     expect(source('deploy/staging/build-current-test.mjs')).toContain("VITE_GAMIFICATION_QUIZ_DUEL: 'true'")
   })
 
