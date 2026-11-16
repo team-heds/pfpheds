@@ -49,7 +49,7 @@ export const useMobileProfileStore = defineStore('mobileProfile', {
       try {
         const profileRequest = supabase
           .from('user_profiles')
-          .select('display_name, forname, family_name, email, avatar_url')
+          .select('display_name, forname, family_name, email, avatar_url, city, preferred_language, canton_of_origin')
           .eq('user_id', userId)
           .maybeSingle()
         const [profileResult, stats, streak, challenges, badges] = await Promise.all([

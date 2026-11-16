@@ -796,4 +796,21 @@ onBeforeUnmount(() => {
     min-height: 0;
   }
 }
+
+/* Téléphone : pleine largeur et chiffres sur une ligne (recette du 16.11). */
+@media (max-width: 640px) {
+  .week-info,
+  .stats-overview,
+  .challenges-section,
+  .history-section {
+    padding-inline: 0;
+  }
+  .week-info { gap: 0.75rem; margin-bottom: 1rem; }
+  .week-card, .time-remaining-card { padding: 1rem; }
+  .stats-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+}
 </style>
