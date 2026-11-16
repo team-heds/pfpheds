@@ -154,7 +154,13 @@ export async function publishStory({ userId, file, caption = '', lifetimeHours =
     upsert: false,
     contentType: file.type
   })
-  if (uploadError) throw uploadError
+  if (uploadError) {
+    // Refus de la règle d'accès : limite de dépôts atteinte (6 par jour, 40 par mois).
+    if (/row-level security|unauthorized|403/i.test(String(uploadError.message || uploadError.statusCode || ''))) {
+      throw new Error('Limite atteinte : 6 stories par jour et 40 par mois. Réessayez plus tard.')
+    }
+    throw uploadError
+  }
 
   const { data, error } = await supabase
     .from('stories')
