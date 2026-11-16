@@ -87,6 +87,8 @@ const SearchTab = defineAsyncComponent(() => import('@/mobile/search/SearchTab.v
 const ProfileTab = defineAsyncComponent(() => import('@/mobile/profile/ProfileTab.vue').then((module) => module.default))
 const InstitutionDetailScreen = defineAsyncComponent(() => import('@/mobile/institutions/InstitutionDetailScreen.vue').then((module) => module.default))
 const MobileChallengesScreen = defineAsyncComponent(() => import('@/mobile/challenges/MobileChallengesScreen.vue').then((module) => module.default))
+const MobileHousesRankingScreen = defineAsyncComponent(() => import('@/mobile/houses/MobileHousesRankingScreen.vue').then((module) => module.default))
+const MobileHouseScreen = defineAsyncComponent(() => import('@/mobile/houses/MobileHouseScreen.vue').then((module) => module.default))
 
 // Écrans conçus pour le téléphone, par nom de route. Une adresse absente de
 // ces tables affiche la page existante dans le cadre de la coque.
@@ -105,6 +107,8 @@ const nativeTabs = [
 const NATIVE_PAGES = {
   InstitutionView: { component: InstitutionDetailScreen, title: 'Institution' },
   ChallengesPage: { component: MobileChallengesScreen, title: 'Défis du moment' },
+  HousesRankingPage: { component: MobileHousesRankingScreen, title: 'Classement des maisons' },
+  HouseStatsPage: { component: MobileHouseScreen, title: 'Maison' },
 }
 
 const route = useRoute()
