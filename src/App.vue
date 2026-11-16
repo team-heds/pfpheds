@@ -58,6 +58,7 @@ import { runtimeFeatures } from '@/config/runtimeFeatures';
 import gamificationIntegration from '@/service/gamificationIntegration';
 import { recordDailyVisit } from '@/utils/dailyVisit';
 import { isInstallPromptAllowed } from '@/utils/pwaInstall';
+import { installStandaloneViewportFix } from '@/mobile/shell/standaloneViewport';
 
 export default {
   name: "App",
@@ -156,6 +157,8 @@ export default {
     },
   },
   mounted() {
+    // iPhone, application installée : hauteur de l'écran entier (voir standaloneViewport.js).
+    this.removeStandaloneViewportFix = installStandaloneViewportFix();
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     // Simuler un chargement de données (par exemple, lors du démarrage de l'application)
     setTimeout(() => {
@@ -166,6 +169,7 @@ export default {
     this.expirationCheckInterval = questExpirationService.startPeriodicCheck(5)
   },
   beforeUnmount() {
+    this.removeStandaloneViewportFix?.();
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     // 🛑 Arrêter proprement la vérification à la fermeture de l'app
     if (this.expirationCheckInterval) {
@@ -253,9 +257,12 @@ export default {
    laissait un espace sous la barre d'onglets. */
 .app-shell.app-shell--mobile-app {
   position: fixed;
-  inset: 0;
+  inset: 0 0 auto 0;
   width: auto;
-  height: auto;
+  /* iPhone, application installée : iOS peut annoncer une fenêtre plus courte que
+     l'écran, de la hauteur de la barre d'état, et la coque s'arrêtait avant le bas.
+     --app-height, posée par standaloneViewport.js, prend alors l'écran entier. */
+  height: var(--app-height, 100%);
   /* Zone de l'encoche (padding du haut) : couleur de l'en-tête. */
   background: var(--surface-ground);
   overscroll-behavior: none;
