@@ -182,7 +182,9 @@ import { gamificationFeatures } from '@/config/gamificationFeatures';
 
 const AsyncEventDetail = defineAsyncComponent(() => import('@/components/events/EventDetail.vue'));
 
-const defaultAvatar = '@/assets/images/avatar/01.jpg';
+// Import (et non chaîne « @/… ») : sinon l'image n'est jamais trouvée et le
+// navigateur affiche une image cassée avec le texte « Avatar ».
+import defaultAvatar from '@/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",

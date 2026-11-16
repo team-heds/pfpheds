@@ -88,18 +88,22 @@
       <div class="question-card">
         <h3 class="question-title">{{ currentQuestion.question }}</h3>
         <div class="answers-container">
-          <div
+          <!-- De vrais boutons : réponses atteignables au clavier et annoncées
+               comme choix par les lecteurs d'écran. -->
+          <button
             v-for="(answer, index) in currentQuestion.answers"
             :key="index"
+            type="button"
             @click="selectAnswer(answer)"
             class="answer-option"
             :class="{ selected: selectedAnswer === answer }"
+            :aria-pressed="selectedAnswer === answer ? 'true' : 'false'"
           >
-            <div class="answer-content">
+            <span class="answer-content">
               <span class="answer-letter">{{ String.fromCharCode(97 + index) }})</span>
               <span class="answer-text">{{ answer.text }}</span>
-            </div>
-          </div>
+            </span>
+          </button>
         </div>
         <div class="question-actions" v-if="selectedAnswer">
           <button @click="nextQuestion" class="next-button">
@@ -681,6 +685,11 @@ onMounted(async () => {
 }
 
 .answer-option {
+  display: block;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   padding: 1rem;
   border: 1px solid var(--surface-border);
   border-radius: 8px;
@@ -693,6 +702,11 @@ onMounted(async () => {
   border-color: var(--primary-color);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.answer-option:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .answer-option.selected {

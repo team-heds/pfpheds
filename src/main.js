@@ -17,6 +17,7 @@ import { bootstrapApplication } from '@/service/appBootstrap';
 import { installPageNavigation } from '@/service/pageNavigationService';
 import { clearPageListContexts, disposePageListContexts } from '@/composables/usePageListContext';
 
+import { primevueLocaleFr } from '@/config/primevueLocaleFr';
 import '@/assets/styles/styles.scss';
 import 'primeflex/primeflex.css';
 import '@/assets/styles/platform-foundations.scss';
@@ -27,7 +28,7 @@ const pinia = createPinia();
 
 app.use(pinia);
 app.use(router);
-app.use(PrimeVue, { ripple: true });
+app.use(PrimeVue, { ripple: true, locale: primevueLocaleFr });
 app.use(ToastService);
 app.use(DialogService);
 app.use(ConfirmationService);
