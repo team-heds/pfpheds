@@ -499,8 +499,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   .wod-tile__mark { top: 2px; right: 2px; font-size: .45rem; }
   .wod-tile--small .wod-tile__mark { font-size: .5rem; }
   .wod-panel { padding: 1rem .75rem; }
-  /* Cases un peu plus petites : la grille et le clavier restent visibles ensemble. */
-  .wod-board { width: min(100%, calc(var(--wod-length) * 3.4rem)); }
+  /* Dans l'application mobile, l'en-tête de la coque affiche déjà le titre : la
+     description et la ligne de validité passent à la trappe pour que la grille
+     ET le clavier tiennent ensemble au-dessus de la barre d'onglets (375 × 812).
+     Sélecteur renforcé : la coque force l'affichage de la description. */
+  .wod-root .wod-content :deep(.game-header__description) { display: none !important; }
+  .wod-game__validity { display: none; }
+  /* Cases d'environ 40 px : six essais + clavier visibles sans faire défiler. */
+  .wod-board { width: min(100%, calc(var(--wod-length) * 2.75rem)); }
   .wod-board, .wod-row { gap: .25rem; }
   .wod-tile { border-radius: 8px; }
   /* Le clavier prend toute la largeur du panneau pour des touches plus faciles à viser. */

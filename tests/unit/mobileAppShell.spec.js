@@ -6,6 +6,7 @@ import pagesRoutes from '@/router/routes/pages'
 import socialRoutes from '@/router/routes/social'
 import { buildTabs } from '@/mobile/shell/tabs'
 import {
+  isInstallPromptAllowed,
   isIosDevice,
   isStandaloneDisplay,
   markInstallPromptDismissed,
@@ -70,6 +71,23 @@ describe('invitation d’installation', () => {
     markInstallPromptDismissed(storage, 1000)
     expect(wasInstallPromptDismissed(storage, 1000 + 29 * day)).toBe(true)
     expect(wasInstallPromptDismissed(storage, 1000 + 31 * day)).toBe(false)
+  })
+
+  it('ne s’affiche qu’une fois connecté, jamais sur la page de connexion', () => {
+    // Sur iPhone, l’invitation recouvrait le bouton « Se connecter ».
+    expect(isInstallPromptAllowed(null, { hideMobileNav: true })).toBe(false)
+    expect(isInstallPromptAllowed(null, {})).toBe(false)
+    expect(isInstallPromptAllowed('guest-user', {})).toBe(false)
+    expect(isInstallPromptAllowed('etudiant-test', { hideMobileNav: true })).toBe(false)
+    expect(isInstallPromptAllowed('etudiant-test', { immersive: true })).toBe(false)
+    expect(isInstallPromptAllowed('etudiant-test', { requiresAuth: true })).toBe(true)
+    expect(isInstallPromptAllowed('etudiant-test', undefined)).toBe(true)
+  })
+
+  it('n’est montrée par l’application que si elle est autorisée', () => {
+    const app = readSource('src/App.vue')
+    expect(app).toContain('<PwaInstallPrompt v-if="installPromptAllowed" />')
+    expect(app).toContain('isInstallPromptAllowed(this.gamificationUserId, this.$route.meta)')
   })
 
   it('reste utilisable quand le stockage est indisponible', () => {

@@ -54,4 +54,28 @@ const safeProgress = computed(() => Math.max(0, Math.min(100, props.progress ?? 
 .game-stat__body > span { color: #b8c3d1; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.035em; text-transform: uppercase; }
 .game-stat__track { height: 0.35rem; margin-top: 0.35rem; overflow: hidden; background: #243a58; border-radius: 999px; }
 .game-stat__track span { display: block; height: 100%; background: var(--house-color, #f3c300); border-radius: inherit; }
+
+/* Téléphone : trois chiffres côte à côte au lieu de trois grandes cartes
+   empilées qui repoussaient les défis, quêtes et badges deux écrans plus bas. */
+@media (max-width: 640px) {
+  .game-stat {
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 0;
+    gap: 0.35rem;
+    padding: 0.7rem 0.75rem;
+    border-radius: 0.8rem;
+    box-shadow: none;
+  }
+  .game-stat__icon { display: none; }
+  .game-stat__body { width: 100%; }
+  .game-stat__body strong { font-size: 1.2rem; }
+  .game-stat__body > span {
+    font-size: 0.68rem;
+    letter-spacing: 0.02em;
+    line-height: 1.25;
+    hyphens: auto;
+    overflow-wrap: anywhere;
+  }
+}
 </style>
