@@ -256,7 +256,7 @@ onMounted(() => reload())
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 4px 16px 28px;
+  padding: 4px 16px calc(28px + var(--m-tabbar-space, 0px));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;

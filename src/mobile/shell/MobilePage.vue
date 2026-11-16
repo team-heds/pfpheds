@@ -85,10 +85,10 @@ watch(scrollTopSignal, () => {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 0.5rem var(--content-pad, 1rem) 1.5rem;
+  padding: 0.5rem var(--content-pad, 1rem) calc(1.5rem + var(--m-tabbar-space, 0px));
   background: var(--m-bg);
 }
 .m-page--bare {
-  padding: 0;
+  padding: 0 0 var(--m-tabbar-space, 0px);
 }
 </style>

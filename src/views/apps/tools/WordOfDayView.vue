@@ -151,6 +151,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useMobileImmersive } from '@/mobile/shell/useMobileImmersive'
 import Button from 'primevue/button'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
@@ -171,6 +172,8 @@ const message = ref('')
 const messageIsError = ref(false)
 
 const finished = computed(() => game.value?.status === 'won' || game.value?.status === 'lost')
+// Sur téléphone, la barre d'onglets se cache tant que la partie est en cours.
+useMobileImmersive(() => Boolean(game.value) && !finished.value)
 const stats = computed(() => ({
   played: 0, win_rate: 0, current_streak: 0, best_streak: 0, ...(game.value?.stats || {}),
 }))

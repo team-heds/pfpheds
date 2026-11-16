@@ -83,6 +83,7 @@ import MobilePostCard from '@/mobile/home/MobilePostCard.vue'
 import { useMobileShell } from '@/mobile/shell/useMobileShell'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useKeptScroll } from '@/mobile/shell/useKeptScroll'
+import { useHideOnScroll } from '@/mobile/shell/useHideOnScroll'
 import { usePullToRefresh } from '@/mobile/home/usePullToRefresh'
 import { useMobileStoriesStore } from '@/mobile/home/mobileStoriesStore'
 import { useMobileNotificationsStore } from '@/mobile/home/mobileNotificationsStore'
@@ -114,6 +115,8 @@ const { scrollTopSignal } = storeToRefs(useMobileShellStore())
 const scrollerRef = ref(null)
 const sentinelRef = ref(null)
 const kept = useKeptScroll(scrollerRef, () => props.active)
+// Longue liste : la barre d'onglets se cache en descendant, revient en remontant.
+useHideOnScroll(scrollerRef, () => props.active)
 
 const userId = computed(() => {
   const id = authStore.user?.id
@@ -271,7 +274,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 4px 16px 24px;
+  padding: 4px 16px calc(24px + var(--m-tabbar-space, 0px));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;

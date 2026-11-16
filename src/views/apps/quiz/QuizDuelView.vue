@@ -364,6 +364,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useMobileImmersive } from '@/mobile/shell/useMobileImmersive'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import { useToast } from 'primevue/usetoast'
@@ -409,6 +410,8 @@ const detail = ref(null)
 const detailLoading = ref(false)
 const detailError = ref('')
 const playing = ref(false)
+// Sur téléphone, la barre d'onglets se cache pendant la partie.
+useMobileImmersive(() => playing.value)
 const acting = ref(false)
 const declining = ref(false)
 const detailTitle = ref(null)

@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="m-shell" :class="{ 'm-shell--light': lightTheme }">
+  <div ref="rootRef" class="m-shell" :class="{ 'm-shell--light': lightTheme, 'm-shell--with-tabs': chrome }">
     <MobileHeader
       v-if="chrome && showHeader"
       :title="title"
@@ -36,7 +36,15 @@
       </router-view>
     </div>
 
-    <MobileTabBar v-if="chrome" :tabs="tabs" :active="store.activeTab" :avatar-url="stories.ownAvatarUrl" @select="selectTab" />
+    <MobileTabBar
+      v-if="chrome"
+      :tabs="tabs"
+      :active="store.activeTab"
+      :avatar-url="stories.ownAvatarUrl"
+      :hidden="tabBarHidden"
+      @select="selectTab"
+      @reveal="store.setBarsHidden(false)"
+    />
 
     <TransitionGroup name="m-overlay" tag="div" class="m-shell__overlays" :duration="300">
       <component
@@ -102,7 +110,7 @@ const stories = useMobileStoriesStore()
 const institutionsView = useMobileInstitutionsStore()
 const rootRef = ref(null)
 
-useKeyboardInset(rootRef)
+useKeyboardInset(rootRef, undefined, (open) => store.setKeyboardOpen(open))
 
 const userId = computed(() => {
   const id = authStore.user?.id
@@ -116,6 +124,13 @@ const nativeScreen = computed(() => {
 })
 const chrome = computed(() => route.meta?.mobileChrome !== 'none')
 const canGoBack = computed(() => store.canGoBack)
+// Barre d'onglets cachée : tâche plein écran (route ou écran qui le déclare),
+// clavier ouvert, ou défilement vers le bas dans une longue liste. Jamais sur la carte.
+const tabBarHidden = computed(() => {
+  if (route.meta?.mobileImmersive) return true
+  if (store.immersiveCount > 0 || store.keyboardOpen) return true
+  return store.barsHidden && nativeScreen.value !== 'map'
+})
 const showHeader = computed(() => nativeTabs.find((tab) => tab.key === nativeScreen.value)?.header !== false)
 
 // Un onglet mobile reste monté une fois visité : on y revient sans rechargement.
@@ -292,6 +307,7 @@ onBeforeUnmount(() => {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  overscroll-behavior: none;
   background: var(--m-bg);
   color: var(--m-fg);
   font-family: var(--font-family, 'Poppins', system-ui, sans-serif);
@@ -308,6 +324,16 @@ onBeforeUnmount(() => {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+}
+/* La barre d'onglets passe par-dessus le bas des écrans (elle peut s'y cacher) :
+   chaque zone qui défile garde en bas la place de la barre, cachée ou non,
+   pour que le contenu ne saute pas. */
+.m-shell {
+  --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --m-tabbar-space: 0px;
+}
+.m-shell--with-tabs {
+  --m-tabbar-space: calc(57px + var(--m-safe-bottom));
 }
 .m-shell__overlays {
   display: contents;
