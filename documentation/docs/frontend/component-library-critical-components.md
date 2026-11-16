@@ -63,9 +63,9 @@ Lecture utile si :
 - le binding du formulaire ne remonte plus ;
 - un refactoring auth a cassé les événements attendus par la vue parente.
 
-### `src/components/common/utils/MobileBottomNav.vue`
+### `src/mobile/shell/MobileAppShell.vue`
 
-Important pour la navigation mobile.
+Coque de l'application mobile (en-tête, onglets, écrans empilés, panneaux du bas). Voir `frontend/mobile-app.md`.
 
 ### `src/components/common/utils/GlobalSearch.vue`
 

@@ -112,37 +112,34 @@ export const useSocialFeedStore = defineStore('socialFeed', {
 
       const postIds = rows.map((row) => row.id)
       const userIds = rows.map((row) => row.user_id).filter(Boolean)
-      let mediaRows = []
-      try {
-        const { data, error } = await supabase
-          .from('post_media')
-          .select('post_id, url, type')
-          .in('post_id', postIds)
-        if (error) throw error
-        mediaRows = data || []
-      } catch (error) {
-        console.warn('[SocialFeed] Médias indisponibles, affichage du texte seul:', error)
-      }
-
-      let likeSummaries = null
-      try {
-        likeSummaries = await fetchLikeSummaries(postIds)
-      } catch (error) {
-        console.warn('[SocialFeed] J’aime indisponibles, chargement par publication:', error)
-      }
-
-      let commentCounts = null
-      try {
-        commentCounts = await fetchCommentCounts(postIds)
-      } catch (error) {
-        console.warn('[SocialFeed] Commentaires indisponibles, chargement par publication:', error)
-      }
-
-      try {
-        await this.fetchAvatars(userIds)
-      } catch (error) {
-        console.warn('[SocialFeed] Avatars indisponibles, affichage sans avatar:', error)
-      }
+      // Médias, j'aime, commentaires et avatars sont demandés en même temps :
+      // sur téléphone, quatre allers-retours enchaînés ralentissaient le fil.
+      const [mediaRows, likeSummaries, commentCounts] = await Promise.all([
+        (async () => {
+          try {
+            const { data, error } = await supabase
+              .from('post_media')
+              .select('post_id, url, type')
+              .in('post_id', postIds)
+            if (error) throw error
+            return data || []
+          } catch (error) {
+            console.warn('[SocialFeed] Médias indisponibles, affichage du texte seul:', error)
+            return []
+          }
+        })(),
+        fetchLikeSummaries(postIds).catch((error) => {
+          console.warn('[SocialFeed] J’aime indisponibles, chargement par publication:', error)
+          return null
+        }),
+        fetchCommentCounts(postIds).catch((error) => {
+          console.warn('[SocialFeed] Commentaires indisponibles, chargement par publication:', error)
+          return null
+        }),
+        this.fetchAvatars(userIds).catch((error) => {
+          console.warn('[SocialFeed] Avatars indisponibles, affichage sans avatar:', error)
+        }),
+      ])
 
       const mediaByPost = {}
       ;(mediaRows || []).forEach((media) => {

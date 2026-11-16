@@ -185,12 +185,11 @@
 
         <!-- RIGHT: MAP -->
         <aside class="iv-aside">
-          <div class="iv-map">
-            <div class="iv-map__label">
-              <i class="pi pi-map-marker"></i> Localisation
-            </div>
-            <div id="map" class="iv-map__canvas"></div>
-          </div>
+          <InstitutionLocationMap
+            class="iv-map"
+            :institution="institutionDetails"
+            :map-link="institutionMapLink"
+          />
         </aside>
       </div>
     </div>
@@ -208,8 +207,6 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ref as firebaseDbRef, onValue, off } from 'firebase/database'
 import { onAuthStateChanged } from 'firebase/auth'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 
 import Navbar from '@/components/common/utils/Navbar.vue'
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue'
@@ -219,18 +216,8 @@ import { useInstitutionsStore } from '@/stores/institutionsStore'
 import { usePlacesStore } from '@/stores/placesStore'
 import { openPfpDocument } from '@/service/pfpDocumentMediaService'
 import { db, auth } from '../../../firebase.js'
-import schoolLogo from '../../..//public/assets/images/markerheds.png'
+import InstitutionLocationMap from '@/components/map/InstitutionLocationMap.vue'
 
-const originalWidth = 25
-const originalHeight = 30
-const markerScale = 1
-
-const schoolLogoIcon = L.icon({
-  iconUrl: schoolLogo,
-  iconSize: [originalWidth * markerScale, originalHeight * markerScale],
-  iconAnchor: [(originalWidth * markerScale) / 2, originalHeight * markerScale],
-  popupAnchor: [0, -(originalHeight * markerScale)],
-})
 
 const route = useRoute()
 const router = useRouter()
@@ -238,12 +225,15 @@ const institutionsStore = useInstitutionsStore()
 const placesStore = usePlacesStore()
 
 const institutionDetails = ref(null)
+// Grande carte centrée sur cette institution.
+const institutionMapLink = computed(() => {
+  const id = institutionDetails.value?.InstitutionId ?? institutionDetails.value?.id
+  return id != null ? { name: 'Map', query: { institution: String(id) } } : ''
+})
 const institutionFiles = ref([])
 const loadingFiles = ref(false)
 const activeIndex = ref(route.query.tab === 'encadrement' ? 1 : 0)
 const userRole = ref(null)
-const mapInstance = ref(null)
-const mapMarker = ref(null)
 
 let placesRefInstance = null
 let placesCallback = null
@@ -270,7 +260,6 @@ onBeforeUnmount(() => {
   detachPlacesListener()
   detachRoleListener()
   if (typeof unsubscribeAuth === 'function') unsubscribeAuth()
-  destroyMap()
 })
 
 watch(institutionId, (newId, oldId) => {
@@ -332,8 +321,6 @@ async function loadInstitution() {
     
     // TOUJOURS recharger depuis Supabase (pas de cache)
     await fetchInstitutionFiles(instId)
-    
-    setupMap(inst)
   } catch (error) {
     console.error("❌ Erreur lors du chargement de l'institution:", error)
     router.push({ name: 'Error404' })
@@ -456,40 +443,6 @@ async function handleFileClick(file) {
   catch (error) { window.alert(error.message) }
 }
 
-function setupMap(inst) {
-  const lat = Number(inst?.Latitude)
-  const lng = Number(inst?.Longitude)
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    destroyMap()
-    return
-  }
-
-  destroyMap()
-
-  mapInstance.value = L.map('map', {
-    center: [lat, lng],
-    zoom: 13,
-    scrollWheelZoom: false,
-  })
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-  }).addTo(mapInstance.value)
-
-  mapMarker.value = L.marker([lat, lng], {
-    icon: schoolLogoIcon,
-    title: "Localisation de l'institution",
-    riseOnHover: true,
-  }).addTo(mapInstance.value)
-}
-
-function destroyMap() {
-  if (mapInstance.value) {
-    mapInstance.value.remove()
-    mapInstance.value = null
-  }
-  mapMarker.value = null
-}
 
 function listenUserRole() {
   unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -828,23 +781,10 @@ function listenUserRole() {
 /* ====== MAP SIDEBAR ====== */
 .iv-aside { min-width: 0; }
 .iv-map {
-  background: var(--surface-card);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
-  border: 1px solid var(--surface-border);
   position: sticky; top: 1rem;
   animation: cardUp .5s cubic-bezier(.22,1,.36,1) both;
   animation-delay: .1s;
 }
-.iv-map__label {
-  display: flex; align-items: center; gap: .45rem;
-  padding: .8rem 1.1rem;
-  font-size: .88rem; font-weight: 700; color: var(--text-color);
-  border-bottom: 1px solid var(--surface-border);
-}
-.iv-map__label i { color: var(--accent); font-size: .9rem; }
-.iv-map__canvas { height: 400px; width: 100%; }
 
 /* ====== FADE HELPER ====== */
 .iv-fade {
@@ -876,7 +816,6 @@ function listenUserRole() {
   .iv-nav { width: 100%; }
   .iv-nav__btn { flex: 1; justify-content: center; font-size: .8rem; padding: .5rem .75rem; }
   .iv-card { padding: 1.1rem; }
-  .iv-map__canvas { height: min(60dvh, 22rem); }
   .iv-hero__addr { align-items:flex-start; }
   .iv-pill { min-height:2.25rem; }
 }

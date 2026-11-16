@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import appRoutes from '@/router/routes/apps'
+import pagesRoutes from '@/router/routes/pages'
+import socialRoutes from '@/router/routes/social'
+import { buildTabs } from '@/mobile/shell/tabs'
 import {
   isIosDevice,
   isStandaloneDisplay,
@@ -17,14 +20,13 @@ function memoryStorage() {
 }
 
 describe('socle de l’application mobile', () => {
-  it('chaque destination de la barre du bas correspond à une page existante', () => {
-    const nav = readSource('src/components/common/utils/MobileBottomNav.vue')
-    const declared = [...nav.matchAll(/to: '(\/[a-z-]+)'/g)].map(match => match[1])
-    const appPaths = new Set(appRoutes.map(route => route.path))
+  it('chaque onglet de l’application mobile mène à une page existante', () => {
+    const paths = new Set([...appRoutes, ...pagesRoutes, ...socialRoutes].map(route => route.path))
+    const tabs = buildTabs('etudiant-test')
 
-    expect(declared).toContain('/mobile-search')
-    expect(appPaths.has('/mobile-search')).toBe(true)
-    expect(appPaths.has('/mobile-outils')).toBe(true)
+    expect(tabs.map(tab => tab.label)).toEqual(['Carte', 'Institutions', 'Accueil', 'Recherche', 'Profil'])
+    for (const tab of tabs.slice(0, 4)) expect(paths.has(tab.root)).toBe(true)
+    expect(tabs[4].root).toBe('/profile/etudiant-test')
   })
 
   it('déclare les balises et les icônes nécessaires à l’installation', () => {

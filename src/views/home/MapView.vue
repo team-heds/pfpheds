@@ -1,25 +1,25 @@
 ﻿<template>
   <div class="map-page">
-    <div v-if="isMobile">
-      <HeaderIcons />
-    </div>
     <Navbar />
-    <FiltreMap />
+    <!-- Téléphone (768 px et moins) : la carte d'origine, inchangée. -->
+    <FiltreMap v-if="isMobile" />
+    <DesktopInstitutionMap v-else />
   </div>
 </template>
 
-
-<script>
-
-import { defineComponent } from 'vue'
-import FiltreMap from '@/components/common/filters/FiltreMap.vue'
+<script setup>
+import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import Navbar from '@/components/common/utils/Navbar.vue'
-import HeaderIcons from '@/components/common/utils/HeaderIcons.vue'
 
-export default defineComponent({
-  components: { Navbar, FiltreMap, HeaderIcons }
-})
+const FiltreMap = defineAsyncComponent(() => import('@/components/common/filters/FiltreMap.vue'))
+const DesktopInstitutionMap = defineAsyncComponent(() => import('@/components/map/DesktopInstitutionMap.vue'))
+
+// Même seuil que la carte d'origine (FiltreMap) : 768 px et moins = téléphone.
+const MOBILE_QUERY = '(max-width: 768px)'
+const media = typeof window !== 'undefined' ? window.matchMedia(MOBILE_QUERY) : null
+const isMobile = ref(media ? media.matches : false)
+const onChange = (event) => { isMobile.value = event.matches }
+
+onMounted(() => media?.addEventListener('change', onChange))
+onBeforeUnmount(() => media?.removeEventListener('change', onChange))
 </script>
-
-<style scoped>
-</style>

@@ -49,7 +49,7 @@ export default [
   { path: '/capsules-insuffisance-renale/qcm-evaluatif', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleQcmEvaluatifView.vue'), name: 'CapsulesInsuffisanceRenaleQcmEvaluatif', meta: { requiresAuth: true } },
 
   // Mobile spécifique
-  { path: '/create', component: () => import('@/components/social/library/CreateContentMobile.vue'), name: 'CreateContentMobile', meta: { mobileOnly: true } },
+  { path: '/create', component: () => import('@/components/social/library/CreateContentMobile.vue'), name: 'CreateContentMobile', meta: { mobileOnly: true, mobileChrome: 'none' } },
   { path: '/mobile-outils', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsView', meta: { requiresAuth: true, mobileOnly: true, title: 'Mon espace' } },
   { path: '/mobile-search', component: () => import('@/views/apps/tools/MobileSearchView.vue'), name: 'MobileSearchView', meta: { requiresAuth: true, mobileOnly: true, title: 'Recherche' } },
   { path: '/list', component: () => import('@/components/media/audio/ListComponent.vue'), name: 'ListComponent', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
