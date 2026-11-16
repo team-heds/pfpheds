@@ -165,6 +165,16 @@ describe('mot de la semaine physio — aides d’affichage', () => {
   it('propose les 26 lettres sur le clavier à l’écran', () => {
     expect([...KEYBOARD_ROWS.join('')].sort().join('')).toBe('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
   })
+
+  it('garde la grille et le clavier visibles ensemble sur téléphone', () => {
+    // Recette 16.11 : en 375 × 812, la dernière rangée du clavier (avec « Valider »)
+    // passait sous la barre d'onglets ; après un essai, la grille sortait de l'écran.
+    const view = source('src/views/apps/tools/WordOfDayView.vue')
+    const phone = view.slice(view.indexOf('@media (max-width: 640px)'))
+    expect(phone).toContain('.wod-root .wod-content :deep(.game-header__description) { display: none !important; }')
+    expect(phone).toContain('.wod-game__validity { display: none; }')
+    expect(phone).toContain('.wod-board { width: min(100%, calc(var(--wod-length) * 2.75rem)); }')
+  })
 })
 
 describe('mot de la semaine physio — partie', () => {

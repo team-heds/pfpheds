@@ -1057,4 +1057,12 @@ onBeforeUnmount(() => {
   color: var(--text-color-secondary);
   font-size: 0.85rem;
 }
+
+/* Téléphone : pleine largeur et chiffres sur une ligne (recette du 16.11). */
+@media (max-width: 640px) {
+  .quest-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+}
 </style>
