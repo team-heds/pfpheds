@@ -36,3 +36,5 @@ Lire en priorité selon la zone touchée : `documentation/docs/architecture.md`,
 ## UI
 
 Pour tout travail d'interface, utiliser le skill `impeccable` (et les skills `better-*`) dans `.claude/skills/`.
+
+Pour tout écran de l'application mobile (`src/mobile/`), respecter `documentation/docs/frontend/mobile-app-rules.md` (zones sûres, barre d'onglets, en-tête, panneaux du bas, toucher, PWA) et faire sa liste de vérification avant de livrer.
