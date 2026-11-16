@@ -39,7 +39,7 @@ with programme(bloc, debut, fin, name, description, action_type, target_value, x
   -- Bloc 5 · Printemps des maisons (29 mars–25 avril)
   (5, date '2027-03-29', date '2027-04-25', 'Présence de printemps', 'Connecte-toi 10 jours différents.', 'daily_login', 10, 50),
   (5, date '2027-03-29', date '2027-04-25', 'La maison s''exprime', 'Publie 3 messages dans le feed.', 'create_post', 3, 60),
-  (5, date '2027-03-29', date '2027-04-25', 'Profil à jour', 'Mets à jour ton profil (photo, présentation, coordonnées).', 'update_profile', 1, 20),
+  (5, date '2027-03-29', date '2027-04-25', 'Profil à jour', 'Mets à jour ton profil : photo, ville, langue ou canton d''origine.', 'update_profile', 1, 20),
   -- Bloc 6 · Esprit d'équipe (26 avril–23 mai)
   (6, date '2027-04-26', date '2027-05-23', 'Marathon', 'Connecte-toi 15 jours différents.', 'daily_login', 15, 80),
   (6, date '2027-04-26', date '2027-05-23', 'Contributeur', 'Publie 5 messages dans le feed.', 'create_post', 5, 90),

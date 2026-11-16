@@ -231,9 +231,9 @@ describe('page de scan', () => {
 describe('garde-fous du module', () => {
   const migration = read('supabase/migrations/20261116100000_gamification_treasure_hunt.sql')
 
-  it('est branché derrière son réglage, désactivé en production tant que la migration n’y est pas', () => {
+  it('est branché derrière son réglage, activé en production depuis l’application de la migration', () => {
     expect(read('src/config/gamificationFeatures.js')).toContain('treasureHunt: isEnabled(import.meta.env.VITE_GAMIFICATION_TREASURE_HUNT)')
-    expect(JSON.parse(read('scripts/deployment/production-features.json')).VITE_GAMIFICATION_TREASURE_HUNT).toBe('false')
+    expect(JSON.parse(read('scripts/deployment/production-features.json')).VITE_GAMIFICATION_TREASURE_HUNT).toBe('true')
     const routes = read('src/router/routes/apps.js')
     for (const path of ['/chasse-au-tresor', '/chasse-au-tresor/gestion', '/chasse-au-tresor/gestion/:id', '/chasse-au-tresor/gestion/:id/impression', '/chasse-au-tresor/:id']) {
       expect(routes).toContain(`path: '${path}'`)
