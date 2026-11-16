@@ -15,6 +15,11 @@ export default [
   // Scan d'un QR code de la plateforme (présence à un événement). Le lien du QR mène ici :
   // sans session, on passe par la connexion puis on revient valider le code.
   { path: '/scan', component: () => import('@/views/apps/scan/ScanCodeView.vue'), name: 'ScanCode', beforeEnter: featureGuard('eventCheckin'), meta: { requiresAuth: true, loginRedirect: true, title: 'Présences' } },
+  { path: '/chasse-au-tresor', component: () => import('@/views/apps/treasure/TreasureHuntListView.vue'), name: 'TreasureHuntList', beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, title: 'Chasse au trésor' } },
+  { path: '/chasse-au-tresor/gestion', component: () => import('@/views/apps/treasure/TreasureHuntManageView.vue'), name: 'TreasureHuntManage', beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, title: 'Gérer les chasses au trésor' } },
+  { path: '/chasse-au-tresor/gestion/:id', component: () => import('@/views/apps/treasure/TreasureHuntEditorView.vue'), name: 'TreasureHuntEditor', props: true, beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, title: 'Modifier la chasse au trésor' } },
+  { path: '/chasse-au-tresor/gestion/:id/impression', component: () => import('@/views/apps/treasure/TreasureHuntPrintView.vue'), name: 'TreasureHuntPrint', props: true, beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, immersive: true, hideMobileNav: true, title: 'QR codes de la chasse au trésor' } },
+  { path: '/chasse-au-tresor/:id', component: () => import('@/views/apps/treasure/TreasureHuntPlayView.vue'), name: 'TreasureHuntPlay', props: true, beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, title: 'Chasse au trésor' } },
   { path: '/events', component: () => import('@/views/apps/events/EventManagementView.vue'), name: 'EventManagementView', meta: { requiresAuth: true } },
   { path: '/event-management', component: () => import('@/views/apps/events/EventManagementView.vue'), name: 'EventManagement', meta: { requiresAuth: true } },
   { path: '/tools', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },
