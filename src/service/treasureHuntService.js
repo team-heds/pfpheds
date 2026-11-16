@@ -124,7 +124,7 @@ export function describeTreasureResult(result) {
       ...base,
       success: true,
       severity: 'success',
-      icon: result.completed ? 'pi pi-trophy' : 'pi pi-check-circle',
+      icon: result.completed ? 'pi pi-verified' : 'pi pi-check-circle',
       title: xp > 0 ? `Étape trouvée : +${xp} XP` : 'Étape trouvée',
       detail,
       xp: xp + bonus,

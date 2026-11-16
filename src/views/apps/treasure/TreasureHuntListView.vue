@@ -57,7 +57,7 @@
             <span class="th-progress">
               <span class="th-progress__label">
                 <span>{{ progressLabel(hunt.found_count, hunt.step_count) }}</span>
-                <span v-if="hunt.completed" class="hunt-card__done"><i class="pi pi-trophy" aria-hidden="true"></i> Terminée</span>
+                <span v-if="hunt.completed" class="hunt-card__done"><i class="pi pi-verified" aria-hidden="true"></i> Terminée</span>
               </span>
               <span class="th-progress__track" aria-hidden="true">
                 <span class="th-progress__fill" :style="{ width: `${progressPercent(hunt.found_count, hunt.step_count)}%` }"></span>

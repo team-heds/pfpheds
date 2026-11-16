@@ -130,6 +130,7 @@ onMounted(async () => {
   box-shadow: 0 6px 24px rgba(7, 20, 38, .18);
   text-align: center;
 }
+.sheet, .sheet h2, .sheet p, .sheet strong { color: #071426; }
 .sheet__head { width: 100%; }
 .sheet__eyebrow { margin: 0; color: #475569; font-size: 12pt; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
 .sheet__title { margin: 3mm 0 0; font-size: 26pt; line-height: 1.15; overflow-wrap: anywhere; }
@@ -175,6 +176,13 @@ onMounted(async () => {
 <style>
 /* Impression : seule la page des QR codes sort, sans les éléments communs de l'application. */
 @media print {
-  .skip-link, .p-toast, .pwa-install-prompt, .offline-banner, .version-badge { display: none !important; }
+  html, body, #app, .app-shell, .content, .print-page {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  .skip-link, .p-toast, .background-container { display: none !important; }
 }
 </style>

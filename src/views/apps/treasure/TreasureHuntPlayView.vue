@@ -35,6 +35,7 @@
 
       <div v-else class="play-layout">
         <div class="th-stack">
+          <p class="play-mobile-title">{{ hunt.title }}</p>
           <!-- Progression -->
           <section class="th-panel" aria-labelledby="hunt-progress-title">
             <div class="play-status">
@@ -58,7 +59,7 @@
               </span>
             </div>
             <p v-if="completedAt" class="play-complete">
-              <i class="pi pi-trophy" aria-hidden="true"></i>
+              <i class="pi pi-verified" aria-hidden="true"></i>
               Chasse terminée le {{ formatHuntDate(completedAt) }}. Bravo !
             </p>
             <p v-else class="th-muted play-note">
@@ -148,7 +149,7 @@
                     Étape {{ step.position }}<template v-if="step.found && step.name"> · {{ step.name }}</template>
                     <span class="m-sr-only">{{ step.found ? ' (trouvée)' : step.locked ? ' (verrouillée)' : ' (à trouver)' }}</span>
                   </strong>
-                  <span v-if="step.hint" class="step__hint"><i class="pi pi-lightbulb" aria-hidden="true"></i>{{ step.hint }}</span>
+                  <span v-if="step.hint" class="step__hint"><i class="pi pi-info-circle" aria-hidden="true"></i>{{ step.hint }}</span>
                   <span v-else class="step__hint th-muted">Indice révélé après l’étape précédente.</span>
                 </span>
                 <span class="step__xp">{{ step.found ? `+${step.xp_awarded || 0}` : step.xp_reward }} XP</span>
@@ -200,7 +201,7 @@
                 <span class="player-list__name">
                   <span class="player-list__dot" :style="{ background: player.house_color || 'var(--surface-border)' }" aria-hidden="true"></span>
                   {{ player.name }}<template v-if="player.is_me"> (vous)</template>
-                  <i v-if="player.completed" class="pi pi-trophy" aria-label="Chasse terminée"></i>
+                  <i v-if="player.completed" class="pi pi-verified" aria-label="Chasse terminée"></i>
                 </span>
                 <span class="player-list__score">{{ player.found }}/{{ steps.length }} · {{ player.points }} XP</span>
               </li>
@@ -384,7 +385,7 @@ onMounted(load)
 .step--locked .step__badge { border-color: var(--surface-border); }
 .step__copy { display: grid; gap: .25rem; min-width: 0; }
 .step__copy strong { overflow-wrap: anywhere; }
-.step__hint { display: flex; gap: .45rem; line-height: 1.45; overflow-wrap: anywhere; }
+.step__hint { display: flex; gap: .45rem; line-height: 1.45; overflow-wrap: break-word; }
 .step__hint i { margin-top: .2rem; color: var(--th-accent); }
 .step__xp { font-weight: 700; white-space: nowrap; }
 .step-bonus { display: flex; align-items: center; gap: .45rem; margin-top: .9rem !important; }
@@ -403,14 +404,26 @@ onMounted(load)
 .player-list li.is-me { background: color-mix(in srgb, var(--th-accent) 18%, transparent); }
 .player-list__rank { font-weight: 700; text-align: center; }
 .player-list__name { display: flex; align-items: center; gap: .45rem; min-width: 0; overflow-wrap: anywhere; }
-.player-list__name .pi-trophy { color: var(--th-accent); }
+.player-list__name .pi-verified { color: var(--th-accent); }
 .player-list__dot { flex: none; width: .7rem; height: .7rem; border-radius: 50%; }
 .player-list__score { color: var(--text-color-secondary); font-size: .92rem; white-space: nowrap; }
 .ranking-me { margin-top: .8rem !important; }
 .m-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+@media (max-width: 520px) {
+  .step { grid-template-columns: 2.4rem minmax(0, 1fr); gap: .35rem .7rem; padding: .7rem; }
+  .step__badge { width: 2.4rem; height: 2.4rem; }
+  .step__xp { grid-column: 2; color: var(--text-color-secondary); font-size: .9rem; }
+}
+
 @media (min-width: 960px) {
   .play-layout { grid-template-columns: minmax(0, 1fr) 340px; }
   .ranking { position: sticky; top: 1rem; }
 }
+</style>
+
+<style>
+/* Dans l'application mobile, l'en-tête de la page est remplacé par celui de la coque. */
+.th-page .play-mobile-title { display: none; margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.25; overflow-wrap: break-word; }
+.m-shell .th-page .play-mobile-title { display: block; }
 </style>

@@ -74,7 +74,7 @@ describe('messages de scan de la chasse au trésor', () => {
     const message = describeTreasureResult({
       status: 'ok', kind: 'treasure_hunt', hunt, found: 3, total: 3, xp_gained: 20, bonus_xp: 20, completed: true,
     })
-    expect(message.icon).toBe('pi pi-trophy')
+    expect(message.icon).toBe('pi pi-verified')
     expect(message.detail).toContain('bonus de +20 XP')
     expect(message.xp).toBe(40)
   })

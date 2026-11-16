@@ -11,8 +11,9 @@
       >
         <template v-if="hunt" #actions>
           <Button
-            label="Imprimer les QR codes"
+            label="Imprimer"
             icon="pi pi-print"
+            aria-label="Imprimer les QR codes"
             class="th-primary th-touch"
             :disabled="!steps.length"
             @click="router.push(`${TREASURE_HUNT_MANAGE_PATH}/${hunt.id}/impression`)"
@@ -133,7 +134,7 @@
               </div>
               <div class="edit-step__body">
                 <h3>{{ step.position }}. {{ step.name }}</h3>
-                <p class="edit-step__hint"><i class="pi pi-lightbulb" aria-hidden="true"></i>{{ step.hint }}</p>
+                <p class="edit-step__hint"><i class="pi pi-info-circle" aria-hidden="true"></i>{{ step.hint }}</p>
                 <p class="th-meta">
                   <span><i class="pi pi-star" aria-hidden="true"></i>{{ step.xp_reward }} XP</span>
                   <span><i class="pi pi-user" aria-hidden="true"></i>Trouvée {{ step.find_count }} fois</span>

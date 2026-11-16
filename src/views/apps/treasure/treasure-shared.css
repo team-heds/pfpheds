@@ -43,9 +43,10 @@
 .th-page .th-meta span { display: inline-flex; align-items: center; gap: .4rem; }
 
 .th-page .th-progress { display: grid; gap: .4rem; }
+.th-page .th-progress__label > span { min-width: 0; }
 .th-page .th-progress__label { display: flex; justify-content: space-between; gap: 1rem; font-weight: 600; }
-.th-page .th-progress__track { height: .6rem; overflow: hidden; border-radius: 999px; background: var(--surface-ground, #132b47); }
-.th-page .th-progress__fill { height: 100%; border-radius: inherit; background: var(--th-accent); transition: width .4s ease; }
+.th-page .th-progress__track { display: block; height: .6rem; overflow: hidden; border-radius: 999px; background: var(--surface-ground, #132b47); }
+.th-page .th-progress__fill { display: block; height: 100%; border-radius: inherit; background: var(--th-accent); transition: width .4s ease; }
 
 .th-page .th-field { display: grid; gap: .4rem; }
 .th-page .th-field > label { font-weight: 600; }
