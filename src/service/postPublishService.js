@@ -1,3 +1,4 @@
+import { profileDisplayName } from '@/utils/profileDisplayName'
 import { supabase } from '@/supabase.js'
 import gamificationIntegration from '@/service/gamificationIntegration'
 import { extractPostTags, plainTextFromHtml, safeStorageFileName } from '@/service/postComposer'
@@ -32,9 +33,24 @@ async function uploadFiles(userId, files) {
  * La gamification existante est appelée ensuite (action POST : 25 XP, 3 fois par jour, plafond
  * appliqué côté Supabase). Son échec n'annule pas la publication.
  */
+/** Nom complet de l'auteur lu dans son profil ; à défaut, le nom de secours du compte. */
+export async function resolveProfileAuthorName(user, client = supabase) {
+  if (!user?.id) return ''
+  try {
+    const { data } = await client
+      .from('user_profiles')
+      .select('display_name, forname, family_name')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    return profileDisplayName(data) || resolveAuthorName(user)
+  } catch {
+    return resolveAuthorName(user)
+  }
+}
+
 export async function publishPost({ user, content, files = [], communityId = null }) {
   if (!user?.id) throw new Error('Utilisateur non connecté')
-  const authorName = resolveAuthorName(user)
+  const authorName = await resolveProfileAuthorName(user)
   const { hashtags, mentions } = extractPostTags(content)
 
   const media = await uploadFiles(user.id, files)

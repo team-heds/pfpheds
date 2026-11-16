@@ -1,3 +1,4 @@
+import { profileDisplayName } from '@/utils/profileDisplayName'
 import { defineStore } from 'pinia'
 import { supabase } from '@/supabase.js'
 import { fetchLikeSummaries } from '@/service/postLikesService'
@@ -73,6 +74,9 @@ export const useSocialFeedStore = defineStore('socialFeed', {
   state: () => ({
     entries: {},
     avatarCache: {},
+    // Nom complet de chaque auteur, lu dans son profil (le nom enregistré avec
+    // l'ancienne publication était souvent le début de l'adresse e-mail).
+    authorNameCache: {},
     pendingMedia: {}
   }),
 
@@ -95,7 +99,7 @@ export const useSocialFeedStore = defineStore('socialFeed', {
 
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('user_id, avatar_url')
+        .select('user_id, avatar_url, display_name, forname, family_name')
         .in('user_id', missing)
       if (error) throw error
 
@@ -104,6 +108,8 @@ export const useSocialFeedStore = defineStore('socialFeed', {
       })
       ;(data || []).forEach((profile) => {
         this.avatarCache[profile.user_id] = profile.avatar_url || null
+        const name = profileDisplayName(profile)
+        if (name) this.authorNameCache[profile.user_id] = name
       })
     },
 
@@ -156,7 +162,7 @@ export const useSocialFeedStore = defineStore('socialFeed', {
 
       return rows.map((row) => ({
         id: row.id,
-        Author: row.author_name,
+        Author: this.authorNameCache[row.user_id] || row.author_name,
         IdUser: row.user_id,
         avatar_url: this.avatarCache[row.user_id] || null,
         Content: row.content,

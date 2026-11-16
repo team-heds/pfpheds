@@ -131,7 +131,7 @@ import MIcon from '@/mobile/ui/MIcon.vue'
 import AddStoryCore from '@/components/social/library/AddStoryCore.vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useSocialFeedStore } from '@/stores/socialFeedStore'
-import { publishPost, resolveAuthorName } from '@/service/postPublishService'
+import { publishPost, resolveAuthorName, resolveProfileAuthorName } from '@/service/postPublishService'
 import {
   ACCEPT_ATTRIBUTE,
   MAX_POST_MEDIA,
@@ -171,7 +171,12 @@ const publishError = ref('')
 const publishing = ref(false)
 const textRef = ref(null)
 
-const authorName = computed(() => resolveAuthorName(authStore.user) || 'Moi')
+// En-tête du composer : nom complet du profil dès qu'il est connu.
+const profileName = ref('')
+const authorName = computed(() => profileName.value || resolveAuthorName(authStore.user) || 'Moi')
+onMounted(async () => {
+  profileName.value = feedStore.authorNameCache[authStore.user?.id] || await resolveProfileAuthorName(authStore.user)
+})
 const tags = computed(() => {
   const { hashtags, mentions } = extractPostTags(text.value)
   return [...Object.keys(hashtags).map((tag) => `#${tag}`), ...Object.keys(mentions).map((mention) => `@${mention}`)]
