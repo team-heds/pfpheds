@@ -383,10 +383,10 @@ const viewMode = ref('grid') // 'grid' ou 'list'
 
 // House configuration (identique à GamificationProfilePage)
 const houseConfig = {
-  'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert - "L'équilibre soigne"
-  'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge - "Clarifier, guider, apaiser"
-  'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or - "Comprendre la douleur, c'est soigner"
-  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu - "Apaiser pour mieux guérir"
+  'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert
+  'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge
+  'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or
+  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu
 }
 
 // Normalisation des noms de maisons (identique à GamificationProfilePage)

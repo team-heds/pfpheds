@@ -189,8 +189,8 @@ describe('gamificationServiceSupabase', () => {
   // ==================== getHouseMotto ====================
   describe('getHouseMotto', () => {
     it('returns correct mottos', () => {
-      expect(gamificationServiceSupabase.getHouseMotto('harmonis')).toBe("L'équilibre soigne")
-      expect(gamificationServiceSupabase.getHouseMotto('elaris')).toBe('Clarifier, guider, apaiser')
+      expect(gamificationServiceSupabase.getHouseMotto('harmonis')).toBe("Harmonie et équilibre dans l'apprentissage")
+      expect(gamificationServiceSupabase.getHouseMotto('elaris')).toBe('Excellence et innovation pédagogique')
     })
 
     it('returns empty string for unknown house', () => {

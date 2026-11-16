@@ -5,37 +5,38 @@
 
 import { supabase } from '../supabase.js'
 import { normalizeLoginStreak } from '../utils/loginStreak.js'
+import { HOUSE_TEXTS, houseMotto } from '../domain/gamification/houseTexts.js'
 
 // Configuration des maisons HES (compatible avec hesHousesService)
 export const HES_HOUSES = {
   harmonis: {
     name: 'Harmonis',
-    motto: 'L\'équilibre soigne',
-    description: 'Tu es quelqu\'un de stable, paisible et centré. Tu cherches l\'harmonie autour de toi, tu aides les autres à se sentir bien sans faire de bruit. Tu sais que l\'équilibre soigne.',
+    motto: HOUSE_TEXTS.harmonis.motto,
+    description: HOUSE_TEXTS.harmonis.description,
     color: '#2E8B57', // Vert
     icon: 'pi pi-plus', // Icône médicale (caducée)
     traits: ['Stabilité', 'Paix', 'Équilibre', 'Harmonie', 'Sérénité']
   },
   elaris: {
     name: 'Elaris',
-    motto: 'Clarifier, guider, apaiser',
-    description: 'Tu es clair dans tes idées, tu aimes guider les autres et voir au-delà des apparences. Tu éclaires les chemins, tu transmets des idées avec calme et assurance.',
+    motto: HOUSE_TEXTS.elaris.motto,
+    description: HOUSE_TEXTS.elaris.description,
     color: '#DC143C', // Rouge
     icon: 'pi pi-sun',
     traits: ['Clarté', 'Leadership', 'Vision', 'Guidance', 'Assurance']
   },
   doloris: {
     name: 'Doloris',
-    motto: 'Comprendre la douleur, c\'est soigner',
-    description: 'Tu ressens profondément ce que les autres vivent. Tu as de la compassion, tu veux comprendre avant d\'agir. Tu ne fais pas les choses à moitié.',
+    motto: HOUSE_TEXTS.doloris.motto,
+    description: HOUSE_TEXTS.doloris.description,
     color: '#FFD700', // Jaune
     icon: 'pi pi-heart',
     traits: ['Empathie', 'Compassion', 'Compréhension', 'Profondeur', 'Sensibilité']
   },
   solencia: {
     name: 'Solencia',
-    motto: 'Apaiser pour mieux guérir',
-    description: 'Tu es doux, apaisant, et tu offres ta présence aux autres dans les moments difficiles. Tu sais écouter, rassurer et consoler.',
+    motto: HOUSE_TEXTS.solencia.motto,
+    description: HOUSE_TEXTS.solencia.description,
     color: '#4169E1', // Bleu
     icon: 'pi pi-moon',
     traits: ['Douceur', 'Réconfort', 'Écoute', 'Tendresse', 'Consolation']
@@ -454,14 +455,7 @@ class GamificationServiceSupabase {
   }
 
   getHouseMotto(house) {
-    const mottos = {
-      harmonis: 'L\'équilibre soigne',
-      elaris: 'Clarifier, guider, apaiser',
-      doloris: 'Comprendre la douleur, c\'est soigner',
-      solencia: 'Apaiser pour mieux guérir',
-      gamemaster: 'Voir tout, gérer tout'
-    }
-    return mottos[house] || ''
+    return houseMotto(house)
   }
 
   /**
