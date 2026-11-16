@@ -13,6 +13,8 @@ const ACTION_PRESENTATION = Object.freeze({
   OPENING_BALANCE: { label: 'Solde initial repris', detail: 'Vos points existants ont été repris lors du passage à Supabase.', icon: 'pi pi-history' },
   DAILY_WHEEL: { label: 'Activité quotidienne', detail: 'Une activité quotidienne a été validée.', icon: 'pi pi-star' },
   EVENT_CHECKIN: { label: 'Présence à un événement', detail: 'Votre présence a été validée par QR code.', icon: 'pi pi-qrcode' },
+  TREASURE_HUNT: { label: 'Chasse au trésor', detail: 'Vous avez trouvé une étape de la chasse au trésor.', icon: 'pi pi-map' },
+  TREASURE_HUNT_COMPLETE: { label: 'Chasse au trésor terminée', detail: 'Bonus : toutes les étapes de la chasse sont trouvées.', icon: 'pi pi-trophy' },
   QUIZ_COMPLETE: { label: 'Quiz réussi', detail: 'Un quiz a été validé.', icon: 'pi pi-check-circle' },
   QUIZ_DUEL_WIN: { label: 'Duel de quiz gagné', detail: 'Victoire en duel de quiz, comptée pour votre maison.', icon: 'pi pi-bolt' },
   QUIZ_DUEL_LOSS: { label: 'Duel de quiz terminé', detail: 'Duel de quiz joué jusqu’au bout.', icon: 'pi pi-bolt' },

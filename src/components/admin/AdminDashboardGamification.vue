@@ -138,6 +138,7 @@ import { fetchGamificationActivity } from '@/service/adminDashboardStatsService'
 import { fetchGamificationAdminConsole, fetchGamificationRollout } from '@/service/adminGamificationConsoleService'
 import { getKpisForRole } from '@/config/kpiConfigs'
 import { useRoleStore } from '@/stores/role'
+import { gamificationFeatures } from '@/config/gamificationFeatures'
 
 const router = useRouter()
 const roleStore = useRoleStore()
@@ -180,6 +181,7 @@ const managementLinks = [
   { label: 'Défis', description: 'Configurer les objectifs', icon: 'pi pi-trophy', route: '/admin/gamification/challenges' },
   { label: 'Badges', description: 'Gérer les récompenses', icon: 'pi pi-star', route: '/admin/gamification/badges' },
   { label: 'Participants', description: 'Consulter les profils', icon: 'pi pi-users', route: '/admin/gamification/users' },
+  ...(gamificationFeatures.treasureHunt ? [{ label: 'Chasse au trésor', description: 'Étapes, QR codes et classement', icon: 'pi pi-map', route: '/chasse-au-tresor/gestion' }] : []),
 ]
 const kpiRoutes = Object.freeze({
   challenges_active: '/admin/gamification/challenges',

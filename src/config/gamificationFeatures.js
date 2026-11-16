@@ -14,4 +14,5 @@ export const gamificationFeatures = Object.freeze({
   ventriglisse: isEnabled(import.meta.env.VITE_GAMIFICATION_VENTRIGLISSE),
   wordOfDay: isEnabled(import.meta.env.VITE_GAMIFICATION_WORD_OF_DAY),
   eventCheckin: isEnabled(import.meta.env.VITE_GAMIFICATION_EVENT_CHECKIN),
+  treasureHunt: isEnabled(import.meta.env.VITE_GAMIFICATION_TREASURE_HUNT),
 })

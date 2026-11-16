@@ -10,6 +10,7 @@ const QUICK_TILES = [
   { key: 'mentoring', icon: 'users', label: 'Mentorat', detail: 'Proposer ou réserver un créneau', to: '/mentorat', feature: ['mentoring'] },
   { key: 'documents', icon: 'file', label: 'Documents PFP', detail: 'Guides et formulaires', action: 'documents' },
   { key: 'scan', icon: 'qr', label: 'Scanner', detail: 'Valider ta présence à un événement', to: '/scan', feature: ['eventCheckin'] },
+  { key: 'treasure', icon: 'map', label: 'Chasse au trésor', detail: 'QR codes cachés sur le campus', to: '/chasse-au-tresor', feature: ['treasureHunt'] },
 ]
 
 // Accès déjà présents ailleurs dans l'application mobile (onglets ou tuiles).

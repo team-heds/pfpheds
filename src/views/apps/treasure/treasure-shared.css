@@ -1,0 +1,65 @@
+/* Styles communs aux pages de la chasse au trésor, limités à .th-page. Couleurs : thème. */
+.th-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100%;
+  padding: 1rem 1rem 6rem;
+  color: var(--text-color);
+  background: transparent;
+  --th-accent: #f3c300;
+  --th-accent-ink: #071426;
+}
+
+.th-page *,
+.th-page *::before,
+.th-page *::after { box-sizing: border-box; }
+
+.th-page .th-shell { width: min(100%, 980px); margin: 0 auto; }
+.th-page h2, .th-page h3, .th-page p { margin: 0; }
+.th-page .th-muted { color: var(--text-color-secondary); line-height: 1.55; }
+
+.th-page .th-panel {
+  padding: 1.15rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+  background: var(--surface-card);
+}
+.th-page .th-panel + .th-panel,
+.th-page .th-stack > * + * { margin-top: 1rem; }
+
+.th-page .th-panel__title { margin-bottom: .9rem; font-size: 1.15rem; line-height: 1.3; }
+
+.th-page .th-state { display: flex; align-items: flex-start; gap: 1rem; }
+.th-page .th-state > i { margin-top: .2rem; color: var(--th-accent); font-size: 1.5rem; }
+.th-page .th-state h2 { margin-bottom: .4rem; font-size: 1.15rem; }
+
+.th-page .th-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.th-page .th-actions .p-button,
+.th-page .th-touch { min-height: 44px; }
+.th-page .th-primary.p-button { background: var(--th-accent); border-color: var(--th-accent); color: var(--th-accent-ink); }
+.th-page .th-primary.p-button:enabled:hover { background: #ffdb48; border-color: #ffdb48; color: var(--th-accent-ink); }
+
+.th-page .th-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem 1rem; color: var(--text-color-secondary); font-size: .92rem; }
+.th-page .th-meta span { display: inline-flex; align-items: center; gap: .4rem; }
+
+.th-page .th-progress { display: grid; gap: .4rem; }
+.th-page .th-progress__label > span { min-width: 0; }
+.th-page .th-progress__label { display: flex; justify-content: space-between; gap: 1rem; font-weight: 600; }
+.th-page .th-progress__track { display: block; height: .6rem; overflow: hidden; border-radius: 999px; background: var(--surface-ground, #132b47); }
+.th-page .th-progress__fill { display: block; height: 100%; border-radius: inherit; background: var(--th-accent); transition: width .4s ease; }
+
+.th-page .th-field { display: grid; gap: .4rem; }
+.th-page .th-field > label { font-weight: 600; }
+.th-page .th-field small { color: var(--text-color-secondary); line-height: 1.4; }
+.th-page .th-error { color: var(--red-300, #fca5a5); }
+
+.th-page :focus-visible { outline: 3px solid var(--th-accent); outline-offset: 2px; }
+
+@media (min-width: 700px) {
+  .th-page { padding: 1.5rem 1.5rem 7rem; }
+  .th-page .th-panel { padding: 1.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .th-page .th-progress__fill { transition: none; }
+}
