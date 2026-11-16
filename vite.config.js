@@ -180,7 +180,9 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('primevue') || id.includes('primeicons')) {
+            // PrimeVue n'est plus regroupé en un seul fichier : chaque écran ne
+            // télécharge que les composants qu'il utilise (885 Ko d'un bloc auparavant).
+            if (/[\\/]node_modules[\\/]primevue[\\/](config|api|utils|base|basecomponent|basedirective|usestyle|service|toast|toastservice|confirmationservice|confirmdialog|confirmpopup|dialog|dialogservice|button|ripple|tooltip|styleclass|badgedirective|portal|focustrap)[\\/]/.test(id)) {
               return 'primevue'
             }
             if (id.includes('@supabase')) {
