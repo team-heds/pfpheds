@@ -722,4 +722,17 @@ onBeforeUnmount(() => {
     font-size: 1rem;
   }
 }
+
+/* Téléphone : pleine largeur et chiffres sur une ligne (recette du 16.11). */
+@media (max-width: 640px) {
+  .stats-overview,
+  .badges-grid {
+    padding-inline: 0;
+  }
+  .stats-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+}
 </style>
