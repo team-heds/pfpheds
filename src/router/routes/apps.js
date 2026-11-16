@@ -31,6 +31,7 @@ export default [
   { path: '/quiz/gestion', component: () => import('@/views/apps/quiz/QuizManageView.vue'), name: 'QuizManageView', beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true } },
   { path: '/quiz/gestion/:id', component: () => import('@/views/apps/quiz/QuizEditorView.vue'), name: 'QuizEditorView', props: true, beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true } },
   { path: '/quiz/:id', component: () => import('@/views/apps/quiz/QuizPlayView.vue'), name: 'QuizPlayView', props: true, beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true } },
+  { path: '/duels', component: () => import('@/views/apps/quiz/QuizDuelView.vue'), name: 'QuizDuelView', beforeEnter: featureGuard('quizDuel'), meta: { requiresAuth: true, title: 'Duels de quiz' } },
   { path: '/rom-runner', component: () => import('@/views/apps/rom-runner/RomRunnerView.vue'), name: 'RomRunnerView', beforeEnter: featureGuard('romRunner'), meta: { requiresAuth: true } },
   { path: '/chatbot', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotView', meta: { requiresAuth: true } },
   { path: '/tournois', component: () => import('@/views/apps/tools/TournoisView.vue'), name: 'TournoisView', beforeEnter: featureGuard('tournaments'), meta: { requiresAuth: true } },

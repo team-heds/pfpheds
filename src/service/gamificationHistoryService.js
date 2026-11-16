@@ -16,6 +16,9 @@ const ACTION_PRESENTATION = Object.freeze({
   TREASURE_HUNT: { label: 'Chasse au trésor', detail: 'Vous avez trouvé une étape de la chasse au trésor.', icon: 'pi pi-map' },
   TREASURE_HUNT_COMPLETE: { label: 'Chasse au trésor terminée', detail: 'Bonus : toutes les étapes de la chasse sont trouvées.', icon: 'pi pi-trophy' },
   QUIZ_COMPLETE: { label: 'Quiz réussi', detail: 'Un quiz a été validé.', icon: 'pi pi-check-circle' },
+  QUIZ_DUEL_WIN: { label: 'Duel de quiz gagné', detail: 'Victoire en duel de quiz, comptée pour votre maison.', icon: 'pi pi-bolt' },
+  QUIZ_DUEL_LOSS: { label: 'Duel de quiz terminé', detail: 'Duel de quiz joué jusqu’au bout.', icon: 'pi pi-bolt' },
+  QUIZ_DUEL_DRAW: { label: 'Duel de quiz à égalité', detail: 'Égalité parfaite en duel de quiz.', icon: 'pi pi-bolt' },
 })
 
 const SOURCE_TABLES = Object.freeze({

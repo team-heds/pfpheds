@@ -21,6 +21,10 @@
           <WordOfDayHubCard />
         </div>
 
+        <div v-if="gamificationFeatures.quizDuel" class="col-12">
+          <QuizDuelHubCard />
+        </div>
+
         <div v-if="gamificationFeatures.treasureHunt" class="col-12">
           <TreasureHuntHubCard />
         </div>
@@ -99,6 +103,7 @@
 import { useRouter } from 'vue-router';
 import Navbar from '@/components/common/utils/Navbar.vue';
 import WordOfDayHubCard from '@/components/games/word-of-day/WordOfDayHubCard.vue';
+import QuizDuelHubCard from '@/components/games/quiz-duel/QuizDuelHubCard.vue';
 import TreasureHuntHubCard from '@/components/games/treasure-hunt/TreasureHuntHubCard.vue';
 import DailyWheelWidget from '@/components/gamification/daily/DailyWheelWidget.vue';
 import Button from 'primevue/button';
@@ -107,7 +112,7 @@ import GamificationPageHeader from '@/components/gamification/GamificationPageHe
 import { computed } from 'vue';
 
 const router = useRouter();
-const hasGames = computed(() => gamificationFeatures.wordOfDay || gamificationFeatures.treasureHunt || gamificationFeatures.ventriglisse || gamificationFeatures.dailyWheel || gamificationFeatures.romRunner);
+const hasGames = computed(() => gamificationFeatures.wordOfDay || gamificationFeatures.quizDuel || gamificationFeatures.treasureHunt || gamificationFeatures.ventriglisse || gamificationFeatures.dailyWheel || gamificationFeatures.romRunner);
 const goBack = () => router.push(gamificationFeatures.userJourney ? { name: 'GamificationProfileSelf' } : '/outils');
 </script>
 
