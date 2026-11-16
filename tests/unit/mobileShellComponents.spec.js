@@ -211,13 +211,13 @@ describe('coque de l’application mobile', () => {
   })
 
   it('ouvre un panneau depuis un écran et le ferme au retour', async () => {
-    ({ wrapper, router } = await mountShell('/documents_pfp'))
+    ({ wrapper, router } = await mountShell('/quiz'))
     await wrapper.get('.open-comments').trigger('click'); await settle()
     expect(router.currentRoute.value.hash).toBe('#/commentaires')
     expect(wrapper.get('.sheet-stub').text()).toBe('p9')
 
     router.back(); await settle()
-    expect(router.currentRoute.value.fullPath).toBe('/documents_pfp')
+    expect(router.currentRoute.value.fullPath).toBe('/quiz')
     expect(wrapper.find('.sheet-stub').exists()).toBe(false)
   })
 
@@ -268,6 +268,13 @@ describe('coque de l’application mobile', () => {
     await wrapper.get('.m-header [aria-label="Retour"]').trigger('click'); await settle()
     expect(router.currentRoute.value.path).toBe('/map')
     expect(wrapper.find('.map-stub').isVisible()).toBe(true)
+  })
+
+  it('renvoie l’ancienne page des documents vers la vue Documents de l’onglet Institutions', async () => {
+    ({ wrapper, router } = await mountShell('/documents_pfp'))
+    await settle()
+    expect(router.currentRoute.value.path).toBe('/institution')
+    expect(wrapper.find('.institutions-stub').isVisible()).toBe(true)
   })
 
   it('laisse tout l’écran aux pages qui ont leur propre en-tête', async () => {

@@ -149,6 +149,7 @@ import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
   boundsFor,
+  homeBounds,
   distanceKm,
   formatDistance,
   mappableInstitutions,
@@ -276,9 +277,9 @@ function drawMarkers() {
   }
 }
 
-function fitAll(animate = false) {
+function fitAll(animate = false, { home = false } = {}) {
   if (!map) return
-  const bounds = boundsFor(items.value.map((item) => item.latLng))
+  const bounds = home ? homeBounds(items.value) : boundsFor(items.value.map((item) => item.latLng))
   if (bounds) map.fitBounds(bounds, { paddingTopLeft: [28, 150], paddingBottomRight: [28, 40], maxZoom: 13, animate })
   else map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate })
 }
@@ -436,7 +437,7 @@ onMounted(async () => {
   map?.invalidateSize()
   drawMarkers()
   if (mapStore.focusKey) applyFocus()
-  else fitAll(false)
+  else fitAll(false, { home: true })
 })
 
 onBeforeUnmount(() => {

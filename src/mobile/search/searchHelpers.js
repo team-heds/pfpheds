@@ -15,6 +15,8 @@ const QUICK_TILES = [
 
 // Accès déjà présents ailleurs dans l'application mobile (onglets ou tuiles).
 const COVERED_DESTINATIONS = new Set(['institutions', 'documents', 'map', 'profile', 'mentoring', 'quizzes'])
+// Pages qui ne fonctionnent pas encore dans l'application (anciennes données Firebase).
+const UNAVAILABLE_ON_MOBILE = new Set(['notes'])
 
 /** Tuiles à afficher selon les réglages actifs et les pages existantes. */
 export function buildQuickTiles({ features = {}, hasPath = () => true } = {}) {
@@ -28,7 +30,7 @@ export function buildQuickTiles({ features = {}, hasPath = () => true } = {}) {
 
 /** Autres accès de la personne (votation, événements, outils, administration…). */
 export function otherDestinations(destinations = []) {
-  return destinations.filter((item) => !COVERED_DESTINATIONS.has(item.key))
+  return destinations.filter((item) => !COVERED_DESTINATIONS.has(item.key) && !UNAVAILABLE_ON_MOBILE.has(item.key))
 }
 
 const normalize = (value) => String(value ?? '')

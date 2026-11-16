@@ -33,7 +33,7 @@ describe('accès rapide de la recherche mobile', () => {
   })
 
   it('ne répète pas les accès déjà présents dans les onglets', () => {
-    const list = [{ key: 'votation' }, { key: 'institutions' }, { key: 'map' }, { key: 'profile' }, { key: 'events' }, { key: 'quizzes' }, { key: 'admin' }]
+    const list = [{ key: 'votation' }, { key: 'institutions' }, { key: 'map' }, { key: 'profile' }, { key: 'events' }, { key: 'quizzes' }, { key: 'notes' }, { key: 'admin' }]
     expect(otherDestinations(list).map((item) => item.key)).toEqual(['votation', 'events', 'admin'])
   })
 })

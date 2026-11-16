@@ -81,3 +81,12 @@ export function formatDistance(km) {
   if (km < 1) return `${Math.max(50, Math.round(km * 20) * 50)} m`
   return km < 10 ? `${km.toFixed(1).replace('.', ',')} km` : `${Math.round(km)} km`
 }
+
+/**
+ * Vue de départ : les institutions du Valais quand il y en a assez (la plupart
+ * des stages s'y trouvent), sinon toutes celles de Suisse.
+ */
+export function homeBounds(items = [], { canton = 'VS', minimum = 5 } = {}) {
+  const local = items.filter((item) => String(item.institution?.Canton || '').trim().toUpperCase() === canton)
+  return boundsFor((local.length >= minimum ? local : items).map((item) => item.latLng))
+}

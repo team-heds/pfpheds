@@ -60,6 +60,7 @@ import MobilePage from '@/mobile/shell/MobilePage.vue'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useMobileNotificationsStore } from '@/mobile/home/mobileNotificationsStore'
 import { useMobileStoriesStore } from '@/mobile/home/mobileStoriesStore'
+import { useMobileInstitutionsStore } from '@/mobile/institutions/mobileInstitutionsStore'
 import { MOBILE_SHELL_KEY } from '@/mobile/shell/useMobileShell'
 import { OVERLAYS, canRestoreOverlay } from '@/mobile/shell/overlayRegistry'
 import { buildTabs, pageKey } from '@/mobile/shell/tabs'
@@ -98,6 +99,7 @@ const authStore = useAuthStore()
 const store = useMobileShellStore()
 const notifications = useMobileNotificationsStore()
 const stories = useMobileStoriesStore()
+const institutionsView = useMobileInstitutionsStore()
 const rootRef = ref(null)
 
 useKeyboardInset(rootRef)
@@ -143,6 +145,18 @@ const unmarkLeaving = (el) => {
   el.removeAttribute?.('aria-hidden')
   el.removeAttribute?.('inert')
 }
+
+// Anciennes pages remplacées par une vue mobile : on y renvoie.
+const MOBILE_REDIRECTS = {
+  DocumentsPFP: () => {
+    institutionsView.view = 'documents'
+    return '/institution'
+  },
+}
+watch(() => route.name, (name) => {
+  const redirect = MOBILE_REDIRECTS[name]
+  if (redirect) router.replace(redirect())
+}, { immediate: true })
 
 // --- Synchronisation avec le routeur -------------------------------------
 watch(userId, (id) => {
