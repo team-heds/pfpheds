@@ -34,7 +34,7 @@ vi.mock('@/utils/dailyVisit', () => ({ recordDailyVisit: vi.fn() }))
 vi.mock('@/mobile/shell/useMobileViewport', () => ({ useMobileViewport: () => mocks.phone }))
 vi.mock('@/components/common/forms/AuthForm.vue', () => ({ default: { name: 'AuthForm', render: () => null } }))
 
-import { hideAppSplash } from '@/utils/appSplash'
+import { hideAppSplash, isInstalledApp } from '@/utils/appSplash'
 import { MOBILE_BREAKPOINT_QUERY } from '@/mobile/shell/tabs'
 import MobileLoginScreen from '@/mobile/auth/MobileLoginScreen.vue'
 import LoginHome from '@/views/auth/LoginHome.vue'
@@ -70,12 +70,33 @@ describe('application installée : portrait et démarrage', () => {
   it('l’écran de chargement s’efface en fondu après le premier rendu', () => {
     vi.useFakeTimers()
     document.body.innerHTML = '<div id="app-splash"></div>'
-    const win = { matchMedia: () => ({ matches: false }), requestAnimationFrame: (callback) => callback() }
+    const win = { matchMedia: (query) => ({ matches: query === '(display-mode: standalone)' }), requestAnimationFrame: (callback) => callback() }
     expect(hideAppSplash({ doc: document, win })).toBe(true)
     expect(document.getElementById('app-splash').classList.contains('is-leaving')).toBe(true)
     vi.advanceTimersByTime(400)
     expect(document.getElementById('app-splash')).toBeNull()
     vi.useRealTimers()
+  })
+
+  it('écran de chargement réservé à l’application installée : masqué par défaut dans un navigateur', () => {
+    const html = read('index.html')
+    const css = html.slice(html.indexOf('#app-splash {'), html.indexOf('#app-splash.is-leaving'))
+    // Masqué dès le premier rendu, visible seulement dans l'application installée.
+    expect(css).toMatch(/#app-splash \{\s*display: none;/)
+    expect(css).toMatch(/@media \(display-mode: standalone\) \{\s*#app-splash \{ display: grid; \}/)
+    expect(css).toMatch(/html\.is-installed-app #app-splash \{\s*display: grid;/)
+    expect(html).toMatch(/navigator\.standalone === true\) document\.documentElement\.classList\.add\('is-installed-app'\)/)
+    // Le logo n'est pas une image du document : un navigateur ne le télécharge pas.
+    expect(html).toMatch(/<div id="app-splash" aria-hidden="true"><\/div>/)
+    expect(html).toMatch(/rel="preload" as="image" href="\/splash\/logo.png" media="\(display-mode: standalone\)"/)
+  })
+
+  it('dans un navigateur, l’écran de chargement est retiré sans fondu', () => {
+    expect(isInstalledApp({ matchMedia: () => ({ matches: false }), navigator: {} })).toBe(false)
+    expect(isInstalledApp({ matchMedia: () => ({ matches: false }), navigator: { standalone: true } })).toBe(true)
+    document.body.innerHTML = '<div id="app-splash"></div>'
+    hideAppSplash({ doc: document, win: { matchMedia: () => ({ matches: false }), navigator: {} } })
+    expect(document.getElementById('app-splash')).toBeNull()
   })
 
   it('sans fondu quand la personne demande moins de mouvement', () => {

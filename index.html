@@ -24,22 +24,31 @@
   <link rel="apple-touch-startup-image" href="/splash/iphone-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
   <link rel="apple-touch-startup-image" href="/splash/iphone-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
   <link rel="apple-touch-startup-image" href="/splash/iphone-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-  <link rel="preload" as="image" href="/splash/logo.png">
+  <link rel="preload" as="image" href="/splash/logo.png" media="(display-mode: standalone)">
+  <script>
+    // iPhone : l'application installée se reconnaît aussi à navigator.standalone.
+    if (window.navigator.standalone === true) document.documentElement.classList.add('is-installed-app');
+  </script>
   <style>
-    /* Écran de chargement : identique à l'écran de démarrage, affiché jusqu'au
-       premier rendu de l'application, puis retiré en fondu (src/utils/appSplash.js). */
+    /* Écran de chargement : seulement dans l'application installée, jamais dans
+       un navigateur (ordinateur ou téléphone). Masqué par défaut dès le premier
+       rendu ; identique à l'écran de démarrage, retiré en fondu après le premier
+       rendu de l'application (src/utils/appSplash.js). Le logo est une image de
+       fond : un navigateur ne le télécharge même pas. */
     #app-splash {
+      display: none;
       position: fixed;
       inset: 0;
       z-index: 9000;
-      display: grid;
       place-items: center;
-      background: #0B213F;
+      background: #0B213F url('/splash/logo.png') center / min(56vw, 240px) auto no-repeat;
       transition: opacity 200ms ease-out;
     }
-    #app-splash img {
-      width: min(56vw, 240px);
-      height: auto;
+    @media (display-mode: standalone) {
+      #app-splash { display: grid; }
+    }
+    html.is-installed-app #app-splash {
+      display: grid;
     }
     #app-splash.is-leaving {
       opacity: 0;
@@ -91,7 +100,7 @@
   <noscript>
     <strong>We're sorry but pfpheds doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
   </noscript>
-  <div id="app-splash" aria-hidden="true"><img src="/splash/logo.png" alt=""></div>
+  <div id="app-splash" aria-hidden="true"></div>
   <div id="rotate-hint" role="alert">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
     <span>Tourne ton téléphone</span>
