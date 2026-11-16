@@ -296,7 +296,7 @@ const prevBA22 = () => {
   line-height: 1.5;
 }
 .sidebar-eyebrow {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;

@@ -500,7 +500,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 1.1rem;
   flex-shrink: 0;
   background: color-mix(in srgb, var(--primary-color) 12%, var(--surface-card));

@@ -945,7 +945,7 @@ onMounted(loadAll)
   border-radius: 0.85rem;
 }
 
-.state i { font-size: 1.75rem; color: var(--primary-color); }
+.state i { font-size: 1.75rem; color: var(--primary-text-color, var(--primary-color)); }
 .state p { max-width: 46ch; margin: 0; line-height: 1.5; }
 
 .count {

@@ -608,7 +608,7 @@ onMounted(async () => {
 .quiz-header {
   text-align: center;
   margin-bottom: 2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .quiz-logo {
@@ -617,7 +617,7 @@ onMounted(async () => {
 
 .quiz-icon {
   font-size: 4rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .quiz-title {
@@ -669,7 +669,7 @@ onMounted(async () => {
 
 .question-title {
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-bottom: 2rem;
   text-align: center;
 }
@@ -719,7 +719,7 @@ onMounted(async () => {
 
 .answer-letter {
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   min-width: 20px;
 }
 

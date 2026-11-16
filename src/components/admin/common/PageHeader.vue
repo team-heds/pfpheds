@@ -36,7 +36,7 @@ defineProps({
 }
 .title-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .title-wrap { display: flex; align-items: center; gap: .75rem; }
-.title-icon { color: var(--primary-color); font-size: 1.5rem; }
+.title-icon { color: var(--primary-text-color, var(--primary-color)); font-size: 1.5rem; }
 .title { margin: 0; font-size: 1.5rem; color: var(--text-color); }
 .subtitle { margin: .25rem 0 0; color: var(--text-color-secondary); font-size: .95rem; }
 .actions :deep(> *) { margin-left: .5rem; }

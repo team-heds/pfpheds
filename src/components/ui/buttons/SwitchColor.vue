@@ -11,12 +11,12 @@
         <i
           v-if="!isDimTheme"
           class="pi pi-moon"
-          style="color: var(--primary-color); font-size: 20px;"
+          style="color: var(--primary-text-color, var(--primary-color)); font-size: 20px;"
         ></i>
         <i
           v-if="isDimTheme"
           class="pi pi-sun"
-          style="color: var(--primary-color); font-size: 20px;"
+          style="color: var(--primary-text-color, var(--primary-color)); font-size: 20px;"
         ></i>
       </div>
     </button>
@@ -50,7 +50,7 @@ const { isDark: isDimTheme, toggle: toggleTheme } = useTheme();
   cursor: pointer;
   background-color: var(--surface-overlay);
   border: 0;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   transition: background-color 150ms ease, transform 150ms ease;
 }
 

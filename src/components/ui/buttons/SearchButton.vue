@@ -43,7 +43,7 @@ const props = defineProps({
   transform: scale(.96);
 }
 .search-btn i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 1.3rem;
 }
 @media (prefers-reduced-motion: reduce) {

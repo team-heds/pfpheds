@@ -1194,7 +1194,7 @@ const saveProfileWithXP = async () => {
   grid-row: 1 / span 2;
   align-self: center;
   font-size: 1.25rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   flex-shrink: 0;
 }
 .info-label {

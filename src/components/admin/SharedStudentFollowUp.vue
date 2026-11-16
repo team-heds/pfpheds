@@ -83,7 +83,7 @@ h4 { margin: 0; font-size: .875rem; }
 p { white-space: pre-wrap; overflow-wrap: anywhere; margin: .45rem 0 0; line-height: 1.45; }
 button, select { min-height: 40px; font: inherit; }
 button { cursor: pointer; border: 1px solid var(--surface-border); border-radius: 6px; background: var(--surface-ground); color: var(--text-color); }
-.edit-button { display: inline-flex; align-items: center; gap: .35rem; padding: .4rem .6rem; color: var(--primary-color); white-space: nowrap; }
+.edit-button { display: inline-flex; align-items: center; gap: .35rem; padding: .4rem .6rem; color: var(--primary-text-color, var(--primary-color)); white-space: nowrap; }
 .add-follow-up { display: grid; gap: .45rem; padding-top: .75rem; }
 .add-follow-up label { font-size: .8rem; font-weight: 600; color: var(--text-color-secondary); }
 .add-controls { display: flex; gap: .5rem; }

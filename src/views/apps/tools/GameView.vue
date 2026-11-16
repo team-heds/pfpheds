@@ -142,7 +142,7 @@ const goBack = () => router.push(gamificationFeatures.userJourney ? { name: 'Gam
 }
 
 .games-empty { padding: clamp(1.25rem, 4vw, 2.5rem); border-radius: 16px; color: var(--text-color); background: var(--surface-card); }
-.games-empty > i { color: var(--primary-color); font-size: 1.5rem; }
+.games-empty > i { color: var(--primary-text-color, var(--primary-color)); font-size: 1.5rem; }
 .games-empty h2 { margin: 1rem 0 .5rem; font-size: clamp(1.1rem, 3vw, 1.5rem); line-height: 1.3; }
 .games-empty p { margin: 0 0 1.25rem; color: var(--text-color-secondary); line-height: 1.5; }
 

@@ -402,7 +402,7 @@ onMounted(loadAll)
 .stat-icon.uncovered { color: #fbbf24; background: rgb(245 158 11 / 15%); }
 .error-state, .anomaly-state { display: flex; align-items: center; gap: 1rem; }
 .anomaly-summary { flex: 1; }
-.anomaly-summary summary { cursor: pointer; color: var(--primary-color); font-weight: 600; }
+.anomaly-summary summary { cursor: pointer; color: var(--primary-text-color, var(--primary-color)); font-weight: 600; }
 .error-state > div { flex: 1; }
 .empty-state { min-height: 12rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; text-align: center; }
 

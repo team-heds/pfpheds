@@ -243,7 +243,7 @@ export default {
 }
 
 .cropper-content h2 {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-weight: 600;
   margin-top: 0;
   margin-bottom: 1rem;

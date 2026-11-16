@@ -163,7 +163,7 @@ function installPwa() {
   opacity: 0;
   transform: translateY(80px);
 }
-.pwa-text .pi { margin-inline: .15rem; color: var(--primary-color); }
+.pwa-text .pi { margin-inline: .15rem; color: var(--primary-text-color, var(--primary-color)); }
 /* Sur téléphone, l'invitation se place au-dessus de la barre de navigation au lieu de la recouvrir. */
 @media (max-width: 768px) {
   .pwa-install-prompt {

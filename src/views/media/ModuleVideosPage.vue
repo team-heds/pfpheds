@@ -437,7 +437,7 @@ onMounted(async () => {
 }
 
 .stat i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .module-actions {
@@ -587,7 +587,7 @@ onMounted(async () => {
 
 .play-overlay i {
   font-size: 1.25rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-left: 0.125rem;
 }
 
@@ -636,7 +636,7 @@ onMounted(async () => {
   align-items: center;
   gap: 0.25rem;
   font-size: 0.875rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .video-actions {

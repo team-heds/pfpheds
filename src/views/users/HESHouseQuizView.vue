@@ -47,13 +47,13 @@ onMounted(async () => {
 
 .quiz-header h1 {
   font-size: 2.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-bottom: 1rem;
 }
 
 .quiz-header p {
   font-size: 1.2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .quiz-content {
@@ -65,7 +65,7 @@ onMounted(async () => {
   text-align: center;
   padding: 3rem;
   font-size: 1.2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 @media (max-width: 768px) {

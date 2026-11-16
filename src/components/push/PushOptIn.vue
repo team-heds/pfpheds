@@ -140,7 +140,7 @@ onMounted(refresh)
   border-radius: 50%;
 }
 
-.push-opt-in__icon--on { color: var(--primary-color); }
+.push-opt-in__icon--on { color: var(--primary-text-color, var(--primary-color)); }
 
 .push-opt-in__title {
   margin: 0 0 0.15rem;

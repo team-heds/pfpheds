@@ -865,7 +865,7 @@ async function submit() {
 }
 
 .preview-content :deep(a) {
-  color: var(--primary-color) !important;
+  color: var(--primary-text-color, var(--primary-color)) !important;
   text-decoration: underline;
 }
 
@@ -922,7 +922,7 @@ async function submit() {
 }
 
 .type-card i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .form-actions {
@@ -934,7 +934,7 @@ async function submit() {
 }
 
 h3 {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin: 0;
 }
 </style>

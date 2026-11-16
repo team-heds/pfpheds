@@ -44,7 +44,7 @@
 
         <!-- Toggle vue -->
         <div class="tabs-section">
-          <h3 style="margin: 0; color: var(--primary-color); font-size: 1.1rem;">
+          <h3 style="margin: 0; color: var(--primary-text-color, var(--primary-color)); font-size: 1.1rem;">
             <i class="pi pi-cloud"></i> Catalogue Vimeo
           </h3>
           
@@ -906,7 +906,7 @@ onMounted(async () => {
 }
 
 .title-section h1 i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .subtitle {
@@ -916,7 +916,7 @@ onMounted(async () => {
 }
 
 .cache-info {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-weight: 600;
   font-size: 0.875rem;
 }
@@ -943,7 +943,7 @@ onMounted(async () => {
 
 .tabs-section .p-button.active-tab {
   border-bottom-color: var(--primary-color);
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-weight: 600;
 }
 
@@ -1002,7 +1002,7 @@ onMounted(async () => {
 
 .modules-header :deep(.p-button) {
   background: white;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   border-color: white;
 }
 
@@ -1032,7 +1032,7 @@ onMounted(async () => {
 
 .no-vimeo-message i {
   font-size: 3rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-bottom: 1rem;
 }
 
@@ -1102,7 +1102,7 @@ onMounted(async () => {
 
 .stat-card i {
   font-size: 2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .stat-value {
@@ -1417,7 +1417,7 @@ onMounted(async () => {
 .stat-value-large {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 /* Responsive */

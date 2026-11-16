@@ -330,7 +330,7 @@ onMounted(async () => {
   min-width: var(--navbar-control-size);
   height: var(--navbar-control-size);
   border-radius: 12px;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   background: var(--surface-overlay);
   text-decoration: none;
   transition: background-color 150ms ease, color 150ms ease, transform 100ms ease;
