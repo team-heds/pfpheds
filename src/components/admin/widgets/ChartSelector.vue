@@ -32,7 +32,7 @@
     <div class="chart-display" ref="displayRef" role="region" :aria-label="title ? `Visualisation : ${title}` : 'Visualisation des données'">
       <!-- Loading state pendant le switch pour éviter les re-renders -->
       <div v-if="switching" class="chart-loading" role="status" aria-live="polite">
-        <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--primary-color)"></i>
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--primary-text-color, var(--primary-color))"></i>
         <span>Changement de vue...</span>
       </div>
       

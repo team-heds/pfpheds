@@ -10,10 +10,12 @@
   --surface-d:#e5e7eb;
   --surface-e:#ffffff;
   --surface-f:#ffffff;
-  --text-color:#4b5563;
-  --text-color-secondary:#6b7280;
+  --text-color:#1f2937;
+  --text-color-secondary:#4b5563;
   --primary-color:#f3c300;
-  --primary-color-text:#ffffff;
+  --primary-color-text:#172033;
+  /* Jaune HEdS employé comme texte ou icône : or foncé, lisible sur fond clair (6,25:1 sur blanc). */
+  --primary-text-color:#7a5c00;
   --surface-0: #ffffff;
   --surface-50: #f9fafb;
   --surface-100: #f3f4f6;
@@ -39,11 +41,11 @@
   --content-padding:1.25rem;
   --inline-spacing:0.5rem;
   --border-radius:6px;
-  --surface-ground:#EFF3F8;
+  --surface-ground:#E9EEF5;
   --surface-section:#ffffff;
   --surface-card:#ffffff;
   --surface-overlay:#ffffff;
-  --surface-border:#dfe7ef;
+  --surface-border:#cbd5e1;
   --surface-hover:#f6f9fc;
   --focus-ring: 0 0 0 0.2rem #fde68a;
   --maskbg: rgba(0, 0, 0, 0.4);
@@ -257,7 +259,7 @@
 .p-editor-container .ql-snow.ql-toolbar button.ql-active,
 .p-editor-container .ql-snow.ql-toolbar .ql-picker-label.ql-active,
 .p-editor-container .ql-snow.ql-toolbar .ql-picker-item.ql-selected {
-  color: #f3c300;
+  color: var(--primary-text-color);
 }
 .p-editor-container .ql-snow.ql-toolbar button.ql-active .ql-stroke,
 .p-editor-container .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke,
@@ -272,7 +274,7 @@
 .p-editor-container .ql-snow.ql-toolbar button.ql-active .ql-picker-label,
 .p-editor-container .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-picker-label,
 .p-editor-container .ql-snow.ql-toolbar .ql-picker-item.ql-selected .ql-picker-label {
-  color: #f3c300;
+  color: var(--primary-text-color);
 }
 
 @layer primevue {
@@ -804,7 +806,7 @@
   }
   .p-datepicker .p-datepicker-header .p-datepicker-title .p-datepicker-year:enabled:hover,
   .p-datepicker .p-datepicker-header .p-datepicker-title .p-datepicker-month:enabled:hover {
-    color: #f3c300;
+    color: var(--primary-text-color);
   }
   .p-datepicker .p-datepicker-header .p-datepicker-title .p-datepicker-month {
     margin-right: 0.5rem;
@@ -2495,10 +2497,10 @@
     box-shadow: 0 0 0 0.2rem #fde68a;
   }
   .p-rating .p-rating-item.p-rating-item-active .p-rating-icon {
-    color: #f3c300;
+    color: var(--primary-text-color);
   }
   .p-rating:not(.p-disabled):not(.p-readonly) .p-rating-item:hover .p-rating-icon {
-    color: #f3c300;
+    color: var(--primary-text-color);
   }
   .p-rating:not(.p-disabled):not(.p-readonly) .p-rating-item:hover .p-rating-icon.p-rating-cancel {
     color: #e73d3e;
@@ -2525,7 +2527,7 @@
   .p-selectbutton .p-button.p-highlight {
     background: #f3c300;
     border-color: #f3c300;
-    color: #ffffff;
+    color: #172033;
   }
   .p-selectbutton .p-button.p-highlight .p-button-icon-left,
   .p-selectbutton .p-button.p-highlight .p-button-icon-right {
@@ -2780,7 +2782,7 @@
   .p-togglebutton.p-highlight .p-button {
     background: #f3c300;
     border-color: #f3c300;
-    color: #ffffff;
+    color: #172033;
   }
   .p-togglebutton.p-highlight .p-button .p-button-icon-left,
   .p-togglebutton.p-highlight .p-button .p-button-icon-right {
@@ -2868,7 +2870,7 @@
     z-index: 1;
   }
   .p-button {
-    color: #ffffff;
+    color: #172033;
     background: #f3c300;
     border: 1px solid #f3c300;
     padding: 0.75rem 1.25rem;
@@ -2889,17 +2891,17 @@
   }
   .p-button.p-button-outlined {
     background-color: transparent;
-    color: #f3c300;
+    color: var(--primary-text-color);
     border: 1px solid;
   }
   .p-button.p-button-outlined:not(:disabled):hover {
     background: rgba(243, 195, 0, 0.04);
-    color: #f3c300;
+    color: var(--primary-text-color);
     border: 1px solid;
   }
   .p-button.p-button-outlined:not(:disabled):active {
     background: rgba(243, 195, 0, 0.16);
-    color: #f3c300;
+    color: var(--primary-text-color);
     border: 1px solid;
   }
   .p-button.p-button-outlined.p-button-plain {
@@ -2916,17 +2918,17 @@
   }
   .p-button.p-button-text {
     background-color: transparent;
-    color: #f3c300;
+    color: var(--primary-text-color);
     border-color: transparent;
   }
   .p-button.p-button-text:not(:disabled):hover {
     background: rgba(243, 195, 0, 0.04);
-    color: #f3c300;
+    color: var(--primary-text-color);
     border-color: transparent;
   }
   .p-button.p-button-text:not(:disabled):active {
     background: rgba(243, 195, 0, 0.16);
-    color: #f3c300;
+    color: var(--primary-text-color);
     border-color: transparent;
   }
   .p-button.p-button-text.p-button-plain {
@@ -2965,7 +2967,7 @@
     min-width: 1rem;
     height: 1rem;
     line-height: 1rem;
-    color: #f3c300;
+    color: var(--primary-text-color);
     background-color: #ffffff;
   }
   .p-button.p-button-raised {
@@ -5944,11 +5946,11 @@
   .p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link {
     background: #ffffff;
     border-color: #f3c300;
-    color: #f3c300;
+    color: var(--primary-text-color);
   }
   .p-tabview .p-tabview-nav-btn.p-link {
     background: #ffffff;
-    color: #f3c300;
+    color: var(--primary-text-color);
     width: 3rem;
     box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
     border-radius: 0;
@@ -6351,7 +6353,7 @@
   }
   .p-overlaypanel .p-overlaypanel-close {
     background: #f3c300;
-    color: #ffffff;
+    color: #172033;
     width: 2rem;
     height: 2rem;
     transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
@@ -8100,7 +8102,7 @@
   .p-tabmenu .p-tabmenu-nav .p-tabmenuitem.p-highlight .p-menuitem-link {
     background: #ffffff;
     border-color: #f3c300;
-    color: #f3c300;
+    color: var(--primary-text-color);
   }
   .p-tieredmenu ul {
     margin: 0;
@@ -9179,7 +9181,7 @@
   }
   .p-badge {
     background: #f3c300;
-    color: #ffffff;
+    color: #172033;
     font-size: 0.75rem;
     font-weight: 700;
     min-width: 1.5rem;
@@ -9709,7 +9711,7 @@
   }
   .p-tag {
     background: #f3c300;
-    color: #ffffff;
+    color: #172033;
     font-size: 0.75rem;
     font-weight: 700;
     padding: 0.25rem 0.4rem;
@@ -9845,11 +9847,11 @@
   }
   .p-steps .p-steps-item.p-highlight .p-steps-number {
     background: #f3c300;
-    color: #ffffff;
+    color: #172033;
   }
   .p-stepper .p-stepper-header.p-highlight .p-stepper-number {
     background: #f3c300;
-    color: #ffffff;
+    color: #172033;
   }
 }
 .fc {
@@ -9884,7 +9886,7 @@
   border: 1px solid #e5e7eb;
 }
 .fc.fc-unthemed .fc-toolbar .fc-button {
-  color: #ffffff;
+  color: #172033;
   background: #f3c300;
   border: 1px solid #f3c300;
   font-size: 1rem;
@@ -9943,7 +9945,7 @@
 .fc.fc-unthemed .fc-toolbar .fc-button.fc-dayGridMonth-button.fc-button-active, .fc.fc-unthemed .fc-toolbar .fc-button.fc-timeGridWeek-button.fc-button-active, .fc.fc-unthemed .fc-toolbar .fc-button.fc-timeGridDay-button.fc-button-active {
   background: #f3c300;
   border-color: #f3c300;
-  color: #ffffff;
+  color: #172033;
 }
 .fc.fc-unthemed .fc-toolbar .fc-button.fc-dayGridMonth-button.fc-button-active:hover, .fc.fc-unthemed .fc-toolbar .fc-button.fc-timeGridWeek-button.fc-button-active:hover, .fc.fc-unthemed .fc-toolbar .fc-button.fc-timeGridDay-button.fc-button-active:hover {
   background: #d97706;
@@ -10049,7 +10051,7 @@
   background: #f9fafb;
 }
 .fc.fc-theme-standard .fc-toolbar .fc-button {
-  color: #ffffff;
+  color: #172033;
   background: #f3c300;
   border: 1px solid #f3c300;
   font-size: 1rem;
@@ -10073,7 +10075,7 @@
 }
 .fc.fc-theme-standard .fc-toolbar .fc-button:disabled {
   opacity: 0.6;
-  color: #ffffff;
+  color: #172033;
   background: #f3c300;
   border: 1px solid #f3c300;
 }
@@ -10112,7 +10114,7 @@
 .fc.fc-theme-standard .fc-toolbar .fc-button.fc-dayGridMonth-button.fc-button-active, .fc.fc-theme-standard .fc-toolbar .fc-button.fc-timeGridWeek-button.fc-button-active, .fc.fc-theme-standard .fc-toolbar .fc-button.fc-timeGridDay-button.fc-button-active {
   background: #f3c300;
   border-color: #f3c300;
-  color: #ffffff;
+  color: #172033;
 }
 .fc.fc-theme-standard .fc-toolbar .fc-button.fc-dayGridMonth-button.fc-button-active:hover, .fc.fc-theme-standard .fc-toolbar .fc-button.fc-timeGridWeek-button.fc-button-active:hover, .fc.fc-theme-standard .fc-toolbar .fc-button.fc-timeGridDay-button.fc-button-active:hover {
   background: #d97706;
@@ -10142,3 +10144,12 @@
 }
 
 /*# sourceMappingURL=theme.css.map */
+
+/* Thème clair lisible : le jaune HEdS reste la couleur des fonds ; employé comme
+   texte (classe utilitaire, liens), il devient or foncé. */
+.text-primary {
+  color: var(--primary-text-color) !important;
+}
+a:not(.p-button):not([class*="m-"]) {
+  color: var(--primary-text-color);
+}

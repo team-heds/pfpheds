@@ -401,7 +401,7 @@ onMounted(async () => {
 }
 
 .stat i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .module-progress {

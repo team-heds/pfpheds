@@ -1582,7 +1582,7 @@ async function exportMyCoursesExcel() {
 
 .module-icon i {
   font-size: 1.25rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .module-info {
@@ -1770,7 +1770,7 @@ async function exportMyCoursesExcel() {
 .hour-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .hour-label {
@@ -1918,7 +1918,7 @@ async function exportMyCoursesExcel() {
 .course-time-badge {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-bottom: 0.25rem;
 }
 

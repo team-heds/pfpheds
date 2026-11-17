@@ -254,7 +254,7 @@ function getStatusSeverity(status) {
 
 .course-code {
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .course-info {

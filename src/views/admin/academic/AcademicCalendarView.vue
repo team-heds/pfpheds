@@ -439,7 +439,7 @@ onMounted(async () => {
 }
 
 .title-section h1 i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .subtitle {

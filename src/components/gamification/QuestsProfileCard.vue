@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
 .quests-profile-card { margin-top: 1.5rem; padding: 1.25rem; border-radius: 16px; color: var(--text-color); background: var(--surface-card); }
 .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
 .card-header h3 { display: flex; align-items: center; gap: .55rem; margin: 0; font-size: 1.1rem; line-height: 1.35; }
-.card-header h3 i { color: var(--primary-color); }
+.card-header h3 i { color: var(--primary-text-color, var(--primary-color)); }
 .card-header p, .widget-state p { margin: .4rem 0 0; color: var(--text-color-secondary); line-height: 1.5; }
 .count-badge { display: grid; min-width: 28px; min-height: 28px; padding: .2rem .4rem; place-items: center; border-radius: 8px; color: var(--house-foreground); background: var(--house-color); font-size: .875rem; font-weight: 700; }
 .quests-list { margin: 0; padding: 0; list-style: none; }
@@ -185,9 +185,9 @@ button.quest-item:hover { background: var(--surface-hover); }
 .progress-fill { display: block; width: 100%; height: 100%; border-radius: inherit; background: var(--house-color); transform-origin: left; transition: transform 300ms ease-out; }
 .progress-text { flex: 0 0 auto; min-width: 3rem; color: var(--text-color-secondary); font-size: .875rem; text-align: right; }
 .quest-status { display: block; margin-top: .25rem; }
-.quest-reward { box-sizing: border-box; display: flex; flex: 0 0 auto; align-items: center; gap: .6rem; color: var(--primary-color); font-size: .875rem; font-weight: 700; white-space: nowrap; }
+.quest-reward { box-sizing: border-box; display: flex; flex: 0 0 auto; align-items: center; gap: .6rem; color: var(--primary-text-color, var(--primary-color)); font-size: .875rem; font-weight: 700; white-space: nowrap; }
 .quest-reward i { color: var(--text-color-secondary); }
-.journal-link, .retry-button { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; min-height: 44px; padding: .65rem 0; border: 0; border-radius: 8px; color: var(--primary-color); background: transparent; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.journal-link, .retry-button { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; min-height: 44px; padding: .65rem 0; border: 0; border-radius: 8px; color: var(--primary-text-color, var(--primary-color)); background: transparent; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
 .journal-link { margin-top: .5rem; }
 .retry-button { padding-inline: .75rem; }
 button:focus-visible { outline: 3px solid var(--primary-color); outline-offset: 3px; }

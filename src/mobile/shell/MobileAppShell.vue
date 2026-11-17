@@ -74,6 +74,7 @@ import { OVERLAYS, canRestoreOverlay } from '@/mobile/shell/overlayRegistry'
 import { buildTabs, pageKey } from '@/mobile/shell/tabs'
 import { useKeyboardInset } from '@/mobile/shell/useKeyboardInset'
 import { useEdgeSwipeBack } from '@/mobile/shell/useEdgeSwipeBack'
+import { currentScheme } from '@/theme/themeService'
 import { useDialogsAsSheets } from '@/mobile/shell/useDialogsAsSheets'
 import '@/mobile/shell/mobileDialogs.css'
 import '@/mobile/shell/mobileToasts.css'
@@ -285,12 +286,10 @@ function onHeaderAction(key) {
 }
 
 // --- Thème -----------------------------------------------------------------
-// Le thème clair est une feuille de style activée à la demande : on regarde
-// laquelle est en service pour ajuster les couleurs d'accent du texte.
+// Thème affiché (service unique) : ajuste les couleurs d'accent du texte.
 const lightTheme = ref(false)
 const detectTheme = () => {
-  const light = document.querySelector('link[data-theme-link="heds"][data-theme-scheme="light"]')
-  lightTheme.value = Boolean(light && !light.disabled && light.media !== 'not all')
+  lightTheme.value = currentScheme() === 'light'
 }
 watch(() => route.fullPath, detectTheme)
 window.addEventListener('heds:theme-change', detectTheme)

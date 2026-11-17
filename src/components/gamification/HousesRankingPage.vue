@@ -780,12 +780,12 @@ onUnmounted(() => { loadGeneration += 1 })
   border: 1px solid var(--surface-border);
   border-radius: 16px;
 }
-.ranking-refresh-error > i { color: var(--primary-color); font-size: 1.5rem; }
+.ranking-refresh-error > i { color: var(--primary-text-color, var(--primary-color)); font-size: 1.5rem; }
 .ranking-refresh-error > div { flex: 1 1 16rem; min-width: 0; }
 .ranking-refresh-error h2 { margin: 0 0 .4rem; color: var(--text-color); font-size: 1.15rem; }
 .ranking-refresh-error p { margin: 0; line-height: 1.5; color: var(--text-color-secondary); }
 .ranking-empty { padding: 3rem 1.5rem; text-align: center; color: var(--text-color); }
-.ranking-empty > i { font-size: 2rem; color: var(--primary-color); }
+.ranking-empty > i { font-size: 2rem; color: var(--primary-text-color, var(--primary-color)); }
 .ranking-empty h2 { margin: 1rem 0 .75rem; font-size: 1.5rem; }
 .ranking-empty p { margin: 0 auto 1.5rem; max-width: 36rem; color: var(--text-color-secondary); line-height: 1.5; }
 

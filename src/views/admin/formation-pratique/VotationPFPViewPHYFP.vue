@@ -2511,7 +2511,7 @@ onMounted(() => {
 }
 
 :deep(.p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon) {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 /* ========== TABVIEW STYLING ========== */
@@ -2532,11 +2532,11 @@ onMounted(() => {
 }
 
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:hover) {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 :deep(.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   border-bottom: 3px solid var(--primary-color);
 }
 

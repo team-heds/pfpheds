@@ -695,7 +695,7 @@ function showTicketMenu(event, ticket) {
 }
 
 .ticket-description.markdown-content :deep(a) {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-decoration: none;
 }
 
@@ -714,7 +714,7 @@ function showTicketMenu(event, ticket) {
 }
 
 .info-item i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 0.875rem;
   width: 16px;
   flex-shrink: 0;

@@ -760,7 +760,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--surface-border);
   border-radius: 16px;
 }
-.quest-load-error > i { color: var(--primary-color); font-size: 1.5rem; }
+.quest-load-error > i { color: var(--primary-text-color, var(--primary-color)); font-size: 1.5rem; }
 .quest-load-error > div { flex: 1 1 16rem; min-width: 0; }
 .quest-load-error h2 { margin: 0 0 .5rem; font-size: 1.25rem; color: var(--text-color); }
 .quest-load-error p { margin: 0; color: var(--text-color-secondary); line-height: 1.5; }

@@ -158,7 +158,7 @@ onBeforeUnmount(() => clearTimeout(debounceTimer))
 .mobile-search__result { display: flex; align-items: center; gap: .85rem; min-height: 4rem; padding: .65rem .9rem; color: var(--text-color); -webkit-tap-highlight-color: transparent; }
 .mobile-search__result:active { background: var(--surface-hover); }
 .mobile-search__result:focus-visible { outline: 3px solid var(--primary-color); outline-offset: -3px; }
-.mobile-search__icon { display: inline-flex; flex: 0 0 2.5rem; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; overflow: hidden; border-radius: .75rem; color: var(--primary-color); background: color-mix(in srgb, var(--primary-color) 12%, var(--surface-card)); }
+.mobile-search__icon { display: inline-flex; flex: 0 0 2.5rem; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; overflow: hidden; border-radius: .75rem; color: var(--primary-text-color, var(--primary-color)); background: color-mix(in srgb, var(--primary-color) 12%, var(--surface-card)); }
 .mobile-search__icon img { width: 100%; height: 100%; object-fit: cover; }
 .mobile-search__copy { display: flex; flex: 1 1 auto; flex-direction: column; gap: .15rem; min-width: 0; }
 .mobile-search__name { font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }

@@ -326,7 +326,7 @@ export default {
 
 .drop-zone .pi {
   font-size: 2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .drop-zone.is-dragging,

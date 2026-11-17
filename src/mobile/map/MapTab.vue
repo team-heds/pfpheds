@@ -131,6 +131,7 @@
 </template>
 
 <script setup>
+import { currentScheme } from '@/theme/themeService'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
@@ -375,8 +376,7 @@ function onDragEnd() {
 
 // --- Thème -----------------------------------------------------------------
 const detectTheme = () => {
-  const light = document.querySelector('link[data-theme-link="heds"][data-theme-scheme="light"]')
-  lightTiles.value = Boolean(light && !light.disabled && light.media !== 'not all')
+  lightTiles.value = currentScheme() === 'light'
 }
 
 // --- Chargement --------------------------------------------------------------

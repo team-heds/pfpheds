@@ -55,7 +55,7 @@ onBeforeUnmount(() => watcher?.stop())
   font-size: 0.95rem;
   line-height: 1.35;
 }
-.pwa-update__icon { color: var(--primary-color); font-size: 1.15rem; }
+.pwa-update__icon { color: var(--primary-text-color, var(--primary-color)); font-size: 1.15rem; }
 .pwa-update__apply {
   min-height: 2.75rem;
   padding: 0.5rem 1rem;

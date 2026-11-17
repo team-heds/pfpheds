@@ -374,7 +374,7 @@ onUnmounted(() => {
   font-size: 1rem;
   font-weight: bold;
   margin: 0;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   animation: slide-in-right 0.4s ease-out;
 }
 

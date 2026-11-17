@@ -55,7 +55,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'primevue/usetoast';
-import { useLayout } from '@/layout/composables/layout';
+import { useTheme } from '@/theme/useTheme';
 import { useAuthStore } from '@/stores/authStore';
 import { useRoleStore } from '@/stores/role';
 import { useRateLimit } from '@/composables/useRateLimit';
@@ -72,8 +72,7 @@ const rememberMe = ref(false);
 const isSubmitting = ref(false);
 const loginLimiter = useRateLimit({ maxAttempts: 5, lockoutDuration: 60_000 });
 const resetLimiter = useRateLimit({ maxAttempts: 3, lockoutDuration: 120_000 });
-const { layoutConfig } = useLayout();
-const darkMode = ref(layoutConfig.colorScheme.value !== 'light');
+const { isDark: darkMode } = useTheme();
 
 
 const submitForm = async () => {

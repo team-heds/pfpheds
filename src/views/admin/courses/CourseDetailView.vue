@@ -474,7 +474,7 @@ function duplicateCourse() {
 
 .schedule-block i {
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .schedule-details {
@@ -514,7 +514,7 @@ function duplicateCourse() {
 .stat-number {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .stat-label {
@@ -584,7 +584,7 @@ function duplicateCourse() {
 
 .resource-item i {
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .resource-info {
@@ -606,7 +606,7 @@ function duplicateCourse() {
 
 .attendance-stat {
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .actions-card {
