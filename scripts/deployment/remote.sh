@@ -6,6 +6,20 @@ backend=/opt/pfpheds-backend
 stack=/opt/supabase
 caddy=supabase-caddy-1
 [[ "$mode" == check || "$mode" == deploy ]]
+
+# Ne garder que les sauvegardes les plus récentes : chacune pèse environ 500 Mo
+# sur un disque de 20 Go, et le déploiement refuse de démarrer sous 4 Go libres.
+releases=/opt/pfpheds-releases
+keep_releases=4
+prune_releases() {
+  local dir="$1" keep="$2" old
+  old=$(sudo ls -1dt "$dir"/pfpheds-deploy-* 2>/dev/null | tail -n +"$((keep + 1))" || true)
+  [[ -n "$old" ]] || return 0
+  while IFS= read -r path; do
+    [[ "$(basename "$path")" =~ ^pfpheds-deploy-[a-zA-Z0-9]+$ ]] && sudo rm -rf -- "$path"
+  done <<< "$old"
+  echo "Anciennes sauvegardes retirées : $(wc -l <<< "$old" | tr -d ' ') (les $keep plus récentes sont gardées)."
+}
 [[ "$(hostname)" == ov-7a3a52 ]] || { echo 'VPS inattendu'; exit 1; }
 sudo -n true
 test -d "$app"
@@ -19,6 +33,12 @@ else
 fi
 "${compose[@]}" version >/dev/null
 sudo docker inspect -f '{{.State.Running}}' "$caddy" | grep -qx true
+# Déploiement : faire de la place avant de vérifier l'espace. On garde les
+# sauvegardes les plus récentes moins une ; celle de ce déploiement complète le
+# compte. La vérification seule (--check) n'écrit rien sur le serveur.
+if [[ "$mode" == deploy ]]; then
+  prune_releases "$releases" "$((keep_releases - 1))"
+fi
 # Refuse before any write when fewer than 4 GiB remain for builds/backups.
 available=$(df -Pk /opt /var/www /tmp | awk 'NR>1 {if(min==0 || $4<min) min=$4} END {print min}')
 [[ "$available" -ge 4194304 ]] || { echo 'Espace libre insuffisant (< 4 GiB).'; exit 1; }
@@ -32,7 +52,7 @@ test -f "$source_dir/backend.tar.gz"
 # Serialize deployments; the kernel releases the lock even on failure.
 exec 9>/tmp/pfpheds-deploy.lock
 flock -n 9 || { echo 'Un déploiement est déjà en cours.'; exit 1; }
-backup="/opt/pfpheds-releases/$release"
+backup="$releases/$release"
 sudo mkdir -p "$backup"
 sudo chmod 700 "$backup"
 sudo cp -a "$app" "$backup/frontend"
@@ -70,4 +90,6 @@ fi
 sudo docker exec "$caddy" caddy reload --config /etc/caddy/Caddyfile
 sudo docker ps --format 'table {{.Names}}\t{{.Status}}'
 sudo rm -rf "$source_dir"
+# Seulement après une publication réussie : un échec garde toutes les sauvegardes.
+prune_releases "$releases" "$keep_releases"
 echo "Publication effectuée. Sauvegarde : $backup"
