@@ -33,6 +33,12 @@ else
 fi
 "${compose[@]}" version >/dev/null
 sudo docker inspect -f '{{.State.Running}}' "$caddy" | grep -qx true
+# Déploiement : faire de la place avant de vérifier l'espace. On garde les
+# sauvegardes les plus récentes moins une ; celle de ce déploiement complète le
+# compte. La vérification seule (--check) n'écrit rien sur le serveur.
+if [[ "$mode" == deploy ]]; then
+  prune_releases "$releases" "$((keep_releases - 1))"
+fi
 # Refuse before any write when fewer than 4 GiB remain for builds/backups.
 available=$(df -Pk /opt /var/www /tmp | awk 'NR>1 {if(min==0 || $4<min) min=$4} END {print min}')
 [[ "$available" -ge 4194304 ]] || { echo 'Espace libre insuffisant (< 4 GiB).'; exit 1; }

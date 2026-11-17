@@ -40,6 +40,13 @@ describe('déploiement : sauvegardes gardées sur le serveur', () => {
     expect(fs.readdirSync(target).sort()).toEqual(['autre-dossier', 'pfpheds-deploy-a1', 'pfpheds-deploy-b2'])
   })
 
+  it('au déploiement, la place est faite avant la vérification d’espace (jamais en simple vérification)', () => {
+    const early = script.indexOf('prune_releases "$releases" "$((keep_releases - 1))"')
+    expect(early).toBeGreaterThan(0)
+    expect(early).toBeLessThan(script.indexOf('Espace libre insuffisant'))
+    expect(script.slice(script.lastIndexOf('\n', early - 40), early)).toMatch(/if \[\[ "\$mode" == deploy \]\]; then/)
+  })
+
   it('le script réglé à 4, et le ménage seulement après une publication réussie', () => {
     expect(script).toMatch(/^keep_releases=4$/m)
     const prunedAt = script.indexOf('prune_releases "$releases" "$keep_releases"')
