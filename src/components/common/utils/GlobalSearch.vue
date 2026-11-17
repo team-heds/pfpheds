@@ -549,7 +549,7 @@ onUnmounted(() => {
   padding: 0;
   border: 0;
   border-radius: 32%;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   background: var(--surface-overlay);
   box-shadow: none;
   display: inline-flex;
@@ -691,7 +691,7 @@ onUnmounted(() => {
   margin-bottom: 0.5rem;
   font-size: 13px;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid var(--surface-border);
@@ -859,7 +859,7 @@ onUnmounted(() => {
 .result-item:hover .result-arrow,
 .result-item-selected .result-arrow {
   transform: translateX(4px);
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 /* === AUCUN RESULTAT === */

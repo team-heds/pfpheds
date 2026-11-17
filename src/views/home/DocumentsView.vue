@@ -426,7 +426,7 @@ const saveNewFile = async (newFile) => {
   margin: 0 auto;
   padding: 2rem 1.5rem 8rem;
 }
-.documents-breadcrumb{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;color:var(--text-color-secondary)}.documents-breadcrumb a{color:var(--primary-color);text-decoration:none}.folder-header-row{width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left}.folder-header-row:focus-visible{outline:3px solid var(--primary-color);outline-offset:-3px}
+.documents-breadcrumb{display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;color:var(--text-color-secondary)}.documents-breadcrumb a{color: var(--primary-text-color, var(--primary-color));text-decoration:none}.folder-header-row{width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left}.folder-header-row:focus-visible{outline:3px solid var(--primary-color);outline-offset:-3px}
 .documents-selection-bar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem;padding:.75rem 1rem;border:1px solid var(--surface-border);border-radius:.75rem;background:var(--surface-card)}.documents-selection-bar div{display:flex;gap:.5rem}.documents-selection-bar button{min-height:2.5rem;padding:.5rem .75rem;border:1px solid var(--surface-border);border-radius:.5rem;background:var(--surface-ground);color:var(--text-color);font:inherit;cursor:pointer}@media(max-width:640px){.documents-selection-bar{align-items:stretch;flex-direction:column}.documents-selection-bar div{flex-direction:column}}
 
 /* Header Section */

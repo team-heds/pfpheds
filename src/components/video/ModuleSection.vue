@@ -155,7 +155,7 @@ function toggleExpanded() {
 }
 
 .module-title-row h2 i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 1.25rem;
 }
 
@@ -189,7 +189,7 @@ function toggleExpanded() {
 }
 
 .stat-item i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .module-content {

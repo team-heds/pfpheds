@@ -395,11 +395,11 @@ function disconnect() {
 }
 
 .help-text .pi {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .link {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-decoration: none;
 }
 
@@ -424,7 +424,7 @@ function disconnect() {
   border-radius: 5px;
   font-family: 'Monaco', 'Menlo', monospace;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .field {
@@ -508,6 +508,6 @@ function disconnect() {
   font-family: 'Monaco', 'Menlo', monospace;
   font-size: 0.813rem;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 </style>

@@ -1081,7 +1081,7 @@ function openWorkloadDiagnostics() {
 
 .shortcut-card:hover .shortcut-arrow {
   opacity: 1;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 /* ====== CALENDAR GRID ====== */
@@ -1170,7 +1170,7 @@ function openWorkloadDiagnostics() {
 .calendar-slot-time {
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-bottom: 0.15rem;
 }
 
@@ -1238,7 +1238,7 @@ function openWorkloadDiagnostics() {
 .module-number {
   font-weight: 700;
   font-size: 0.85rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .module-title {

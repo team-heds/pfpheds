@@ -1118,7 +1118,7 @@ onMounted(() => {
 .module-number {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   background: var(--primary-50);
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;

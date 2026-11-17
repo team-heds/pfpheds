@@ -632,7 +632,7 @@ onMounted(() => {
 
 .header-title i {
   font-size: 3rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .header-title h1 {

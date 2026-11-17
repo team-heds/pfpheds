@@ -1067,7 +1067,7 @@ function handleAvatarError(event) {
 }
 
 .markdown-rendered :deep(a) {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-decoration: underline;
 }
 

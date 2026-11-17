@@ -328,7 +328,7 @@ defineExpose({ submit, reset, canSubmit, publishing })
 }
 
 .composer-add-media .pi {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .composer-add-media:hover {

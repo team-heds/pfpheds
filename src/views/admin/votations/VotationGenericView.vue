@@ -2533,7 +2533,7 @@ export default {
   margin-bottom: 1rem;
   border-radius: 50%;
   background: color-mix(in srgb, var(--primary-color) 14%, transparent);
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 1.8rem;
 }
 
@@ -2639,7 +2639,7 @@ export default {
 
 .header-icon {
   font-size: 3rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   background: rgba(99, 102, 241, 0.1);
   padding: 1rem;
   border-radius: 12px;
@@ -2668,7 +2668,7 @@ export default {
 
 .back-button:hover {
   border-color: var(--primary-color);
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   background: rgba(99, 102, 241, 0.1);
 }
 
@@ -2788,7 +2788,7 @@ export default {
 
 /* Styles pour les liens et contenus */
 .institution-link {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -2797,7 +2797,7 @@ export default {
 }
 
 .institution-link:hover {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-decoration: underline;
 }
 
@@ -2876,7 +2876,7 @@ export default {
 
 .recap-header i {
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .recap-header h3 {
@@ -2914,7 +2914,7 @@ export default {
 .recap-institution {
   display: flex;
   align-items: center;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-weight: 500;
 }
 
@@ -2953,7 +2953,7 @@ export default {
 }
 
 .vote-info i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 1.25rem;
 }
 

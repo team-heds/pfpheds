@@ -53,7 +53,7 @@
 
           <Column field="number" header="N° Module" sortable style="width: 120px">
             <template #body="{ data }">
-              <span class="font-bold" style="color: var(--primary-color)">{{ data.number || '—' }}</span>
+              <span class="font-bold" style="color: var(--primary-text-color, var(--primary-color))">{{ data.number || '—' }}</span>
             </template>
           </Column>
 
@@ -79,7 +79,7 @@
           <Column field="responsable" header="Chef de module" sortable>
             <template #body="{ data }">
               <div v-if="data.responsable" class="flex align-items-center gap-2">
-                <i class="pi pi-user" style="color: var(--primary-color)"></i>
+                <i class="pi pi-user" style="color: var(--primary-text-color, var(--primary-color))"></i>
                 <span>{{ data.responsable }}</span>
               </div>
               <span v-else class="text-500">—</span>

@@ -382,7 +382,7 @@ const getInstagramEmbedUrl = (url) => {
 
 .media-link {
   word-break: break-all;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-decoration: underline;
 }
 
@@ -409,7 +409,7 @@ const getInstagramEmbedUrl = (url) => {
 .action-button:focus-visible{outline:3px solid var(--primary-color);outline-offset:2px;border-radius:.5rem}
 
 .action-button:hover {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .action-icon {

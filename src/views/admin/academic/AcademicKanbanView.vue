@@ -622,7 +622,7 @@ onMounted(async () => {
 .stat-value {
   font-size: 2.5rem;
   font-weight: bold;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .stat-item {

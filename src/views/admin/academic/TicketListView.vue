@@ -712,7 +712,7 @@ onMounted(async () => {
 }
 
 .type-icon {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 1rem;
 }
 

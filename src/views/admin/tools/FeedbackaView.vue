@@ -347,7 +347,7 @@ function goCreate() {
 
 .rating-value {
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   min-width: 50px;
 }
 
@@ -359,7 +359,7 @@ function goCreate() {
 .metric-value {
   font-size: 4rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .metric-label {

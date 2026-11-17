@@ -966,7 +966,7 @@ onMounted(async () => {
 
 .stat-card i {
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .stat-value {
@@ -1037,7 +1037,7 @@ onMounted(async () => {
 }
 
 .teacher-name-cell:hover strong {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-decoration: underline;
 }
 

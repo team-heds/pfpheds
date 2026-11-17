@@ -119,7 +119,7 @@ import PageHeader from '@/components/admin/common/PageHeader.vue';
 
 .permission-card h3 {
   margin-bottom: 1.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   border-bottom: 2px solid var(--surface-border);
   padding-bottom: 0.5rem;
 }

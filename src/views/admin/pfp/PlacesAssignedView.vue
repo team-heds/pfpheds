@@ -1191,12 +1191,12 @@ onMounted(async () => {
 }
 
 .pfp-tab:hover {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   background: var(--surface-hover);
 }
 
 .pfp-tab-active {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   border-bottom-color: var(--primary-color);
   font-weight: 700;
 }
