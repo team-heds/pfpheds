@@ -57,6 +57,6 @@ export default {
   text-align: center;
   padding: 20px;
   font-size: 16px;
-  color: #f3c300;
+  color: var(--primary-text-color, #f3c300);
 }
 </style>

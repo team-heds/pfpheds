@@ -252,7 +252,7 @@ const formatDate = (date) => {
 }
 
 .detail__facts .pi-star-fill {
-  color: #f3c300;
+  color: var(--primary-text-color, #f3c300);
 }
 
 .detail__hint,
