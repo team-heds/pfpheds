@@ -547,7 +547,7 @@ onMounted(async () => {
 
 .offre-empty {
   background: #F1F5F9;
-  color: #94A3B8;
+  color: var(--text-color-secondary, #94A3B8);
 }
 
 .prop-has-value {
@@ -557,7 +557,7 @@ onMounted(async () => {
 
 .prop-empty {
   background: #F1F5F9;
-  color: #94A3B8;
+  color: var(--text-color-secondary, #94A3B8);
 }
 
 /* Analysis badges */

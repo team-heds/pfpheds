@@ -679,11 +679,11 @@ onMounted(async () => {
 }
 
 .stage-text {
-  color: #e2e8f0;
+  color: var(--text-color, #e2e8f0);
 }
 
 .stage-text-muted {
-  color: #94a3b8;
+  color: var(--text-color-secondary, #94a3b8);
   font-style: italic;
 }
 

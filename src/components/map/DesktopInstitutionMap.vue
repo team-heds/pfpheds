@@ -704,7 +704,7 @@ onBeforeUnmount(() => {
   height: 26px;
   border: 2.5px solid var(--imap-brand);
   border-radius: 50%;
-  background: #071426;
+  background: var(--surface-card, #071426);
   color: var(--imap-brand);
   font-size: 0.75rem;
   box-shadow: 0 3px 10px rgb(0 0 0 / 0.35);
@@ -728,7 +728,7 @@ onBeforeUnmount(() => {
 }
 .imap__canvas :deep(.imap-pin.is-selected .imap-pin__dot) {
   background: var(--imap-brand);
-  border-color: #071426;
+  border-color: var(--surface-card, #071426);
   color: var(--imap-on-brand);
   transform: scale(1.35);
   box-shadow: 0 0 0 8px rgb(243 195 0 / 0.25), 0 6px 16px rgb(0 0 0 / 0.35);

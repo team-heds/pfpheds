@@ -980,7 +980,7 @@ watch(() => props.visible, async (newVal) => {
 :deep(.institution-dropdown-panel .p-dropdown-filter) {
   background: rgba(255,255,255,0.08) !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
-  color: #f8fafc !important;
+  color: var(--text-color, #f8fafc) !important;
   padding: 0.75rem 1rem;
 }
 
@@ -1062,7 +1062,7 @@ watch(() => props.visible, async (newVal) => {
 .institution-dropdown-panel .p-dropdown-filter {
   background: rgba(255,255,255,0.08) !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
-  color: #f8fafc !important;
+  color: var(--text-color, #f8fafc) !important;
   padding: 0.75rem 1rem !important;
   width: 100% !important;
 }
@@ -1125,7 +1125,7 @@ watch(() => props.visible, async (newVal) => {
 .praticiens-dropdown-panel .p-multiselect-filter {
   background: rgba(255,255,255,0.08) !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
-  color: #f8fafc !important;
+  color: var(--text-color, #f8fafc) !important;
   padding: 0.75rem 1rem !important;
   width: 100% !important;
 }
