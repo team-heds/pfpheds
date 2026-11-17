@@ -342,7 +342,7 @@ export default {
 .place-card-button:focus-visible { outline:3px solid var(--primary-color); outline-offset:3px; }
 .active-filter-row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
 .active-filter-chip { padding:.25rem .625rem; border-radius:999px; background:var(--surface-card); color:var(--text-color); font-size:.85rem; }
-.clear-filter-button { min-height:2rem; border:0; background:transparent; color:var(--primary-color); font:inherit; cursor:pointer; }
+.clear-filter-button { min-height:2rem; border:0; background:transparent; color: var(--primary-text-color, var(--primary-color)); font:inherit; cursor:pointer; }
 .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
 .img-cards{
   width: 100%;

@@ -722,7 +722,7 @@ onBeforeUnmount(() => {
 
 .duel-note i {
   margin-top: 0.2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .duel-score {
@@ -831,7 +831,7 @@ onBeforeUnmount(() => {
 }
 
 .duel-mode__btn i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 1.15rem;
 }
 
@@ -994,7 +994,7 @@ onBeforeUnmount(() => {
 }
 
 .duel-xp {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 0.85rem;
   font-weight: 700;
   white-space: nowrap;

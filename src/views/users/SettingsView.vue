@@ -499,7 +499,7 @@
     box-shadow: 0 10px 30px rgba(0,0,0,.18);
   }
   .settings-savebar > span { display:flex; align-items:center; gap:.5rem; color:var(--text-color); font-weight:600; }
-  .settings-savebar > span i { color:var(--primary-color); font-size:.55rem; }
+  .settings-savebar > span i { color: var(--primary-text-color, var(--primary-color)); font-size:.55rem; }
   .settings-savebar > div { display:flex; gap:.75rem; flex-wrap:wrap; }
   .savebar-button { min-height:44px; padding:.625rem 1rem; border:0; border-radius:.75rem; background:var(--primary-color); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
   .savebar-button--secondary { border:1px solid var(--surface-border); background:transparent; color:var(--text-color); }

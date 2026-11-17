@@ -1441,7 +1441,7 @@ function getRoundName(roundNum, totalRounds) {
 .minibracket-title {
   font-size: 1.8rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .minibracket-results {
@@ -1460,7 +1460,7 @@ function getRoundName(roundNum, totalRounds) {
 .qualifies-summary h3 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-bottom: 1.5rem;
   text-align: center;
 }
@@ -1482,7 +1482,7 @@ function getRoundName(roundNum, totalRounds) {
 .qualifie-card h4 {
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-bottom: 1rem;
   text-align: center;
 }
@@ -1519,7 +1519,7 @@ function getRoundName(roundNum, totalRounds) {
 .total-qualifies {
   text-align: center;
   font-size: 1.2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   padding: 1rem;
   background: rgba(102, 126, 234, 0.1);
   border-radius: 8px;
@@ -1537,7 +1537,7 @@ function getRoundName(roundNum, totalRounds) {
   font-size: 1.8rem;
   font-weight: 700;
   margin-bottom: 2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-align: center;
 }
 
@@ -1714,7 +1714,7 @@ function getRoundName(roundNum, totalRounds) {
 
 .equipe-header i {
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .equipe-name-input {
@@ -1846,7 +1846,7 @@ function getRoundName(roundNum, totalRounds) {
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .classement-table :deep(.p-datatable-tbody > tr:nth-child(1)) {

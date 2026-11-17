@@ -774,7 +774,7 @@ export default {
 }
 .quick-post-icon {
   font-size: 1rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 .quick-post-placeholder {
   color: #888;

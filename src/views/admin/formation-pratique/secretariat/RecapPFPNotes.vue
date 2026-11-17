@@ -816,7 +816,7 @@ watch(filterYear, () => {
 }
 
 .expand-toggle:hover {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   border-color: var(--primary-color);
 }
 

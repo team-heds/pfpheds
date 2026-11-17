@@ -174,7 +174,7 @@ export default {
 }
 
 .banner-header i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 1.2rem;
 }
 

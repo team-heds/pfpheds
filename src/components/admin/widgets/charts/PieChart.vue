@@ -6,7 +6,8 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { useTheme } from '@/theme/useTheme'
+import { computed } from 'vue'
 import { Pie } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -40,30 +41,9 @@ const props = defineProps({
   accessibleLabel: String
 })
 
-// Détection réactive du thème
-const resolvedTextColor = ref('rgba(255, 255, 255, 0.87)')
-const wrapperRef = ref(null)
-
-function detectTextColor() {
-  const themeLink = document.getElementById('theme-link')
-  if (themeLink) {
-    const href = themeLink.getAttribute('href') || ''
-    if (href.includes('theme-light')) return '#4b5563'
-    if (href.includes('theme-dim') || href.includes('theme-dark')) return 'rgba(255, 255, 255, 0.87)'
-  }
-  const cs = getComputedStyle(document.documentElement).colorScheme
-  if (cs && cs.includes('dark')) return 'rgba(255, 255, 255, 0.87)'
-  return '#4b5563'
-}
-
-onMounted(() => {
-  resolvedTextColor.value = detectTextColor()
-  const themeLink = document.getElementById('theme-link')
-  if (themeLink) {
-    const obs = new MutationObserver(() => { resolvedTextColor.value = detectTextColor() })
-    obs.observe(themeLink, { attributes: true, attributeFilter: ['href'] })
-  }
-})
+// Couleur du texte selon le thème de la plateforme (service unique).
+const { isDark } = useTheme()
+const resolvedTextColor = computed(() => (isDark.value ? 'rgba(255, 255, 255, 0.87)' : '#4b5563'))
 
 const chartData = computed(() => {
   if (!props.data || props.data.length === 0) return null

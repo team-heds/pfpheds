@@ -94,7 +94,8 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useTheme } from '@/theme/useTheme'
+import { computed } from 'vue'
 import Skeleton from 'primevue/skeleton'
 import MiniChart from './MiniChart.vue'
 import ChartSelector from './ChartSelector.vue'
@@ -193,41 +194,8 @@ const normalizedChartData = computed(() => {
   }))
 })
 
-// Variable réactive pour suivre les changements de thème
-const isDarkMode = ref(false)
-
-// Détecter le thème au montage
-onMounted(() => {
-  const updateTheme = () => {
-    // Vérifier via le theme-link href (méthode HEdS)
-    const themeLink = document.getElementById('theme-link')
-    if (themeLink) {
-      const href = themeLink.getAttribute('href') || ''
-      if (href.includes('theme-dim') || href.includes('theme-dark')) { isDarkMode.value = true; return }
-      if (href.includes('theme-light')) { isDarkMode.value = false; return }
-    }
-    // Fallback: vérifier les classes
-    const root = document.documentElement
-    const body = document.body
-    isDarkMode.value = root.classList.contains('dark') || 
-                       root.classList.contains('p-dark') || 
-                       body.classList.contains('dark') || 
-                       body.classList.contains('p-dark')
-  }
-  
-  // Détecter le thème initial
-  updateTheme()
-  
-  // Observer les changements de classes ET du theme-link
-  const observer = new MutationObserver(updateTheme)
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] })
-  const themeLink = document.getElementById('theme-link')
-  if (themeLink) observer.observe(themeLink, { attributes: true, attributeFilter: ['href'] })
-  
-  // Nettoyer l'observer
-  onUnmounted(() => observer.disconnect())
-})
+// Thème de la plateforme (service unique).
+const { isDark: isDarkMode } = useTheme()
 
 const themeTextColor = computed(() => {
   // Forcer la mise à jour en fonction du mode sombre

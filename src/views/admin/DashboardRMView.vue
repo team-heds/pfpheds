@@ -1876,7 +1876,7 @@ function generateAlerts() {
 
 .card-section__header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; }
 .card-section__title { display: flex; align-items: center; gap: 0.5rem; }
-.card-section__title i { font-size: 1.1rem; color: var(--primary-color); }
+.card-section__title i { font-size: 1.1rem; color: var(--primary-text-color, var(--primary-color)); }
 .card-section__title h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-color); }
 .card-section__toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 
@@ -1936,7 +1936,7 @@ function generateAlerts() {
 }
 .cal-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); transform: translateY(-1px); }
 
-.cal-card__time { font-size: 0.7rem; font-weight: 700; color: var(--primary-color); margin-bottom: 2px; }
+.cal-card__time { font-size: 0.7rem; font-weight: 700; color: var(--primary-text-color, var(--primary-color)); margin-bottom: 2px; }
 .cal-card__module { font-size: 0.8rem; font-weight: 700; color: var(--text-color); line-height: 1.2; }
 .cal-card__course { font-size: 0.72rem; color: var(--text-color-secondary); line-height: 1.2; margin-top: 1px; }
 .cal-card__activity { font-size: 0.68rem; color: var(--text-color-secondary); font-style: italic; }
@@ -2134,7 +2134,7 @@ function generateAlerts() {
   display: flex; align-items: center; gap: 0.5rem;
   padding-bottom: 0.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--surface-border);
 }
-.responsable-card__header i { color: var(--primary-color); }
+.responsable-card__header i { color: var(--primary-text-color, var(--primary-color)); }
 .responsable-card__header strong { font-size: 0.9rem; }
 
 .responsable-card__modules { display: flex; flex-direction: column; gap: 0.35rem; }
@@ -2145,7 +2145,7 @@ function generateAlerts() {
   background: var(--surface-card); transition: transform 0.15s;
 }
 .mini-module:hover { transform: translateX(3px); }
-.mini-module__num { font-weight: 800; color: var(--primary-color); font-size: 0.85rem; min-width: 28px; }
+.mini-module__num { font-weight: 800; color: var(--primary-text-color, var(--primary-color)); font-size: 0.85rem; min-width: 28px; }
 .mini-module__title { font-size: 0.82rem; color: var(--text-color); }
 
 /* ═══ PLANNING CIRCLES ═══ */

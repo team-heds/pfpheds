@@ -90,7 +90,7 @@ function updateTournoi(updatedTournoi) {
 }
 
 .loading-state i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .error-state h3 {
