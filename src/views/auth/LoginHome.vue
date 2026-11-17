@@ -21,7 +21,7 @@
       <!-- Section gauche - Logo -->
       <div class="flex flex-column justify-content-center align-items-center w-full lg:w-6 text-white p-5">
         <img
-          src="/assets/images/FR-DE_HEdS_rvb_neg.png"
+          :src="isDark ? '/assets/images/FR-DE_HEdS_rvb_neg.png' : '/assets/images/FR-DE_HEdS.png'"
           alt="Logo"
           class="mb-3 h-8rem lg:h-15rem" />
       </div>
@@ -73,6 +73,7 @@ import Toast from 'primevue/toast'
 import AuthForm from '@/components/common/forms/AuthForm.vue'
 import MobileLoginScreen from '@/mobile/auth/MobileLoginScreen.vue'
 import { useMobileViewport } from '@/mobile/shell/useMobileViewport'
+import { useTheme } from '@/theme/useTheme'
 import gamificationIntegration from '@/service/gamificationIntegration'
 import { recordDailyVisit } from '@/utils/dailyVisit'
 import { gamificationFeatures } from '@/config/gamificationFeatures'
@@ -91,6 +92,8 @@ const toast = useToast()
 const authStore = useAuthStore()
 const roleStore = useRoleStore()
 const isPhone = useMobileViewport()
+// Logo blanc sur fond sombre, logo en couleur sur fond clair.
+const { isDark } = useTheme()
 // Téléphone : les messages s'affichent sous les champs, pas en bandeau flottant.
 const emailMessage = ref('')
 const passwordMessage = ref('')
