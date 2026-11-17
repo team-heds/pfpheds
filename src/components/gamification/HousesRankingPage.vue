@@ -412,7 +412,7 @@ onUnmounted(() => { loadGeneration += 1 })
 
 .page-header {
   padding: 2rem 1rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .header-content {
@@ -426,7 +426,7 @@ onUnmounted(() => { loadGeneration += 1 })
 .back-btn, .refresh-btn {
   background: var(--surface-card);
   border: none;
-  color: white;
+  color: var(--text-color, white);
   padding: 0.75rem;
   width: 44px;
   min-width: 44px;
@@ -498,7 +498,7 @@ onUnmounted(() => { loadGeneration += 1 })
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: white;
+  color: var(--text-color, white);
   font-size: 1rem;
 }
 
@@ -522,7 +522,7 @@ onUnmounted(() => { loadGeneration += 1 })
   display: block;
   font-size: 1.5rem;
   font-weight: bold;
-  color: white;
+  color: var(--text-color, white);
   margin-top: 0.5rem;
 }
 
@@ -594,7 +594,7 @@ onUnmounted(() => { loadGeneration += 1 })
 
 .level-name {
   font-size: 0.9rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .stats-grid {
@@ -611,12 +611,12 @@ onUnmounted(() => { loadGeneration += 1 })
 .stat strong {
   display: block;
   font-size: 1.2rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .stat span {
   font-size: 0.8rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .progress-section {
@@ -639,7 +639,7 @@ onUnmounted(() => { loadGeneration += 1 })
 
 .progress-text {
   font-size: 0.8rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .max-level {
@@ -658,7 +658,7 @@ onUnmounted(() => { loadGeneration += 1 })
 
 .full-ranking h2 {
   margin: 0 0 1.5rem 0;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .ranking-item {
@@ -700,7 +700,7 @@ onUnmounted(() => { loadGeneration += 1 })
 
 .house-level {
   font-size: 0.9rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .house-metrics {
@@ -715,16 +715,16 @@ onUnmounted(() => { loadGeneration += 1 })
 .metric .value {
   display: block;
   font-weight: bold;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .metric .label {
   font-size: 0.8rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .arrow {
-  color: white;
+  color: var(--text-color, white);
 }
 
 .loading {
@@ -733,7 +733,7 @@ onUnmounted(() => { loadGeneration += 1 })
   align-items: center;
   justify-content: center;
   min-height: 400px;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .loading i {

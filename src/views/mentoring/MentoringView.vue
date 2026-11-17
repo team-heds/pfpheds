@@ -858,7 +858,7 @@ onMounted(loadAll)
 
 .mentoring__rule i {
   margin-top: 0.2rem;
-  color: #f3c300;
+  color: var(--primary-text-color, #f3c300);
 }
 
 .mentoring__tabs :deep(.p-tabview-panels) {
@@ -1099,7 +1099,7 @@ onMounted(loadAll)
 
 .slot__phase--muted { color: var(--text-color-secondary); font-weight: 500; }
 .slot__phase--ok { color: var(--green-400, #4ade80); }
-.slot__phase--action { color: #f3c300; }
+.slot__phase--action { color: var(--primary-text-color, #f3c300); }
 
 .slot__actions {
   display: flex;
