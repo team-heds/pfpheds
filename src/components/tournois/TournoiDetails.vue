@@ -975,8 +975,8 @@ function genererFeuilleMatchs() {
         body {
           font-family: Arial, sans-serif;
           padding: 20px;
-          background: white;
-          color: black;
+          background: var(--surface-card, white);
+          color: var(--text-color, black);
         }
         .header {
           text-align: center;
@@ -986,7 +986,7 @@ function genererFeuilleMatchs() {
         }
         h1 { margin: 0; font-size: 2rem; }
         .meta { 
-          color: #666; 
+          color: var(--text-color-secondary, #666); 
           margin-top: 10px;
           font-size: 0.9rem;
         }
@@ -1006,7 +1006,7 @@ function genererFeuilleMatchs() {
         }
         .section-final {
           background: linear-gradient(135deg, #FFD700, #FFA500) !important;
-          color: #000 !important;
+          color: var(--text-color, #000) !important;
           font-size: 1.3rem !important;
           padding: 15px 20px !important;
           text-align: center;
@@ -1019,14 +1019,14 @@ function genererFeuilleMatchs() {
           gap: 10px;
           padding: 12px 15px;
           margin: 5px 0;
-          border: 2px solid #ddd;
+          border: 2px solid var(--surface-border, #ddd);
           border-radius: 5px;
           align-items: center;
-          background: white;
+          background: var(--surface-card, white);
           page-break-inside: avoid;
         }
         .match:hover {
-          background: #f5f5f5;
+          background: var(--surface-hover, #f5f5f5);
         }
         .match.played {
           background: #e8f5e9;
@@ -1085,7 +1085,7 @@ function genererFeuilleMatchs() {
         .footer {
           margin-top: 40px;
           padding-top: 20px;
-          border-top: 2px solid #ddd;
+          border-top: 2px solid var(--surface-border, #ddd);
           text-align: center;
           color: #999;
           font-size: 0.85rem;
@@ -1106,7 +1106,7 @@ function genererFeuilleMatchs() {
         <button onclick="window.close()">✖️ Fermer</button>
       </div>
       
-      <div class="legend" style="display: flex; justify-content: center; gap: 2rem; margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 8px;">
+      <div class="legend" style="display: flex; justify-content: center; gap: 2rem; margin: 20px 0; padding: 15px; background: var(--surface-hover, #f5f5f5); border-radius: 8px;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="width: 30px; height: 30px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 4px;"></div>
           <span>Match joué</span>
@@ -1817,14 +1817,14 @@ function getRoundName(roundNum, totalRounds) {
 
 .position-badge.gold {
   background: linear-gradient(135deg, #FFD700, #FFA500);
-  color: #000;
+  color: var(--text-color, #000);
   font-size: 1.1rem;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
 .position-badge.silver {
   background: linear-gradient(135deg, #C0C0C0, #808080);
-  color: #000;
+  color: var(--text-color, #000);
   font-size: 1.1rem;
   box-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
 }

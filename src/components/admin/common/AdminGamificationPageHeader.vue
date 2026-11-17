@@ -34,8 +34,8 @@ defineProps({
 <style scoped>
 .gamification-admin-header {
   padding: 1.5rem;
-  color: #f8fafc;
-  background: #071426;
+  color: var(--text-color, #f8fafc);
+  background: var(--surface-card, #071426);
   border: 1px solid #263a55;
   border-radius: 16px;
   box-shadow: 0 14px 34px rgba(3, 12, 28, 0.2);
@@ -59,7 +59,7 @@ defineProps({
   text-decoration: none;
 }
 
-.gamification-admin-header__breadcrumb a:hover { color: #f3c300; }
+.gamification-admin-header__breadcrumb a:hover { color: var(--primary-text-color, #f3c300); }
 .gamification-admin-header__breadcrumb a:focus-visible {
   outline: 3px solid rgba(243, 195, 0, 0.5);
   outline-offset: 3px;
@@ -87,7 +87,7 @@ defineProps({
 .gamification-admin-header__icon i { font-size: 1.3rem; }
 h1 {
   margin: 0;
-  color: #f8fafc;
+  color: var(--text-color, #f8fafc);
   font-size: clamp(1.65rem, 4vw, 2.35rem);
   line-height: 1.1;
   letter-spacing: -0.025em;
@@ -96,7 +96,7 @@ h1 {
 p {
   max-width: 68ch;
   margin: 0.55rem 0 0;
-  color: #b8c3d1;
+  color: var(--text-color-secondary, #b8c3d1);
   line-height: 1.55;
 }
 

@@ -226,7 +226,7 @@ function modifierMatch(match) {
   justify-content: center;
   gap: 2rem;
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  color: #000;
+  color: var(--text-color, #000);
   padding: 2rem;
   border-radius: 12px;
   margin-bottom: 3rem;

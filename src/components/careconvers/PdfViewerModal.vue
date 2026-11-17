@@ -59,7 +59,7 @@ export default {
   z-index: 1000;
 }
 .modal {
-  background: #fff;
+  background: var(--surface-card, #fff);
   width: min(1000px, 96vw);
   height: min(90vh, 920px);
   border-radius: 12px;
@@ -68,14 +68,14 @@ export default {
   display: flex;
   flex-direction: column;
 }
-.modal-header { padding: 12px 16px; border-bottom: 1px solid #eee; }
-.modal-header h2 { margin: 0; font-size: 18px; color: #111827; }
-.modal-content { flex: 1; background: #f9fafb; }
+.modal-header { padding: 12px 16px; border-bottom: 1px solid var(--surface-border, #eee); }
+.modal-header h2 { margin: 0; font-size: 18px; color: var(--text-color, #111827); }
+.modal-content { flex: 1; background: var(--surface-hover, #f9fafb); }
 .pdf-container { position: relative; width: 100%; height: 100%; }
-.pdf-frame { width: 100%; height: 100%; border: none; background: #fff; }
-.empty { padding: 20px; color: #374151; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 16px; border-top: 1px solid #eee; background: #fff; }
-.btn { cursor: pointer; border-radius: 8px; padding: 8px 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #111827; font-weight: 600; text-decoration: none; }
+.pdf-frame { width: 100%; height: 100%; border: none; background: var(--surface-card, #fff); }
+.empty { padding: 20px; color: var(--text-color, #374151); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--surface-border, #eee); background: var(--surface-card, #fff); }
+.btn { cursor: pointer; border-radius: 8px; padding: 8px 12px; border: 1px solid var(--surface-border, #e5e7eb); background: var(--surface-hover, #f9fafb); color: var(--text-color, #111827); font-weight: 600; text-decoration: none; }
 .btn-primary { background: #0ea5e9; color: white; border-color: #0ea5e9; }
 .btn-primary:hover { background: #0284c7; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3); transition: all 0.2s; }
 .btn:hover { background: #e5e7eb; transition: all 0.2s; }
