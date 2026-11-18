@@ -25,7 +25,11 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const OFFLINE_DISPLAY_DELAY = 2500
 const ONLINE_DISPLAY_DURATION = 3000
-const PROBE_INTERVAL = 5000
+// Connexion normale : une vérification par minute suffit, les événements
+// online/offline du navigateur signalent déjà les coupures franches.
+// Après un échec, on vérifie toutes les 5 secondes jusqu'au retour.
+const PROBE_INTERVAL_ONLINE = 60000
+const PROBE_INTERVAL_RECOVERY = 5000
 const PROBE_TIMEOUT = 3000
 const FAILURES_BEFORE_OFFLINE = 2
 
@@ -33,7 +37,7 @@ const offline = ref(typeof navigator !== 'undefined' && navigator.onLine === fal
 const visible = ref(offline.value)
 let hideTimer = null
 let offlineTimer = null
-let probeInterval = null
+let probeTimer = null
 let activeController = null
 let consecutiveFailures = 0
 let wasOffline = offline.value
@@ -77,6 +81,7 @@ async function checkConnection() {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     consecutiveFailures = FAILURES_BEFORE_OFFLINE
     markOffline()
+    scheduleProbe()
     return
   }
 
@@ -98,12 +103,37 @@ async function checkConnection() {
   } finally {
     clearTimeout(timeout)
     if (activeController === controller) activeController = null
+    scheduleProbe()
   }
+}
+
+function isPageHidden() {
+  return typeof document !== 'undefined' && document.visibilityState === 'hidden'
+}
+
+function scheduleProbe() {
+  clearTimeout(probeTimer)
+  probeTimer = null
+  // Onglet en arrière-plan ou application mise de côté : aucune requête.
+  if (!mounted || isPageHidden()) return
+  const recovering = offline.value || consecutiveFailures > 0 || Boolean(offlineTimer)
+  probeTimer = setTimeout(() => { void checkConnection() }, recovering ? PROBE_INTERVAL_RECOVERY : PROBE_INTERVAL_ONLINE)
+}
+
+function handleVisibilityChange() {
+  if (isPageHidden()) {
+    clearTimeout(probeTimer)
+    probeTimer = null
+    return
+  }
+  // Retour sur la page : on vérifie tout de suite, puis le rythme reprend.
+  void checkConnection()
 }
 
 function handleOffline() {
   consecutiveFailures = FAILURES_BEFORE_OFFLINE
   markOffline()
+  scheduleProbe()
 }
 
 function handleOnline() {
@@ -115,15 +145,17 @@ onMounted(() => {
   mounted = true
   window.addEventListener('offline', handleOffline)
   window.addEventListener('online', handleOnline)
-  void checkConnection()
-  probeInterval = setInterval(() => { void checkConnection() }, PROBE_INTERVAL)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  if (offline.value) void checkConnection()
+  else scheduleProbe()
 })
 
 onBeforeUnmount(() => {
   mounted = false
   clearTimeout(hideTimer)
   clearOfflineTimer()
-  clearInterval(probeInterval)
+  clearTimeout(probeTimer)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
   activeController?.abort()
   window.removeEventListener('offline', handleOffline)
   window.removeEventListener('online', handleOnline)
@@ -142,6 +174,13 @@ onBeforeUnmount(() => {
   border-radius: var(--border-radius, 6px);
   box-shadow: 0 .5rem 1.5rem rgba(2, 12, 27, .25);
   transform: translateX(-50%);
+}
+
+/* Le thème donne aux messages un fond à 20 % d'opacité : posée sur la barre
+   de navigation, la bannière laissait voir les icônes à travers son texte.
+   Fond plein, teinté avec la couleur du message (erreur ou succès). */
+.offline-banner.p-message {
+  background: color-mix(in srgb, currentColor 16%, var(--surface-overlay, var(--surface-card, #071426)));
 }
 
 .offline-banner :deep(.p-message-wrapper) {
