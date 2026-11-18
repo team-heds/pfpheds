@@ -39,7 +39,7 @@ import Navbar from '@/components/common/utils/Navbar.vue';
 
 .p-card-header h2 {
   margin: 0;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .p-card-header i {

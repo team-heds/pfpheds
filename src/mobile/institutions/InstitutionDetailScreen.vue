@@ -234,7 +234,7 @@ onMounted(load)
   flex-direction: column;
   gap: 12px;
   margin-top: -20px;
-  padding: 18px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  padding: 18px 16px 28px;
   border-radius: 22px 22px 0 0;
   background: var(--m-bg);
 }

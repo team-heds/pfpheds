@@ -96,6 +96,7 @@ import { filterInstitutions } from '@/service/institutionFiltersService'
 import { useMobileShell } from '@/mobile/shell/useMobileShell'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useKeptScroll } from '@/mobile/shell/useKeptScroll'
+import { useHideOnScroll } from '@/mobile/shell/useHideOnScroll'
 import { useMobileInstitutionsStore } from '@/mobile/institutions/mobileInstitutionsStore'
 import { activeFilterChips, countActiveFilters, indexOffers } from '@/mobile/institutions/institutionHelpers'
 
@@ -111,6 +112,8 @@ const { scrollTopSignal } = storeToRefs(useMobileShellStore())
 const scrollerRef = ref(null)
 const inputRef = ref(null)
 const kept = useKeptScroll(scrollerRef, () => props.active)
+// Longue liste : la barre d'onglets se cache en descendant, revient en remontant.
+useHideOnScroll(scrollerRef, () => props.active)
 const loading = ref(false)
 const failed = ref(false)
 

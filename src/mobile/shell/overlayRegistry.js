@@ -1,5 +1,9 @@
 import { defineAsyncComponent } from 'vue'
 
+// Fenêtre d'une page existante affichée en panneau du bas (voir useDialogsAsSheets) :
+// la page la dessine elle-même, l'entrée ne sert qu'au bouton retour.
+const DialogPlaceholder = { name: 'MobileDialogPlaceholder', render: () => null }
+
 // Panneaux du bas et écrans empilés de l'application mobile. Le nom apparaît
 // dans l'adresse (« /feed#/notifications ») : le retour du téléphone les ferme.
 // `restorable` : peut se rouvrir seul après un rechargement (aucune donnée à fournir).
@@ -39,6 +43,12 @@ export const OVERLAYS = {
   },
   story: {
     component: defineAsyncComponent(() => import('@/mobile/home/StoryViewerOverlay.vue')),
+  },
+  defi: {
+    component: defineAsyncComponent(() => import('@/mobile/challenges/ChallengeSheet.vue')),
+  },
+  fenetre: {
+    component: DialogPlaceholder,
   },
 }
 

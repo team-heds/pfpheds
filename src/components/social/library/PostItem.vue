@@ -157,7 +157,10 @@ import { createDoubleTapDetector, isInteractiveTarget } from '@/service/postLike
 import PostLikersDialog from '@/components/social/library/PostLikersDialog.vue';
 import PostComments from '@/components/social/library/PostComments.vue';
 import { formatFullDate, formatRelativeTime } from '@/service/postComments';
+import { useToast } from 'primevue/usetoast';
+import { postShareUrl, sharePostLink } from '@/utils/postShare';
 
+const toast = useToast();
 const props = defineProps({
   post: {
     type: Object,
@@ -229,11 +232,16 @@ const onContentPointerUp = (event) => {
   }
 };
 
-const sharePost = () => {
-  const postUrl = `${window.location.origin}/posts/${props.post.id}`;
-  navigator.clipboard.writeText(postUrl).then(() => {
-    alert('Lien du post copié dans le presse-papiers !');
-  });
+// Pas de page par publication : le lien mène au fil (comme sur téléphone).
+// L'ancien lien /posts/<id> aboutissait à une page 404.
+const SHARE_MESSAGES = {
+  copied: { severity: 'success', summary: 'Lien copié', detail: 'Le texte et le lien du fil sont dans le presse-papiers.' },
+  unavailable: { severity: 'warn', summary: 'Partage indisponible', detail: 'Ce navigateur ne permet pas de copier le lien.' },
+};
+const sharePost = async () => {
+  const title = `Publication de ${authorName.value}`;
+  const outcome = await sharePostLink({ title, text: title, url: postShareUrl() });
+  if (SHARE_MESSAGES[outcome]) toast.add({ ...SHARE_MESSAGES[outcome], life: 3000 });
 };
 
 // Icône bulle : ouvre les commentaires et place le curseur dans le champ (comme Instagram).
@@ -374,7 +382,7 @@ const getInstagramEmbedUrl = (url) => {
 
 .media-link {
   word-break: break-all;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-decoration: underline;
 }
 
@@ -401,7 +409,7 @@ const getInstagramEmbedUrl = (url) => {
 .action-button:focus-visible{outline:3px solid var(--primary-color);outline-offset:2px;border-radius:.5rem}
 
 .action-button:hover {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .action-icon {

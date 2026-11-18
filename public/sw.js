@@ -35,7 +35,14 @@ self.addEventListener('push', (event) => {
 // Clic sur la notification
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || '/';
+  // Seuls les liens internes au site sont ouverts (protection contre l'hameçonnage).
+  let url = '/';
+  try {
+    const parsed = new URL(event.notification.data?.url || '/', self.location.origin);
+    if (parsed.origin === self.location.origin) url = parsed.pathname + parsed.search + parsed.hash;
+  } catch (e) {
+    url = '/';
+  }
   event.waitUntil((async () => {
     const all = await clients.matchAll({ type: 'window', includeUncontrolled: true });
     const target = all.find(c => new URL(c.url).pathname === new URL(url, self.location.origin).pathname);

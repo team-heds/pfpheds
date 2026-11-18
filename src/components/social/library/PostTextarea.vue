@@ -152,7 +152,7 @@ export default {
 <style scoped>
 .post-textarea {
   width: 100%;
-  background: #0B213F;
+  background: var(--surface-ground, #0B213F);
   border-radius: 1.2rem;
   padding: 1rem 1rem 0.6rem 1rem;
   box-sizing: border-box;
@@ -162,7 +162,7 @@ export default {
   width: 100%;
   min-height: 90px;
   padding: 0.75rem;
-  background-color: #0B213F;
+  background-color: var(--surface-ground, #0B213F);
   border-radius: 1.2rem;
   color: #fff;
   font-size: 1.1rem;
@@ -236,7 +236,7 @@ export default {
 }
 .file-icon {
   font-size: 2.2rem;
-  color: #F3C300;
+  color: var(--primary-text-color, #F3C300);
 }
 .remove-media-btn {
   position: absolute;

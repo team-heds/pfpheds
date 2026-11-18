@@ -349,7 +349,7 @@ onMounted(() => {
 
 .header-left .pi-bell {
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .bell-animation {

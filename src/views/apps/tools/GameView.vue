@@ -21,6 +21,14 @@
           <WordOfDayHubCard />
         </div>
 
+        <div v-if="gamificationFeatures.quizDuel" class="col-12">
+          <QuizDuelHubCard />
+        </div>
+
+        <div v-if="gamificationFeatures.treasureHunt" class="col-12">
+          <TreasureHuntHubCard />
+        </div>
+
         <div v-if="gamificationFeatures.ventriglisse" class="col-12">
           <section class="ventriglisse-card" aria-labelledby="ventriglisse-title">
             <div class="ventriglisse-preview" aria-hidden="true">
@@ -95,6 +103,8 @@
 import { useRouter } from 'vue-router';
 import Navbar from '@/components/common/utils/Navbar.vue';
 import WordOfDayHubCard from '@/components/games/word-of-day/WordOfDayHubCard.vue';
+import QuizDuelHubCard from '@/components/games/quiz-duel/QuizDuelHubCard.vue';
+import TreasureHuntHubCard from '@/components/games/treasure-hunt/TreasureHuntHubCard.vue';
 import DailyWheelWidget from '@/components/gamification/daily/DailyWheelWidget.vue';
 import Button from 'primevue/button';
 import { gamificationFeatures } from '@/config/gamificationFeatures';
@@ -102,7 +112,7 @@ import GamificationPageHeader from '@/components/gamification/GamificationPageHe
 import { computed } from 'vue';
 
 const router = useRouter();
-const hasGames = computed(() => gamificationFeatures.wordOfDay || gamificationFeatures.ventriglisse || gamificationFeatures.dailyWheel || gamificationFeatures.romRunner);
+const hasGames = computed(() => gamificationFeatures.wordOfDay || gamificationFeatures.quizDuel || gamificationFeatures.treasureHunt || gamificationFeatures.ventriglisse || gamificationFeatures.dailyWheel || gamificationFeatures.romRunner);
 const goBack = () => router.push(gamificationFeatures.userJourney ? { name: 'GamificationProfileSelf' } : '/outils');
 </script>
 
@@ -132,7 +142,7 @@ const goBack = () => router.push(gamificationFeatures.userJourney ? { name: 'Gam
 }
 
 .games-empty { padding: clamp(1.25rem, 4vw, 2.5rem); border-radius: 16px; color: var(--text-color); background: var(--surface-card); }
-.games-empty > i { color: var(--primary-color); font-size: 1.5rem; }
+.games-empty > i { color: var(--primary-text-color, var(--primary-color)); font-size: 1.5rem; }
 .games-empty h2 { margin: 1rem 0 .5rem; font-size: clamp(1.1rem, 3vw, 1.5rem); line-height: 1.3; }
 .games-empty p { margin: 0 0 1.25rem; color: var(--text-color-secondary); line-height: 1.5; }
 

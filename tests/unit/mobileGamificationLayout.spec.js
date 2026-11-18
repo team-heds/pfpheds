@@ -33,6 +33,26 @@ describe('gamification sur téléphone', () => {
     expect(wrapper.find('h1').text()).toBe('Défis du moment')
   })
 
+  it.each([
+    ['src/components/gamification/ChallengesPage.vue', '.stats-overview'],
+    ['src/components/gamification/AchievementsPage.vue', '.stats-overview'],
+    ['src/components/gamification/QuestsPage.vue', '.quest-stats'],
+  ])('%s range ses trois chiffres sur une seule ligne sur téléphone', (file, selector) => {
+    // Recette 16.11 : trois grandes cartes empilées repoussaient le contenu de deux écrans.
+    const source = readSource(file)
+    const block = source.slice(source.indexOf('Téléphone : pleine largeur et chiffres sur une ligne'))
+    expect(block).toContain('@media (max-width: 640px)')
+    expect(block).toContain(selector)
+    expect(block).toContain('grid-template-columns: repeat(3, minmax(0, 1fr))')
+  })
+
+  it('affiche les cartes de chiffres en version compacte sur téléphone', () => {
+    const card = readSource('src/components/gamification/GamificationStatCard.vue')
+    const block = card.slice(card.indexOf('@media (max-width: 640px)'))
+    expect(block).toContain('.game-stat__icon { display: none; }')
+    expect(block).toContain('min-height: 0')
+  })
+
   it('n’affiche pas de champ de recherche sous 16 px sur téléphone', () => {
     const source = readSource('src/components/gamification/AchievementsPage.vue')
     const block = source.slice(source.indexOf('Sous 16 px'))

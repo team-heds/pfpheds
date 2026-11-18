@@ -203,10 +203,10 @@ let disposed = false
 
 // House configuration (identique aux autres pages)
 const houseConfig = {
-  'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert - "L'équilibre soigne"
-  'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge - "Clarifier, guider, apaiser"
-  'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or - "Comprendre la douleur, c'est soigner"
-  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu - "Apaiser pour mieux guérir"
+  'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert
+  'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge
+  'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or
+  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu
 }
 
 // Normalisation des noms de maisons
@@ -794,6 +794,23 @@ onBeforeUnmount(() => {
 
   .challenges-page {
     min-height: 0;
+  }
+}
+
+/* Téléphone : pleine largeur et chiffres sur une ligne (recette du 16.11). */
+@media (max-width: 640px) {
+  .week-info,
+  .stats-overview,
+  .challenges-section,
+  .history-section {
+    padding-inline: 0;
+  }
+  .week-info { gap: 0.75rem; margin-bottom: 1rem; }
+  .week-card, .time-remaining-card { padding: 1rem; }
+  .stats-overview {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
   }
 }
 </style>

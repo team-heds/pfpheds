@@ -11,25 +11,134 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="HEdS">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <!-- Écran de démarrage de l'application installée sur iPhone (une image par taille d'écran) -->
+  <link rel="apple-touch-startup-image" href="/splash/iphone-1320x2868.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-1206x2622.png" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-1290x2796.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-1179x2556.png" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-1284x2778.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-1170x2532.png" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="/splash/iphone-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+  <link rel="preload" as="image" href="/splash/logo.png" media="(display-mode: standalone)">
+  <script>
+    // iPhone : l'application installée se reconnaît aussi à navigator.standalone.
+    if (window.navigator.standalone === true) document.documentElement.classList.add('is-installed-app');
+  </script>
+  <style>
+    /* Écran de chargement : seulement dans l'application installée, jamais dans
+       un navigateur (ordinateur ou téléphone). Masqué par défaut dès le premier
+       rendu ; identique à l'écran de démarrage, retiré en fondu après le premier
+       rendu de l'application (src/utils/appSplash.js). Le logo est une image de
+       fond : un navigateur ne le télécharge même pas. */
+    #app-splash {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      place-items: center;
+      background: #0B213F url('/splash/logo.png') center / min(56vw, 240px) auto no-repeat;
+      transition: opacity 200ms ease-out;
+    }
+    @media (display-mode: standalone) {
+      #app-splash { display: grid; }
+    }
+    html.is-installed-app #app-splash {
+      display: grid;
+    }
+    #app-splash.is-leaving {
+      opacity: 0;
+      pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #app-splash { transition: none; }
+    }
+    /* Application installée sur téléphone : elle se tient en portrait. En paysage,
+       un écran couvre l'application sans la démonter (rien de ce qui est saisi
+       n'est perdu). Ni les tablettes ni l'ordinateur ne sont concernés. */
+    #rotate-hint {
+      display: none;
+    }
+    @media (display-mode: standalone) and (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+      html:not(.allow-landscape) #rotate-hint {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        background: #0B213F;
+        color: #f2f5fa;
+        font: 600 17px/1.4 Poppins, system-ui, -apple-system, sans-serif;
+        text-align: center;
+      }
+      html:not(.allow-landscape) #rotate-hint svg {
+        width: 56px;
+        height: 56px;
+        color: #f3c300;
+      }
+      html:not(.allow-landscape) #rotate-hint small {
+        font-weight: 400;
+        font-size: 14px;
+        color: #93a4bd;
+      }
+    }
+  </style>
   <title>Plateforme - HEdS</title>
   <link href="/layout/styles/preloading/preloading.css" rel="stylesheet"/>
   <link id="theme-link" data-theme-link="heds" data-theme-scheme="dim" rel="stylesheet" href="./src/assets/theme/theme-dim/heds/theme.css" />
   <link data-theme-link="heds" data-theme-scheme="light" rel="stylesheet" href="./src/assets/theme/theme-light/heds/theme.css" media="not all" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-        crossorigin=""/>
+  <script>
+    // Thème choisi (src/theme/themeService.js, même clé et même logique), appliqué
+    // avant le premier rendu : sombre par défaut, clair, ou automatique.
+    (function () {
+      var choice = 'dim';
+      try { choice = localStorage.getItem('heds.theme') || 'dim'; } catch (e) {}
+      if (choice !== 'light' && choice !== 'auto') choice = 'dim';
+      var scheme = choice === 'auto'
+        ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dim')
+        : choice;
+      var root = document.documentElement;
+      root.setAttribute('data-theme', scheme);
+      root.style.colorScheme = scheme === 'light' ? 'light' : 'dark';
+      var links = document.querySelectorAll('link[data-theme-link="heds"]');
+      for (var i = 0; i < links.length; i++) {
+        var active = links[i].getAttribute('data-theme-scheme') === scheme;
+        links[i].disabled = !active;
+        links[i].media = active ? 'all' : 'not all';
+      }
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', scheme === 'light' ? '#ffffff' : '#0B213F');
+    })();
+  </script>
 </head>
 <body>
+  <script>
+    // En production, la feuille principale (qui contient le thème sombre) est
+    // ajoutée à la fin de <head> : la feuille claire doit passer après elle.
+    if (document.documentElement.getAttribute('data-theme') === 'light') {
+      var lightSheet = document.querySelector('link[data-theme-link="heds"][data-theme-scheme="light"]');
+      if (lightSheet) document.head.appendChild(lightSheet);
+    }
+  </script>
   <noscript>
     <strong>We're sorry but pfpheds doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
   </noscript>
-  <div id="app">
-    <!-- Loader supprimé -->
+  <div id="app-splash" aria-hidden="true"></div>
+  <div id="rotate-hint" role="alert">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+    <span>Tourne ton téléphone</span>
+    <small>L’application s’utilise à la verticale.</small>
   </div>
+  <div id="app"></div>
   <script type="module" src="/src/main.js"></script>
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-          integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-          crossorigin=""></script>
   <!-- ElevenLabs Convai Widget - TEMPORAIREMENT DÉSACTIVÉ -->
   <!-- <elevenlabs-convai agent-id="mz6MO6cxxKQYHSghIs10"></elevenlabs-convai>
   <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script> -->

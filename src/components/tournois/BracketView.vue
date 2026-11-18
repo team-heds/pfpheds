@@ -226,7 +226,7 @@ function modifierMatch(match) {
   justify-content: center;
   gap: 2rem;
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  color: #000;
+  color: var(--text-color, #000);
   padding: 2rem;
   border-radius: 12px;
   margin-bottom: 3rem;
@@ -272,7 +272,7 @@ function modifierMatch(match) {
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   padding: 1rem;
   background: rgba(102, 126, 234, 0.1);
   border-radius: 8px;
@@ -357,7 +357,7 @@ function modifierMatch(match) {
 .team-score {
   font-size: 1.3rem;
   font-weight: 800;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   min-width: 40px;
   text-align: center;
 }

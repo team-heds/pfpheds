@@ -2140,7 +2140,7 @@ onMounted(() => {
 }
 
 .filter-summary__active {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-weight: 600;
 }
 
@@ -2254,7 +2254,7 @@ onMounted(() => {
 }
 
 .sae-student-card__meta i {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   font-size: 0.6875rem;
 }
 
@@ -2466,7 +2466,7 @@ onMounted(() => {
 .cell-info.cell-has-content {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.4);
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .cell-sae {
@@ -2506,7 +2506,7 @@ onMounted(() => {
   top: 2px;
   right: 3px;
   font-size: 0.6rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   background: var(--surface-card);
   border-radius: 50%;
   padding: 1px;

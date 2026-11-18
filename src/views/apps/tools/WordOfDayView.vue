@@ -151,6 +151,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useMobileImmersive } from '@/mobile/shell/useMobileImmersive'
 import Button from 'primevue/button'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import GamificationPageHeader from '@/components/gamification/GamificationPageHeader.vue'
@@ -171,6 +172,8 @@ const message = ref('')
 const messageIsError = ref(false)
 
 const finished = computed(() => game.value?.status === 'won' || game.value?.status === 'lost')
+// Sur téléphone, la barre d'onglets se cache tant que la partie est en cours.
+useMobileImmersive(() => Boolean(game.value) && !finished.value)
 const stats = computed(() => ({
   played: 0, win_rate: 0, current_streak: 0, best_streak: 0, ...(game.value?.stats || {}),
 }))
@@ -490,16 +493,27 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 @media (max-width: 640px) {
   .wod-root { padding-top: 0; }
-  .wod-content { padding: 1rem .75rem 2rem; }
+  /* La page a déjà ses marges latérales sur téléphone : on n'en rajoute pas. */
+  .wod-content { padding: 1rem 0 2rem; }
   /* Sur téléphone, la grille et le clavier tiennent ensemble à l'écran. */
   :deep(.game-header) { margin-bottom: .75rem; padding: .85rem; gap: .75rem; }
   :deep(.game-header__description) { display: none; }
-  .wod-game { gap: .75rem; }
+  .wod-game { gap: .75rem; padding-inline: .5rem; }
   .wod-tile__mark { top: 2px; right: 2px; font-size: .45rem; }
   .wod-tile--small .wod-tile__mark { font-size: .5rem; }
   .wod-panel { padding: 1rem .75rem; }
+  /* Dans l'application mobile, l'en-tête de la coque affiche déjà le titre : la
+     description et la ligne de validité passent à la trappe pour que la grille
+     ET le clavier tiennent ensemble au-dessus de la barre d'onglets (375 × 812).
+     Sélecteur renforcé : la coque force l'affichage de la description. */
+  .wod-root .wod-content :deep(.game-header__description) { display: none !important; }
+  .wod-game__validity { display: none; }
+  /* Cases d'environ 40 px : six essais + clavier visibles sans faire défiler. */
+  .wod-board { width: min(100%, calc(var(--wod-length) * 2.75rem)); }
   .wod-board, .wod-row { gap: .25rem; }
   .wod-tile { border-radius: 8px; }
+  /* Le clavier prend toute la largeur du panneau pour des touches plus faciles à viser. */
+  .wod-keyboard { justify-self: start; width: calc(100% + .5rem); margin-inline: -.25rem; }
   .wod-keyboard__row { gap: .2rem; }
   .wod-key--wide span { display: none; }
   .wod-key--wide { font-size: 1rem; }

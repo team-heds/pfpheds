@@ -57,7 +57,7 @@ export default {
   z-index: 1000;
 }
 .modal {
-  background: #fff;
+  background: var(--surface-card, #fff);
   width: min(720px, 92vw);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -65,12 +65,12 @@ export default {
 }
 .modal-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--surface-border, #eee);
 }
 .modal-header h2 {
   margin: 0;
   font-size: 20px;
-  color: #222;
+  color: var(--text-color, #222);
 }
 .modal-content {
   padding: 16px 20px 0 20px;
@@ -78,20 +78,20 @@ export default {
   overflow-y: auto;
 }
 .intro { font-weight: 600; margin-bottom: 8px; }
-.objectives { margin: 0 0 12px 18px; padding: 0; color:black }
+.objectives { margin: 0 0 12px 18px; padding: 0; color:var(--text-color, black) }
 .objectives li { margin-bottom: 6px; line-height: 1.4; }
-.note { color: #555; font-size: 14px; }
+.note { color: var(--text-color-secondary, #555); font-size: 14px; }
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   padding: 14px 20px 18px 20px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--surface-border, #eee);
 }
 .btn { cursor: pointer; border-radius: 8px; padding: 10px 14px; border: 1px solid transparent; font-weight: 600; }
 .btn-primary { background: #0ea5e9; color: white; }
 .btn-primary:hover { background: #0284c7; }
-.btn-secondary { background: #f3f4f6; color: #111827; border-color: #e5e7eb; }
+.btn-secondary { background: var(--surface-hover, #f3f4f6); color: var(--text-color, #111827); border-color: var(--surface-border, #e5e7eb); }
 .btn-secondary:hover { background: #e5e7eb; }
 
 /* Transitions */

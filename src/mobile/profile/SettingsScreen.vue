@@ -22,6 +22,36 @@
         <p v-if="avatarError" class="m-settings__error" role="alert">{{ avatarError }}</p>
       </section>
 
+      <section aria-labelledby="m-settings-info">
+        <h2 id="m-settings-info" class="m-settings__heading">Mes informations</h2>
+        <form class="m-settings__form" @submit.prevent="saveInfo">
+          <label class="m-settings__field">
+            <span>Ville</span>
+            <input v-model="info.city" type="text" maxlength="100" autocomplete="address-level2" enterkeyhint="done" />
+          </label>
+          <label class="m-settings__field">
+            <span>Langue préférée</span>
+            <select v-model="info.preferredLanguage">
+              <option value="">Non renseignée</option>
+              <option v-for="option in PROFILE_LANGUAGE_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </select>
+          </label>
+          <label class="m-settings__field">
+            <span>Canton d’origine</span>
+            <select v-model="info.cantonOfOrigin">
+              <option value="">Non renseigné</option>
+              <option v-for="option in SWISS_CANTON_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </select>
+          </label>
+          <p class="m-settings__hint">Nom, classe et adresse e-mail sont gérés par l’administration.</p>
+          <button type="submit" class="m-ghost-button m-settings__save" :disabled="savingInfo">
+            <span v-if="savingInfo" class="m-spinner" aria-hidden="true"></span>
+            {{ savingInfo ? 'Enregistrement…' : 'Enregistrer mes informations' }}
+          </button>
+          <p v-if="infoError" class="m-settings__error" role="alert">{{ infoError }}</p>
+        </form>
+      </section>
+
       <section aria-labelledby="m-settings-notifications">
         <h2 id="m-settings-notifications" class="m-settings__heading">Notifications sur ce téléphone</h2>
         <PushOptIn purpose="quand quelqu’un réagit à tes publications ou réserve un créneau" class="m-settings__push" />
@@ -42,6 +72,7 @@
             {{ option.label }}
           </button>
         </div>
+        <p v-if="scheme === 'auto'" class="m-settings__theme-hint">Le thème suit le réglage clair ou sombre du téléphone.</p>
       </section>
 
       <section aria-labelledby="m-settings-more">
@@ -71,7 +102,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import MobileStackScreen from '@/mobile/ui/MobileStackScreen.vue'
@@ -84,12 +115,15 @@ import { useMobileStoriesStore } from '@/mobile/home/mobileStoriesStore'
 import { initialsOf } from '@/mobile/home/postMedia'
 import { useMobileProfileStore } from '@/mobile/profile/mobileProfileStore'
 import { displayNameOf } from '@/mobile/profile/profileHelpers'
-import { applyScheme, currentScheme } from '@/mobile/profile/theme'
+import { useTheme } from '@/theme/useTheme'
+import { profileInfoForm, recordProfileUpdate, saveProfileInfo } from '@/mobile/profile/profileInfo'
+import { PROFILE_LANGUAGE_OPTIONS, SWISS_CANTON_OPTIONS } from '@/domain/profile/profilePreferences'
 import packageInfo from '../../../package.json'
 
 const THEMES = [
   { key: 'dim', label: 'Sombre', icon: 'moon' },
   { key: 'light', label: 'Clair', icon: 'sun' },
+  { key: 'auto', label: 'Auto', icon: 'contrast' },
 ]
 
 const emit = defineEmits(['close'])
@@ -120,6 +154,8 @@ async function onAvatarChosen(event) {
     // Le reste de la plateforme relit le profil : la nouvelle photo y apparaît aussi.
     void Promise.resolve(userStore.fetchProfile?.()).catch(() => null)
     toast.add({ severity: 'success', summary: 'Photo mise à jour', life: 2500 })
+    // Comme sur ordinateur : changer sa photo compte pour le défi « Profil à jour ».
+    void recordProfileUpdate(userId, { hasAvatar: true })
   } catch (error) {
     console.error('[Réglages] Photo refusée:', error)
     avatarError.value = error?.message || 'La photo n’a pas pu être enregistrée. Réessaie avec une autre image.'
@@ -129,10 +165,33 @@ async function onAvatarChosen(event) {
   }
 }
 
+// --- Ville, langue, canton (seuls champs modifiables par l'étudiant, #251) -----
+const info = reactive(profileInfoForm(profile.profile))
+watch(() => profile.profile, (value) => Object.assign(info, profileInfoForm(value)))
+const savingInfo = ref(false)
+const infoError = ref('')
+async function saveInfo() {
+  const userId = authStore.user?.id
+  if (!userId || savingInfo.value) return
+  savingInfo.value = true
+  infoError.value = ''
+  try {
+    const saved = await saveProfileInfo(userId, info)
+    profile.profile = { ...(profile.profile || {}), ...saved }
+    toast.add({ severity: 'success', summary: 'Informations enregistrées', life: 2500 })
+  } catch (error) {
+    console.error('[Réglages] Informations refusées:', error)
+    infoError.value = 'Vos informations n’ont pas pu être enregistrées. Réessayez dans un instant.'
+  } finally {
+    savingInfo.value = false
+  }
+}
+
 // --- Thème ---------------------------------------------------------------------
-const scheme = ref(currentScheme())
+// Réglage partagé avec l'ordinateur ; « Auto » suit le réglage du téléphone.
+const { preference: scheme, setPreference } = useTheme()
 function setScheme(next) {
-  scheme.value = applyScheme(next)
+  setPreference(next)
 }
 
 // --- Déconnexion ---------------------------------------------------------------
@@ -216,6 +275,44 @@ input:focus-visible + .m-settings__upload {
   color: var(--m-danger);
   font-size: 0.8125rem;
 }
+.m-settings__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.m-settings__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.m-settings__field input,
+.m-settings__field select {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--m-surface);
+  color: inherit;
+  /* 16 px : Safari ne zoome pas sur le champ au toucher. */
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+}
+.m-settings__field input:focus-visible,
+.m-settings__field select:focus-visible {
+  outline: 2px solid var(--m-accent-text);
+  outline-offset: 1px;
+}
+.m-settings__hint {
+  margin: 0;
+  color: var(--m-muted);
+  font-size: 0.75rem;
+}
+.m-settings__save {
+  width: 100%;
+}
 .m-settings__push {
   border-radius: 16px;
   font-size: 0.8125rem;
@@ -243,6 +340,11 @@ input:focus-visible + .m-settings__upload {
   font: inherit;
   font-size: 0.875rem;
   cursor: pointer;
+}
+.m-settings__theme-hint {
+  margin: 8px 4px 0;
+  color: var(--m-muted);
+  font-size: 0.8125rem;
 }
 .m-settings__themes button[aria-checked='true'] {
   background: var(--m-raised);

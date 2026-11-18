@@ -88,18 +88,22 @@
       <div class="question-card">
         <h3 class="question-title">{{ currentQuestion.question }}</h3>
         <div class="answers-container">
-          <div
+          <!-- De vrais boutons : réponses atteignables au clavier et annoncées
+               comme choix par les lecteurs d'écran. -->
+          <button
             v-for="(answer, index) in currentQuestion.answers"
             :key="index"
+            type="button"
             @click="selectAnswer(answer)"
             class="answer-option"
             :class="{ selected: selectedAnswer === answer }"
+            :aria-pressed="selectedAnswer === answer ? 'true' : 'false'"
           >
-            <div class="answer-content">
+            <span class="answer-content">
               <span class="answer-letter">{{ String.fromCharCode(97 + index) }})</span>
               <span class="answer-text">{{ answer.text }}</span>
-            </div>
-          </div>
+            </span>
+          </button>
         </div>
         <div class="question-actions" v-if="selectedAnswer">
           <button @click="nextQuestion" class="next-button">
@@ -154,6 +158,7 @@
 </template>
 
 <script setup>
+import { HOUSE_TEXTS, houseDescription, houseMotto } from '@/domain/gamification/houseTexts'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
@@ -193,33 +198,29 @@ const quizAvailable = computed(() => quizStatusLoaded.value && quizOpen.value &&
 const houses = {
   harmonis: {
     name: 'Harmonis',
-    motto: "L'équilibre soigne",
-    description:
-      "Tu es quelqu'un de stable, paisible et centré. Tu cherches l'harmonie autour de toi, tu aides les autres à se sentir bien sans faire de bruit. Tu sais que l'équilibre soigne.",
+    motto: HOUSE_TEXTS.harmonis.motto,
+    description: HOUSE_TEXTS.harmonis.description,
     color: '#2E8B57',
     icon: 'pi pi-circle'
   },
   elaris: {
     name: 'Elaris',
-    motto: 'Clarifier, guider, apaiser',
-    description:
-      'Tu es clair dans tes idées, tu aimes guider les autres et voir au-delà des apparences. Tu éclaires les chemins, tu transmets des idées avec calme et assurance.',
+    motto: HOUSE_TEXTS.elaris.motto,
+    description: HOUSE_TEXTS.elaris.description,
     color: '#DC143C',
     icon: 'pi pi-sun'
   },
   doloris: {
     name: 'Doloris',
-    motto: "Comprendre la douleur, c'est soigner",
-    description:
-      "Tu ressens profondément ce que les autres vivent. Tu as de la compassion, tu veux comprendre avant d'agir. Tu ne fais pas les choses à moitié.",
+    motto: HOUSE_TEXTS.doloris.motto,
+    description: HOUSE_TEXTS.doloris.description,
     color: '#FFD700',
     icon: 'pi pi-heart'
   },
   solencia: {
     name: 'Solencia',
-    motto: 'Apaiser pour mieux guérir',
-    description:
-      'Tu es doux, apaisant, et tu offres ta présence aux autres dans les moments difficiles. Tu sais écouter, rassurer et consoler.',
+    motto: HOUSE_TEXTS.solencia.motto,
+    description: HOUSE_TEXTS.solencia.description,
     color: '#4169E1',
     icon: 'pi pi-moon'
   }
@@ -546,12 +547,12 @@ const getHouseIcon = (houseName) => {
 
 const getHouseMotto = (houseName) => {
   const house = Object.values(houses).find((h) => h.name === houseName)
-  return house?.motto || "L'équilibre soigne"
+  return house?.motto || houseMotto(houseName)
 }
 
 const getHouseDescription = (houseName) => {
   const house = Object.values(houses).find((h) => h.name === houseName)
-  return house?.description || 'Votre maison vous correspond parfaitement.'
+  return house?.description || houseDescription(houseName) || 'Votre maison vous correspond parfaitement.'
 }
 
 // Actions de navigation
@@ -607,7 +608,7 @@ onMounted(async () => {
 .quiz-header {
   text-align: center;
   margin-bottom: 2rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .quiz-logo {
@@ -616,7 +617,7 @@ onMounted(async () => {
 
 .quiz-icon {
   font-size: 4rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .quiz-title {
@@ -668,7 +669,7 @@ onMounted(async () => {
 
 .question-title {
   font-size: 1.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-bottom: 2rem;
   text-align: center;
 }
@@ -681,6 +682,11 @@ onMounted(async () => {
 }
 
 .answer-option {
+  display: block;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   padding: 1rem;
   border: 1px solid var(--surface-border);
   border-radius: 8px;
@@ -693,6 +699,11 @@ onMounted(async () => {
   border-color: var(--primary-color);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.answer-option:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .answer-option.selected {
@@ -708,7 +719,7 @@ onMounted(async () => {
 
 .answer-letter {
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   min-width: 20px;
 }
 

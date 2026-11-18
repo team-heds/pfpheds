@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="m-shell" :class="{ 'm-shell--light': lightTheme }">
+  <div ref="rootRef" class="m-shell" :class="{ 'm-shell--light': lightTheme, 'm-shell--with-tabs': chrome }">
     <MobileHeader
       v-if="chrome && showHeader"
       :title="title"
@@ -36,7 +36,15 @@
       </router-view>
     </div>
 
-    <MobileTabBar v-if="chrome" :tabs="tabs" :active="store.activeTab" :avatar-url="stories.ownAvatarUrl" @select="selectTab" />
+    <MobileTabBar
+      v-if="chrome"
+      :tabs="tabs"
+      :active="store.activeTab"
+      :avatar-url="stories.ownAvatarUrl"
+      :hidden="tabBarHidden"
+      @select="selectTab"
+      @reveal="store.setBarsHidden(false)"
+    />
 
     <TransitionGroup name="m-overlay" tag="div" class="m-shell__overlays" :duration="300">
       <component
@@ -60,10 +68,16 @@ import MobilePage from '@/mobile/shell/MobilePage.vue'
 import { useMobileShellStore } from '@/mobile/shell/mobileShellStore'
 import { useMobileNotificationsStore } from '@/mobile/home/mobileNotificationsStore'
 import { useMobileStoriesStore } from '@/mobile/home/mobileStoriesStore'
+import { useMobileInstitutionsStore } from '@/mobile/institutions/mobileInstitutionsStore'
 import { MOBILE_SHELL_KEY } from '@/mobile/shell/useMobileShell'
 import { OVERLAYS, canRestoreOverlay } from '@/mobile/shell/overlayRegistry'
 import { buildTabs, pageKey } from '@/mobile/shell/tabs'
 import { useKeyboardInset } from '@/mobile/shell/useKeyboardInset'
+import { useEdgeSwipeBack } from '@/mobile/shell/useEdgeSwipeBack'
+import { currentScheme } from '@/theme/themeService'
+import { useDialogsAsSheets } from '@/mobile/shell/useDialogsAsSheets'
+import '@/mobile/shell/mobileDialogs.css'
+import '@/mobile/shell/mobileToasts.css'
 
 // Chaque onglet n'est téléchargé qu'à sa première ouverture : le démarrage
 // ne charge que la coque et l'onglet affiché.
@@ -73,6 +87,9 @@ const MapTab = defineAsyncComponent(() => import('@/mobile/map/MapTab.vue').then
 const SearchTab = defineAsyncComponent(() => import('@/mobile/search/SearchTab.vue').then((module) => module.default))
 const ProfileTab = defineAsyncComponent(() => import('@/mobile/profile/ProfileTab.vue').then((module) => module.default))
 const InstitutionDetailScreen = defineAsyncComponent(() => import('@/mobile/institutions/InstitutionDetailScreen.vue').then((module) => module.default))
+const MobileChallengesScreen = defineAsyncComponent(() => import('@/mobile/challenges/MobileChallengesScreen.vue').then((module) => module.default))
+const MobileHousesRankingScreen = defineAsyncComponent(() => import('@/mobile/houses/MobileHousesRankingScreen.vue').then((module) => module.default))
+const MobileHouseScreen = defineAsyncComponent(() => import('@/mobile/houses/MobileHouseScreen.vue').then((module) => module.default))
 
 // Écrans conçus pour le téléphone, par nom de route. Une adresse absente de
 // ces tables affiche la page existante dans le cadre de la coque.
@@ -90,6 +107,9 @@ const nativeTabs = [
 // le nom de la page étant affiché dans l'écran lui-même) :
 const NATIVE_PAGES = {
   InstitutionView: { component: InstitutionDetailScreen, title: 'Institution' },
+  ChallengesPage: { component: MobileChallengesScreen, title: 'Défis du moment' },
+  HousesRankingPage: { component: MobileHousesRankingScreen, title: 'Classement des maisons' },
+  HouseStatsPage: { component: MobileHouseScreen, title: 'Maison' },
 }
 
 const route = useRoute()
@@ -98,9 +118,10 @@ const authStore = useAuthStore()
 const store = useMobileShellStore()
 const notifications = useMobileNotificationsStore()
 const stories = useMobileStoriesStore()
+const institutionsView = useMobileInstitutionsStore()
 const rootRef = ref(null)
 
-useKeyboardInset(rootRef)
+useKeyboardInset(rootRef, undefined, (open) => store.setKeyboardOpen(open))
 
 const userId = computed(() => {
   const id = authStore.user?.id
@@ -114,6 +135,13 @@ const nativeScreen = computed(() => {
 })
 const chrome = computed(() => route.meta?.mobileChrome !== 'none')
 const canGoBack = computed(() => store.canGoBack)
+// Barre d'onglets cachée : tâche plein écran (route ou écran qui le déclare),
+// clavier ouvert, ou défilement vers le bas dans une longue liste. Jamais sur la carte.
+const tabBarHidden = computed(() => {
+  if (route.meta?.mobileImmersive) return true
+  if (store.immersiveCount > 0 || store.keyboardOpen) return true
+  return store.barsHidden && nativeScreen.value !== 'map'
+})
 const showHeader = computed(() => nativeTabs.find((tab) => tab.key === nativeScreen.value)?.header !== false)
 
 // Un onglet mobile reste monté une fois visité : on y revient sans rechargement.
@@ -143,6 +171,18 @@ const unmarkLeaving = (el) => {
   el.removeAttribute?.('aria-hidden')
   el.removeAttribute?.('inert')
 }
+
+// Anciennes pages remplacées par une vue mobile : on y renvoie.
+const MOBILE_REDIRECTS = {
+  DocumentsPFP: () => {
+    institutionsView.view = 'documents'
+    return '/institution'
+  },
+}
+watch(() => route.name, (name) => {
+  const redirect = MOBILE_REDIRECTS[name]
+  if (redirect) router.replace(redirect())
+}, { immediate: true })
 
 // --- Synchronisation avec le routeur -------------------------------------
 watch(userId, (id) => {
@@ -192,6 +232,24 @@ function selectTab(key) {
 
 provide(MOBILE_SHELL_KEY, { open: openOverlay, close: closeOverlay, goBack })
 
+// Fenêtres des pages existantes : panneaux du bas, fermés par le retour du téléphone.
+useDialogsAsSheets({ open: openOverlay, close: closeOverlay, overlayNames: () => store.overlayNames })
+
+// --- Retour par glissement depuis le bord gauche (application installée sur iPhone)
+// Sur un panneau du bas, le geste ne fait rien : on le ferme en le glissant vers le bas.
+const topOverlayScreen = () => {
+  const layers = rootRef.value?.querySelectorAll('.m-shell__overlays > *')
+  const top = layers?.[layers.length - 1]
+  return top?.matches?.('.m-screen:not(.m-screen--modal)') ? top : null
+}
+const currentPageElement = () => [...(rootRef.value?.querySelectorAll('.m-shell__views > .m-page') || [])]
+  .find((el) => !el.hasAttribute('aria-hidden') && el.style.display !== 'none') || null
+useEdgeSwipeBack(rootRef, {
+  enabled: () => (store.overlays.length ? Boolean(topOverlayScreen()) : store.canGoBack && !nativeScreen.value),
+  target: () => (store.overlays.length ? topOverlayScreen() : currentPageElement()),
+  onBack: goBack,
+})
+
 // --- En-tête ---------------------------------------------------------------
 // Les pages existantes annoncent leur titre dans l'onglet du navigateur une
 // fois affichées : on le reprend dans l'en-tête.
@@ -228,12 +286,10 @@ function onHeaderAction(key) {
 }
 
 // --- Thème -----------------------------------------------------------------
-// Le thème clair est une feuille de style activée à la demande : on regarde
-// laquelle est en service pour ajuster les couleurs d'accent du texte.
+// Thème affiché (service unique) : ajuste les couleurs d'accent du texte.
 const lightTheme = ref(false)
 const detectTheme = () => {
-  const light = document.querySelector('link[data-theme-link="heds"][data-theme-scheme="light"]')
-  lightTheme.value = Boolean(light && !light.disabled && light.media !== 'not all')
+  lightTheme.value = currentScheme() === 'light'
 }
 watch(() => route.fullPath, detectTheme)
 window.addEventListener('heds:theme-change', detectTheme)
@@ -278,6 +334,7 @@ onBeforeUnmount(() => {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  overscroll-behavior: none;
   background: var(--m-bg);
   color: var(--m-fg);
   font-family: var(--font-family, 'Poppins', system-ui, sans-serif);
@@ -294,6 +351,16 @@ onBeforeUnmount(() => {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+}
+/* La barre d'onglets passe par-dessus le bas des écrans (elle peut s'y cacher) :
+   chaque zone qui défile garde en bas la place de la barre, cachée ou non,
+   pour que le contenu ne saute pas. */
+.m-shell {
+  --m-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --m-tabbar-space: 0px;
+}
+.m-shell--with-tabs {
+  --m-tabbar-space: calc(57px + var(--m-safe-bottom));
 }
 .m-shell__overlays {
   display: contents;
@@ -564,6 +631,27 @@ onBeforeUnmount(() => {
   overflow: hidden !important;
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
+}
+
+/* Pages existantes : titres de section à la taille d'une application (certains
+   montaient à 32 px, plus gros que le titre de l'en-tête). */
+.m-shell .m-page:not(.m-page--bare) h2 {
+  font-size: 1.25rem !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0 !important;
+}
+.m-shell .m-page:not(.m-page--bare) h3 {
+  font-size: 1.0625rem !important;
+  line-height: 1.35 !important;
+  letter-spacing: 0 !important;
+}
+/* Pas de texte sélectionné ni de menu d'aperçu au toucher long sur les boutons. */
+.m-shell button,
+.m-shell [role='button'],
+.m-shell [role='tab'] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* Transitions entre écrans d'un même onglet (glissement) ou entre onglets (fondu). */

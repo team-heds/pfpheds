@@ -57,7 +57,7 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   text-decoration: none;
 }
 .school-logo-link:focus-visible,

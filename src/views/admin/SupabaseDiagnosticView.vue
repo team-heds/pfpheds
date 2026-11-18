@@ -369,7 +369,7 @@ const testSignup = async () => {
 
 .diagnostic-header h1 {
   font-size: 2.5rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   margin-bottom: 0.5rem;
 }
 
@@ -401,7 +401,7 @@ const testSignup = async () => {
 
 .diagnostic-section h3 {
   margin-bottom: 1rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .diagnostic-section h3 i {

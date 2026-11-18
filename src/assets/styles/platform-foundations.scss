@@ -76,10 +76,13 @@ textarea {
 }
 
 /* Après un changement de page, le titre reçoit le focus pour les lecteurs
-   d'écran. Ce n'est pas un élément actionnable : pas de cadre visible. */
+   d'écran. Ce n'est pas un élément actionnable : pas de cadre visible.
+   !important : certaines pages (quiz, progression…) encadrent tout
+   « [tabindex]:focus-visible » avec un sélecteur plus fort, ce qui dessinait
+   un cadre jaune autour du titre à chaque arrivée sur la page. */
 :is(h1, h2)[tabindex="-1"]:focus,
 :is(h1, h2)[tabindex="-1"]:focus-visible {
-  outline: none;
+  outline: none !important;
 }
 
 /* Messages éphémères : jamais plus larges que l'écran ni sous l'encoche. */

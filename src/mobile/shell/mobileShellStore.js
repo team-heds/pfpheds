@@ -32,6 +32,12 @@ export const useMobileShellStore = defineStore('mobileShell', {
     direction: 'none',
     scrollTopSignal: 0,
     nextOverlayId: 1,
+    /** Barre d'onglets cachée par le défilement d'une longue liste. */
+    barsHidden: false,
+    /** Tâches plein écran en cours (partie, duel…) : la barre se cache. */
+    immersiveCount: 0,
+    /** Clavier du téléphone ouvert : la barre se cache. */
+    keyboardOpen: false,
   }),
 
   getters: {
@@ -41,9 +47,24 @@ export const useMobileShellStore = defineStore('mobileShell', {
     },
     canGoBack: (state) => (state.stacks[state.activeTab] || []).length > 1,
     overlayNames: (state) => state.overlays.map((overlay) => overlay.name),
+    /** La barre d'onglets doit-elle être cachée (hors règle propre à l'écran) ? */
+    tabBarHidden: (state) => state.barsHidden || state.immersiveCount > 0 || state.keyboardOpen,
   },
 
   actions: {
+    setBarsHidden(hidden) {
+      this.barsHidden = Boolean(hidden)
+    },
+    enterImmersive() {
+      this.immersiveCount += 1
+    },
+    leaveImmersive() {
+      this.immersiveCount = Math.max(0, this.immersiveCount - 1)
+    },
+    setKeyboardOpen(open) {
+      this.keyboardOpen = Boolean(open)
+    },
+
     /** Changement de compte : les piles de l'ancien compte ne doivent pas rester. */
     setUser(userId) {
       const next = userId || null
@@ -83,6 +104,7 @@ export const useMobileShellStore = defineStore('mobileShell', {
       }
 
       this.stacks = { ...this.stacks, [tab]: stack }
+      if (page !== previousPage) this.barsHidden = false
       this.activeTab = tab
       if (tab !== previousTab) direction = 'tab'
       else if (page === previousPage) direction = 'none'

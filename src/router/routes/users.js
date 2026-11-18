@@ -1,3 +1,5 @@
+// Pages remplacées par un écran mobile : chargées seulement quand elles s'affichent.
+import { loadWhenShown } from '@/router/loadWhenShown'
 // Routes gestion utilisateurs, formulaires, institutions & détails
 export default [
   // Listes utilisateurs
@@ -23,7 +25,7 @@ export default [
   { path: '/affectation_stage_etudiant_ba24', component: () => import('@/components/admin/forms/AffectationStageEtudiantBA24.vue'), name: 'AffectationStageEtudiantBA24', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
 
   // Institutions & détails
-  { path: '/institution/:id', component: () => import('@/views/institutions/InstitutionView.vue'), name: 'InstitutionView', props: true, meta: { requiresAuth: true } },
+  { path: '/institution/:id', component: loadWhenShown(() => import('@/views/institutions/InstitutionView.vue'), 'InstitutionView'), name: 'InstitutionView', props: true, meta: { requiresAuth: true } },
   { path: '/institution_details/:id', component: () => import('@/views/admin/institutions/InstitutionDetailsView.vue'), name: 'InstitutionDetails', props: true, meta: { requiresAuth: true } },
   { path: '/etudiant/:id/details', component: () => import('@/components/admin/details/EtudiantDetails.vue'), name: 'EtudiantDetails', props: true, meta: { requiresAuth: true } },
   { path: '/place_details', component: () => import('@/components/admin/details/PlaceDetails.vue'), name: 'place-details', meta: { requiresAuth: true } },

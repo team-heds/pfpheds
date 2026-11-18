@@ -42,7 +42,7 @@ describe('médias d’une publication', () => {
   it('repère les liens à intégrer, sans doublon', () => {
     const embeds = extractEmbeds('Voir https://youtu.be/abcdefghijk et https://www.youtube.com/watch?v=abcdefghijk puis https://open.spotify.com/track/xyz')
     expect(embeds).toEqual([
-      { kind: 'youtube', src: 'https://www.youtube.com/embed/abcdefghijk' },
+      { kind: 'youtube', src: 'https://www.youtube-nocookie.com/embed/abcdefghijk?autoplay=1&playsinline=1', thumbnail: 'https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg' },
       { kind: 'spotify', src: 'https://open.spotify.com/embed/track/xyz' },
     ])
     expect(extractEmbeds('')).toEqual([])

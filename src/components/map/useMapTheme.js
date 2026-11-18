@@ -1,31 +1,15 @@
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useLayout } from '@/layout/composables/layout'
+import { computed } from 'vue'
+import { currentScheme } from '@/theme/themeService'
+import { useTheme } from '@/theme/useTheme'
 
-/**
- * Thème réellement actif : la feuille claire est-elle en service ?
- * En production le thème sombre est intégré à la feuille principale ; seule la claire reste un <link>.
- */
+/** Le thème clair est-il affiché ? (service unique du thème) */
 export function isLightSchemeActive(doc = typeof document !== 'undefined' ? document : null) {
   if (!doc) return false
-  const light = doc.querySelector('link[data-theme-link="heds"][data-theme-scheme="light"]')
-  return Boolean(light && !light.disabled && light.media !== 'not all')
+  return currentScheme(doc) === 'light'
 }
 
-/**
- * `dark` suit le thème de la plateforme : bouton de la barre d'ordinateur (layoutConfig)
- * et réglage de l'application mobile (événement heds:theme-change).
- */
+/** `dark` suit le thème de la plateforme, quel que soit le bouton qui l'a changé. */
 export function useMapTheme() {
-  const { layoutConfig } = useLayout()
-  const dark = ref(!isLightSchemeActive())
-  const refresh = () => { dark.value = !isLightSchemeActive() }
-
-  watch(() => layoutConfig.colorScheme.value, refresh)
-  onMounted(() => {
-    refresh()
-    window.addEventListener('heds:theme-change', refresh)
-  })
-  onBeforeUnmount(() => window.removeEventListener('heds:theme-change', refresh))
-
-  return { dark }
+  const { isDark } = useTheme()
+  return { dark: computed(() => isDark.value) }
 }

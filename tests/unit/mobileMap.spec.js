@@ -4,6 +4,7 @@ import {
   boundsFor,
   distanceKm,
   formatDistance,
+  homeBounds,
   institutionLatLng,
   mappableInstitutions,
   searchOnMap,
@@ -41,6 +42,14 @@ describe('carte mobile : institutions à placer', () => {
     expect(searchOnMap(items, 'vs').map((item) => item.key)).toEqual(['2', '1'])
     expect(searchOnMap(items, 'montreal')).toHaveLength(1)
     expect(searchOnMap(items, 's')).toEqual([])
+  })
+
+  it('ouvre la carte sur le Valais quand la plupart des institutions s’y trouvent', () => {
+    const vs = [[46.21, 7.31], [46.22, 7.32], [46.23, 7.33], [46.24, 7.34], [46.25, 7.35]]
+      .map((latLng) => ({ institution: { Canton: 'VS' }, latLng }))
+    const fr = [{ institution: { Canton: 'FR' }, latLng: [46.8, 7.15] }]
+    expect(homeBounds([...vs, ...fr])).toEqual([[46.21, 7.31], [46.25, 7.35]])
+    expect(homeBounds([...vs.slice(0, 2), ...fr])).toEqual([[46.21, 7.15], [46.8, 7.32]])
   })
 
   it('mesure et écrit une distance', () => {

@@ -49,18 +49,18 @@ export default {
   z-index: 1000;
 }
 .modal {
-  background: #fff;
+  background: var(--surface-card, #fff);
   width: min(720px, 92vw);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   overflow: hidden;
 }
-.modal-header { padding: 16px 20px; border-bottom: 1px solid #eee; }
-.modal-header h2 { margin: 0; font-size: 20px; color: #222; }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--surface-border, #eee); }
+.modal-header h2 { margin: 0; font-size: 20px; color: var(--text-color, #222); }
 .modal-content { padding: 16px 20px; }
-.consigne-text { color: #111827; line-height: 1.6; font-size: 15px; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px 18px 20px; border-top: 1px solid #eee; }
-.btn { cursor: pointer; border-radius: 8px; padding: 8px 12px; border: 1px solid #e5e7eb; background: #f9fafb; color: #111827; font-weight: 600; }
+.consigne-text { color: var(--text-color, #111827); line-height: 1.6; font-size: 15px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px 18px 20px; border-top: 1px solid var(--surface-border, #eee); }
+.btn { cursor: pointer; border-radius: 8px; padding: 8px 12px; border: 1px solid var(--surface-border, #e5e7eb); background: var(--surface-hover, #f9fafb); color: var(--text-color, #111827); font-weight: 600; }
 .btn-primary { background: #0ea5e9; color: white; border-color: #0ea5e9; }
 .btn-primary:hover { background: #0284c7; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3); transition: all 0.2s; }
 

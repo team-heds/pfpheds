@@ -17,17 +17,21 @@ import { bootstrapApplication } from '@/service/appBootstrap';
 import { installPageNavigation } from '@/service/pageNavigationService';
 import { clearPageListContexts, disposePageListContexts } from '@/composables/usePageListContext';
 
+import { primevueLocaleFr } from '@/config/primevueLocaleFr';
 import '@/assets/styles/styles.scss';
 import 'primeflex/primeflex.css';
 import '@/assets/styles/platform-foundations.scss';
 import '@/assets/styles/si-admin-system.scss';
+import { hideAppSplash } from '@/utils/appSplash';
+import { initTheme } from '@/theme/themeService';
+import { useTheme } from '@/theme/useTheme';
 
 const app = createApp(App);
 const pinia = createPinia();
 
 app.use(pinia);
 app.use(router);
-app.use(PrimeVue, { ripple: true });
+app.use(PrimeVue, { ripple: true, locale: primevueLocaleFr });
 app.use(ToastService);
 app.use(DialogService);
 app.use(ConfirmationService);
@@ -57,6 +61,10 @@ app.directive('ripple', Ripple);
 app.directive('styleclass', StyleClass);
 
 async function bootstrap() {
+  // Thème choisi (déjà posé par index.html) : feuilles dans le bon ordre, suivi du système.
+  initTheme();
+  // Garde le réglage de mise en page des anciennes pages accordé au thème.
+  useTheme();
   const authStore = useAuthStore();
   const userStore = useUserStore();
 
@@ -101,6 +109,7 @@ async function bootstrap() {
     waitForRouter: () => router.isReady(),
     mount: () => {
       app.mount('#app');
+      hideAppSplash();
       void pageNavigation.refresh();
     },
     onError: showBootstrapFailure,

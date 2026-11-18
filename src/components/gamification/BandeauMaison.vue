@@ -43,14 +43,15 @@
 
 <script setup>
 import { computed } from 'vue'
+import { HOUSE_TEXTS } from '@/domain/gamification/houseTexts';
 import { useRouter } from 'vue-router'
 
 // Import des images de fond des maisons
-import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
-import FondElaris from '@/assets/maisons/FondElaris.png'
-import FondDoloris from '@/assets/maisons/FondDoloris.png'
-import FondSolencia from '@/assets/maisons/FondSolencia.png'
-import MaitreDuJeuFond from '@/assets/maisons/MaitreDuJeuFond.png'
+import FondHarmonis from '@/assets/maisons/web/FondHarmonis.jpg'
+import FondElaris from '@/assets/maisons/web/FondElaris.jpg'
+import FondDoloris from '@/assets/maisons/web/FondDoloris.jpg'
+import FondSolencia from '@/assets/maisons/web/FondSolencia.jpg'
+import MaitreDuJeuFond from '@/assets/maisons/web/MaitreDuJeuFond.jpg'
 
 const props = defineProps({
   maison: {
@@ -111,31 +112,31 @@ const houseConfig = {
   harmonis: {
     color: '#2E8B57',
     icon: 'pi pi-circle',
-    motto: 'L\'équilibre soigne',
+    motto: HOUSE_TEXTS.harmonis.motto,
     background: FondHarmonis
   },
   elaris: {
     color: '#DC143C',
     icon: 'pi pi-sun',
-    motto: 'Clarifier, guider, apaiser',
+    motto: HOUSE_TEXTS.elaris.motto,
     background: FondElaris
   },
   doloris: {
     color: '#FFD700',
     icon: 'pi pi-heart',
-    motto: 'Comprendre la douleur, c\'est soigner',
+    motto: HOUSE_TEXTS.doloris.motto,
     background: FondDoloris
   },
   solencia: {
     color: '#4169E1',
     icon: 'pi pi-moon',
-    motto: 'Apaiser pour mieux guérir',
+    motto: HOUSE_TEXTS.solencia.motto,
     background: FondSolencia
   },
   gamemaster: {
     color: '#9333ea',
     icon: 'pi pi-crown',
-    motto: 'Voir tout, gérer tout',
+    motto: HOUSE_TEXTS.gamemaster.motto,
     background: MaitreDuJeuFond
   }
 }

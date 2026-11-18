@@ -652,7 +652,7 @@ onMounted(async () => {
 .empty-state {
   text-align: center;
   padding: 3rem;
-  color: #94a3b8;
+  color: var(--text-color-secondary, #94a3b8);
 }
 
 .empty-state i {

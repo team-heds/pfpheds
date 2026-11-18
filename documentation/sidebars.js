@@ -41,6 +41,7 @@ const sidebars = {
         'frontend/ui',
         'frontend/pwa',
         'frontend/mobile-app',
+        'frontend/mobile-app-rules',
       ],
     },
     {

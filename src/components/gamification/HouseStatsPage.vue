@@ -83,7 +83,7 @@
       <!-- Niveau de la maison -->
       <div class="house-level-card">
         <div class="level-info">
-          <div class="level-badge" :style="{ backgroundColor: houseInfo?.color }">
+          <div class="level-badge" :style="{ backgroundColor: houseInfo?.color, color: houseForeground }">
             Niveau {{ houseStats.houseLevel.niveau }}
           </div>
           <h2 class="level-name">{{ houseStats.houseLevel.name }}</h2>
@@ -111,7 +111,7 @@
       <!-- Statistiques générales -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon" :style="{ backgroundColor: houseInfo?.color }">
+          <div class="stat-icon" :style="{ backgroundColor: houseInfo?.color, color: houseForeground }">
             <i class="pi pi-users"></i>
           </div>
           <div class="stat-content">
@@ -121,7 +121,7 @@
         </div>
         
         <div class="stat-card">
-          <div class="stat-icon" :style="{ backgroundColor: houseInfo?.color }">
+          <div class="stat-icon" :style="{ backgroundColor: houseInfo?.color, color: houseForeground }">
             <i class="pi pi-star"></i>
           </div>
           <div class="stat-content">
@@ -131,7 +131,7 @@
         </div>
         
         <div v-if="houseStats.averageLevel != null" class="stat-card">
-          <div class="stat-icon" :style="{ backgroundColor: houseInfo?.color }">
+          <div class="stat-icon" :style="{ backgroundColor: houseInfo?.color, color: houseForeground }">
             <i class="pi pi-chart-line"></i>
           </div>
           <div class="stat-content">
@@ -185,12 +185,13 @@ import gamificationServiceSupabase from '@/service/gamificationServiceSupabase'
 import Navbar from '@/components/common/utils/Navbar.vue'
 import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
+import { getReadableTextColor } from '@/utils/colorContrast'
 
 // Import des images de fond des maisons
-import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
-import FondElaris from '@/assets/maisons/FondElaris.png'
-import FondDoloris from '@/assets/maisons/FondDoloris.png'
-import FondSolencia from '@/assets/maisons/FondSolencia.png'
+import FondHarmonis from '@/assets/maisons/web/FondHarmonis.jpg'
+import FondElaris from '@/assets/maisons/web/FondElaris.jpg'
+import FondDoloris from '@/assets/maisons/web/FondDoloris.jpg'
+import FondSolencia from '@/assets/maisons/web/FondSolencia.jpg'
 
 const route = useRoute()
 const toast = useToast()
@@ -210,6 +211,9 @@ const houseImages = {
 }
 
 // Image de fond de la maison
+// Texte lisible sur la couleur de la maison (contraste d'au moins 4,5:1).
+const houseForeground = computed(() => getReadableTextColor(houseInfo.value?.color))
+
 const houseBackgroundImage = computed(() => {
   return houseImages[houseName] || FondHarmonis
 })
@@ -346,7 +350,7 @@ onMounted(() => {
 
 .house-banner {
   padding: 4rem 1rem;
-  color: white;
+  color: var(--text-color, white);
   position: relative;
   overflow: hidden;
   background-size: cover;
@@ -430,7 +434,7 @@ onMounted(() => {
 .house-level-badge {
   display: inline-block;
   background: rgba(255, 255, 255, 0.2);
-  color: white;
+  color: var(--text-color, white);
   padding: 0.8rem 2rem;
   border-radius: 30px;
   font-weight: bold;
@@ -441,7 +445,7 @@ onMounted(() => {
 }
 
 .level-text {
-  color: white;
+  color: var(--text-color, white);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -518,7 +522,7 @@ onMounted(() => {
 .level-name {
   font-size: 2rem;
   margin: 0 0 1.5rem 0;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .xp-bar {
@@ -540,7 +544,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   font-size: 0.9rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .max-level {
@@ -584,12 +588,12 @@ onMounted(() => {
 .stat-content h3 {
   font-size: 1.8rem;
   margin: 0;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .stat-content p {
   margin: 0;
-  color: white;
+  color: var(--text-color, white);
   font-size: 0.9rem;
 }
 
@@ -602,7 +606,7 @@ onMounted(() => {
 
 .members-ranking h2 {
   margin: 0 0 1.5rem 0;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .member-item {
@@ -635,7 +639,7 @@ onMounted(() => {
 .rank-number {
   font-weight: bold;
   font-size: 1.2rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .pi-crown.gold { color: #f1c40f; }
@@ -644,14 +648,14 @@ onMounted(() => {
 
 .member-info h4 {
   margin: 0 0 0.5rem 0;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .member-details {
   display: flex;
   gap: 1rem;
   font-size: 0.9rem;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .streak {
@@ -667,7 +671,7 @@ onMounted(() => {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
-  color: white;
+  color: var(--text-color, white);
 }
 
 .error-state i {

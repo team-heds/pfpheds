@@ -30,3 +30,16 @@ export function markInstallPromptDismissed(storage = window.localStorage, now = 
     // Stockage indisponible (navigation privée) : l'invitation reviendra simplement.
   }
 }
+
+/**
+ * L'invitation d'installation n'apparaît qu'une fois connecté, hors des pages
+ * de connexion et plein écran : sur iPhone, elle recouvrait le bouton
+ * « Se connecter » et s'affichait aussi aux visiteurs des pages publiques.
+ */
+export function isInstallPromptAllowed(userId, routeMeta = {}) {
+  const meta = routeMeta || {}
+  return Boolean(userId)
+    && userId !== 'guest-user'
+    && meta.hideMobileNav !== true
+    && meta.immersive !== true
+}

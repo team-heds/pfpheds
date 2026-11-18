@@ -600,7 +600,7 @@ async function testEnvironmentVariables() {
 
 .page-header h1 {
   margin: 0 0 0.5rem 0;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .page-header p {

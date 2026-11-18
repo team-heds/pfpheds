@@ -108,7 +108,7 @@ declare
   v_row public.alpinphysio_partnership_requests%rowtype;
   v_count integer;
 begin
-  select count(*) into v_count from public.alpinphysio_partnership_requests where email like '%@example.invalid';
+  select count(*) into v_count from public.alpinphysio_partnership_requests where email like '%@example.invalid' and created_at = now();
   if v_count <> 1 then
     raise exception 'Exactly one stored request expected (honeypot and invalid ones dropped), got %', v_count;
   end if;
@@ -136,14 +136,14 @@ declare
   v_refused boolean := false;
 begin
   insert into public.alpinphysio_partnership_requests (organization, contact_name, email)
-  select 'Lot ' || n, 'Contact ' || n, 'lot' || n || '@example.invalid' from generate_series(1, 30) n;
+  select 'Lot ' || n, 'Contact ' || n, 'lot' || n || '@example.invalid' from generate_series(1, 100) n;
   begin
     perform public.submit_alpinphysio_partnership_request(jsonb_build_object(
       'organization', 'Une de trop', 'contact_name', 'Personne', 'email', 'trop@example.invalid'));
   exception when raise_exception then v_refused := true;
   end;
   if not v_refused then
-    raise exception 'More than 30 requests per hour must be refused';
+    raise exception 'More than 100 requests per hour must be refused';
   end if;
 end
 $flood$;

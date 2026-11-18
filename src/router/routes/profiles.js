@@ -1,5 +1,7 @@
 import { profileAccessGuard } from '@/router/guards/profileAccessGuard'
 import { gamificationFeatures } from '@/config/gamificationFeatures'
+// Pages remplacées par un écran mobile : chargées seulement quand elles s'affichent.
+import { loadWhenShown } from '@/router/loadWhenShown'
 
 const badgesChallengesGuard = () => (
   gamificationFeatures.userJourney && gamificationFeatures.badgesChallenges
@@ -9,16 +11,16 @@ const badgesChallengesGuard = () => (
 
 // Routes profils, utilisateurs & gamification
 export default [
-  { path: '/profile/:id', component: () => import('@/views/users/ProfileView.vue'), name: 'Profile', beforeEnter: profileAccessGuard, meta: { requiresAuth: true } },
+  { path: '/profile/:id', component: loadWhenShown(() => import('@/views/users/ProfileView.vue'), 'ProfileView'), name: 'Profile', beforeEnter: profileAccessGuard, meta: { requiresAuth: true } },
   { path: '/profilAdmin/:id', component: () => import('@/views/admin/ProfileAdminView.vue'), name: 'ProfileAdmin', beforeEnter: profileAccessGuard, meta: { requiresAuth: true, need: ['admin', 'house_coach'] } },
   { path: '/settings', component: () => import('@/views/users/SettingsView.vue'), name: 'SettingView', meta: { requiresAuth: true } },
-  { path: '/hes-house-quiz', component: () => import('@/views/users/HESHouseQuizView.vue'), name: 'HESHouseQuizView', meta: { requiresAuth: true } },
-  { path: '/houses/:houseName/stats', component: () => import('@/components/gamification/HouseStatsPage.vue'), name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
-  { path: '/houses/ranking', component: () => import('@/components/gamification/HousesRankingPage.vue'), name: 'HousesRankingPage', meta: { requiresAuth: true } },
+  { path: '/hes-house-quiz', component: () => import('@/views/users/HESHouseQuizView.vue'), name: 'HESHouseQuizView', meta: { requiresAuth: true, title: 'Quiz des maisons' } },
+  { path: '/houses/:houseName/stats', component: loadWhenShown(() => import('@/components/gamification/HouseStatsPage.vue'), 'HouseStatsPage'), name: 'HouseStatsPage', props: true, meta: { requiresAuth: true } },
+  { path: '/houses/ranking', component: loadWhenShown(() => import('@/components/gamification/HousesRankingPage.vue'), 'HousesRankingPage'), name: 'HousesRankingPage', meta: { requiresAuth: true } },
   { path: '/gamification-profile', component: () => import('@/components/gamification/GamificationProfilePage.vue'), name: 'GamificationProfileSelf', beforeEnter: () => gamificationFeatures.userJourney ? true : { name: 'QuestsPage' }, meta: { requiresAuth: true, title: 'Ma progression' } },
   { path: '/gamification-profile/:id', component: () => import('@/components/gamification/GamificationProfilePage.vue'), name: 'GamificationProfilePage', props: true, beforeEnter: profileAccessGuard, meta: { requiresAuth: true } },
   { path: '/achievements', component: () => import('@/components/gamification/AchievementsPage.vue'), name: 'AchievementsPage', beforeEnter: badgesChallengesGuard, meta: { requiresAuth: true } },
-  { path: '/challenges', component: () => import('@/components/gamification/ChallengesPage.vue'), name: 'ChallengesPage', beforeEnter: badgesChallengesGuard, meta: { requiresAuth: true } },
+  { path: '/challenges', component: loadWhenShown(() => import('@/components/gamification/ChallengesPage.vue'), 'ChallengesPage'), name: 'ChallengesPage', beforeEnter: badgesChallengesGuard, meta: { requiresAuth: true } },
   { path: '/mentorat', component: () => import('@/views/mentoring/MentoringView.vue'), name: 'MentoringView', beforeEnter: () => gamificationFeatures.mentoring ? true : { path: '/outils', replace: true }, meta: { requiresAuth: true, title: 'Mentorat' } },
   { path: '/quests', component: () => import('@/components/gamification/QuestsPage.vue'), name: 'QuestsPage', meta: { requiresAuth: true } },
   { path: '/gamification/quests', redirect: { name: 'QuestsPage' } },

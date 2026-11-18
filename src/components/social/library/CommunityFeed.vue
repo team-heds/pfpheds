@@ -453,7 +453,7 @@ export default {
 
 .upload-button:hover {
   background-color: var(--primary-color-light);
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .upload-button .pi {

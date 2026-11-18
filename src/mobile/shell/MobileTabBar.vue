@@ -1,5 +1,5 @@
 <template>
-  <nav class="m-tabs" aria-label="Navigation principale">
+  <nav class="m-tabs" :class="{ 'is-hidden': hidden }" aria-label="Navigation principale" @focusin="emit('reveal')">
     <button
       v-for="tab in tabs"
       :key="tab.key"
@@ -28,8 +28,11 @@ const props = defineProps({
   active: { type: String, required: true },
   /** Photo de profil affichée sur l'onglet Profil (pictogramme à défaut). */
   avatarUrl: { type: String, default: null },
+  /** Barre glissée sous le bord (défilement, tâche plein écran, clavier). */
+  hidden: { type: Boolean, default: false },
 })
-const emit = defineEmits(['select'])
+// `reveal` : le clavier arrive sur la barre cachée, elle doit réapparaître.
+const emit = defineEmits(['select', 'reveal'])
 
 const avatarFailed = ref(false)
 watch(() => props.avatarUrl, () => {
@@ -39,19 +42,36 @@ watch(() => props.avatarUrl, () => {
 
 <style scoped>
 .m-tabs {
+  /* Ancrée au bas de l'écran, par-dessus le contenu. Le fond descend jusqu'au
+     bord physique (barre d'accueil de l'iPhone comprise) ; les pictogrammes
+     restent au-dessus de cette zone. */
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
   display: flex;
-  flex-shrink: 0;
-  /* Sous les icônes, juste la place de la barre d'accueil de l'iPhone (pas toute
-     la zone sûre, qui laissait un grand vide). */
-  padding: 4px max(8px, env(safe-area-inset-right, 0px)) max(4px, calc(env(safe-area-inset-bottom, 0px) - 14px)) max(8px, env(safe-area-inset-left, 0px));
+  padding: 2px max(8px, env(safe-area-inset-right, 0px)) var(--m-safe-bottom, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
   border-top: 1px solid var(--m-line);
   background: var(--m-surface);
+  transition: transform 220ms cubic-bezier(0, 0, 0.2, 1);
+  will-change: transform;
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .m-tabs {
+    background: color-mix(in srgb, var(--m-surface) 86%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    backdrop-filter: blur(20px) saturate(140%);
+  }
+}
+.m-tabs.is-hidden {
+  transform: translateY(100%);
 }
 .m-tabs__item {
   position: relative;
   flex: 1 1 0;
   min-width: 0;
-  min-height: 48px;
+  min-height: 52px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -114,6 +134,7 @@ watch(() => props.avatarUrl, () => {
   object-fit: cover;
 }
 @media (prefers-reduced-motion: reduce) {
+  .m-tabs,
   .m-tabs__item {
     transition: none;
   }

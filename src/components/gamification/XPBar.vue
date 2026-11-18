@@ -40,10 +40,10 @@
 import { computed, ref, watch } from 'vue'
 
 // Import des images de fond des maisons
-import FondHarmonis from '@/assets/maisons/FondHarmonis.png'
-import FondElaris from '@/assets/maisons/FondElaris.png'
-import FondDoloris from '@/assets/maisons/FondDoloris.png'
-import FondSolencia from '@/assets/maisons/FondSolencia.png'
+import FondHarmonis from '@/assets/maisons/web/FondHarmonis.jpg'
+import FondElaris from '@/assets/maisons/web/FondElaris.jpg'
+import FondDoloris from '@/assets/maisons/web/FondDoloris.jpg'
+import FondSolencia from '@/assets/maisons/web/FondSolencia.jpg'
 
 const props = defineProps({
   xp: {

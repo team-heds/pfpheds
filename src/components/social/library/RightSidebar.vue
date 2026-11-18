@@ -278,7 +278,7 @@ export default {
 }
 
 .communities-header h4.clickable:hover {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .communities-list {

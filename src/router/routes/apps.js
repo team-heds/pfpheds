@@ -1,4 +1,6 @@
 import { gamificationFeatures } from '@/config/gamificationFeatures'
+// Pages remplacées par un écran mobile : chargées seulement quand elles s'affichent.
+import { loadWhenShown } from '@/router/loadWhenShown'
 
 const featureGuard = (feature) => () => (
   gamificationFeatures[feature] ? true : { path: '/outils', replace: true }
@@ -14,7 +16,12 @@ export default [
   { path: '/notes', component: () => import('@/views/apps/notes/NotesWorkspaceView.vue'), name: 'NotesWorkspaceView', meta: { requiresAuth: true } },
   // Scan d'un QR code de la plateforme (présence à un événement). Le lien du QR mène ici :
   // sans session, on passe par la connexion puis on revient valider le code.
-  { path: '/scan', component: () => import('@/views/apps/scan/ScanCodeView.vue'), name: 'ScanCode', beforeEnter: featureGuard('eventCheckin'), meta: { requiresAuth: true, loginRedirect: true, title: 'Présences' } },
+  { path: '/scan', component: () => import('@/views/apps/scan/ScanCodeView.vue'), name: 'ScanCode', beforeEnter: featureGuard('eventCheckin'), meta: { requiresAuth: true, loginRedirect: true, mobileImmersive: true, title: 'Présences' } },
+  { path: '/chasse-au-tresor', component: () => import('@/views/apps/treasure/TreasureHuntListView.vue'), name: 'TreasureHuntList', beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, title: 'Chasse au trésor' } },
+  { path: '/chasse-au-tresor/gestion', component: () => import('@/views/apps/treasure/TreasureHuntManageView.vue'), name: 'TreasureHuntManage', beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, title: 'Gérer les chasses au trésor' } },
+  { path: '/chasse-au-tresor/gestion/:id', component: () => import('@/views/apps/treasure/TreasureHuntEditorView.vue'), name: 'TreasureHuntEditor', props: true, beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, title: 'Gestion de la chasse' } },
+  { path: '/chasse-au-tresor/gestion/:id/impression', component: () => import('@/views/apps/treasure/TreasureHuntPrintView.vue'), name: 'TreasureHuntPrint', props: true, beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, immersive: true, hideMobileNav: true, title: 'QR codes de la chasse au trésor' } },
+  { path: '/chasse-au-tresor/:id', component: () => import('@/views/apps/treasure/TreasureHuntPlayView.vue'), name: 'TreasureHuntPlay', props: true, beforeEnter: featureGuard('treasureHunt'), meta: { requiresAuth: true, title: 'Chasse au trésor' } },
   { path: '/events', component: () => import('@/views/apps/events/EventManagementView.vue'), name: 'EventManagementView', meta: { requiresAuth: true } },
   { path: '/event-management', component: () => import('@/views/apps/events/EventManagementView.vue'), name: 'EventManagement', meta: { requiresAuth: true } },
   { path: '/tools', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },
@@ -25,7 +32,8 @@ export default [
   { path: '/quiz', component: () => import('@/views/apps/quiz/QuizListView.vue'), name: 'QuizListView', beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true } },
   { path: '/quiz/gestion', component: () => import('@/views/apps/quiz/QuizManageView.vue'), name: 'QuizManageView', beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true } },
   { path: '/quiz/gestion/:id', component: () => import('@/views/apps/quiz/QuizEditorView.vue'), name: 'QuizEditorView', props: true, beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true } },
-  { path: '/quiz/:id', component: () => import('@/views/apps/quiz/QuizPlayView.vue'), name: 'QuizPlayView', props: true, beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true } },
+  { path: '/quiz/:id', component: () => import('@/views/apps/quiz/QuizPlayView.vue'), name: 'QuizPlayView', props: true, beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true, mobileImmersive: true } },
+  { path: '/duels', component: () => import('@/views/apps/quiz/QuizDuelView.vue'), name: 'QuizDuelView', beforeEnter: featureGuard('quizDuel'), meta: { requiresAuth: true, title: 'Duels de quiz' } },
   { path: '/rom-runner', component: () => import('@/views/apps/rom-runner/RomRunnerView.vue'), name: 'RomRunnerView', beforeEnter: featureGuard('romRunner'), meta: { requiresAuth: true } },
   { path: '/chatbot', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotView', meta: { requiresAuth: true } },
   { path: '/tournois', component: () => import('@/views/apps/tools/TournoisView.vue'), name: 'TournoisView', beforeEnter: featureGuard('tournaments'), meta: { requiresAuth: true } },
@@ -51,7 +59,7 @@ export default [
   // Mobile spécifique
   { path: '/create', component: () => import('@/components/social/library/CreateContentMobile.vue'), name: 'CreateContentMobile', meta: { mobileOnly: true, mobileChrome: 'none' } },
   { path: '/mobile-outils', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsView', meta: { requiresAuth: true, mobileOnly: true, title: 'Mon espace' } },
-  { path: '/mobile-search', component: () => import('@/views/apps/tools/MobileSearchView.vue'), name: 'MobileSearchView', meta: { requiresAuth: true, mobileOnly: true, title: 'Recherche' } },
+  { path: '/mobile-search', component: loadWhenShown(() => import('@/views/apps/tools/MobileSearchView.vue'), 'MobileSearchView'), name: 'MobileSearchView', meta: { requiresAuth: true, mobileOnly: true, title: 'Recherche' } },
   { path: '/list', component: () => import('@/components/media/audio/ListComponent.vue'), name: 'ListComponent', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
 
   // Routes spéciales

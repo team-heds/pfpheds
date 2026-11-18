@@ -227,7 +227,7 @@ onBeforeUnmount(destroy)
   inset: 8px;
   display: grid;
   place-items: center;
-  border: 3px solid #071426;
+  border: 3px solid var(--surface-card, #071426);
   border-radius: 50%;
   background: var(--iloc-brand);
   color: var(--iloc-on-brand);

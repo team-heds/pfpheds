@@ -18,7 +18,7 @@
       <MobileAppShell v-if="mobileAppActive" />
       <router-view v-else />
       <VersionningComponent v-if="!isImmersiveRoute" />
-      <PwaInstallPrompt />
+      <PwaInstallPrompt v-if="installPromptAllowed" />
       <OfflineBanner />
       <PwaUpdatePrompt />
       <!-- Intégration du widget ConvAI -->
@@ -57,6 +57,8 @@ import { gamificationFeatures } from '@/config/gamificationFeatures';
 import { runtimeFeatures } from '@/config/runtimeFeatures';
 import gamificationIntegration from '@/service/gamificationIntegration';
 import { recordDailyVisit } from '@/utils/dailyVisit';
+import { isInstallPromptAllowed } from '@/utils/pwaInstall';
+import { installStandaloneViewportFix } from '@/mobile/shell/standaloneViewport';
 
 export default {
   name: "App",
@@ -103,6 +105,9 @@ export default {
     isImmersiveRoute() {
       return this.$route.meta?.immersive === true;
     },
+    installPromptAllowed() {
+      return isInstallPromptAllowed(this.gamificationUserId, this.$route.meta);
+    },
     showHeaderIconsMobile() {
       const routeName = this.$route.name;
       // Liste des pages où on NE VEUT PAS les icônes
@@ -121,6 +126,14 @@ export default {
     }
   },
   watch: {
+    // Sous la barre d'onglets, aucune bande d'une autre couleur : la page prend
+    // la couleur de la barre, et ne rebondit plus (seul l'écran courant défile).
+    mobileAppActive: {
+      immediate: true,
+      handler(active) {
+        document.documentElement.classList.toggle('m-app', Boolean(active));
+      },
+    },
     // Connexion du jour : comptée à l'ouverture, même si la session est restée active.
     gamificationUserId: {
       immediate: true,
@@ -144,6 +157,8 @@ export default {
     },
   },
   mounted() {
+    // iPhone, application installée : hauteur de l'écran entier (voir standaloneViewport.js).
+    this.removeStandaloneViewportFix = installStandaloneViewportFix();
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     // Simuler un chargement de données (par exemple, lors du démarrage de l'application)
     setTimeout(() => {
@@ -154,6 +169,7 @@ export default {
     this.expirationCheckInterval = questExpirationService.startPeriodicCheck(5)
   },
   beforeUnmount() {
+    this.removeStandaloneViewportFix?.();
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     // 🛑 Arrêter proprement la vérification à la fermeture de l'app
     if (this.expirationCheckInterval) {
@@ -241,9 +257,21 @@ export default {
    laissait un espace sous la barre d'onglets. */
 .app-shell.app-shell--mobile-app {
   position: fixed;
-  inset: 0;
+  inset: 0 0 auto 0;
   width: auto;
-  height: auto;
+  /* iPhone, application installée : iOS peut annoncer une fenêtre plus courte que
+     l'écran, de la hauteur de la barre d'état, et la coque s'arrêtait avant le bas.
+     --app-height, posée par standaloneViewport.js, prend alors l'écran entier. */
+  height: var(--app-height, 100%);
+  /* Zone de l'encoche (padding du haut) : couleur de l'en-tête. */
+  background: var(--surface-ground);
+  overscroll-behavior: none;
+}
+
+:global(html.m-app),
+:global(html.m-app body) {
+  background: var(--surface-card);
+  overscroll-behavior: none;
 }
 
 /* Application mobile : la coque occupe tout l'espace et gère son propre défilement. */

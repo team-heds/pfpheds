@@ -6,13 +6,17 @@ const QUICK_TILES = [
   { key: 'challenges', icon: 'target', label: 'Défis et quêtes', detail: 'Gagner des points pour ta maison', to: '/challenges', fallbackTo: '/quests', feature: ['userJourney', 'badgesChallenges'] },
   { key: 'word', icon: 'letters', label: 'Mot de la semaine', detail: 'Six essais pour le trouver', to: '/mot-de-la-semaine', feature: ['wordOfDay'] },
   { key: 'quiz', icon: 'quiz', label: 'Quiz', detail: 'Réviser et suivre ton classement', to: '/quiz', feature: ['quizzes'] },
+  { key: 'duel', icon: 'bolt', label: 'Duel de quiz', detail: '5 questions contre un autre joueur', to: '/duels', feature: ['quizDuel'] },
   { key: 'mentoring', icon: 'users', label: 'Mentorat', detail: 'Proposer ou réserver un créneau', to: '/mentorat', feature: ['mentoring'] },
   { key: 'documents', icon: 'file', label: 'Documents PFP', detail: 'Guides et formulaires', action: 'documents' },
   { key: 'scan', icon: 'qr', label: 'Scanner', detail: 'Valider ta présence à un événement', to: '/scan', feature: ['eventCheckin'] },
+  { key: 'treasure', icon: 'map', label: 'Chasse au trésor', detail: 'QR codes cachés sur le campus', to: '/chasse-au-tresor', feature: ['treasureHunt'] },
 ]
 
 // Accès déjà présents ailleurs dans l'application mobile (onglets ou tuiles).
 const COVERED_DESTINATIONS = new Set(['institutions', 'documents', 'map', 'profile', 'mentoring', 'quizzes'])
+// Pages qui ne fonctionnent pas encore dans l'application (anciennes données Firebase).
+const UNAVAILABLE_ON_MOBILE = new Set(['notes'])
 
 /** Tuiles à afficher selon les réglages actifs et les pages existantes. */
 export function buildQuickTiles({ features = {}, hasPath = () => true } = {}) {
@@ -26,7 +30,7 @@ export function buildQuickTiles({ features = {}, hasPath = () => true } = {}) {
 
 /** Autres accès de la personne (votation, événements, outils, administration…). */
 export function otherDestinations(destinations = []) {
-  return destinations.filter((item) => !COVERED_DESTINATIONS.has(item.key))
+  return destinations.filter((item) => !COVERED_DESTINATIONS.has(item.key) && !UNAVAILABLE_ON_MOBILE.has(item.key))
 }
 
 const normalize = (value) => String(value ?? '')

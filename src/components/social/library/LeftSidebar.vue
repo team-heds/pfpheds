@@ -182,7 +182,9 @@ import { gamificationFeatures } from '@/config/gamificationFeatures';
 
 const AsyncEventDetail = defineAsyncComponent(() => import('@/components/events/EventDetail.vue'));
 
-const defaultAvatar = '@/assets/images/avatar/01.jpg';
+// Import (et non chaîne « @/… ») : sinon l'image n'est jamais trouvée et le
+// navigateur affiche une image cassée avec le texte « Avatar ».
+import defaultAvatar from '@/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
@@ -687,7 +689,7 @@ export default {
 }
 
 .profile-link:hover {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .user-profile {
@@ -776,7 +778,7 @@ export default {
 }
 
 .profile-action:hover {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   background-color: var(--surface-hover);
 }
 
@@ -787,7 +789,7 @@ export default {
   height: 2rem;
   border-radius: 0.625rem;
   background: color-mix(in srgb, var(--primary-color) 12%, transparent);
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .profile-action__arrow {
@@ -828,7 +830,7 @@ export default {
   gap: 0.5rem;
   font-size: 1rem;
   font-weight: 500;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   background: none;
   border: none;
   cursor: pointer;
@@ -868,7 +870,7 @@ export default {
 
 /* Style des badges de type d'événement */
 .event-type-badge {
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
   border: 1px solid var(--primary-color);
   padding: 0.3rem 0.8rem;
   border-radius: 1rem;

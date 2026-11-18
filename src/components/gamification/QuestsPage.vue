@@ -383,10 +383,10 @@ const viewMode = ref('grid') // 'grid' ou 'list'
 
 // House configuration (identique à GamificationProfilePage)
 const houseConfig = {
-  'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert - "L'équilibre soigne"
-  'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge - "Clarifier, guider, apaiser"
-  'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or - "Comprendre la douleur, c'est soigner"
-  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu - "Apaiser pour mieux guérir"
+  'Harmonis': { name: 'Harmonis', color: '#2E8B57' }, // Vert
+  'Elaris': { name: 'Elaris', color: '#DC143C' }, // Rouge
+  'Doloris': { name: 'Doloris', color: '#FFD700' }, // Jaune/Or
+  'Solencia': { name: 'Solencia', color: '#4169E1' } // Bleu
 }
 
 // Normalisation des noms de maisons (identique à GamificationProfilePage)
@@ -760,7 +760,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--surface-border);
   border-radius: 16px;
 }
-.quest-load-error > i { color: var(--primary-color); font-size: 1.5rem; }
+.quest-load-error > i { color: var(--primary-text-color, var(--primary-color)); font-size: 1.5rem; }
 .quest-load-error > div { flex: 1 1 16rem; min-width: 0; }
 .quest-load-error h2 { margin: 0 0 .5rem; font-size: 1.25rem; color: var(--text-color); }
 .quest-load-error p { margin: 0; color: var(--text-color-secondary); line-height: 1.5; }
@@ -1056,5 +1056,36 @@ onBeforeUnmount(() => {
 .upcoming-text span {
   color: var(--text-color-secondary);
   font-size: 0.85rem;
+}
+
+/* Téléphone : pleine largeur et chiffres sur une ligne (recette du 16.11). */
+@media (max-width: 640px) {
+  .quest-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  /* Les deux onglets tiennent dans la largeur du téléphone, sans défilement de côté. */
+  .quest-tabs {
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .quest-tab {
+    flex: 1 1 auto;
+    gap: 0.3rem;
+    padding: 0.55rem 0.4rem;
+    font-size: 0.8125rem;
+  }
+
+  .quest-tab > .pi {
+    display: none;
+  }
+
+  .quest-tab__count {
+    min-width: 1.25rem;
+    padding: 0.1rem 0.3rem;
+    font-size: 0.6875rem;
+  }
 }
 </style>

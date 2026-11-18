@@ -965,7 +965,7 @@ loadListesEquipes()
   font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  color: var(--primary-color);
+  color: var(--primary-text-color, var(--primary-color));
 }
 
 .empty-state {

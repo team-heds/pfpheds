@@ -116,7 +116,7 @@ watch(() => state.view, (view) => {
 .m-inst__panels :deep(.m-inst-view) {
   position: absolute;
   inset: 0;
-  padding: 0 16px 24px;
+  padding: 0 16px calc(24px + var(--m-tabbar-space, 0px));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
