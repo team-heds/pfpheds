@@ -49,6 +49,10 @@
   padding: clamp(1rem, 2vw, 2rem) !important;
 }
 
+.admin-content:has(> .admin-header .si-page-header) > .si-admin-screen {
+  padding-inline: 0 !important;
+}
+
 .si-admin-screen .dashboard-grid,
 .si-admin-screen > div:not(.loading-container) {
   min-width: 0;

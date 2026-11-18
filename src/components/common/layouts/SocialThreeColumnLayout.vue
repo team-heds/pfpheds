@@ -37,6 +37,9 @@ const centerStyle = computed(() => (
 <style scoped>
 .social-layout {
   --social-side-column: clamp(15rem, 20vw, 25.5rem);
+  width: min(100%, 120rem);
+  box-sizing: border-box;
+  margin-inline: auto;
   --social-side-inset: clamp(0rem, calc((100vw - 64rem) * 0.0625), 4rem);
   display: grid;
   grid-template-columns:

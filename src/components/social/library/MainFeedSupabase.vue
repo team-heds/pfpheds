@@ -686,17 +686,12 @@ export default {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 880px;
-  margin-left: auto;
-  margin-right: auto;
-}
-@media (max-width: 900px) {
-  .main-feed {
-    max-width: 98vw;
-  }
+  /* Largeur de lecture : les publications restent lisibles sur grand écran. */
+  max-width: 55rem;
+  margin-inline: auto;
 }
 .main-feed.community-mode {
-  max-width: 880px;
+  max-width: 55rem;
   width: 100%;
   align-items: stretch;
   height: 85vh;

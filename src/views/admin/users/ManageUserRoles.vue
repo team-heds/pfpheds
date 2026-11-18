@@ -1,5 +1,5 @@
 <template>
-  <AdminLayout>
+  <AdminLayout wide full-width>
     <template #header>
       <PageHeader
         title="Gestion des rôles utilisateurs"

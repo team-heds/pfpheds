@@ -253,7 +253,7 @@ onMounted(async () => {
 .desktop-nav {
   display: flex;
   flex-direction: column;
-  width: min(100%, 90rem);
+  width: min(100%, 120rem);
   margin-inline: auto;
   padding-inline: clamp(1rem, 4vw, 4rem);
 }
