@@ -16,6 +16,7 @@ import {
   fetchOwnCommentAuthor,
   fetchPostComments
 } from '@/service/postCommentsService'
+import { canDeleteComment, postAuthorId } from '@/service/postPermissions'
 
 // Nom et photo de l'utilisateur connecté, chargés une fois pour toutes les publications.
 const ownAuthorCache = new Map()
@@ -176,8 +177,13 @@ export function usePostComments(getPost) {
     }
   }
 
+  /** L'auteur du commentaire ou l'auteur de la publication (même règle que la RLS). */
+  function canDelete(comment) {
+    return canDeleteComment(comment, { userId: userId.value, postAuthorId: postAuthorId(getPost()) })
+  }
+
   async function remove(comment) {
-    if (!requireUser() || comment.user_id !== userId.value || comment.pending) return false
+    if (!requireUser() || !canDelete(comment)) return false
     const { list, removed } = removeCommentTree(state.comments, comment.id)
     state.comments = list
     setCount(state.count - removed.length)
@@ -203,6 +209,7 @@ export function usePostComments(getPost) {
     threads,
     userId,
     canComment: computed(() => Boolean(userId.value)),
+    canDelete,
     expand,
     collapse,
     load,

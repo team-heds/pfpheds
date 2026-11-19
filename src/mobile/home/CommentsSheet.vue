@@ -18,6 +18,8 @@
           :comment="thread"
           :now="now"
           :own="thread.user_id === userId"
+          :deletable="canDelete(thread)"
+          :reply-count="thread.replies.length"
           :confirming="confirmingId === thread.id"
           @reply="startReply(thread)"
           @ask-delete="confirmingId = thread.id"
@@ -31,6 +33,7 @@
               :now="now"
               small
               :own="reply.user_id === userId"
+              :deletable="canDelete(reply)"
               :confirming="confirmingId === reply.id"
               @reply="startReply(reply)"
               @ask-delete="confirmingId = reply.id"
@@ -86,7 +89,7 @@ import { MAX_COMMENT_LENGTH, normalizeCommentText, resolveReplyTarget } from '@/
 const props = defineProps({ post: { type: Object, required: true } })
 const emit = defineEmits(['close'])
 
-const { state, threads, userId, canComment, expand, load, add, remove } = usePostComments(() => props.post)
+const { state, threads, userId, canComment, canDelete, expand, load, add, remove } = usePostComments(() => props.post)
 
 const inputId = `m-comment-input-${String(props.post.id)}`
 const draft = ref('')

@@ -27,12 +27,12 @@
           <button type="button" class="comment-action" @click="emit('reply')">
             Répondre<span class="sr-only"> à {{ comment.display_name || 'ce commentaire' }}</span>
           </button>
-          <template v-if="own">
+          <template v-if="deletable">
             <button v-if="!confirming" type="button" class="comment-action" @click="emit('ask-delete')">
-              Supprimer<span class="sr-only"> mon commentaire</span>
+              Supprimer<span class="sr-only">{{ deleteTarget }}</span>
             </button>
             <span v-else class="comment-confirm" role="group" aria-label="Confirmer la suppression">
-              <span>Supprimer ?</span>
+              <span>{{ confirmLabel }}</span>
               <button type="button" class="comment-action comment-action--danger" @click="emit('delete')">Oui</button>
               <button type="button" class="comment-action" @click="emit('cancel-delete')">Annuler</button>
             </span>
@@ -45,12 +45,15 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatFullDate, formatRelativeTime } from '@/service/postComments'
+import { formatFullDate, formatRelativeTime, formatRepliesLabel } from '@/service/postComments'
 
 const props = defineProps({
   comment: { type: Object, required: true },
   now: { type: Number, required: true },
   own: { type: Boolean, default: false },
+  // Auteur du commentaire ou auteur de la publication : la base applique la même règle.
+  deletable: { type: Boolean, default: false },
+  replyCount: { type: Number, default: 0 },
   small: { type: Boolean, default: false },
   confirming: { type: Boolean, default: false }
 })
@@ -59,6 +62,13 @@ const emit = defineEmits(['reply', 'ask-delete', 'cancel-delete', 'delete'])
 const initial = computed(() => (props.comment.display_name || '?').charAt(0).toUpperCase())
 const relative = computed(() => formatRelativeTime(props.comment.created_at, props.now))
 const fullDate = computed(() => formatFullDate(props.comment.created_at))
+const deleteTarget = computed(() =>
+  props.own ? ' mon commentaire' : ` le commentaire écrit par ${props.comment.display_name || 'cette personne'}`
+)
+// Les réponses partent avec le commentaire : on le dit avant de confirmer.
+const confirmLabel = computed(() =>
+  props.replyCount > 0 ? `Supprimer avec ${formatRepliesLabel(props.replyCount)} ?` : 'Supprimer ?'
+)
 </script>
 
 <style scoped>

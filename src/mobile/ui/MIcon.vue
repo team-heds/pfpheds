@@ -55,6 +55,8 @@ const PATHS = {
   logout: 'M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10',
   play: 'M7 4l13 8-13 8z',
   trash: 'M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13',
+  // Trois points (menu d'actions).
+  more: 'M5 11.2a.8.8 0 100 1.6.8.8 0 000-1.6zM12 11.2a.8.8 0 100 1.6.8.8 0 000-1.6zM19 11.2a.8.8 0 100 1.6.8.8 0 000-1.6z',
 }
 
 const props = defineProps({ name: { type: String, required: true } })

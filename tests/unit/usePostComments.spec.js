@@ -131,8 +131,28 @@ describe('usePostComments', () => {
   it('ne supprime jamais le commentaire de quelqu’un d’autre', async () => {
     const api = setup()
     await api.expand()
+    expect(api.canDelete(api.state.comments[0])).toBe(false)
     await expect(api.remove(api.state.comments[0])).resolves.toBe(false)
     expect(service.deletePostComment).not.toHaveBeenCalled()
     expect(api.state.comments).toHaveLength(1)
+  })
+
+  it('laisse l’auteur de la publication supprimer un commentaire reçu', async () => {
+    service.deletePostComment.mockResolvedValueOnce()
+    const api = setup({ id: 'post-1', IdUser: 'me', comments_count: 1 })
+    await api.expand()
+    expect(api.canDelete(api.state.comments[0])).toBe(true)
+    await expect(api.remove(api.state.comments[0])).resolves.toBe(true)
+    expect(service.deletePostComment).toHaveBeenCalledWith('c1')
+    expect(api.state.comments).toEqual([])
+    expect(api.state.count).toBe(0)
+  })
+
+  it('n’ouvre pas ce droit sur la publication de quelqu’un d’autre', async () => {
+    const api = setup({ id: 'post-1', IdUser: 'someone-else', comments_count: 1 })
+    await api.expand()
+    expect(api.canDelete(api.state.comments[0])).toBe(false)
+    await expect(api.remove(api.state.comments[0])).resolves.toBe(false)
+    expect(service.deletePostComment).not.toHaveBeenCalled()
   })
 })
