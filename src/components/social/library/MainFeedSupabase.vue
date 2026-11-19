@@ -728,6 +728,10 @@ export default {
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
+  /* Sans cette ligne, overflow-y: auto rend aussi l'axe horizontal défilable : un contenu
+     trop large (texte collé, tableau) laissait le trackpad faire glisser le fil hors de
+     l'écran. Le carrousel des stories garde son propre défilement horizontal. */
+  overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: none;
   -ms-overflow-style: none;

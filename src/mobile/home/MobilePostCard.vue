@@ -1,5 +1,10 @@
 <template>
-  <article class="m-post" :aria-label="`Publication de ${authorName}`">
+  <article
+    class="m-post"
+    :class="{ 'is-deleting': deleting }"
+    :aria-label="`Publication de ${authorName}`"
+    :aria-busy="deleting ? 'true' : undefined"
+  >
     <header class="m-post__head">
       <component
         :is="post.IdUser ? 'button' : 'div'"
@@ -19,6 +24,23 @@
           >{{ formatRelativeTime(post.Timestamp, now) }}</time>
         </span>
       </component>
+
+      <!-- Actions de l'auteur seulement (la base applique la même règle). -->
+      <template v-if="canDelete">
+        <button
+          type="button"
+          class="m-icon-button m-post__menu"
+          aria-label="Actions de la publication"
+          aria-haspopup="menu"
+          :aria-controls="menuId"
+          :aria-expanded="menuOpen ? 'true' : 'false'"
+          :disabled="deleting"
+          @click="toggleMenu"
+        >
+          <MIcon name="more" />
+        </button>
+        <Menu :id="menuId" ref="menuRef" :model="menuItems" popup @show="menuOpen = true" @hide="menuOpen = false" />
+      </template>
     </header>
 
     <div class="m-post__content" @pointerup="onContentPointerUp" @dblclick="onContentDoubleClick">
@@ -119,12 +141,22 @@ import { createDoubleTapDetector, isInteractiveTarget } from '@/service/postLike
 import { formatFullDate, formatRelativeTime } from '@/service/postComments'
 import { useMobileShell } from '@/mobile/shell/useMobileShell'
 import { extractEmbeds, initialsOf, plainTextExcerpt, splitPostMedia } from '@/mobile/home/postMedia'
+import Menu from 'primevue/menu'
+import { usePostDelete } from '@/composables/usePostDelete'
 
 const props = defineProps({
   post: { type: Object, required: true },
   /** Horloge partagée du fil : les dates relatives restent justes sans recharger. */
   now: { type: Number, default: () => Date.now() },
 })
+
+// Retrait par l'auteur : menu « ⋯ », confirmation (panneau du bas), retrait du fil.
+const { canDelete, deleting, askDelete } = usePostDelete(() => props.post)
+const menuId = `m-post-${String(props.post.id)}-actions`
+const menuRef = ref(null)
+const menuOpen = ref(false)
+const toggleMenu = (event) => menuRef.value?.toggle(event)
+const menuItems = [{ label: 'Supprimer', icon: 'pi pi-trash', class: 'post-menu-danger', command: askDelete }]
 
 const router = useRouter()
 const shell = useMobileShell()
@@ -255,8 +287,24 @@ async function share() {
   border-radius: var(--m-radius);
   background: var(--m-surface);
 }
+.m-post.is-deleting {
+  opacity: 0.55;
+  pointer-events: none;
+}
 .m-post__head {
-  padding: 10px 14px 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 6px 6px 14px;
+}
+.m-post__menu {
+  margin-left: auto;
+  color: var(--m-muted, inherit);
+}
+/* Le menu s'ouvre hors du composant (overlay PrimeVue) : règle globale ciblée. */
+:global(.post-menu-danger .p-menuitem-text),
+:global(.post-menu-danger .p-menuitem-icon) {
+  color: var(--red-500, #e24c4c);
 }
 .m-post__author {
   display: flex;

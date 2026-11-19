@@ -1,5 +1,5 @@
 <template>
-  <div class="post-item">
+  <div class="post-item" :class="{ 'is-deleting': deleting }" :aria-busy="deleting ? 'true' : undefined">
     <!-- En-tête du post -->
     <div class="post-header">
       <img :src="authorAvatarUrl || defaultAvatar" alt="Avatar" class="avatar m-2" />
@@ -20,6 +20,30 @@
           >{{ formatRelativeTime(post.Timestamp) }}</time>
         </div>
       </div>
+
+      <!-- Actions de l'auteur : le bouton n'existe que pour lui (la base applique la même règle). -->
+      <template v-if="canDelete">
+        <button
+          type="button"
+          class="post-menu-button"
+          aria-label="Actions de la publication"
+          aria-haspopup="menu"
+          :aria-controls="menuId"
+          :aria-expanded="menuOpen ? 'true' : 'false'"
+          :disabled="deleting"
+          @click="toggleMenu"
+        >
+          <i class="pi pi-ellipsis-h" aria-hidden="true"></i>
+        </button>
+        <Menu
+          :id="menuId"
+          ref="menuRef"
+          :model="menuItems"
+          popup
+          @show="menuOpen = true"
+          @hide="menuOpen = false"
+        />
+      </template>
     </div>
 
     <!-- Contenu du post -->
@@ -158,7 +182,9 @@ import PostLikersDialog from '@/components/social/library/PostLikersDialog.vue';
 import PostComments from '@/components/social/library/PostComments.vue';
 import { formatFullDate, formatRelativeTime } from '@/service/postComments';
 import { useToast } from 'primevue/usetoast';
+import Menu from 'primevue/menu';
 import { postShareUrl, sharePostLink } from '@/utils/postShare';
+import { usePostDelete } from '@/composables/usePostDelete';
 
 const toast = useToast();
 const props = defineProps({
@@ -167,6 +193,19 @@ const props = defineProps({
     required: true,
   },
 });
+const emit = defineEmits(['deleted']);
+
+// Retrait de la publication : menu « ⋯ » réservé à l'auteur, confirmation, puis retrait du fil.
+const { canDelete, deleting, askDelete } = usePostDelete(() => props.post, {
+  onDeleted: (id) => emit('deleted', id),
+});
+const menuId = `post-${String(props.post.id)}-actions`;
+const menuRef = ref(null);
+const menuOpen = ref(false);
+const toggleMenu = (event) => menuRef.value?.toggle(event);
+const menuItems = [
+  { label: 'Supprimer', icon: 'pi pi-trash', class: 'post-menu-danger', command: askDelete },
+];
 
 // State
 const commentsRef = ref(null);
@@ -325,6 +364,11 @@ const getInstagramEmbedUrl = (url) => {
   margin-bottom: 15px; /* Espace entre les posts */
 }
 
+.post-item.is-deleting {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 .post-header {
   display: flex;
   align-items: center;
@@ -334,6 +378,45 @@ const getInstagramEmbedUrl = (url) => {
 .post-author {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+.post-menu-button {
+  margin-left: auto;
+  align-self: flex-start;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.post-menu-button:hover,
+.post-menu-button[aria-expanded='true'] {
+  background: var(--surface-hover);
+  color: var(--text-color);
+}
+
+.post-menu-button:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.post-menu-button .pi {
+  font-size: 1.1rem;
+}
+
+/* Le menu s'ouvre hors du composant (overlay PrimeVue) : règle globale ciblée. */
+:global(.post-menu-danger .p-menuitem-text),
+:global(.post-menu-danger .p-menuitem-icon) {
+  color: var(--red-500, #e24c4c);
 }
 
 .post-content {
@@ -342,7 +425,30 @@ const getInstagramEmbedUrl = (url) => {
   display: flex;
   flex-direction: column;
   margin-top: 10px;
+  min-width: 0;
+}
 
+/* Une suite de caractères sans espace (par exemple 1000 points) ne doit jamais
+   élargir le fil : elle débordait et le trackpad faisait glisser tout le fil de côté. */
+.post-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.post-text :deep(img),
+.post-text :deep(video) {
+  max-width: 100%;
+  height: auto;
+}
+
+.post-text :deep(pre) {
+  white-space: pre-wrap;
+}
+
+.post-text :deep(table) {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .post-media {
@@ -374,7 +480,8 @@ const getInstagramEmbedUrl = (url) => {
 }
 
 .pdf-embed {
-  width: 70vw;
+  /* 100 % de la carte : 70vw dépassait de la colonne centrale. */
+  width: 100%;
   height: 80vh;
   border: none;
   margin: 0 auto;
