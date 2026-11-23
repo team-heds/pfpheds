@@ -90,14 +90,14 @@
         <!-- Contrôles en mode édition -->
         <div v-if="editMode" class="kpi-controls">
           <div class="control-header">
-            <Button
+            <Button aria-label="Glisser pour déplacer"
               icon="pi pi-arrows-alt"
               class="p-button-rounded p-button-text drag-handle"
               size="small"
               severity="secondary"
               v-tooltip.top="'Glisser pour déplacer'"
             />
-            <Button
+            <Button :aria-label="kpi.hidden ? 'Afficher' : 'Masquer'"
               :icon="kpi.hidden ? 'pi pi-eye-slash' : 'pi pi-eye'"
               @click="toggleKpiVisibility(kpi)"
               class="p-button-rounded p-button-text"
@@ -160,7 +160,7 @@
     >
       <div class="flex flex-column gap-3">
         <p class="text-600">Collez votre configuration JSON exportée:</p>
-        <Textarea
+        <Textarea aria-label="Configuration à importer"
           v-model="importConfigText"
           rows="10"
           placeholder='{"kpis": [...], "order": [...]}'
@@ -183,7 +183,7 @@
     >
       <div class="flex flex-column gap-3">
         <p class="text-600">Copiez cette configuration pour la sauvegarder ou la partager:</p>
-        <Textarea
+        <Textarea aria-label="Configuration exportée"
           :model-value="exportedConfig"
           rows="10"
           readonly

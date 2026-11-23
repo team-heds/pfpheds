@@ -51,8 +51,8 @@
           <Column header="Actions" style="width: 150px">
             <template #body="{ data }">
               <div class="flex gap-2">
-                <Button icon="pi pi-pencil" size="small" @click="editModule(data)" />
-                <Button icon="pi pi-video" size="small" severity="info" @click="manageVideos(data)" />
+                <Button aria-label="Modifier" icon="pi pi-pencil" size="small" @click="editModule(data)" />
+                <Button aria-label="Gérer les vidéos" icon="pi pi-video" size="small" severity="info" @click="manageVideos(data)" />
               </div>
             </template>
           </Column>
@@ -175,7 +175,7 @@
         
         <div class="field">
           <label for="moduleYear">Année *</label>
-          <Dropdown 
+          <Dropdown ariaLabel="Année" 
             id="moduleYear" 
             v-model="moduleForm.yearId" 
             :options="yearOptions" 
@@ -192,12 +192,12 @@
         
         <div class="field">
           <label for="moduleOrder">Ordre d'affichage</label>
-          <InputNumber id="moduleOrder" v-model="moduleForm.order" :min="1" />
+          <InputNumber ariaLabel="Ordre d'affichage" id="moduleOrder" v-model="moduleForm.order" :min="1" />
         </div>
         
         <div class="field">
           <label for="moduleStatus">Statut</label>
-          <Dropdown 
+          <Dropdown ariaLabel="Statut" 
             id="moduleStatus" 
             v-model="moduleForm.status" 
             :options="statusOptions" 

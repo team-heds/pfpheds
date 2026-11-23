@@ -51,7 +51,7 @@
           <div class="filters-section mt-4">
             <div class="grid">
               <div class="col-12 md:col-3">
-                <Dropdown
+                <Dropdown ariaLabel="Types"
                   v-model="filterType"
                   :options="typeOptions"
                   optionLabel="label"
@@ -62,7 +62,7 @@
                 />
               </div>
               <div class="col-12 md:col-3">
-                <Dropdown
+                <Dropdown ariaLabel="Modules"
                   v-model="filterModule"
                   :options="moduleOptions"
                   optionLabel="title"
@@ -74,7 +74,7 @@
                 />
               </div>
               <div class="col-12 md:col-3">
-                <InputText
+                <InputText aria-label="Rechercher"
                   v-model="searchQuery"
                   placeholder="Rechercher..."
                   class="w-full"

@@ -6,7 +6,7 @@
       <!-- Header -->
       <div class="docs-header">
         <div class="header-content">
-          <Button 
+          <Button aria-label="Retour" 
             icon="pi pi-arrow-left" 
             @click="goBack"
             class="back-btn"
@@ -43,13 +43,13 @@
         <div class="search-section">
           <IconField iconPosition="left">
             <InputIcon class="pi pi-search" />
-            <InputText 
+            <InputText aria-label="Rechercher dans la documentation" 
               v-model="searchQuery" 
               placeholder="Rechercher dans la documentation..."
               class="search-input"
             />
           </IconField>
-          <Button 
+          <Button aria-label="Fermer" 
             v-if="searchQuery"
             icon="pi pi-times"
             @click="searchQuery = ''"
@@ -81,7 +81,7 @@
         <div class="markdown-content" v-html="renderedContent"></div>
 
         <!-- Scroll to Top Button -->
-        <Button 
+        <Button aria-label="Monter" 
           v-if="showScrollTop"
           icon="pi pi-arrow-up"
           @click="scrollToTop"

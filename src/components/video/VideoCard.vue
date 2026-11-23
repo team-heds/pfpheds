@@ -70,7 +70,7 @@
           class="action-btn"
           size="small"
         />
-        <Button 
+        <Button aria-label="Plus d’actions" 
           icon="pi pi-ellipsis-v" 
           text
           @click="$emit('show-menu', $event, video)"

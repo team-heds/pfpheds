@@ -32,7 +32,7 @@
               label="Ajouter une séance" 
               @click="openAddDialog"
             />
-            <Button 
+            <Button aria-label="Actualiser" 
               icon="pi pi-refresh" 
               class="p-button-text"
               @click="loadData"
@@ -122,12 +122,12 @@
                   </div>
                 </div>
                 <div class="session-actions">
-                  <Button 
+                  <Button aria-label="Modifier" 
                     icon="pi pi-pencil" 
                     class="p-button-rounded p-button-text p-button-sm"
                     @click.stop="openEditDialog(session)"
                   />
-                  <Button 
+                  <Button aria-label="Supprimer" 
                     icon="pi pi-trash" 
                     class="p-button-rounded p-button-text p-button-danger p-button-sm"
                     @click.stop="confirmDelete(session)"
@@ -150,7 +150,7 @@
           <div class="field-row">
             <div class="field">
               <label>Classe / Volée</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Classe / Volée" 
                 v-model="editingSession.classCode" 
                 :options="classOptions" 
                 optionLabel="label"
@@ -161,7 +161,7 @@
             </div>
             <div class="field">
               <label>Semaine</label>
-              <InputNumber v-model="editingSession.weekNumber" :min="1" :max="52" class="w-full" />
+              <InputNumber ariaLabel="Semaine" v-model="editingSession.weekNumber" :min="1" :max="52" class="w-full" />
             </div>
             <div class="field">
               <label>Jour</label>
@@ -200,7 +200,7 @@
           
           <div class="field">
             <label>Nom du cours (affiché dans le planning)</label>
-            <Textarea 
+            <Textarea aria-label="Nom du cours (affiché dans le planning)" 
               v-model="editingSession.courseTitle" 
               placeholder="Ex: Introduction Module: questions-réponses en lien avec la vidéo"
               :rows="2"
@@ -211,7 +211,7 @@
           
           <div class="field">
             <label>Détails / Activité complémentaire</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Détails / Activité complémentaire" 
               v-model="editingSession.activity" 
               :options="activityOptions"
               editable
@@ -222,7 +222,7 @@
           
           <div class="field">
             <label>Enseignants (max 6)</label>
-            <AutoComplete 
+            <AutoComplete ariaLabel="Enseignants (max 6)" 
               v-model="editingSession.teachers"
               :suggestions="filteredTeachers"
               @complete="searchTeachers"
@@ -247,11 +247,11 @@
           <div class="field-row">
             <div class="field">
               <label>Salle</label>
-              <InputText v-model="editingSession.room" placeholder="Salle 101" class="w-full" />
+              <InputText aria-label="Salle" v-model="editingSession.room" placeholder="Salle 101" class="w-full" />
             </div>
             <div class="field">
               <label>Notes</label>
-              <InputText v-model="editingSession.notes" placeholder="Notes additionnelles" class="w-full" />
+              <InputText aria-label="Notes" v-model="editingSession.notes" placeholder="Notes additionnelles" class="w-full" />
             </div>
           </div>
         </div>

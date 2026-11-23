@@ -13,7 +13,7 @@
       </div>
     </div>
     <div class="p-inputgroup">
-      <InputText v-model="input" @keyup.enter="sendMessage" placeholder="Votre question..." />
+      <InputText aria-label="Votre question" v-model="input" @keyup.enter="sendMessage" placeholder="Votre question..." />
       <Button icon="pi pi-send" @click="sendMessage" label="Envoyer" />
     </div>
   </div>

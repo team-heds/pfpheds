@@ -33,7 +33,7 @@
                 ({{ institutionsOptions.length }} disponibles)
               </span>
             </label>
-            <Button
+            <Button aria-label="Recharger les institutions"
               v-if="!institutionsStore.loading"
               icon="pi pi-refresh"
               text
@@ -42,7 +42,7 @@
               v-tooltip.top="'Recharger les institutions'"
             />
           </div>
-          <Dropdown
+          <Dropdown ariaLabel="Institution * ( disponibles)"
             id="institution"
             v-model="formData.InstitutionId"
             :options="institutionsOptions"
@@ -288,7 +288,7 @@
               ({{ praticiensOptions.length }} disponibles)
             </span>
           </h3>
-          <Button
+          <Button aria-label="Recharger les praticiens"
             v-if="!praticiensStore.loading"
             icon="pi pi-refresh"
             text
@@ -298,7 +298,7 @@
           />
         </div>
         <div class="field">
-          <MultiSelect
+          <MultiSelect ariaLabel="Sélectionnez les praticiens formateurs ou tapez pour rechercher"
             v-model="formData.praticiensFormateurs"
             :options="praticiensOptions"
             optionLabel="label"
@@ -330,7 +330,7 @@
         <TabView v-model:activeIndex="activeYearTabIndex">
           <TabPanel header="2025">
             <div class="field mt-3">
-              <Textarea
+              <Textarea aria-label="Remarques pour 2025"
                 v-model="formData.remarques2025"
                 rows="4"
                 placeholder="Remarques pour 2025..."
@@ -340,7 +340,7 @@
           </TabPanel>
           <TabPanel header="2026">
             <div class="field mt-3">
-              <Textarea
+              <Textarea aria-label="Remarques pour 2026"
                 v-model="formData.remarques2026"
                 rows="4"
                 placeholder="Remarques pour 2026..."
@@ -350,7 +350,7 @@
           </TabPanel>
           <TabPanel header="2027">
             <div class="field mt-3">
-              <Textarea
+              <Textarea aria-label="Remarques pour 2026-2027"
                 v-model="formData.remarques2027"
                 rows="4"
                 placeholder="Remarques pour 2026-2027..."
@@ -391,7 +391,7 @@
               :loading="uploading"
               :disabled="!selectedFile || uploading"
             />
-            <Button
+            <Button aria-label="Annuler"
               v-if="selectedFile && !uploading"
               icon="pi pi-times"
               text

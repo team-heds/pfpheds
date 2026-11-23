@@ -13,7 +13,7 @@
         <div class="search-bar">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <InputText v-model="searchQuery" placeholder="Rechercher..." />
+            <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." />
           </span>
         </div>
         <div class="list-actions">
@@ -22,7 +22,7 @@
       </div>
 
       <div class="filters-bar">
-        <Dropdown v-model="filterStatus" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Statut" showClear />
+        <Dropdown ariaLabel="Statut" v-model="filterStatus" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Statut" showClear />
       </div>
 
       <DataTable
@@ -54,9 +54,9 @@
         <Column header="Actions">
           <template #body="{ data }">
             <div class="action-buttons">
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text" v-tooltip.top="'Éditer'" @click.stop="goEdit(data)" />
-              <Button icon="pi pi-eye" class="p-button-sm p-button-text" v-tooltip.top="'Ouvrir (étudiant)'" @click.stop="goStudent(data)" />
-              <Button icon="pi pi-copy" class="p-button-sm p-button-text" v-tooltip.top="'Dupliquer'" @click.stop="duplicate(data)" />
+              <Button aria-label="Éditer" icon="pi pi-pencil" class="p-button-sm p-button-text" v-tooltip.top="'Éditer'" @click.stop="goEdit(data)" />
+              <Button aria-label="Ouvrir (étudiant)" icon="pi pi-eye" class="p-button-sm p-button-text" v-tooltip.top="'Ouvrir (étudiant)'" @click.stop="goStudent(data)" />
+              <Button aria-label="Dupliquer" icon="pi pi-copy" class="p-button-sm p-button-text" v-tooltip.top="'Dupliquer'" @click.stop="duplicate(data)" />
             </div>
           </template>
         </Column>

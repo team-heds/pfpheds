@@ -11,7 +11,7 @@
           </div>
         </div>
         <div class="stats-actions">
-          <Button
+          <Button :aria-label="showChart ? 'Masquer graphique' : 'Afficher graphique'"
             v-if="showChartToggle"
             :icon="showChart ? 'pi pi-eye-slash' : 'pi pi-eye'"
             @click="showChart = !showChart"

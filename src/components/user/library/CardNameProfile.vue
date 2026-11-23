@@ -157,7 +157,7 @@
         <span class="info-label">Répondant HES :</span>
         <span class="info-value">
           <template v-if="isAdmin">
-            <Dropdown
+            <Dropdown ariaLabel="Sélectionnez un enseignant"
               v-model="selectedTeacher"
               :options="teachersOptions"
               optionLabel="label"
@@ -175,7 +175,7 @@
         <i class="pi pi-star-fill info-icon"></i>
         <span class="info-label">SAE (cas particulier) :</span>
         <span class="info-value flex align-items-center gap-2">
-          <InputSwitch v-model="isSae" @change="toggleSae" :disabled="saeSaving" />
+          <InputSwitch :ariaLabel="`${isSae ? 'Marqué' : 'Non marqué'}`" v-model="isSae" @change="toggleSae" :disabled="saeSaving" />
           <span class="text-xs text-600">{{ isSae ? 'Marqué' : 'Non marqué' }}</span>
         </span>
       </div>

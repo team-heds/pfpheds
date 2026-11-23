@@ -59,7 +59,7 @@
         <h3 :id="`${idPrefix}-cantons-title`">Canton</h3>
         <ul class="filter-list">
           <li v-for="canton in cantons" :key="canton" class="filter-item">
-            <Checkbox :input-id="`${idPrefix}-canton-${canton}`" :value="canton" :model-value="normalizedFilters.cantons" @update:model-value="updateGroup('cantons', $event)" />
+            <Checkbox :ariaLabel="`${canton}`" :input-id="`${idPrefix}-canton-${canton}`" :value="canton" :model-value="normalizedFilters.cantons" @update:model-value="updateGroup('cantons', $event)" />
             <label :for="`${idPrefix}-canton-${canton}`">{{ canton }}</label>
           </li>
           <li v-if="cantons.length === 0" class="empty-option">Aucun canton disponible</li>
@@ -70,7 +70,7 @@
         <h3 :id="`${idPrefix}-criteria-title`">Critères</h3>
         <ul class="filter-list">
           <li v-for="criterion in criteriaOptions" :key="criterion" class="filter-item">
-            <Checkbox :input-id="`${idPrefix}-criterion-${criterion}`" :value="criterion" :model-value="normalizedFilters.criter" @update:model-value="updateGroup('criter', $event)" />
+            <Checkbox :ariaLabel="`${criterion}`" :input-id="`${idPrefix}-criterion-${criterion}`" :value="criterion" :model-value="normalizedFilters.criter" @update:model-value="updateGroup('criter', $event)" />
             <label :for="`${idPrefix}-criterion-${criterion}`">{{ criterion }}</label>
           </li>
         </ul>
@@ -80,7 +80,7 @@
         <h3 :id="`${idPrefix}-pfp-title`">PFP</h3>
         <ul class="filter-list">
           <li v-for="pfp in pfpOptions" :key="pfp" class="filter-item">
-            <Checkbox :input-id="`${idPrefix}-pfp-${pfp}`" :value="pfp" :model-value="normalizedFilters.pfp" @update:model-value="updateGroup('pfp', $event)" />
+            <Checkbox :ariaLabel="`${pfp}`" :input-id="`${idPrefix}-pfp-${pfp}`" :value="pfp" :model-value="normalizedFilters.pfp" @update:model-value="updateGroup('pfp', $event)" />
             <label :for="`${idPrefix}-pfp-${pfp}`">{{ pfp }}</label>
           </li>
         </ul>
@@ -90,7 +90,7 @@
         <h3 :id="`${idPrefix}-languages-title`">Langue</h3>
         <ul class="filter-list">
           <li v-for="language in languageOptions" :key="language" class="filter-item">
-            <Checkbox :input-id="`${idPrefix}-language-${language}`" :value="language" :model-value="normalizedFilters.languages" @update:model-value="updateGroup('languages', $event)" />
+            <Checkbox :ariaLabel="`${language}`" :input-id="`${idPrefix}-language-${language}`" :value="language" :model-value="normalizedFilters.languages" @update:model-value="updateGroup('languages', $event)" />
             <label :for="`${idPrefix}-language-${language}`">{{ language }}</label>
           </li>
         </ul>

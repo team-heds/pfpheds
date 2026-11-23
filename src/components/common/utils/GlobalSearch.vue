@@ -26,7 +26,7 @@
             <i v-if="!isLoading" class="pi pi-search"></i>
             <i v-else class="pi pi-spin pi-spinner"></i>
           </span>
-          <InputText 
+          <InputText aria-label="Rechercher pages, utilisateurs, institutions (villes), modules" 
             ref="searchInput"
             v-model="searchQuery" 
             @keyup.enter="performSearch"
@@ -37,7 +37,7 @@
             class="w-full search-input" 
             autofocus
           />
-          <Button 
+          <Button aria-label="Echap pour fermer" 
             icon="pi pi-times" 
             class="p-button-text" 
             @click="toggleSearchBar"

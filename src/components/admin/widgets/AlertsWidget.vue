@@ -8,7 +8,7 @@
           <Badge v-if="activeAlertCount > 0" :value="activeAlertCount" severity="danger" />
         </div>
         <div class="header-actions">
-          <Button
+          <Button aria-label="Actualiser"
             icon="pi pi-refresh"
             rounded
             text
@@ -92,7 +92,7 @@
               </div>
             </div>
             <div class="alert-actions">
-              <Button
+              <Button aria-label="Marquer comme résolu"
                 v-if="canPersistResolution"
                 icon="pi pi-check"
                 rounded
@@ -102,7 +102,7 @@
                 @click="resolveAlert(alert)"
                 v-tooltip.left="'Marquer comme résolu'"
               />
-              <Button
+              <Button aria-label="Ignorer"
                 icon="pi pi-times"
                 rounded
                 text

@@ -19,7 +19,7 @@
           <template #header>
             <div class="flex justify-content-between">
               <span class="text-xl text-900 font-bold">Liste des PFP</span>
-              <InputText v-model="searchQuery" placeholder="Rechercher..." />
+              <InputText aria-label="Liste des PFP" v-model="searchQuery" placeholder="Rechercher..." />
             </div>
           </template>
           <template #empty>
@@ -39,8 +39,8 @@
           </Column>
           <Column header="Actions">
             <template #body>
-              <Button icon="pi pi-eye" class="p-button-text p-button-sm mr-2" />
-              <Button icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
+              <Button aria-label="Voir" icon="pi pi-eye" class="p-button-text p-button-sm mr-2" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
             </template>
           </Column>
         </DataTable>

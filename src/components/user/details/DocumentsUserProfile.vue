@@ -265,7 +265,7 @@ onMounted(async () => {
           </div>
           <ul class="document-file-list">
             <li v-for="file in files" :key="file.name">
-              <input :id="`document-${file.name}`" type="checkbox" :checked="selectedFiles.has(file.name)" @change="toggleFileSelection(file.name)" />
+              <input :aria-label="`Sélectionner ${file.name}`" :id="`document-${file.name}`" type="checkbox" :checked="selectedFiles.has(file.name)" @change="toggleFileSelection(file.name)" />
               <a :href="file.url" target="_blank">{{ file.name }}</a>
             </li>
           </ul>

@@ -79,7 +79,7 @@
           @click="$router.push({ path: '/scan', query: { camera: '1' } })"
           v-tooltip.top="'Scanner un QR code de présence'"
         />
-        <Button
+        <Button aria-label="Voir tous les événements"
           icon="pi pi-arrow-right"
           class="p-button-text p-button-sm"
           @click="goToEventManagement"

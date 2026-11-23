@@ -13,7 +13,7 @@
         <div class="search-bar">
           <span class="p-input-icon-left">
             <i class="pi pi-search" />
-            <InputText v-model="searchQuery" placeholder="Rechercher un cours..." />
+            <InputText aria-label="Rechercher un cours" v-model="searchQuery" placeholder="Rechercher un cours..." />
           </span>
         </div>
         <div class="list-actions">
@@ -22,9 +22,9 @@
       </div>
 
       <div class="filters-bar">
-        <Dropdown v-model="selectedModule" :options="modules" optionLabel="name" placeholder="Tous les modules" showClear />
-        <Dropdown v-model="selectedTeacher" :options="teachers" optionLabel="name" placeholder="Tous les enseignants" showClear />
-        <Dropdown v-model="selectedStatus" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Tous les statuts" showClear />
+        <Dropdown ariaLabel="Modules" v-model="selectedModule" :options="modules" optionLabel="name" placeholder="Tous les modules" showClear />
+        <Dropdown ariaLabel="Enseignants" v-model="selectedTeacher" :options="teachers" optionLabel="name" placeholder="Tous les enseignants" showClear />
+        <Dropdown ariaLabel="Statuts" v-model="selectedStatus" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Tous les statuts" showClear />
       </div>
 
       <DataTable 
@@ -84,9 +84,9 @@
         <Column header="Actions">
           <template #body="slotProps">
             <div class="action-buttons">
-              <Button icon="pi pi-eye" class="p-button-sm p-button-text" v-tooltip.top="'Voir'" @click="viewCourse(slotProps.data)" />
-              <Button icon="pi pi-pencil" class="p-button-sm p-button-text" v-tooltip.top="'Éditer'" @click="editCourse(slotProps.data)" />
-              <Button icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" v-tooltip.top="'Supprimer'" @click="deleteCourse(slotProps.data)" />
+              <Button aria-label="Voir" icon="pi pi-eye" class="p-button-sm p-button-text" v-tooltip.top="'Voir'" @click="viewCourse(slotProps.data)" />
+              <Button aria-label="Éditer" icon="pi pi-pencil" class="p-button-sm p-button-text" v-tooltip.top="'Éditer'" @click="editCourse(slotProps.data)" />
+              <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-sm p-button-text p-button-danger" v-tooltip.top="'Supprimer'" @click="deleteCourse(slotProps.data)" />
             </div>
           </template>
         </Column>

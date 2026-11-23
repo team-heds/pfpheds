@@ -100,7 +100,7 @@
                   @click="showAssignDialog = true"
                 />
                 <div class="filters">
-                  <Dropdown 
+                  <Dropdown ariaLabel="Filière" 
                     v-model="filterTrack" 
                     :options="trackOptions" 
                     optionLabel="label" 
@@ -108,7 +108,7 @@
                     placeholder="Filière"
                     class="filter-dropdown"
                   />
-                  <Dropdown 
+                  <Dropdown ariaLabel="Rôle" 
                     v-model="filterRole" 
                     :options="roleOptions" 
                     optionLabel="label" 
@@ -152,7 +152,7 @@
                 </Column>
                 <Column header="Actions" style="width: 100px">
                   <template #body="{ data }">
-                    <Button 
+                    <Button aria-label="Supprimer" 
                       v-if="data.isActive"
                       icon="pi pi-trash" 
                       class="p-button-rounded p-button-danger p-button-text"
@@ -171,9 +171,9 @@
               <div class="actions-bar">
                 <span class="p-input-icon-left">
                   <i class="pi pi-search" />
-                  <InputText v-model="moduleSearch" placeholder="Rechercher module..." />
+                  <InputText aria-label="Rechercher module" v-model="moduleSearch" placeholder="Rechercher module..." />
                 </span>
-                <Dropdown 
+                <Dropdown ariaLabel="Filière" 
                   v-model="filterModuleTrack" 
                   :options="trackOptionsWithAll" 
                   optionLabel="label" 
@@ -211,7 +211,7 @@
                     <div class="rm-cell">
                       <span v-if="data.responsable_email">{{ data.responsable_email }}</span>
                       <span v-else class="no-rm">Non assigné</span>
-                      <Button 
+                      <Button aria-label="Modifier" 
                         icon="pi pi-pencil" 
                         class="p-button-rounded p-button-text p-button-sm"
                         @click="editModuleRM(data)"
@@ -235,7 +235,7 @@
         <div class="assign-form">
           <div class="field">
             <label>Utilisateur</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Utilisateur" 
               v-model="assignForm.userId" 
               :options="users" 
               optionLabel="name" 
@@ -247,7 +247,7 @@
           </div>
           <div class="field">
             <label>Filière</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Filière" 
               v-model="assignForm.trackId" 
               :options="tracks" 
               optionLabel="label" 
@@ -258,7 +258,7 @@
           </div>
           <div class="field">
             <label>Rôle</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Rôle" 
               v-model="assignForm.role" 
               :options="availableRoles" 
               optionLabel="label" 
@@ -287,7 +287,7 @@
           </div>
           <div class="field">
             <label>Email du Responsable</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Email du Responsable" 
               v-model="rmForm.email" 
               :options="users" 
               optionLabel="email" 

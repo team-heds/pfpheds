@@ -291,9 +291,9 @@
                   <InputText id="si-course-search" v-model="courseSearch" placeholder="Rechercher un cours..." class="p-inputtext-sm" style="width: 220px" />
                 </span>
                 <label class="sr-only" for="si-course-module-filter">Filtrer mes cours par module</label>
-                <Dropdown inputId="si-course-module-filter" v-model="courseModuleFilter" :options="courseModuleOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 180px" />
+                <Dropdown ariaLabel="Filtrer mes cours par module" inputId="si-course-module-filter" v-model="courseModuleFilter" :options="courseModuleOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 180px" />
                 <label class="sr-only" for="si-course-sort">Trier mes cours</label>
-                <Dropdown inputId="si-course-sort" v-model="courseSort" :options="courseSortOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 170px" />
+                <Dropdown ariaLabel="Trier mes cours" inputId="si-course-sort" v-model="courseSort" :options="courseSortOptions" optionLabel="label" optionValue="value" class="p-inputtext-sm" style="min-width: 170px" />
                 <Button
                   icon="pi pi-thumbs-up"
                   label="Cours en postulation"

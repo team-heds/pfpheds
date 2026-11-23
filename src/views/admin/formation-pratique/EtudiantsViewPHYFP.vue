@@ -18,17 +18,17 @@
             </div>
           </div>
           <div class="flex align-items-center gap-2 flex-wrap">
-            <Dropdown
+            <Dropdown ariaLabel="Cohortes"
               v-model="filterCohort"
               :options="cohortOptions"
               placeholder="Toutes les cohortes"
               showClear
               class="w-12rem"
             />
-            <InputText v-model="globalSearch" placeholder="Rechercher (nom, email)" class="w-16rem" />
+            <InputText aria-label="Rechercher (nom, email)" v-model="globalSearch" placeholder="Rechercher (nom, email)" class="w-16rem" />
             <Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" />
             <Button icon="pi pi-filter-slash" label="Réinitialiser" outlined severity="secondary" @click="resetFilters" />
-            <Button icon="pi pi-refresh" outlined :disabled="loading" @click="loadStudents" />
+            <Button aria-label="Actualiser" icon="pi pi-refresh" outlined :disabled="loading" @click="loadStudents" />
           </div>
         </div>
         <ProgressBar v-if="loading" mode="indeterminate" style="height: 4px" class="mt-3" />
@@ -117,9 +117,9 @@
 
           <Column header="Actions" style="min-width: 10rem">
             <template #body="{ data }">
-              <Button icon="pi pi-eye" class="p-button-rounded p-button-info mr-2" size="small" v-tooltip.top="'Voir profil'" @click="goToProfile(data)" />
-              <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="goToEdit(data)" />
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
+              <Button aria-label="Voir profil" icon="pi pi-eye" class="p-button-rounded p-button-info mr-2" size="small" v-tooltip.top="'Voir profil'" @click="goToProfile(data)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="goToEdit(data)" />
+              <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
             </template>
           </Column>
         </DataTable>
@@ -135,23 +135,23 @@
         <div class="p-fluid">
           <div class="field mb-3">
             <label class="font-semibold">Nom *</label>
-            <InputText v-model="editForm.family_name" />
+            <InputText aria-label="Nom" v-model="editForm.family_name" />
           </div>
           <div class="field mb-3">
             <label class="font-semibold">Prénom *</label>
-            <InputText v-model="editForm.forname" />
+            <InputText aria-label="Prénom" v-model="editForm.forname" />
           </div>
           <div class="field mb-3">
             <label class="font-semibold">Email *</label>
-            <InputText v-model="editForm.email" type="email" />
+            <InputText aria-label="Email" v-model="editForm.email" type="email" />
           </div>
           <div class="field mb-3">
             <label class="font-semibold">Classe</label>
-            <InputText v-model="editForm.classe" />
+            <InputText aria-label="Classe" v-model="editForm.classe" />
           </div>
           <div class="field mb-3">
             <label class="font-semibold">Statut</label>
-            <Dropdown v-model="editForm.is_active" :options="[{ label: 'Actif', value: true }, { label: 'Inactif', value: false }]" optionLabel="label" optionValue="value" class="w-full" />
+            <Dropdown ariaLabel="Statut" v-model="editForm.is_active" :options="[{ label: 'Actif', value: true }, { label: 'Inactif', value: false }]" optionLabel="label" optionValue="value" class="w-full" />
           </div>
         </div>
         <template #footer>

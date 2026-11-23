@@ -276,7 +276,7 @@
             >
               <template #body="slotProps">
                 <div class="radio-wrapper">
-                  <RadioButton
+                  <RadioButton :ariaLabel="'Choix ' + i"
                     v-model="selectedPlaces[i - 1]"
                     :value="slotProps.data"
                     :disabled="isPlaceDisabled(slotProps.data, i - 1)"
@@ -397,7 +397,7 @@
             >
               <template #body="slotProps">
                 <div class="radio-wrapper">
-                  <RadioButton
+                  <RadioButton :ariaLabel="'Choix ' + i"
                     v-model="selectedPlaces[i - 1]"
                     :value="slotProps.data"
                     :disabled="isPlaceDisabled(slotProps.data, i - 1)"
@@ -503,7 +503,7 @@
             >
               <template #body="slotProps">
                 <div class="radio-wrapper">
-                  <RadioButton
+                  <RadioButton :ariaLabel="'Choix ' + i"
                     v-model="selectedPlaces[i - 1]"
                     :value="slotProps.data"
                     :disabled="isPlaceDisabled(slotProps.data, i - 1)"
@@ -635,7 +635,7 @@
           >
             <template #body="slotProps">
               <div class="radio-wrapper">
-                <RadioButton
+                <RadioButton :ariaLabel="'Choix ' + i"
                   v-model="selectedPlaces[i - 1]"
                   :value="slotProps.data"
                   :disabled="isPlaceDisabled(slotProps.data, i - 1)"

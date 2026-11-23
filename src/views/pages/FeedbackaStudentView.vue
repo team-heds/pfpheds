@@ -32,7 +32,7 @@
 
       <div class="card">
         <h3>Ta réponse</h3>
-        <Textarea v-model="answer" rows="10" placeholder="Écris ta réponse..." />
+        <Textarea aria-label="Ta réponse" v-model="answer" rows="10" placeholder="Écris ta réponse..." />
 
         <div class="actions">
           <Button label="Envoyer" icon="pi pi-send" :loading="loading" :disabled="!answer.trim()" @click="submit" />

@@ -19,7 +19,7 @@
           <div class="flex align-items-center gap-3">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année :</label>
-              <Dropdown
+              <Dropdown ariaLabel="Année"
                 v-model="filterYear"
                 :options="years"
                 placeholder="Année"
@@ -29,7 +29,7 @@
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP :</label>
-              <Dropdown
+              <Dropdown ariaLabel="PFP"
                 v-model="filterType"
                 :options="typesPFP"
                 optionLabel="label"
@@ -50,7 +50,7 @@
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Choisir un répondant :</label>
-              <Dropdown
+              <Dropdown ariaLabel="Choisir un répondant"
                 v-model="selectedRepondant"
                 :options="repondantsHESList"
                 optionLabel="label"
@@ -151,7 +151,7 @@
           </Column>
           <Column field="is_validated" header="Validé" sortable>
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.is_validated" :binary="true" @change="toggleValidation(slotProps.data)" />
+              <Checkbox ariaLabel="Validé" v-model="slotProps.data.is_validated" :binary="true" @change="toggleValidation(slotProps.data)" />
             </template>
           </Column>
         </DataTable>

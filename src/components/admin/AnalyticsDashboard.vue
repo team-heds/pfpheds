@@ -46,7 +46,7 @@
             />
           </div>
           
-          <Calendar 
+          <Calendar ariaLabel="Période personnalisée" 
             v-model="customDateRange" 
             selectionMode="range" 
             :manualInput="false"
@@ -167,7 +167,7 @@
                   </div>
                   <h4 class="text-lg font-bold text-900 m-0">Activité quotidienne</h4>
                 </div>
-                <Dropdown 
+                <Dropdown ariaLabel="Indicateur d’activité" 
                   v-model="activityMetric" 
                   :options="activityMetrics" 
                   optionLabel="label" 
@@ -218,7 +218,7 @@
                   </div>
                   <h4 class="text-lg font-bold text-900 m-0">Top Performers</h4>
                 </div>
-                <Dropdown 
+                <Dropdown ariaLabel="Indicateur de performance" 
                   v-model="performerMetric" 
                   :options="performerMetrics" 
                   optionLabel="label" 

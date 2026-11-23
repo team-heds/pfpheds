@@ -11,7 +11,7 @@
           <p class="text-600 m-0">Places de stages par canton</p>
         </div>
       </div>
-      <Button 
+      <Button aria-label="Actualiser" 
         v-if="!loading"
         icon="pi pi-refresh" 
         text 

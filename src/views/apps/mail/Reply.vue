@@ -104,7 +104,7 @@ watch(
                     <label for="Subject" class="block text-900 font-semibold mb-3">Subject</label>
                     <IconField iconPosition="left" class="w-full" style="height: 3.5rem">
                         <InputIcon class="pi pi-pencil" style="left: 1.5rem" />
-                        <InputText id="subject" type="text" placeholder="Subject" class="w-full pl-7 text-900 font-semibold" style="height: 3.5rem" v-model="content.title" />
+                        <InputText aria-label="Subject" id="subject" type="text" placeholder="Subject" class="w-full pl-7 text-900 font-semibold" style="height: 3.5rem" v-model="content.title" />
                     </IconField>
                 </div>
                 <div v-if="displayMessage" class="col-12 field">
@@ -123,8 +123,8 @@ watch(
                 </div>
             </div>
             <div class="flex column-gap-3 justify-content-end p-5 border-top-1 surface-border">
-                <Button type="button" outlined icon="pi pi-image"></Button>
-                <Button type="button" outlined icon="pi pi-paperclip"></Button>
+                <Button aria-label="Choisir une image" type="button" outlined icon="pi pi-image"></Button>
+                <Button aria-label="Joindre un fichier" type="button" outlined icon="pi pi-paperclip"></Button>
                 <Button type="button" class="h-3rem" icon="pi pi-send" label="Send" @click="sendMail()"></Button>
             </div>
         </div>

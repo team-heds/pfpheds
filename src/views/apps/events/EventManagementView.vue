@@ -18,7 +18,7 @@
       <!-- Barre de recherche et filtres avancés -->
       <div class="search-bar" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
         <span class="p-input-icon-left">
-          <InputText v-model="searchTerm" placeholder="Rechercher par titre, description ou type" class="search-input style-bar" />
+          <InputText aria-label="Rechercher par titre, description ou type" v-model="searchTerm" placeholder="Rechercher par titre, description ou type" class="search-input style-bar" />
         </span>
 
       </div>
@@ -36,10 +36,10 @@
           />
         </span>
         <span v-if="privateOnly">
-          <Dropdown v-model="selectedGroup" :options="privateRolesDropdown" optionLabel="label" optionValue="value" placeholder="Rôle (tous)" class="p-inputtext p-dropdown-sm same-width-btn event-dropdown" />
+          <Dropdown ariaLabel="Rôle (tous)" v-model="selectedGroup" :options="privateRolesDropdown" optionLabel="label" optionValue="value" placeholder="Rôle (tous)" class="p-inputtext p-dropdown-sm same-width-btn event-dropdown" />
         </span>
         <span>
-          <Dropdown v-model="sortOrder" :options="sortOptions" optionLabel="label" optionValue="value" class="p-inputtext p-dropdown-sm same-width-btn event-dropdown" />
+          <Dropdown ariaLabel="Trier les événements" v-model="sortOrder" :options="sortOptions" optionLabel="label" optionValue="value" class="p-inputtext p-dropdown-sm same-width-btn event-dropdown" />
         </span>
       </div>
 

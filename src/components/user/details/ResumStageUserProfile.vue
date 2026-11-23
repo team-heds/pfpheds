@@ -154,7 +154,7 @@
             >
               <!-- Mode renommage -->
               <div v-if="doc.isRenaming" class="flex align-items-center gap-2 m-2">
-                <InputText
+                <InputText aria-label="Nom"
                   v-model="doc.tempName"
                   style="width:200px;"
                 />
@@ -179,7 +179,7 @@
                 >
                   {{ doc.fileName }}
                 </span>
-                <Button
+                <Button aria-label="Supprimer"
                   icon="pi pi-trash"
                   class="text-sm p-button-danger"
                   @click="confirmDelete(

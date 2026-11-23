@@ -89,12 +89,12 @@
           <div class="col-12 md:col-6">
             <span class="p-input-icon-left w-full">
               <i class="pi pi-search"></i>
-              <InputText v-model="searchQuery" class="w-full" placeholder="Rechercher par titre, tag, public..." />
+              <InputText aria-label="Rechercher par titre, tag, public" v-model="searchQuery" class="w-full" placeholder="Rechercher par titre, tag, public..." />
             </span>
           </div>
 
           <div class="col-12 md:col-3">
-            <Dropdown
+            <Dropdown ariaLabel="Catégorie"
               v-model="selectedCategory"
               :options="presentationCategories"
               optionLabel="label"
@@ -104,7 +104,7 @@
           </div>
 
           <div class="col-12 md:col-3">
-            <Dropdown
+            <Dropdown ariaLabel="Statut"
               v-model="selectedStatus"
               :options="presentationStatuses"
               optionLabel="label"

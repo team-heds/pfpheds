@@ -127,7 +127,7 @@
       <div class="p-fluid">
         <div class="field mb-3">
           <label>Année de départ</label>
-          <InputNumber 
+          <InputNumber ariaLabel="Année de départ" 
             v-model="newYear.startYear" 
             :min="2020" 
             :max="2050"
@@ -162,7 +162,7 @@
         
         <div class="field mb-3">
           <label>Modalité de formation</label>
-          <Dropdown 
+          <Dropdown ariaLabel="Modalité de formation" 
             v-model="selectedModality" 
             :options="modalityOptions" 
             optionLabel="label" 
@@ -176,7 +176,7 @@
         
         <div class="field">
           <label>Année de la 1ère année</label>
-          <InputNumber 
+          <InputNumber ariaLabel="Année de la 1ère année" 
             v-model="generateYear" 
             :min="2020" 
             :max="2050"

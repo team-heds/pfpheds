@@ -81,7 +81,7 @@
             <div class="table-header">
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText 
+                <InputText aria-label="Rechercher un étudiant" 
                   v-model="filters['global'].value" 
                   placeholder="Rechercher un étudiant..." 
                 />
@@ -126,7 +126,7 @@
 
           <Column field="nouveau_repondant" header="Nouveau Répondant" style="min-width: 300px">
             <template #body="{ data }">
-              <Dropdown
+              <Dropdown ariaLabel="Sélectionnez un répondant"
                 v-model="data.nouveau_repondant"
                 :options="repondantsOptions"
                 optionLabel="label"
@@ -167,7 +167,7 @@
 
           <Column header="Actions" style="min-width: 150px">
             <template #body="{ data }">
-              <Button 
+              <Button aria-label="Sauvegarder" 
                 icon="pi pi-save" 
                 @click="saveStudent(data)"
                 :loading="data.saving"
@@ -178,7 +178,7 @@
                 rounded
                 v-tooltip.top="'Sauvegarder'"
               />
-              <Button 
+              <Button aria-label="Annuler les modifications" 
                 icon="pi pi-times" 
                 @click="resetStudent(data)"
                 :disabled="!data.modified"

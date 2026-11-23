@@ -79,7 +79,7 @@
                     @click="selectedClass = selectedClass === cls ? null : cls"
                     size="small"
                   />
-                  <Button 
+                  <Button aria-label="Actualiser" 
                     icon="pi pi-refresh" 
                     severity="secondary" 
                     outlined
@@ -87,7 +87,7 @@
                     :loading="loadingPlanning"
                     v-tooltip="'Actualiser'"
                   />
-                  <Button 
+                  <Button aria-label="Exporter en Excel" 
                     icon="pi pi-file-excel" 
                     severity="secondary" 
                     outlined
@@ -95,7 +95,7 @@
                     :disabled="filteredPlanning.length === 0"
                     v-tooltip="'Exporter en Excel'"
                   />
-                  <Button 
+                  <Button aria-label="Exporter en PDF" 
                     icon="pi pi-file-pdf" 
                     severity="secondary" 
                     outlined
@@ -104,7 +104,7 @@
                     v-tooltip="'Exporter en PDF'"
                   />
                   <div class="flex border-round overflow-hidden">
-                    <Button 
+                    <Button aria-label="Vue liste" 
                       icon="pi pi-list" 
                       :severity="planningView === 'list' ? 'primary' : 'secondary'"
                       :outlined="planningView !== 'list'"
@@ -161,7 +161,7 @@
                     <template #body="{ data }">
                       <div v-if="data.isFirstSlotOfWeek" class="week-header-cell" :id="`week-${data.week_number}`">
                         <div class="week-content">
-                          <Button 
+                          <Button aria-label="Ajouter une séance" 
                             icon="pi pi-plus" 
                             severity="secondary" 
                             text
@@ -249,7 +249,7 @@
                   <Column header="Actions" style="width: 120px">
                     <template #body="{ data }">
                       <div class="flex gap-1">
-                        <Button 
+                        <Button aria-label="Modifier cette séance" 
                           icon="pi pi-pencil" 
                           severity="secondary" 
                           outlined
@@ -257,7 +257,7 @@
                           @click="editSession(data)"
                           v-tooltip="'Modifier cette séance'"
                         />
-                        <Button 
+                        <Button aria-label="Supprimer cette séance" 
                           icon="pi pi-trash" 
                           severity="danger" 
                           text 
@@ -297,7 +297,7 @@
                   <div class="col-12 md:col-6">
                     <div class="field">
                       <label for="year">Année *</label>
-                      <Dropdown 
+                      <Dropdown ariaLabel="Année" 
                         id="year" 
                         v-model="moduleForm.year" 
                         :options="[1, 2, 3]" 
@@ -364,7 +364,7 @@
                   <div class="col-12 md:col-4">
                     <div class="field">
                       <label for="credits">Crédits ECTS</label>
-                      <InputNumber 
+                      <InputNumber ariaLabel="Crédits ECTS" 
                         id="credits" 
                         v-model="moduleForm.credits" 
                         :min="0"
@@ -377,7 +377,7 @@
                   <div class="col-12 md:col-4">
                     <div class="field">
                       <label for="heures_contact">Heures de contact</label>
-                      <InputNumber 
+                      <InputNumber ariaLabel="Heures de contact" 
                         id="heures_contact" 
                         v-model="moduleForm.heures_contact" 
                         :min="0"
@@ -389,7 +389,7 @@
                   <div class="col-12 md:col-4">
                     <div class="field">
                       <label for="color">Couleur (planning)</label>
-                      <ColorPicker v-model="moduleForm.color" format="hex" />
+                      <ColorPicker :pt="{ input: { 'aria-label': 'Couleur (planning)' } }" v-model="moduleForm.color" format="hex" />
                     </div>
                   </div>
 
@@ -508,7 +508,7 @@
                 <Column header="Actions">
                   <template #body="{ data }">
                     <div class="flex gap-1">
-                      <Button 
+                      <Button aria-label="Voir les détails" 
                         icon="pi pi-eye" 
                         severity="secondary" 
                         text 
@@ -516,7 +516,7 @@
                         @click="showTeacherDetails(data)"
                         v-tooltip="'Voir les détails'"
                       />
-                      <Button 
+                      <Button aria-label="Retirer" 
                         icon="pi pi-trash" 
                         severity="danger" 
                         text 
@@ -668,7 +668,7 @@
                     <div class="flex flex-column gap-2">
                       <div class="flex justify-content-between">
                         <span>Heures prévues:</span>
-                        <InputNumber v-model="hoursBudget.planned_hours" :min="0" :max="999" suffix="h" class="w-6rem" size="small" />
+                        <InputNumber ariaLabel="Heures prévues" v-model="hoursBudget.planned_hours" :min="0" :max="999" suffix="h" class="w-6rem" size="small" />
                       </div>
                       <div class="flex justify-content-between align-items-center">
                         <span>Heures planifiées:</span>
@@ -697,7 +697,7 @@
                       <i class="pi pi-history"></i>
                       Historique des modifications
                     </div>
-                    <Button icon="pi pi-refresh" text @click="loadPlanningHistory" :loading="loadingHistory" />
+                    <Button aria-label="Actualiser" icon="pi pi-refresh" text @click="loadPlanningHistory" :loading="loadingHistory" />
                   </div>
                 </template>
                 <template #content>
@@ -769,7 +769,7 @@
         </div>
         <div class="field">
           <label for="teacher-hours">Heures</label>
-          <InputNumber id="teacher-hours" v-model="newTeacher.hours" />
+          <InputNumber ariaLabel="Heures" id="teacher-hours" v-model="newTeacher.hours" />
         </div>
       </div>
       <template #footer>
@@ -963,14 +963,14 @@
         <!-- Champ Semaine (pour tous les types de cours) -->
         <div class="field">
           <label>Semaine</label>
-          <InputNumber v-model="editingSession.weekNumber" :min="1" :max="52" class="w-full" />
+          <InputNumber ariaLabel="Semaine" v-model="editingSession.weekNumber" :min="1" :max="52" class="w-full" />
           <small class="text-500">Semaine académique (1-52)</small>
         </div>
         
         <!-- Champs pour cours asynchrone: seulement périodes -->
         <div v-if="editingSession.activity === 'Cours Asynchrone'" class="field">
           <label>Nombre de périodes</label>
-          <InputNumber v-model="editingSession.periods" :min="1" :max="100"  class="w-full" />
+          <InputNumber ariaLabel="Nombre de périodes" v-model="editingSession.periods" :min="1" :max="100"  class="w-full" />
           <small class="text-500">Nombre de périodes de travail pour ce cours asynchrone</small>
         </div>
         
@@ -1010,7 +1010,7 @@
         
         <div class="field">
           <label>Nom du cours (affiché dans le planning)</label>
-          <Textarea 
+          <Textarea aria-label="Nom du cours (affiché dans le planning)" 
             v-model="editingSession.courseTitle" 
             placeholder="Ex: Introduction Module: questions-réponses en lien avec la vidéo"
             :rows="2"
@@ -1021,7 +1021,7 @@
         
         <div class="field">
           <label>Enseignants (max 6)</label>
-          <AutoComplete 
+          <AutoComplete ariaLabel="Enseignants (max 6)" 
             v-model="editingSession.teachers"
             :suggestions="filteredTeachers"
             @complete="searchTeachers"
@@ -1046,11 +1046,11 @@
         <div class="field-row">
           <div class="field">
             <label>Salle</label>
-            <InputText v-model="editingSession.room" placeholder="Salle 101" class="w-full" />
+            <InputText aria-label="Salle" v-model="editingSession.room" placeholder="Salle 101" class="w-full" />
           </div>
           <div class="field">
             <label>Notes</label>
-            <InputText v-model="editingSession.notes" placeholder="Notes additionnelles" class="w-full" />
+            <InputText aria-label="Notes" v-model="editingSession.notes" placeholder="Notes additionnelles" class="w-full" />
           </div>
         </div>
       </div>

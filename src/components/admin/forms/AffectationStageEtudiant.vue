@@ -25,7 +25,7 @@
             <tr v-for="etudiant in etudiantsSBA23" :key="etudiant.id">
               <td>{{ etudiant.nom }}</td>
               <td>
-                <Dropdown
+                <Dropdown ariaLabel="Sélectionnez PFP1"
   v-model="affectations[etudiant.id]"
   :options="stagesOptions"
   optionLabel="titre"
@@ -38,24 +38,24 @@
               </td>
               <td>
                 <div style="display: flex; flex-direction: column; align-items: center;">
-  <Checkbox :binary="true" :inputId="'lese-' + etudiant.id" :modelValue="!!((conditionsPFP1[etudiant.id] || {}).lese)" @change="updateCondition('PFP1', etudiant.id, 'lese', $event.target.checked)" />
+  <Checkbox ariaLabel="Condition LESE, PFP1" :binary="true" :inputId="'lese-' + etudiant.id" :modelValue="!!((conditionsPFP1[etudiant.id] || {}).lese)" @change="updateCondition('PFP1', etudiant.id, 'lese', $event.target.checked)" />
   <span style="font-size: 0.8em; margin-top: 2px;"></span>
 </div>
               </td>
               <td>
                 <div style="display: flex; flex-direction: column; align-items: center;">
-  <Checkbox :binary="true" :inputId="'sae-' + etudiant.id" :modelValue="!!((conditionsPFP1[etudiant.id] || {}).sae)" @change="updateCondition('PFP1', etudiant.id, 'sae', $event.target.checked)" />
+  <Checkbox ariaLabel="Condition SAE, PFP1" :binary="true" :inputId="'sae-' + etudiant.id" :modelValue="!!((conditionsPFP1[etudiant.id] || {}).sae)" @change="updateCondition('PFP1', etudiant.id, 'sae', $event.target.checked)" />
   <span style="font-size: 0.8em; margin-top: 2px;"></span>
 </div>
               </td>
               <td>
                 <div style="display: flex; flex-direction: column; align-items: center;">
-  <Checkbox :binary="true" :inputId="'cas-' + etudiant.id" :modelValue="!!((conditionsPFP1[etudiant.id] || {}).cas)" @change="updateCondition('PFP1', etudiant.id, 'cas', $event.target.checked)" />
+  <Checkbox ariaLabel="Cas particulier, PFP1" :binary="true" :inputId="'cas-' + etudiant.id" :modelValue="!!((conditionsPFP1[etudiant.id] || {}).cas)" @change="updateCondition('PFP1', etudiant.id, 'cas', $event.target.checked)" />
   <span style="font-size: 0.8em; margin-top: 2px;"></span>
 </div>
               </td>
               <td>
-                <Dropdown
+                <Dropdown ariaLabel="Sélectionnez PFP2"
                   v-model="affectationsPFP2[etudiant.id]"
                   :options="stagesOptions"
                   optionLabel="titre"
@@ -68,17 +68,17 @@
               </td>
               <td>
                 <div style="display: flex; justify-content: center; align-items: center; min-width:32px;">
-  <Checkbox :binary="true" :inputId="'lese2-' + etudiant.id" :modelValue="!!((conditionsPFP2[etudiant.id] || {}).lese)" @change="updateCondition('PFP2', etudiant.id, 'lese', $event.target.checked)" style="transform: scale(0.9);" />
+  <Checkbox ariaLabel="Condition LESE, PFP2" :binary="true" :inputId="'lese2-' + etudiant.id" :modelValue="!!((conditionsPFP2[etudiant.id] || {}).lese)" @change="updateCondition('PFP2', etudiant.id, 'lese', $event.target.checked)" style="transform: scale(0.9);" />
 </div>
               </td>
               <td>
                 <div style="display: flex; justify-content: center; align-items: center; min-width:32px;">
-  <Checkbox :binary="true" :inputId="'sae2-' + etudiant.id" :modelValue="!!((conditionsPFP2[etudiant.id] || {}).sae)" @change="updateCondition('PFP2', etudiant.id, 'sae', $event.target.checked)" style="transform: scale(0.9);" />
+  <Checkbox ariaLabel="Condition SAE, PFP2" :binary="true" :inputId="'sae2-' + etudiant.id" :modelValue="!!((conditionsPFP2[etudiant.id] || {}).sae)" @change="updateCondition('PFP2', etudiant.id, 'sae', $event.target.checked)" style="transform: scale(0.9);" />
 </div>
               </td>
               <td>
                 <div style="display: flex; justify-content: center; align-items: center; min-width:32px;">
-  <Checkbox :binary="true" :inputId="'cas2-' + etudiant.id" :modelValue="!!((conditionsPFP2[etudiant.id] || {}).cas)" @change="updateCondition('PFP2', etudiant.id, 'cas', $event.target.checked)" style="transform: scale(0.9);" />
+  <Checkbox ariaLabel="Cas particulier, PFP2" :binary="true" :inputId="'cas2-' + etudiant.id" :modelValue="!!((conditionsPFP2[etudiant.id] || {}).cas)" @change="updateCondition('PFP2', etudiant.id, 'cas', $event.target.checked)" style="transform: scale(0.9);" />
 </div>
               </td>
               <td>

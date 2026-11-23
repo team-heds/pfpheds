@@ -46,7 +46,7 @@
         <Column header="Remarque étudiant">
           <template #body="slotProps">
             <span>{{ slotProps.data.remarqueEtudiant || 'Aucune' }}</span>
-            <Button icon="pi pi-pencil" class="p-button-text" @click="openRemarkDialog(slotProps.data)" />
+            <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text" @click="openRemarkDialog(slotProps.data)" />
           </template>
         </Column>
         <Column header="Remarques places">
@@ -68,7 +68,7 @@
       <!-- Dialog pour modifier le StudentNote de l'étudiant -->
       <Dialog header="Modifier le StudentNote de l'étudiant" v-model:visible="displayRemarkDialog" modal>
         <div class="remark-dialog">
-          <textarea v-model="editedRemarks" rows="5" style="width:100%;" placeholder="Saisir vos remarques ici..."></textarea>
+          <textarea aria-label="Saisir vos remarques ici" v-model="editedRemarks" rows="5" style="width:100%;" placeholder="Saisir vos remarques ici..."></textarea>
           <div class="dialog-buttons" style="margin-top:1em; text-align:right;">
             <Button label="Annuler" class="p-button-text" @click="cancelRemarkEdit" />
             <Button label="Confirmer" class="p-button-success" @click="confirmRemarkUpdate" />

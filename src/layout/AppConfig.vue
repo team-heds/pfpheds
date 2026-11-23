@@ -97,7 +97,7 @@ const onRippleChange = (value) => {
 </script>
 
 <template>
-    <button class="layout-config-button config-link" type="button" @click="onConfigButtonClick()">
+    <button aria-label="Paramètres" class="layout-config-button config-link" type="button" @click="onConfigButtonClick()">
         <i class="pi pi-cog"></i>
     </button>
 
@@ -120,11 +120,11 @@ const onRippleChange = (value) => {
 
         <h5>Scale</h5>
         <div class="flex align-items-center">
-            <Button icon="pi pi-minus" type="button" @click="decrementScale()" class="w-2rem h-2rem mr-2" text rounded :disabled="layoutConfig.scale.value === scales[0]"></Button>
+            <Button aria-label="Retirer" icon="pi pi-minus" type="button" @click="decrementScale()" class="w-2rem h-2rem mr-2" text rounded :disabled="layoutConfig.scale.value === scales[0]"></Button>
             <div class="flex gap-2 align-items-center">
                 <i class="pi pi-circle-fill text-300" v-for="s in scales" :key="s" :class="{ 'text-primary-500': s === layoutConfig.scale.value }"></i>
             </div>
-            <Button icon="pi pi-plus" type="button" @click="incrementScale()" class="w-2rem h-2rem ml-2" text rounded :disabled="layoutConfig.scale.value === scales[scales.length - 1]"></Button>
+            <Button aria-label="Ajouter" icon="pi pi-plus" type="button" @click="incrementScale()" class="w-2rem h-2rem ml-2" text rounded :disabled="layoutConfig.scale.value === scales[scales.length - 1]"></Button>
         </div>
 
         <template v-if="!simple">
@@ -152,7 +152,7 @@ const onRippleChange = (value) => {
                     <label for="mode4">Reveal</label>
                 </div>
                 <div class="flex align-items-center gap-2 w-6">
-                    <RadioButton name="menuMode" value="drawer" v-model="layoutConfig.menuMode.value" inputId="mode6"></RadioButton>
+                    <RadioButton ariaLabel="Drawer" name="menuMode" value="drawer" v-model="layoutConfig.menuMode.value" inputId="mode6"></RadioButton>
                     <label for="mode5">Drawer</label>
                 </div>
                 <div class="flex align-items-center gap-2 w-6">
@@ -204,7 +204,7 @@ const onRippleChange = (value) => {
             </div>
 
             <h5>Ripple Effect</h5>
-            <InputSwitch :modelValue="rippleActive" @update:modelValue="onRippleChange"></InputSwitch>
+            <InputSwitch ariaLabel="Ripple Effect" :modelValue="rippleActive" @update:modelValue="onRippleChange"></InputSwitch>
         </template>
     </Sidebar>
 </template>

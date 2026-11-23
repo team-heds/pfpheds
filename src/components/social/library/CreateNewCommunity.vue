@@ -20,7 +20,7 @@
         <br>
         <div class="form-group">
           <label class="text-white" for="communityType">Type de Communauté</label>
-          <Dropdown id="communityType" optionLabel="name" :options="types" optionValue="code"
+          <Dropdown ariaLabel="Type de Communauté" id="communityType" optionLabel="name" :options="types" optionValue="code"
                     placeholder="Sélectionnez le type" v-model="newCommunity.type" required class="w-full mb-4 mt-2">
             <option value="" disabled></option>
           </Dropdown>

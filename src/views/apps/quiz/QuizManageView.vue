@@ -113,7 +113,7 @@
         </div>
         <div class="quiz-field">
           <label for="new-quiz-theme">Thème</label>
-          <Dropdown
+          <Dropdown ariaLabel="Thème"
             v-model="draft.theme"
             input-id="new-quiz-theme"
             :options="themeSuggestions"

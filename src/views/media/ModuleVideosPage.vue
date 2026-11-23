@@ -3,7 +3,7 @@
   <div class="module-videos-page">
     <!-- Header du module -->
     <div class="module-header">
-      <Button 
+      <Button aria-label="Retour" 
         icon="pi pi-arrow-left" 
         @click="goBack"
         class="back-btn"
@@ -53,7 +53,7 @@
     <!-- Filtres -->
     <div class="filters-section">
       <div class="search-bar">
-        <InputText 
+        <InputText aria-label="Rechercher une vidéo" 
           v-model="searchQuery" 
           placeholder="Rechercher une vidéo..." 
           class="search-input"
@@ -88,13 +88,13 @@
       </div>
 
       <div class="view-toggle">
-        <Button 
+        <Button aria-label="Afficher la grille" 
           :class="{ 'active': viewMode === 'grid' }"
           @click="viewMode = 'grid'"
           icon="pi pi-th-large"
           outlined
         />
-        <Button 
+        <Button aria-label="Afficher la liste" 
           :class="{ 'active': viewMode === 'list' }"
           @click="viewMode = 'list'"
           icon="pi pi-list"
@@ -154,19 +154,19 @@
 
         <!-- Actions rapides -->
         <div class="video-actions">
-          <Button 
+          <Button aria-label="Valider/Commenter" 
             icon="pi pi-eye" 
             class="action-btn"
             @click.stop="navigateToVideoValidation(video.id)"
             v-tooltip="'Valider/Commenter'"
           />
-          <Button 
+          <Button aria-label="Copier le lien" 
             icon="pi pi-link" 
             class="action-btn"
             @click.stop="copyVideoLink(video)"
             v-tooltip="'Copier le lien'"
           />
-          <Button 
+          <Button aria-label="Télécharger" 
             icon="pi pi-download" 
             class="action-btn"
             @click.stop="downloadVideo(video)"
@@ -175,14 +175,14 @@
           
           <!-- Actions de validation rapide -->
           <div class="quick-validation">
-            <Button 
+            <Button aria-label="Valider rapidement" 
               icon="pi pi-check" 
               class="validate-btn"
               @click.stop="quickValidate(video, 'validated')"
               v-tooltip="'Valider rapidement'"
               :disabled="video.status === 'validated'"
             />
-            <Button 
+            <Button aria-label="Rejeter rapidement" 
               icon="pi pi-times" 
               class="reject-btn"
               @click.stop="quickValidate(video, 'rejected')"

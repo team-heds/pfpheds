@@ -101,7 +101,7 @@
                       getPraticienFormateurInfos(place)
                     }}</b>
                     <span v-else class="text-400">Non attribue</span>
-                    <Button
+                    <Button aria-label="Modifier le praticien formateur"
                       v-if="isAdmin"
                       icon="pi pi-pencil"
                       class="p-button-text p-button-plain p-button-sm"
@@ -150,7 +150,7 @@
     <div class="flex flex-column gap-3">
       <div class="field">
         <label for="place">Selectionner une place</label>
-        <Dropdown
+        <Dropdown ariaLabel="Selectionner une place"
           id="place"
           v-model="newAssignment.assigned_place_id"
           :options="availablePlaces"
@@ -180,7 +180,7 @@
               <div class="text-xs text-gray-500">Type: {{ pfp.pfp_type || 'Non specifie' }}</div>
             </div>
             <div class="flex gap-2">
-              <Button
+              <Button aria-label="Selectionner cette PFP"
                 icon="pi pi-check"
                 class="p-button-text p-button-sm p-button-success"
                 v-tooltip="'Selectionner cette PFP'"
@@ -203,7 +203,7 @@
 
       <div class="field">
         <label for="praticien">Praticien formateur</label>
-        <Dropdown
+        <Dropdown ariaLabel="Praticien formateur"
           id="praticien"
           v-model="newAssignment.praticien_formateur"
           :options="availablePraticiens"
@@ -231,7 +231,7 @@
     <div class="flex flex-column gap-3">
       <div class="field">
         <label for="praticien">Praticien formateur</label>
-        <Dropdown
+        <Dropdown ariaLabel="Praticien formateur"
           id="praticien"
           v-model="editPraticienFormateurData.praticien_formateur"
           :options="availablePraticiens"

@@ -33,7 +33,7 @@
         <div class="flex align-items-center gap-3 flex-wrap">
           <div class="flex align-items-center gap-2">
             <span class="text-600 font-medium">Classe</span>
-            <Dropdown 
+            <Dropdown ariaLabel="Classe" 
               v-model="selectedClass" 
               :options="classOptions" 
               placeholder="Classe"
@@ -44,7 +44,7 @@
           </div>
           <div class="flex align-items-center gap-2">
             <span class="text-600 font-medium">PFP</span>
-            <Dropdown 
+            <Dropdown ariaLabel="PFP" 
               v-model="selectedPFP" 
               :options="pfpOptions" 
               optionLabel="label"
@@ -56,7 +56,7 @@
           </div>
           <div class="flex align-items-center gap-2">
             <span class="text-600 font-medium">Année</span>
-            <Dropdown 
+            <Dropdown ariaLabel="Année" 
               v-model="selectedYear" 
               :options="yearOptions" 
               placeholder="Année"
@@ -66,7 +66,7 @@
           </div>
           <div class="flex align-items-center gap-2">
             <span class="text-600 font-medium">Contrôle</span>
-            <Dropdown
+            <Dropdown ariaLabel="Contrôle"
               v-model="reviewStatusFilter"
               :options="reviewStatusOptions"
               optionLabel="label"
@@ -78,7 +78,7 @@
           </div>
           <div class="flex align-items-center gap-2">
             <span class="text-600 font-medium">Publication</span>
-            <Dropdown
+            <Dropdown ariaLabel="Publication"
               v-model="publicationStatusFilter"
               :options="publicationStatusOptions"
               optionLabel="label"
@@ -89,7 +89,7 @@
             />
           </div>
           <span class="flex-1"></span>
-          <Button icon="pi pi-refresh" outlined @click="loadResults" v-tooltip.top="'Rafraîchir'" />
+          <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined @click="loadResults" v-tooltip.top="'Rafraîchir'" />
         </div>
       </div>
 
@@ -260,7 +260,7 @@
               <template #body="slotProps">
                 <div class="flex flex-column gap-2">
                   <!-- Dropdown de sélection -->
-                  <Dropdown
+                  <Dropdown ariaLabel="Sélectionner un praticien"
                     :modelValue="slotProps.data.assigned_praticien_id"
                     @update:modelValue="(value) => assignPraticien(slotProps.data, value)"
                     :options="getPraticienOptions(slotProps.data)"
@@ -326,7 +326,7 @@
 
             <Column field="pfp_validee" header="Stage validé" sortable :style="{ width: '130px', textAlign: 'center' }">
               <template #body="slotProps">
-                <InputSwitch 
+                <InputSwitch ariaLabel="Stage validé" 
                   :modelValue="slotProps.data.pfp_validee" 
                   @update:modelValue="(val) => togglePfpValidee(slotProps.data, val)"
                   v-tooltip.top="'Validation pédagogique après réalisation du stage'"
@@ -336,7 +336,7 @@
 
             <Column field="remarques" header="Remarques" :style="{ minWidth: '250px' }">
               <template #body="slotProps">
-                <Textarea 
+                <Textarea aria-label="Remarques sur le stage" 
                   :modelValue="slotProps.data.remarques || ''" 
                   @update:modelValue="(val) => slotProps.data.remarques = val"
                   @blur="saveRemarques(slotProps.data)"
@@ -424,7 +424,7 @@
 
           <div class="mb-4">
             <h4 class="mb-2">Nouvelle place</h4>
-            <InputText 
+            <InputText aria-label="Nouvelle place" 
               v-model="placeSearchQuery" 
               placeholder="Rechercher une place ou institution..." 
               class="w-full mb-3"

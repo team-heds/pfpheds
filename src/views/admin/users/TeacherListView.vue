@@ -18,10 +18,10 @@
             </div>
           </div>
           <div class="flex align-items-center gap-2 flex-wrap">
-            <InputText v-model="globalSearch" placeholder="Rechercher (nom, email)" class="w-16rem" />
+            <InputText aria-label="Rechercher (nom, email)" v-model="globalSearch" placeholder="Rechercher (nom, email)" class="w-16rem" />
             <Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" />
             <Button icon="pi pi-plus" label="Ajouter" outlined @click="openCreateDialog" />
-            <Button icon="pi pi-refresh" outlined @click="refresh" />
+            <Button aria-label="Actualiser" icon="pi pi-refresh" outlined @click="refresh" />
           </div>
         </div>
       </div>
@@ -52,8 +52,8 @@
           <Column field="email" header="Email" :sortable="true" style="min-width: 14rem"></Column>
           <Column header="Actions" style="min-width: 10rem">
             <template #body="{ data }">
-              <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="openEditDialog(data.id)" />
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="openEditDialog(data.id)" />
+              <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
             </template>
           </Column>
         </DataTable>

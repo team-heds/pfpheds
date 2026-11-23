@@ -15,9 +15,9 @@
           <div class="flex gap-2 align-items-center">
             <span class="p-input-icon-left">
               <i class="pi pi-search" />
-              <InputText v-model="moduleSearchQuery" placeholder="Rechercher un module..." style="width: 300px" />
+              <InputText aria-label="Rechercher un module" v-model="moduleSearchQuery" placeholder="Rechercher un module..." style="width: 300px" />
             </span>
-            <Button icon="pi pi-times" severity="secondary" size="small" @click="moduleSearchQuery = ''" v-tooltip.top="'Effacer'" />
+            <Button aria-label="Effacer" icon="pi pi-times" severity="secondary" size="small" @click="moduleSearchQuery = ''" v-tooltip.top="'Effacer'" />
           </div>
           <div class="flex gap-2 align-items-center">
             <Tag :value="`${filteredModules.length} / ${modules.length} modules`" severity="info" />
@@ -89,14 +89,14 @@
           <Column header="Actions" :exportable="false" style="width: 120px">
             <template #body="slotProps">
               <div class="flex gap-2">
-                <Button 
+                <Button aria-label="Éditer" 
                   icon="pi pi-pencil" 
                   severity="info" 
                   size="small" 
                   @click="editModule(slotProps.data)" 
                   v-tooltip.top="'Éditer'"
                 />
-                <Button 
+                <Button aria-label="Dupliquer" 
                   icon="pi pi-copy" 
                   severity="secondary" 
                   size="small" 
@@ -128,7 +128,7 @@
             <div class="col-6">
               <div class="field">
                 <label for="moduleCredits">Crédits ECTS</label>
-                <InputNumber id="moduleCredits" v-model="moduleForm.credits" :min="0" :max="30" />
+                <InputNumber ariaLabel="Crédits ECTS" id="moduleCredits" v-model="moduleForm.credits" :min="0" :max="30" />
               </div>
             </div>
             <div class="col-6">
@@ -136,14 +136,14 @@
                 <label for="moduleColor">Couleur</label>
                 <div class="flex align-items-center gap-2">
                   <input type="color" id="moduleColor" v-model="moduleForm.color" style="width: 40px; height: 36px; border: none; cursor: pointer; border-radius: 6px;" />
-                  <InputText v-model="moduleForm.color" placeholder="#3B82F6" style="flex: 1" />
+                  <InputText aria-label="Couleur hexadécimale" v-model="moduleForm.color" placeholder="#3B82F6" style="flex: 1" />
                 </div>
               </div>
             </div>
           </div>
           <div class="field">
             <label for="moduleResponsable">Chef de module</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Chef de module" 
               id="moduleResponsable" 
               v-model="moduleForm.responsable" 
               :options="teachers" 

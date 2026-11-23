@@ -385,7 +385,7 @@
         </div>
         <div class="field">
           <label for="base-branch">Branche de base</label>
-          <Dropdown 
+          <Dropdown ariaLabel="Branche de base" 
             id="base-branch"
             v-model="baseBranch" 
             :options="['prod', 'develop', 'main']"

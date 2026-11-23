@@ -140,7 +140,7 @@
           <label for="quest-difficulty" class="block text-sm font-semibold text-900 mb-2">
             <i class="pi pi-star-fill mr-1"></i> Difficulté
           </label>
-          <Dropdown 
+          <Dropdown ariaLabel="Difficulté" 
             inputId="quest-difficulty"
             v-model="selectedDifficulty" 
             :options="difficultyOptions" 
@@ -156,7 +156,7 @@
           <label for="quest-type" class="block text-sm font-semibold text-900 mb-2">
             <i class="pi pi-tag mr-1"></i> Type
           </label>
-          <Dropdown 
+          <Dropdown ariaLabel="Type" 
             inputId="quest-type"
             v-model="selectedType" 
             :options="typeOptions" 
@@ -172,7 +172,7 @@
           <label for="quest-sort" class="block text-sm font-semibold text-900 mb-2">
             <i class="pi pi-sort-alt mr-1"></i> Tri
           </label>
-          <Dropdown 
+          <Dropdown ariaLabel="Tri" 
             inputId="quest-sort"
             v-model="sortBy" 
             :options="sortOptions" 

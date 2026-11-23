@@ -22,13 +22,13 @@
 
     <div class="page-header">
       <div class="header-content">
-        <Button class="back-btn" @click="$router.go(-1)">
+        <Button aria-label="Retour" class="back-btn" @click="$router.go(-1)">
           <i class="pi pi-arrow-left"></i>
         </Button>
         <div class="header-title-container">
           <h2 class="page-title">Statistiques de la Maison</h2>
         </div>
-        <Button 
+        <Button aria-label="Actualiser" 
           v-if="houseStats && !loading" 
           icon="pi pi-refresh" 
           @click="refreshStats" 

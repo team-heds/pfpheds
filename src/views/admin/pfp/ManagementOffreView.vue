@@ -146,7 +146,7 @@
               <div class="flex flex-wrap gap-2 align-items-center">
                 <div class="flex align-items-center gap-2">
                   <span class="text-600">Année</span>
-                  <Dropdown :options="years" optionLabel="label" optionValue="value" v-model="selectedYear" class="w-10rem" @change="refreshPlaces" />
+                  <Dropdown ariaLabel="Année" :options="years" optionLabel="label" optionValue="value" v-model="selectedYear" class="w-10rem" @change="refreshPlaces" />
                 </div>
                 <Button
                   icon="pi pi-copy"
@@ -167,22 +167,22 @@
                 />
                 <div class="flex align-items-center gap-2">
                   <span class="text-600">PFP</span>
-                  <Dropdown :options="pfpOptions" optionLabel="label" optionValue="value" v-model="selectedPFP" class="w-8rem" />
+                  <Dropdown ariaLabel="PFP" :options="pfpOptions" optionLabel="label" optionValue="value" v-model="selectedPFP" class="w-8rem" />
                 </div>
                 <div class="flex align-items-center gap-2">
-                  <InputSwitch v-model="hideZeroOffers" />
+                  <InputSwitch ariaLabel="Masquer offres à 0" v-model="hideZeroOffers" />
                   <span class="text-600">Masquer offres à 0</span>
                 </div>
                 <div class="flex align-items-center gap-2">
                   <span class="text-600">Afficher</span>
-                  <Dropdown :options="rowsOptions" optionLabel="label" optionValue="value" v-model="rowsPerPage" class="w-8rem" />
+                  <Dropdown ariaLabel="Afficher" :options="rowsOptions" optionLabel="label" optionValue="value" v-model="rowsPerPage" class="w-8rem" />
                   <div class="flex align-items-center gap-2">
-                    <InputSwitch v-model="showAll" />
+                    <InputSwitch ariaLabel="Afficher toutes les lignes" v-model="showAll" />
                     <span class="text-600">Tout</span>
                   </div>
                 </div>
-                <InputText v-model="filters['global'].value" placeholder="Rechercher..." />
-                <Button icon="pi pi-refresh" outlined @click="refreshPlaces" />
+                <InputText aria-label="Rechercher" v-model="filters['global'].value" placeholder="Rechercher..." />
+                <Button aria-label="Actualiser" icon="pi pi-refresh" outlined @click="refreshPlaces" />
               </div>
             </div>
           </template>
@@ -199,7 +199,7 @@
               <div v-if="isEditingRow(slotProps.data)" class="criteria-edit-grid">
                 <div v-for="criterion in criteriaDefinitions" :key="criterion.key" class="criteria-edit-item">
                   <span class="text-600 text-sm">{{ criterion.key }}</span>
-                  <InputSwitch v-model="editBuffer[criterion.bufferField]" />
+                  <InputSwitch :ariaLabel="`${criterion.key}`" v-model="editBuffer[criterion.bufferField]" />
                 </div>
               </div>
               <div v-else class="criteria-tags">
@@ -255,7 +255,7 @@
           <Column v-if="shouldShowPFPColumn('PFP3')" header="Proposition PFP3" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
-                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp3_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
+                <InputText aria-label="Proposition PFP3" v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp3_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
                 <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP3') }}</span>
               </div>
             </template>
@@ -263,7 +263,7 @@
           <Column v-if="shouldShowPFPColumn('PFP2')" header="Proposition PFP2" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
-                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp2_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
+                <InputText aria-label="Proposition PFP2" v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp2_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
                 <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP2') }}</span>
               </div>
             </template>
@@ -271,7 +271,7 @@
           <Column v-if="shouldShowPFPColumn('PFP1A')" header="Proposition PFP1A" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
-                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp1a_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
+                <InputText aria-label="Proposition PFP1A" v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp1a_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
                 <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP1A') }}</span>
               </div>
             </template>
@@ -279,7 +279,7 @@
           <Column v-if="shouldShowPFPColumn('PFP1B')" header="Proposition PFP1B" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
-                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp1b_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
+                <InputText aria-label="Proposition PFP1B" v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp1b_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
                 <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP1B') }}</span>
               </div>
             </template>
@@ -287,7 +287,7 @@
           <Column v-if="shouldShowPFPColumn('PFP4')" header="Proposition PFP4" class="w-6rem text-center">
             <template #body="slotProps">
               <div class="flex justify-content-center">
-                <InputText v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp4_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
+                <InputText aria-label="Proposition PFP4" v-if="isEditingRow(slotProps.data)" v-model="editBuffer.pfp4_proposition" class="p-inputtext-sm w-6rem text-center" placeholder="0" />
                 <span v-else class="font-semibold text-blue-600">{{ getPropositionValue(slotProps.data, 'PFP4') }}</span>
               </div>
             </template>
@@ -295,10 +295,10 @@
           <Column header="Actions" class="w-10rem">
             <template #body="slotProps">
               <div class="flex justify-content-center gap-1">
-                <Button v-if="!isEditingRow(slotProps.data)" icon="pi pi-pencil" class="p-button-outlined p-button-sm" @click="startEditRow(slotProps.data)" v-tooltip.top="'Éditer les propositions'" />
+                <Button aria-label="Éditer les propositions" v-if="!isEditingRow(slotProps.data)" icon="pi pi-pencil" class="p-button-outlined p-button-sm" @click="startEditRow(slotProps.data)" v-tooltip.top="'Éditer les propositions'" />
                 <template v-else>
-                  <Button icon="pi pi-check" class="p-button-success p-button-sm" @click="saveEditRow(slotProps.data)" :loading="savingRowId === slotProps.data.PlaceId" v-tooltip.top="'Sauvegarder'" />
-                  <Button icon="pi pi-times" class="p-button-danger p-button-sm" @click="cancelEditRow" v-tooltip.top="'Annuler'" />
+                  <Button aria-label="Sauvegarder" icon="pi pi-check" class="p-button-success p-button-sm" @click="saveEditRow(slotProps.data)" :loading="savingRowId === slotProps.data.PlaceId" v-tooltip.top="'Sauvegarder'" />
+                  <Button aria-label="Annuler" icon="pi pi-times" class="p-button-danger p-button-sm" @click="cancelEditRow" v-tooltip.top="'Annuler'" />
                 </template>
               </div>
               <div v-if="noChangeFeedbackRowId === slotProps.data.PlaceId" class="text-xs text-600 text-center mt-1">

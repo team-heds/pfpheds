@@ -32,7 +32,7 @@
           <form class="filters" aria-label="Filtrer les créneaux" @submit.prevent>
             <div class="field">
               <label for="mentoring-filter-tag">Sujet</label>
-              <Dropdown
+              <Dropdown ariaLabel="Sujet"
                 v-model="filters.tag"
                 input-id="mentoring-filter-tag"
                 :options="filterOptions.tags"
@@ -42,7 +42,7 @@
             </div>
             <div class="field">
               <label for="mentoring-filter-classe">Classe du mentor</label>
-              <Dropdown
+              <Dropdown ariaLabel="Classe du mentor"
                 v-model="filters.classe"
                 input-id="mentoring-filter-classe"
                 :options="filterOptions.classes"
@@ -61,7 +61,7 @@
               />
             </div>
             <div class="filters__toggle">
-              <Checkbox v-model="filters.includeBooked" input-id="mentoring-filter-booked" binary />
+              <Checkbox ariaLabel="Afficher aussi les créneaux déjà pris" v-model="filters.includeBooked" input-id="mentoring-filter-booked" binary />
               <label for="mentoring-filter-booked">Afficher aussi les créneaux déjà pris</label>
             </div>
             <Button

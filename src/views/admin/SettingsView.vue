@@ -136,7 +136,7 @@
                   <strong>Thème</strong>
                   <p>Mode clair ou mode sombre</p>
                 </div>
-                <Dropdown 
+                <Dropdown ariaLabel="Thème" 
                   :modelValue="theme.preference.value"
                   :options="themeOptions"
                   optionLabel="label"
