@@ -13,12 +13,12 @@ export function isNetworkFailure(error) {
   return NETWORK_ERROR.test(String(error.message || ''))
 }
 
-export function isDeviceOffline(nav = globalThis.navigator) {
+export function isDeviceOffline(nav = window.navigator) {
   return nav?.onLine === false
 }
 
 /** Décide si un démarrage doit afficher l'écran « Hors ligne ». */
-export function markStartupConnectivity(error = null, nav = globalThis.navigator) {
+export function markStartupConnectivity(error = null, nav = window.navigator) {
   if (isDeviceOffline(nav) || isNetworkFailure(error)) startupOffline.value = true
   return startupOffline.value
 }
@@ -31,9 +31,9 @@ export function bootstrapFailureMessage(error) {
 
 /** Toute réponse HTTP prouve que le site est joignable. */
 export async function probeOrigin({
-  fetcher = (...args) => globalThis.fetch(...args),
-  origin = globalThis.location?.origin,
-  nav = globalThis.navigator,
+  fetcher = (...args) => window.fetch(...args),
+  origin = window.location.origin,
+  nav = window.navigator,
   timeoutMs = PROBE_TIMEOUT_MS,
 } = {}) {
   if (isDeviceOffline(nav)) return false
