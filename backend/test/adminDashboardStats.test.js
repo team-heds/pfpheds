@@ -147,7 +147,8 @@ function createFakeClient(options = {}) {
     return query
   }
 
-  const rpc = (name, args) => {
+  const rpc = (name, args, rpcOptions) => {
+    if (name === 'admin_recent_sign_in_user_ids') assert.equal(rpcOptions?.get, true)
     const sinceMs = Date.parse(args.p_since)
     const signIns = options.signIns || [
       { user_id: 'student-1', last_sign_in_at: '2026-08-20T07:00:00Z' },
@@ -364,6 +365,11 @@ test('active users pagination is not capped by the PostgREST default page size',
 
   assert.equal(response.domains.gamification.metrics.activeUsers.value, 1005)
   assert.ok(queries.some((query) => query.table === 'xp_history' && query.range?.[0] === 1000))
+  assert.ok(
+    queries
+      .filter((query) => query.table === 'xp_history' && query.range)
+      .every((query) => query.order?.[0] === 'id')
+  )
   assert.ok(queries.some((query) => query.table === 'user_badges' && query.columns === 'badge_id'))
 })
 
