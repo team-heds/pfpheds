@@ -24,9 +24,5 @@ Write-Host "  [OK] package.json" -ForegroundColor Green
 (Get-Content "src/main.js" -Raw) -replace "const APP_VERSION = '.*?'", "const APP_VERSION = '$NewVersion'" | Set-Content "src/main.js" -NoNewline
 Write-Host "  [OK] src/main.js" -ForegroundColor Green
 
-# 3. public/sw.js
-(Get-Content "public/sw.js" -Raw) -replace "const SW_VERSION = '.*?'", "const SW_VERSION = '$NewVersion'" | Set-Content "public/sw.js" -NoNewline
-Write-Host "  [OK] public/sw.js" -ForegroundColor Green
-
 Write-Host "`nVersion $NewVersion prete. Lance maintenant:" -ForegroundColor Yellow
 Write-Host "  .\deploy-hedsvs.ps1" -ForegroundColor White
