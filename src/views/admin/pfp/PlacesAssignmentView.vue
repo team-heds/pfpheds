@@ -286,6 +286,22 @@
                     </template>
                   </Dropdown>
                   
+                  <!-- Second praticien formateur (facultatif) -->
+                  <Dropdown
+                    v-if="slotProps.data.assigned_praticien_id"
+                    :modelValue="slotProps.data.assigned_praticien_2_id"
+                    @update:modelValue="(value) => assignSecondPraticien(slotProps.data, value)"
+                    :options="getSecondPraticienOptions(slotProps.data)"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Ajouter un 2e praticien"
+                    aria-label="Second praticien formateur"
+                    class="w-full"
+                    filter
+                    showClear
+                    :loading="slotProps.data.savingPraticien"
+                  />
+
                   <!-- Info: nombre de praticiens disponibles -->
                   <div v-if="slotProps.data.praticiens_formateurs_list?.length === 1" class="text-xs text-green-600">
                     <i class="pi pi-check-circle mr-1"></i>
@@ -487,6 +503,7 @@
 </template>
 
 <script setup>
+import { joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { useAutoRefresh } from '@/composables/useAutoRefresh'
@@ -889,11 +906,10 @@ const exportCSV = () => {
     return
   }
 
-  const headers = ['Nom', 'Prénom', 'Place Attribuée', 'Institution', 'Praticien Assigné', 'Email Praticien', 'Praticiens Disponibles', 'Rang', 'Date Attribution', 'Statut']
+  const headers = ['Nom', 'Prénom', 'Place Attribuée', 'Institution', 'Praticien(s) Assigné(s)', 'Email(s) Praticien(s)', 'Praticiens Disponibles', 'Rang', 'Date Attribution', 'Statut']
   const rows = results.value.map(r => {
-    const assignedPraticienName = r.assigned_praticien_id ? getPraticienName(r.assigned_praticien_id) : 'Non assigné'
-    const assignedPraticien = r.assigned_praticien_id ? allPraticiens.value.find(p => p.id == r.assigned_praticien_id) : null
-    const assignedPraticienMail = assignedPraticien?.mail || ''
+    const assignedPraticienName = joinAssignedPraticiens(r, getPraticienName) || 'Non assigné'
+    const assignedPraticienMail = joinAssignedPraticiens(r, (id) => allPraticiens.value.find(p => p.id == id)?.mail)
     
     return [
       r.student_nom || 'N/A',
@@ -1400,6 +1416,51 @@ const getPraticienOptions = (assignment) => {
   }))
 }
 
+// Le second PF propose d'abord les autres PF de la place, sinon tous les PF.
+const getSecondPraticienOptions = (assignment) => {
+  const isOther = (option) => String(option.value) !== String(assignment.assigned_praticien_id)
+  const configured = getPraticienOptions(assignment).filter(isOther)
+  if (configured.length > 0) return configured
+  return getPraticienOptions({ ...assignment, praticiens_formateurs_list: [] }).filter(isOther)
+}
+
+const assignSecondPraticien = async (assignment, praticienId) => {
+  assignment.savingPraticien = true
+  try {
+    // Le PF principal peut être seulement pré-rempli : on l'enregistre avec le second.
+    const { error } = await supabase
+      .from('student_result_vote')
+      .update({
+        assigned_praticien_id: assignment.assigned_praticien_id,
+        assigned_praticien_2_id: praticienId || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', assignment.id)
+    if (error) throw error
+
+    assignment.assigned_praticien_2_id = praticienId || null
+    toast.add({
+      severity: 'success',
+      summary: 'Second praticien',
+      detail: praticienId
+        ? `${getPraticienName(praticienId)} a été ajouté pour ${assignment.student_name}`
+        : `Second praticien retiré pour ${assignment.student_name}`,
+      life: 3000
+    })
+    scheduleRefresh()
+  } catch (error) {
+    console.error('[ERROR] Erreur assignation second praticien:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible d\'enregistrer le second praticien: ' + error.message,
+      life: 5000
+    })
+  } finally {
+    assignment.savingPraticien = false
+  }
+}
+
 // Obtenir le nom d'un praticien par son ID
 const getPraticienName = (praticienId) => {
   const praticien = allPraticiens.value.find(p => {
@@ -1418,6 +1479,11 @@ const getPraticienName = (praticienId) => {
 
 // Assigner un praticien formateur à une assignation
 const assignPraticien = async (assignment, praticienId) => {
+  // Sans PF principal, ou s'il devient identique au second, le second est retiré.
+  const secondPraticienId = !praticienId || String(praticienId) === String(assignment.assigned_praticien_2_id)
+    ? null
+    : assignment.assigned_praticien_2_id ?? null
+
   // Marquer comme en cours de sauvegarde
   assignment.savingPraticien = true
   
@@ -1427,6 +1493,7 @@ const assignPraticien = async (assignment, praticienId) => {
       .from('student_result_vote')
       .update({ 
         assigned_praticien_id: praticienId,
+        assigned_praticien_2_id: secondPraticienId,
         updated_at: new Date().toISOString()
       })
       .eq('id', assignment.id)
@@ -1440,6 +1507,7 @@ const assignPraticien = async (assignment, praticienId) => {
     const index = results.value.findIndex(r => r.id === assignment.id)
     if (index !== -1) {
       results.value[index].assigned_praticien_id = praticienId
+      results.value[index].assigned_praticien_2_id = secondPraticienId
     }
     
     // Notification

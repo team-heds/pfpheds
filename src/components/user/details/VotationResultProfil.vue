@@ -117,6 +117,17 @@
                   >
                     {{ getPraticienFormateurContact(place) }}
                   </a>
+
+                  <template v-if="getSecondPraticien(place)">
+                    <b class="mt-1">{{ getSecondPraticien(place).name }}</b>
+                    <a
+                      v-if="getSecondPraticien(place).mail"
+                      :href="'mailto:' + getSecondPraticien(place).mail"
+                      class="text-primary font-bold stage-link"
+                    >
+                      {{ getSecondPraticien(place).mail }}
+                    </a>
+                  </template>
                 </div>
               </div>
 
@@ -419,6 +430,7 @@ const assignedPlacesFromPublished = computed(() => {
         pfp_echec: assignment.pfp_echec,
         pfp_arret: assignment.pfp_arret,
         assigned_praticien_id: assignment.assigned_praticien_id,
+        assigned_praticien_2_id: assignment.assigned_praticien_2_id,
         _key: assignment.id
       }
     }
@@ -446,6 +458,7 @@ const assignedPlacesFromPublished = computed(() => {
       pfp_echec: assignment.pfp_echec,
       pfp_arret: assignment.pfp_arret,
       assigned_praticien_id: assignment.assigned_praticien_id,
+      assigned_praticien_2_id: assignment.assigned_praticien_2_id,
       _key: assignment.id
     }
   })
@@ -539,6 +552,14 @@ function getPraticienFormateurContact(place) {
       supabasePraticiens.value[Number(praticienId)])
 
   return praticien?.mail || praticien?.Mail || ''
+}
+
+function getSecondPraticien(place) {
+  const id = place?.assigned_praticien_2_id
+  const praticien = id && (supabasePraticiens.value[id] || supabasePraticiens.value[String(id)])
+  if (!praticien) return null
+  const name = `${praticien.prenom || praticien.Prenom || ''} ${praticien.nom || praticien.Nom || ''}`.trim()
+  return { name, mail: praticien.mail || praticien.Mail || '' }
 }
 
 function getVotationType(place) {
