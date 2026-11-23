@@ -3,11 +3,6 @@
     <router-link to="/feed" aria-label="HEdS — Accueil" class="school-logo-link">
       <img :src="hedsIcon" alt="" class="school-logo" />
     </router-link>
-    <div class="header-icons-mobile">
-      <router-link to="/chat" class="msg-icon" aria-label="Messages" title="Messages">
-        <i class="pi pi-send" aria-hidden="true"></i>
-      </router-link>
-    </div>
   </div>
 </template>
 
@@ -42,13 +37,7 @@ export default {
   object-fit: contain;
   border-radius: 12px;
 }
-.header-icons-mobile {
-  display: flex;
-  gap: 1px;
-  align-items: center;
-}
-.school-logo-link,
-.msg-icon {
+.school-logo-link {
   width: 50px;
   height: 50px;
   font-size: 24px;
@@ -60,8 +49,7 @@ export default {
   color: var(--primary-text-color, var(--primary-color));
   text-decoration: none;
 }
-.school-logo-link:focus-visible,
-.msg-icon:focus-visible {
+.school-logo-link:focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 3px;
 }

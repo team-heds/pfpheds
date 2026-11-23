@@ -86,7 +86,7 @@ watch(() => state.view, (view) => {
 .m-inst__switch button {
   flex: 1;
   min-width: 0;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 4px;
   border: 0;
   border-radius: 10px;

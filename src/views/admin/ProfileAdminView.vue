@@ -19,7 +19,6 @@
         <!-- DocumentsUserProfile désactivé (utilise Storage) -->
         <!-- <DocumentsUserProfile v-if="activeTab === 1" :key="profileKey" /> -->
         <ResumStageUserProfile v-if="activeTab === 2" :user="user" :key="profileKey" />
-        <ChatProfil v-if="activeTab === 3" :key="profileKey" />
       </div>
     </div>
   </div>
@@ -35,7 +34,6 @@ import { useRoute, useRouter } from 'vue-router';
 import ProfileInfoAdmin from '@/components/user/details/ProfileInfoAdmin.vue'
 import ResumStageUserProfile from '@/components/user/details/ResumStageUserProfile.vue'
 // import DocumentsUserProfile from '@/components/user/details/DocumentsUserProfile.vue' // Désactivé (utilise Storage)
-import ChatProfil from '@/components/user/details/ChatProfil.vue'
 
 export default {
   name: 'ProfilAdmin',
@@ -44,7 +42,6 @@ export default {
     ProfileInfoAdmin,
     ResumStageUserProfile,
     // DocumentsUserProfile, // Désactivé
-    ChatProfil
     },
   setup() {
     const route = useRoute();

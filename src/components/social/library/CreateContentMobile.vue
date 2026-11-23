@@ -237,7 +237,7 @@ export default {
   position: relative;
   z-index: 2;
   flex: 1;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   border: 0;
   border-radius: 999px;
   background: transparent;

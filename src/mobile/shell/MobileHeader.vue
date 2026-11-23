@@ -86,14 +86,12 @@ const trailingActions = computed(() => props.actions.filter((action) => action.s
   min-width: 0;
   max-width: 60vw;
   margin: 0;
-  overflow: hidden;
   font-size: 1.0625rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.3;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   color: var(--m-fg);
   outline: none;
 }

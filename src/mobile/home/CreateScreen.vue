@@ -299,7 +299,9 @@ onBeforeUnmount(() => media.value.forEach(revoke))
   align-items: center;
   justify-content: center;
   min-width: 84px;
-  min-height: 40px;
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 44px;
   padding: 0 16px;
   border: 0;
   border-radius: 99px;
@@ -328,7 +330,7 @@ onBeforeUnmount(() => media.value.forEach(revoke))
 }
 .m-create__switch button {
   flex: 1;
-  min-height: 40px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   background: none;
@@ -471,6 +473,12 @@ onBeforeUnmount(() => media.value.forEach(revoke))
   background: rgba(2, 8, 18, 0.7);
   color: #fff;
   cursor: pointer;
+}
+/* Pastille discrète sur la vignette, zone de toucher de 44 px. */
+.m-create__remove::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
 }
 .m-create__remove :deep(.m-icon) {
   width: 16px;

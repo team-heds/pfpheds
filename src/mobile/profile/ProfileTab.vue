@@ -593,7 +593,7 @@ onMounted(() => reload())
 .m-profile__switch button {
   flex: 1;
   min-width: 0;
-  min-height: 40px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   background: none;

@@ -654,7 +654,7 @@ onBeforeUnmount(() => {
 .m-map__chip {
   position: relative;
   flex: 0 0 auto;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 14px;
   border: 0;
   border-radius: 99px;
