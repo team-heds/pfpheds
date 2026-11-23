@@ -83,12 +83,23 @@ async function selectRows(client, table, columns, configure = (query) => query) 
   return data || []
 }
 
+// Sans ordre total, PostgreSQL peut répéter ou sauter des lignes d'une page à l'autre.
+const PAGINATION_KEYS = Object.freeze({
+  admin_kpi_snapshots: ['domain', 'metric'],
+  places: ['PlaceId'],
+  user_profiles: ['user_id'],
+  xp_history: ['id']
+})
+
 async function selectAllRows(client, table, columns, configure = (query) => query) {
   const pageSize = 1000
   const rows = []
+  const keys = PAGINATION_KEYS[table] || []
   for (let offset = 0; ; offset += pageSize) {
     const page = await selectRows(client, table, columns, (query) =>
-      configure(query).range(offset, offset + pageSize - 1)
+      keys
+        .reduce((ordered, key) => ordered.order(key, { ascending: true }), configure(query))
+        .range(offset, offset + pageSize - 1)
     )
     rows.push(...page)
     if (page.length < pageSize) return rows
@@ -137,12 +148,13 @@ async function countPendingPfpValidations(client, filters = {}) {
 }
 
 // L'API d'administration ignore les comptes dont auth.users.aud est vide : on lit via une
-// fonction réservée au backend.
+// fonction réservée au backend. En GET, le proxy peut rejouer la lecture si PostgREST vient de
+// fermer une connexion inactive ; en POST, ce cas remonte en 502.
 async function loadRecentAuthUsers(client, sinceMs) {
   const ids = new Set()
   for (let offset = 0; ; offset += AUTH_PAGE_SIZE) {
     const { data, error } = await client
-      .rpc('admin_recent_sign_in_user_ids', { p_since: new Date(sinceMs).toISOString() })
+      .rpc('admin_recent_sign_in_user_ids', { p_since: new Date(sinceMs).toISOString() }, { get: true })
       .range(offset, offset + AUTH_PAGE_SIZE - 1)
     if (error) throw queryError('admin_recent_sign_in_user_ids', error)
     const rows = data || []

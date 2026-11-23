@@ -1,9 +1,9 @@
 <template>
   <TheNavbar />
   <div class="p-4">
-    <h1 class="text-3xl mb-4">Calendar - My Courses</h1>
-    <p class="text-700 mb-3">Liste de mes cours et planning associé (placeholder public, branchement Supabase à venir selon auth).</p>
-    <Panel header="Mes cours (exemple)">
+    <h1 class="text-3xl mb-4">Tous les cours</h1>
+    <p class="text-700 mb-3">Les cours, leur module et leur horaire.</p>
+    <Panel header="Cours">
       <DataTable :value="rows" size="small">
         <Column field="name" header="Cours" />
         <Column field="module" header="Module" />

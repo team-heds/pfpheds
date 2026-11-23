@@ -11,8 +11,8 @@ export default [
   // Applications & outils
   { path: '/tasklist', component: () => import('@/views/apps/tasklist/Index.vue'), name: 'Index', meta: { requiresAuth: true, need: ['editor', 'admin'] } },
   { path: '/chat', component: () => import('@/views/apps/chat/IndexChat.vue'), name: 'IndexChat', meta: { requiresAuth: true } },
-  { path: '/files', component: () => import('@/views/apps/files/FilesView.vue'), name: 'FilesView', meta: { requiresAuth: true } },
-  { path: '/mail', component: () => import('@/views/apps/mail/Index.vue'), name: 'MailIndex', meta: { requiresAuth: true } },
+  { path: '/files', redirect: '/feed' },
+  { path: '/mail', redirect: '/feed' },
   { path: '/notes', component: () => import('@/views/apps/notes/NotesWorkspaceView.vue'), name: 'NotesWorkspaceView', meta: { requiresAuth: true } },
   // Scan d'un QR code de la plateforme (présence à un événement). Le lien du QR mène ici :
   // sans session, on passe par la connexion puis on revient valider le code.
@@ -60,7 +60,7 @@ export default [
   { path: '/create', component: () => import('@/components/social/library/CreateContentMobile.vue'), name: 'CreateContentMobile', meta: { mobileOnly: true, mobileChrome: 'none' } },
   { path: '/mobile-outils', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsView', meta: { requiresAuth: true, mobileOnly: true, title: 'Mon espace' } },
   { path: '/mobile-search', component: loadWhenShown(() => import('@/views/apps/tools/MobileSearchView.vue'), 'MobileSearchView'), name: 'MobileSearchView', meta: { requiresAuth: true, mobileOnly: true, title: 'Recherche' } },
-  { path: '/list', component: () => import('@/components/media/audio/ListComponent.vue'), name: 'ListComponent', meta: { requiresAuth: true, requiredRole: ['editor', 'admin'] } },
+  { path: '/list', redirect: '/feed' },
 
   // Routes spéciales
   { path: '/mot-de-la-semaine', component: () => import('@/views/apps/tools/WordOfDayView.vue'), name: 'WordOfDayView', beforeEnter: featureGuard('wordOfDay'), meta: { requiresAuth: true, title: 'Mot de la semaine physio' } },

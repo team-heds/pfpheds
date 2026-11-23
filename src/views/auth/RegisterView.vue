@@ -24,7 +24,7 @@ const darkMode = computed(() => {
 });
 
 const navigateToLogin = () => {
-    router.push({ name: 'login' });
+    router.push('/home');
 };
 
 const handleSignUp = async () => {
@@ -115,17 +115,17 @@ const handleSignUp = async () => {
     <div class="px-5 min-h-screen flex justify-content-center align-items-center">
         <div class="border-1 surface-border surface-card border-round py-7 px-4 md:px-7 z-1">
             <div class="mb-4">
-                <div class="text-900 text-xl font-bold mb-2">Register</div>
-                <span class="text-600 font-medium">Let&lsquo;s get started</span>
+                <div class="text-900 text-xl font-bold mb-2">Créer un compte</div>
+                <span class="text-600 font-medium">Renseignez vos informations pour commencer.</span>
             </div>
             <div class="flex flex-column">
                 <IconField iconPosition="left" class="w-full mb-4">
                     <InputIcon class="pi pi-user" />
-                    <InputText id="username" type="text" v-model="username" class="w-full md:w-25rem" placeholder="Username (optionnel)" />
+                    <InputText id="username" type="text" v-model="username" class="w-full md:w-25rem" placeholder="Nom d’utilisateur (optionnel)" aria-label="Nom d’utilisateur (optionnel)" />
                 </IconField>
                 <IconField iconPosition="left" class="w-full mb-4">
                     <InputIcon class="pi pi-envelope" />
-                    <InputText id="email" type="email" v-model="email" class="w-full md:w-25rem" placeholder="Email" required />
+                    <InputText id="email" type="email" v-model="email" class="w-full md:w-25rem" placeholder="Adresse e-mail" aria-label="Adresse e-mail" required />
                 </IconField>
                 <IconField iconPosition="left" class="w-full mb-4">
                     <InputIcon class="pi pi-lock z-2" />
@@ -134,7 +134,7 @@ const handleSignUp = async () => {
                 <div class="mb-4 flex flex-wrap">
                     <Checkbox name="checkbox" v-model="confirmed" class="mr-2" binary></Checkbox>
                     <label for="checkbox" class="text-900 font-medium mr-2"> J'ai lu et j'accepte les </label>
-                    <a class="text-600 cursor-pointer hover:text-primary cursor-pointer">Conditions d'utilisation</a>
+                    <RouterLink to="/terms_of_use" class="text-600 hover:text-primary">Conditions d'utilisation</RouterLink>
                 </div>
                 <Button label="Créer mon compte" @click="handleSignUp" :loading="loading" class="w-full mb-4"></Button>
                 <span class="font-medium text-600"> Vous avez déjà un compte ? <a class="font-semibold cursor-pointer text-900 hover:text-primary transition-colors transition-duration-300" @click="navigateToLogin">Se connecter</a> </span>

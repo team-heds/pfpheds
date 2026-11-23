@@ -1,7 +1,7 @@
 <template>
   <TheNavbar />
   <div class="p-4">
-    <h1 class="text-3xl mb-4">Calendar - Module</h1>
+    <h1 class="text-3xl mb-4">Détail du module</h1>
     <Panel header="Informations du module">
       <ul class="m-0 pl-3">
         <li><strong>Nom</strong>: {{ module?.name || '—' }}</li>
