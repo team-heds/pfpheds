@@ -150,12 +150,12 @@ function applyColumnFilter(query, column, values) {
 }
 
 function applyPlaceFilters(query, filters = {}) {
-  let filtered = applyColumnFilter(query, 'InstitutionName', filters.institution)
-  if (filters.pfp?.length === 1) filtered = filtered.not(filters.pfp[0], 'eq', {})
-  else if (filters.pfp?.length) {
-    filtered = filtered.or(filters.pfp.map((pfp) => `${pfp}.not.eq.{}`).join(','))
-  }
-  return filtered
+  return applyColumnFilter(query, 'InstitutionName', filters.institution)
+}
+
+// Les colonnes PFP des places sont un JSON { "2027": "2", ... } : capacité par année de fin.
+function placeHasCapacity(place, pfpTypes, year) {
+  return pfpTypes.some((pfp) => Number(place?.[pfp]?.[year]) > 0)
 }
 
 function applyResultFilters(query, filters = {}) {
@@ -277,6 +277,7 @@ module.exports = {
   loadDashboardFilterOptions,
   normalizeFilterValues,
   parseDashboardFilters,
+  placeHasCapacity,
   publicApplicability,
   resolveProfileClass,
   resolveProfileTrack,

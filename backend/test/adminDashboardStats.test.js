@@ -66,6 +66,8 @@ function createFakeClient(options = {}) {
     classes: [{ code: 'BA25', name: 'Bachelor 2025' }],
     cohorts: [{ code: 'PFP1A', name: 'PFP 1A' }],
     institutions: [{ Name: 'Clinique Test', is_hidden: false }],
+    academic_years: [{ end_date: '2027-08-31', is_active: true }],
+    houses: [{ id: 'house-gm', name: 'gamemaster' }],
     ...(options.rows || {})
   }
   const errors = options.errors || {}
@@ -145,7 +147,15 @@ function createFakeClient(options = {}) {
     return query
   }
 
-  return { client: { from: builder }, queries }
+  const auth = {
+    admin: {
+      listUsers: async () => ({
+        data: { users: options.authUsers || [{ id: 'student-1', last_sign_in_at: '2026-08-20T07:00:00Z' }, { id: 'teacher-1', last_sign_in_at: '2026-01-01T07:00:00Z' }] },
+        error: null
+      })
+    }
+  }
+  return { client: { from: builder, auth }, queries }
 }
 
 async function listen(app, callback) {
@@ -254,6 +264,34 @@ test('the track filter falls back on the authoritative primary role', () => {
   assert.equal(resolveProfileTrack({ role: 'EnseignantSoins', permissions: ['EnseignantPhysio'] }), 'SI')
   assert.equal(resolveProfileTrack({ role: 'user', permissions: ['EtudiantPhysio'] }), 'PHY')
   assert.equal(resolveProfileTrack({ role: 'admin', permissions: ['EtudiantPhysio'] }), '')
+})
+
+test('active players exclude system XP and gamemasters', async () => {
+  const { client } = createFakeClient({
+    rows: {
+      houses: [{ id: 'house-gm', name: 'gamemaster' }],
+      user_profiles: [{ user_id: 'gm-1' }],
+      xp_history: [
+        { user_id: 'player-1', action: 'LOGIN' },
+        { user_id: 'player-1', action: 'POST' },
+        { user_id: 'system-only', action: 'OPENING_BALANCE' },
+        { user_id: 'system-only', action: 'SEASON_RESET' },
+        { user_id: 'gm-1', action: 'LOGIN' }
+      ]
+    }
+  })
+  const service = createAdminDashboardStatsService({ client, now: () => new Date('2026-08-26T08:00:00.000Z') })
+  const response = await service.loadStats(['gamification'])
+  assert.equal(response.domains.gamification.metrics.activeUsers.value, 1)
+})
+
+test('connected users are active profiles signed in during the last 30 days', async () => {
+  const { client } = createFakeClient()
+  const service = createAdminDashboardStatsService({ client, now: () => new Date('2026-08-26T08:00:00.000Z') })
+  const response = await service.loadStats(['general'])
+  assert.equal(response.domains.general.metrics.users.value, 5)
+  assert.equal(response.domains.general.metrics.connectedUsers.value, 1)
+  assert.equal(JSON.stringify(response).includes('student-1'), false)
 })
 
 test('academic inventory metrics are global snapshots independent of the selected period', async () => {
@@ -450,6 +488,11 @@ test('profile and PFP filters are applied to current and previous queries', asyn
           pfp_cohort: 'PFP1B',
           primary_track_id: 'physio'
         }
+      ],
+      places: [
+        { PlaceId: 1, PFP2: { 2027: '2', 2026: '0' } },
+        { PlaceId: 2, PFP2: { 2027: '0', 2026: '4' } },
+        { PlaceId: 3, PFP2: { 2027: '' } }
       ]
     }
   })
@@ -478,11 +521,11 @@ test('profile and PFP filters are applied to current and previous queries', asyn
       ].every((filter) => query.filters.some((entry) => JSON.stringify(entry) === JSON.stringify(filter)))
     )
   )
-  assert.ok(
-    queries
-      .filter((query) => query.table === 'places')
-      .every((query) => query.filters.some(([operator, column]) => operator === 'not' && column === 'PFP2'))
-  )
+  const placeQuery = queries.find((query) => query.table === 'places')
+  assert.equal(placeQuery.columns, 'PlaceId,PFP2')
+  assert.equal(response.domains.pfp.metrics.places.value, 1)
+  assert.ok(resultQueries.some((query) => query.filters.some((f) => JSON.stringify(f) === '["eq","year","2027"]')))
+  assert.ok(resultQueries.some((query) => query.filters.some((f) => JSON.stringify(f) === '["lt","year","2027"]')))
 })
 
 test('filter options contain authorized references and no personal data', async () => {

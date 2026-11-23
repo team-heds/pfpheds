@@ -50,6 +50,18 @@
         </div>
       </div>
 
+      <AdminDashboardFilters
+        :model-value="filters.filters.value"
+        :active-filters="filters.activeFilters.value"
+        :catalog="filters.catalog.value"
+        :loading="filters.loading.value"
+        :error="filters.error.value"
+        @apply="applyFilters"
+        @remove="removeFilter"
+        @reset="resetFilters"
+        @retry="loadFilterOptions"
+      />
+
       <!-- KPI Cards -->
       <div class="kpi-grid mb-4">
         <KpiCard
@@ -109,7 +121,7 @@
               </div>
               <div class="flex justify-content-between mt-1">
                 <small class="text-500">{{ assignedPlaces }} attribuées</small>
-                <small class="text-500">{{ totalPlaces }} disponibles</small>
+                <small class="text-500">{{ totalPlaces }} offertes {{ activeYearLabel }}</small>
               </div>
             </div>
           </div>
@@ -320,7 +332,10 @@ import Skeleton from 'primevue/skeleton'
 import Tag from 'primevue/tag'
 import Divider from 'primevue/divider'
 import ErrorState from '@/components/common/states/ErrorState.vue'
+import AdminDashboardFilters from './widgets/AdminDashboardFilters.vue'
+import { useAdminDashboardFilters } from '@/composables/useAdminDashboardFilters'
 import { useAdminDashboardStats } from '@/composables/useAdminDashboardStats'
+import { applyPfpDetailFilters, placeCapacity, pfpYearFromAcademicYear } from '@/utils/pfpDashboardDetails'
 import { getKpisForRole } from '@/config/kpiConfigs'
 import { useRoleStore } from '@/stores/role'
 import { supabase } from '@/supabase'
@@ -331,7 +346,9 @@ const router = useRouter()
 
 const roleStore = useRoleStore()
 const period = ref('month')
-const stats = useAdminDashboardStats({ domains: ['pfp'], period })
+const filters = useAdminDashboardFilters({ domains: ['pfp'], period })
+const stats = useAdminDashboardStats({ domains: ['pfp'], period, filters: filters.filters })
+const activeYearLabel = ref('')
 const configurations = computed(() => getKpisForRole('pfp', roleStore.perms || [], roleStore.isSuper))
 const kpisWithData = stats.mapKpis('pfp', configurations)
 const { loading, refreshing } = stats
@@ -510,6 +527,23 @@ const onPeriodChange = async () => {
   await Promise.all([refresh(), reloadPeriodStats()])
 }
 
+const refreshFiltered = async () => {
+  await Promise.all([refresh(), reloadPeriodStats()])
+}
+const applyFilters = async (nextFilters) => {
+  await filters.setFilters(nextFilters)
+  await refreshFiltered()
+}
+const removeFilter = async (key, value) => {
+  await filters.removeFilter(key, value)
+  await refreshFiltered()
+}
+const resetFilters = async () => {
+  await filters.resetFilters()
+  await refreshFiltered()
+}
+const loadFilterOptions = () => filters.loadOptions().catch(() => undefined)
+
 const refreshAll = async () => {
   dashboardError.value = null
   try {
@@ -546,7 +580,7 @@ const loadOpenSessions = async () => {
 
 const loadExtraStats = async () => {
   try {
-    const [studentDirectory, placesRes, votesRes, institutionsRes] = await Promise.all([
+    const [studentDirectory, placesRes, votesRes, institutionsRes, academicYearRes] = await Promise.all([
       getAllStudents(),
       supabase
         .from('places')
@@ -556,24 +590,43 @@ const loadExtraStats = async () => {
         .select(SUPABASE_SELECTS.dashboardVotes),
       supabase
         .from('institutions')
-        .select(SUPABASE_SELECTS.dashboardInstitutions)
+        .select(SUPABASE_SELECTS.dashboardInstitutions),
+      supabase
+        .from('academic_years')
+        .select('name,end_date')
+        .eq('is_active', true)
+        .limit(1)
     ])
 
     if (placesRes.error) throw placesRes.error
     if (votesRes.error) throw votesRes.error
     if (institutionsRes.error) throw institutionsRes.error
+    if (academicYearRes.error) throw academicYearRes.error
 
-    institutionsList.value = institutionsRes.data || []
+    const academicYear = academicYearRes.data?.[0] || null
+    const pfpYear = pfpYearFromAcademicYear(academicYear)
+    activeYearLabel.value = academicYear?.name || ''
+    const scoped = applyPfpDetailFilters(
+      { students: studentDirectory, places: placesRes.data || [], votes: votesRes.data || [] },
+      filters.filters.value,
+      pfpYear
+    )
+    const allPlacesInScope = scoped.places
+    const allVotes = scoped.votes
+    const capacityTypes = filters.filters.value.pfp?.length ? filters.filters.value.pfp : undefined
 
-    const profiles = studentDirectory.filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
-    const places = (placesRes.data || []).filter((p) => isInSelectedPeriod(p.UpdatedAt || p.CreatedAt))
-    const totalStudents = studentDirectory.filter((p) => p.is_active !== false).length
-    const votesInPeriod = (votesRes.data || []).filter((v) => isInSelectedPeriod(v.updated_at || v.created_at))
-    const allVotes = votesRes.data || []
+    const visibleInstitutionIds = new Set(allPlacesInScope.map((place) => place.InstitutionId))
+    institutionsList.value = filters.filters.value.institution?.length
+      ? (institutionsRes.data || []).filter((institution) => visibleInstitutionIds.has(institution.InstitutionId))
+      : institutionsRes.data || []
+
+    const profiles = scoped.students.filter((p) => isInSelectedPeriod(p.updated_at || p.created_at))
+    const places = allPlacesInScope.filter((p) => isInSelectedPeriod(p.UpdatedAt || p.CreatedAt))
+    const totalStudents = scoped.students.filter((p) => p.is_active !== false).length
+    const votesInPeriod = allVotes.filter((v) => isInSelectedPeriod(v.updated_at || v.created_at))
 
     const activeStudents = profiles.filter((p) => p.is_active !== false).length
     const incompleteProfiles = profiles.filter((p) => !p.family_name || !p.forname || !p.email || !p.Classe).length
-    const openPlaces = places.filter((p) => p.InstitutionId && p.NomPlace).length
     const withPdf = places.filter((p) => p.fileurl).length
     const publishedAssignments = votesInPeriod.filter((v) => v.status === 'published').length
 
@@ -582,10 +635,10 @@ const loadExtraStats = async () => {
     const failed = allVotes.filter((v) => v.pfp_echec === true).length
     const stopped = allVotes.filter((v) => v.pfp_arret === true).length
 
-    // Taux de remplissage (global)
-    const allPlaces = (placesRes.data || []).filter((p) => p.InstitutionId && p.NomPlace)
-    totalPlaces.value = allPlaces.length
-    assignedPlaces.value = allVotes.filter((v) => v.assigned_place_id).length
+    // Taux de remplissage : capacité et attributions de l'année académique active.
+    const openPlacesInYear = allPlacesInScope.filter((p) => placeCapacity(p, pfpYear, capacityTypes) > 0)
+    totalPlaces.value = openPlacesInYear.reduce((sum, p) => sum + placeCapacity(p, pfpYear, capacityTypes), 0)
+    assignedPlaces.value = allVotes.filter((v) => String(v.year) === pfpYear && v.assigned_place_id).length
 
     // Breakdown par PFP type (global, normalise PFP1A/PFP1B → PFP1)
     const normalizePfp = (t) => (t === 'PFP1A' || t === 'PFP1B') ? 'PFP1' : t
@@ -605,7 +658,7 @@ const loadExtraStats = async () => {
 
     extraStats.value = [
       { key: 'active_students', label: 'Étudiants actifs', value: totalStudents, color: '#22c55e', icon: 'pi pi-users' },
-      { key: 'open_places', label: 'Places ouvertes', value: (placesRes.data || []).filter((p) => p.InstitutionId && p.NomPlace).length, color: '#3b82f6', icon: 'pi pi-map-marker' },
+      { key: 'open_places', label: 'Places ouvertes', value: openPlacesInYear.length, color: '#3b82f6', icon: 'pi pi-map-marker' },
       { key: 'published_assignments', label: 'Attributions publiées', value: publishedAssignments, color: '#eab308', icon: 'pi pi-send' },
       { key: 'incomplete_profiles', label: 'Dossiers incomplets', value: incompleteProfiles, color: '#ef4444', icon: 'pi pi-exclamation-triangle' },
       { key: 'validated', label: 'PFP validées', value: validated, color: '#16a34a', icon: 'pi pi-check-circle' },
@@ -620,8 +673,9 @@ const loadExtraStats = async () => {
 }
 
 const exportStatsCsv = () => {
-  const header = ['Statistique', 'Valeur', 'Période']
-  const rows = extraStats.value.map((s) => [s.label, String(s.value), periodRangeLabel.value])
+  const header = ['Statistique', 'Valeur', 'Période', 'Filtres']
+  const activeFilterLabel = filters.activeFilters.value.map((filter) => filter.label).join(', ') || 'Aucun'
+  const rows = extraStats.value.map((s) => [s.label, String(s.value), periodRangeLabel.value, activeFilterLabel])
   const lines = [header, ...rows].map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(';'))
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
@@ -639,7 +693,8 @@ const handleKpiAction = (kpi) => {
     students_count: '/admin/formation-pratique/etudiants',
     institutions_count: '/admin/formation-pratique/institutions',
     places_count: '/admin/formation-pratique/places',
-    pfp_ongoing: '/management_pfpencours'
+    pfp_ongoing: '/management_pfpencours',
+    pfp_validations_pending: '/admin/formation-pratique/valider-echec-pfp'
   }
   if (routes[kpi.id]) router.push(routes[kpi.id])
 }
@@ -735,7 +790,7 @@ const loadRecentActivities = async () => {
 const initializeDashboard = async () => {
   dashboardError.value = null
   try {
-    await Promise.all([loadKpis(), loadExtraStats(), loadOpenSessions(), loadRecentActivities()])
+    await Promise.all([loadFilterOptions(), loadKpis(), loadExtraStats(), loadOpenSessions(), loadRecentActivities()])
   } catch (error) {
     dashboardError.value = error?.message || 'Vérifiez votre connexion puis réessayez.'
   }

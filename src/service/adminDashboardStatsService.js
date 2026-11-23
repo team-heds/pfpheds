@@ -35,6 +35,7 @@ const inFlightRequests = new Map()
 const UI_METRIC_KEYS = Object.freeze({
   general: Object.freeze({
     users: 'users',
+    connectedUsers: 'usersConnected',
     roles: 'roles',
     permissions: 'permissions',
     routes: 'routes',
@@ -44,6 +45,7 @@ const UI_METRIC_KEYS = Object.freeze({
     institutions: 'institutions',
     places: 'places',
     pfpInProgress: 'pfpEnCours',
+    pfpValidationsPending: 'pfpValidationsPending',
   }),
   academic: Object.freeze({
     teachers: 'enseignants',

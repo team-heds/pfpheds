@@ -1,7 +1,11 @@
 const { assertNoPersonalData } = require('./adminDashboardContract')
 const { filterStudentProfiles } = require('../security/userAudience')
 const { resolveProfileClass } = require('./adminDashboardFilters')
-const { countRows, selectAllRows } = require('./adminDashboardStatsService')
+const {
+  countPendingPfpValidations,
+  countRows,
+  selectAllRows
+} = require('./adminDashboardStatsService')
 
 const DROP_THRESHOLD_PERCENT = 30
 const RISE_THRESHOLD_PERCENT = 50
@@ -9,6 +13,7 @@ const MAX_ALERT_KEY_LENGTH = 120
 
 const METRIC_LABELS = Object.freeze({
   'general.users': 'Utilisateurs',
+  'general.connectedUsers': 'Connectés sur 30 jours',
   'general.roles': 'Rôles',
   'general.permissions': 'Permissions',
   'general.routes': 'Routes',
@@ -16,6 +21,7 @@ const METRIC_LABELS = Object.freeze({
   'pfp.institutions': 'Institutions',
   'pfp.places': 'Places',
   'pfp.pfpInProgress': 'PFP en cours',
+  'pfp.pfpValidationsPending': 'Validations à saisir',
   'academic.teachers': 'Enseignants',
   'academic.courses': 'Cours',
   'academic.media': 'Médias',
@@ -46,6 +52,16 @@ const DATA_QUALITY_RULES = Object.freeze([
       const profiles = await selectAllRows(client, 'user_profiles', 'role,permissions,is_active,classe')
       return filterStudentProfiles(profiles).filter((profile) => !resolveProfileClass(profile)).length
     }
+  }),
+  Object.freeze({
+    key: 'quality.pfp_validations_pending',
+    domain: 'pfp',
+    kpiId: 'pfp.pfpValidationsPending',
+    title: 'Validations PFP à saisir',
+    message: (value) => `${value} PFP d'années précédentes sans résultat saisi.`,
+    link: '/admin/formation-pratique/valider-echec-pfp',
+    actionLabel: 'Saisir les validations',
+    load: (client) => countPendingPfpValidations(client)
   }),
   Object.freeze({
     key: 'quality.pfp_draft_results',

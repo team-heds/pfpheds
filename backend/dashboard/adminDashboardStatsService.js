@@ -15,11 +15,13 @@ const {
   applyColumnFilter,
   applyPlaceFilters,
   applyResultFilters,
-  filterProfiles
+  filterProfiles,
+  placeHasCapacity
 } = require('./adminDashboardFilters')
 
 const SOURCES = Object.freeze({
   users: 'public.user_profiles',
+  connectedUsers: 'auth.users.last_sign_in_at',
   roles: 'public.roles',
   permissions: 'public.permissions',
   routes: 'public.dynamic_routes',
@@ -27,6 +29,7 @@ const SOURCES = Object.freeze({
   institutions: 'public.institutions',
   places: 'public.places',
   pfpInProgress: 'public.student_result_vote',
+  pfpValidationsPending: 'public.student_result_vote',
   teachers: 'public.user_profiles',
   courses: 'public.courses',
   media: 'public.video_library',
@@ -46,6 +49,16 @@ const GAMIFICATION_ACTIVITY_TITLES = Object.freeze({
   BADGE_UNLOCK: 'Badge obtenu',
   DAILY_WHEEL: 'Roue quotidienne'
 })
+
+// Attributions de progression ou d'ouverture : elles ne prouvent pas une activité du joueur.
+const SYSTEM_XP_ACTIONS = Object.freeze(new Set([
+  'SEASON_RESET',
+  'OPENING_BALANCE',
+  'HOUSE_ASSIGNMENT',
+  'GAMEMASTER_RESTORE'
+]))
+const CONNECTED_WINDOW_DAYS = 30
+const AUTH_PAGE_SIZE = 1000
 
 function queryError(table, error) {
   const wrapped = new Error(`Impossible de lire ${table}.`)
@@ -90,6 +103,63 @@ async function sumColumn(client, table, column, configure = (query) => query) {
 async function countDistinct(client, table, column, configure = (query) => query) {
   const rows = await selectAllRows(client, table, column, configure)
   return new Set(rows.map((row) => row?.[column]).filter(Boolean)).size
+}
+
+// student_result_vote.year porte l'année de fin : 2027 = année académique 2026-2027.
+async function loadActivePfpYear(client) {
+  const rows = await selectRows(client, 'academic_years', 'end_date', (query) =>
+    query.eq('is_active', true).limit(1)
+  )
+  const match = /^(\d{4})/.exec(String(rows[0]?.end_date || ''))
+  if (!match) throw queryError('academic_years', { code: 'ACTIVE_ACADEMIC_YEAR_MISSING' })
+  return match[1]
+}
+
+function memoize(load) {
+  let promise = null
+  return () => {
+    promise ||= load()
+    return promise
+  }
+}
+
+function applyOpenPfpFilters(query, filters) {
+  let filtered = applyResultFilters(query, filters)
+  if (!filters.status?.length) filtered = filtered.in('status', ['assigned', 'published'])
+  return filtered.eq('pfp_validee', false).eq('pfp_echec', false).eq('pfp_arret', false)
+}
+
+async function countPendingPfpValidations(client, filters = {}) {
+  const year = await loadActivePfpYear(client)
+  return countRows(client, 'student_result_vote', 'id', (query) =>
+    applyOpenPfpFilters(query, filters).lt('year', year)
+  )
+}
+
+async function loadRecentAuthUsers(client, sinceMs) {
+  const ids = new Set()
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await client.auth.admin.listUsers({ page, perPage: AUTH_PAGE_SIZE })
+    if (error) throw queryError('auth.users', error)
+    const users = data?.users || []
+    for (const user of users) {
+      const signedInAt = Date.parse(user?.last_sign_in_at || '')
+      if (Number.isFinite(signedInAt) && signedInAt >= sinceMs) ids.add(user.id)
+    }
+    if (users.length < AUTH_PAGE_SIZE) return ids
+  }
+}
+
+async function loadGamemasterIds(client) {
+  const houses = await selectRows(client, 'houses', 'id,name')
+  const houseIds = houses
+    .filter((house) => String(house?.name || '').trim().toLowerCase() === 'gamemaster')
+    .map((house) => house.id)
+  if (!houseIds.length) return new Set()
+  const members = await selectAllRows(client, 'user_profiles', 'user_id', (query) =>
+    query.in('house_id', houseIds)
+  )
+  return new Set(members.map((member) => member.user_id))
 }
 
 async function loadRecentGamificationActivity(client, limit = 20) {
@@ -249,7 +319,7 @@ function hasPeopleFilters(filters) {
   return ['track', 'role', 'class', 'cohort'].some((key) => filters[key]?.length)
 }
 
-function generalDefinitions(client, filters = {}) {
+function generalDefinitions(client, filters = {}, asOf = new Date().toISOString()) {
   return {
     users: snapshot(async () => {
       const profiles = await selectAllRows(
@@ -258,6 +328,19 @@ function generalDefinitions(client, filters = {}) {
         'role,permissions,is_active,classe,pfp_cohort,primary_track_id'
       )
       return filterProfiles(profiles.filter(isActiveProfile), filters).length
+    }),
+    connectedUsers: snapshot(async () => {
+      const sinceMs = new Date(asOf).getTime() - CONNECTED_WINDOW_DAYS * 24 * 60 * 60 * 1000
+      const [profiles, recentIds] = await Promise.all([
+        selectAllRows(
+          client,
+          'user_profiles',
+          'user_id,role,permissions,is_active,classe,pfp_cohort,primary_track_id'
+        ),
+        loadRecentAuthUsers(client, sinceMs)
+      ])
+      return filterProfiles(profiles.filter(isActiveProfile), filters)
+        .filter((profile) => recentIds.has(profile.user_id)).length
     }),
     roles: snapshot(() => countRows(client, 'roles', 'id')),
     permissions: snapshot(() => countRows(client, 'permissions', 'slug')),
@@ -268,6 +351,7 @@ function generalDefinitions(client, filters = {}) {
 }
 
 function pfpDefinitions(client, filters = {}) {
+  const activeYear = memoize(() => loadActivePfpYear(client))
   return {
     students: snapshot(async () => {
       const profiles = await selectAllRows(
@@ -286,25 +370,25 @@ function pfpDefinitions(client, filters = {}) {
       'snapshot',
       'SOURCE_HAS_NO_CREATED_AT'
     ),
-    places: snapshot(() =>
-      countRows(client, 'places', 'PlaceId', (query) =>
-        applyPlaceFilters(query, filters)
-      )
-    ),
-    pfpInProgress: flow((period) =>
-      countRows(client, 'student_result_vote', 'id', (query) => {
-        let filtered = applyResultFilters(query, filters)
-        if (!filters.status?.length) filtered = filtered.in('status', ['assigned', 'published'])
-        return applyPeriod(
-          filtered
-            .eq('pfp_validee', false)
-            .eq('pfp_echec', false)
-            .eq('pfp_arret', false),
-          'assigned_at',
-          period
+    places: snapshot(async () => {
+      if (!filters.pfp?.length) {
+        return countRows(client, 'places', 'PlaceId', (query) => applyPlaceFilters(query, filters))
+      }
+      const [year, places] = await Promise.all([
+        activeYear(),
+        selectAllRows(client, 'places', `PlaceId,${filters.pfp.join(',')}`, (query) =>
+          applyPlaceFilters(query, filters)
         )
-      })
-    )
+      ])
+      return places.filter((place) => placeHasCapacity(place, filters.pfp, year)).length
+    }),
+    pfpInProgress: snapshot(async () => {
+      const year = await activeYear()
+      return countRows(client, 'student_result_vote', 'id', (query) =>
+        applyOpenPfpFilters(query, filters).eq('year', year)
+      )
+    }),
+    pfpValidationsPending: snapshot(() => countPendingPfpValidations(client, filters))
   }
 }
 
@@ -327,6 +411,7 @@ function academicDefinitions(client, filters = {}) {
 }
 
 function gamificationDefinitions(client, _filters = {}, asOf = new Date().toISOString()) {
+  const gamemasterIds = memoize(() => loadGamemasterIds(client))
   return {
     activeChallenges: snapshot(
       () => {
@@ -356,11 +441,20 @@ function gamificationDefinitions(client, _filters = {}, asOf = new Date().toISOS
         applyPeriod(query, 'earned_at', period)
       )
     ),
-    activeUsers: flow((period) =>
-      countDistinct(client, 'xp_history', 'user_id', (query) =>
-        applyPeriod(query, 'created_at', period)
-      )
-    )
+    activeUsers: flow(async (period) => {
+      const [gamemasters, rows] = await Promise.all([
+        gamemasterIds(),
+        selectAllRows(client, 'xp_history', 'user_id,action', (query) =>
+          applyPeriod(query, 'created_at', period)
+        )
+      ])
+      return new Set(
+        rows
+          .filter((row) => row?.user_id && !gamemasters.has(row.user_id))
+          .filter((row) => !SYSTEM_XP_ACTIONS.has(String(row.action || '').toUpperCase()))
+          .map((row) => row.user_id)
+      ).size
+    })
   }
 }
 
@@ -454,6 +548,7 @@ module.exports = {
   SOURCES,
   applyPeriod,
   countDistinct,
+  countPendingPfpValidations,
   countRows,
   createAdminDashboardStatsService,
   loadRecentGamificationActivity,

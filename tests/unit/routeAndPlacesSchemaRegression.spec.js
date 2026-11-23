@@ -26,7 +26,7 @@ describe('Admin places schema contract', () => {
   it('interroge uniquement les colonnes réellement présentes en production', () => {
     expect(dashboard).toContain('.select(SUPABASE_SELECTS.dashboardPlaces)')
     expect(dashboard).toContain('.select(SUPABASE_SELECTS.dashboardRecentPlaces)')
-    expect(contracts).toContain("dashboardPlaces: 'PlaceId,InstitutionId,NomPlace,fileurl,CreatedAt,UpdatedAt'")
+    expect(contracts).toContain("dashboardPlaces: 'PlaceId,InstitutionId,InstitutionName,NomPlace,fileurl,CreatedAt,UpdatedAt,PFP1A,PFP1B,PFP2,PFP3,PFP4'")
     expect(contracts).toContain("dashboardRecentPlaces: 'PlaceId,NomPlace,CreatedAt'")
     expect(dashboard).toContain(".order('CreatedAt', { ascending: false })")
     expect(contracts).not.toContain('fileURL,fileurl,pdfUrl,created_at,updated_at')
