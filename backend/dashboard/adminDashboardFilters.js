@@ -15,7 +15,7 @@ const PFP_TYPES = Object.freeze(['PFP1A', 'PFP1B', 'PFP2', 'PFP3', 'PFP4'])
 const PFP_STATUSES = Object.freeze(['draft', 'published', 'assigned'])
 
 const FILTER_APPLICABILITY = Object.freeze({
-  track: Object.freeze({ domains: ['general', 'pfp', 'academic'], metrics: ['users', 'students', 'teachers'] }),
+  track: Object.freeze({ domains: ['general', 'pfp', 'academic'], metrics: ['users', 'students', 'teachers', 'modules'] }),
   role: Object.freeze({ domains: ['general', 'pfp', 'academic'], metrics: ['users', 'students', 'teachers'] }),
   class: Object.freeze({ domains: ['general', 'pfp'], metrics: ['users', 'students'] }),
   cohort: Object.freeze({ domains: ['general', 'pfp'], metrics: ['users', 'students'] }),
@@ -79,6 +79,26 @@ function resolveProfileClass(profile) {
   return ''
 }
 
+// primary_track_id est rarement rempli : la filière se déduit alors du rôle principal,
+// puis des permissions pour les comptes au rôle générique.
+function resolveProfileTrack(profile) {
+  const explicitTrack = String(profile?.primary_track_id || '').trim()
+  if (explicitTrack) return explicitTrack
+
+  const trackFromToken = (token) => {
+    if (token.includes('soins')) return 'SI'
+    if (token.includes('physio')) return 'PHY'
+    return ''
+  }
+  const roleToken = normalizeAudienceToken(profile?.role)
+  if (!['', 'user', 'authenticated', 'member'].includes(roleToken)) return trackFromToken(roleToken)
+  for (const permission of normalizePermissions(profile?.permissions)) {
+    const track = trackFromToken(normalizeAudienceToken(permission))
+    if (track) return track
+  }
+  return ''
+}
+
 function parseDashboardFilters(query = {}) {
   const unknownKeys = Object.keys(query).filter(
     (key) => !['domains', 'period', 'reference', ...FILTER_KEYS].includes(key)
@@ -110,7 +130,7 @@ function validateFilterCombination(filters, domains) {
 function filterProfiles(profiles, filters = {}) {
   const roleTokens = new Set((filters.role || []).map(normalizeAudienceToken))
   return (profiles || []).filter((profile) => {
-    if (filters.track?.length && !filters.track.includes(String(profile.primary_track_id || ''))) return false
+    if (filters.track?.length && !filters.track.includes(resolveProfileTrack(profile))) return false
     if (filters.class?.length && !filters.class.includes(resolveProfileClass(profile))) return false
     if (filters.cohort?.length && !filters.cohort.includes(String(profile.pfp_cohort || ''))) return false
     if (roleTokens.size) {
@@ -217,12 +237,11 @@ async function loadDashboardFilterOptions(client, domains) {
         return classCode ? option(classCode) : null
       })
     ])
-    Object.assign(options, {
-      tracks,
-      roles,
-      classes,
-      cohorts: [option('PFP1A'), option('PFP1B')]
-    })
+    Object.assign(options, { tracks, roles })
+    // Classe et cohorte ne s'appliquent pas au domaine académique seul : le serveur les refuserait.
+    if (domains.some((domain) => FILTER_APPLICABILITY.class.domains.includes(domain))) {
+      Object.assign(options, { classes, cohorts: [option('PFP1A'), option('PFP1B')] })
+    }
   }
 
   if (includesPfp) {
@@ -260,5 +279,6 @@ module.exports = {
   parseDashboardFilters,
   publicApplicability,
   resolveProfileClass,
+  resolveProfileTrack,
   validateFilterCombination
 }

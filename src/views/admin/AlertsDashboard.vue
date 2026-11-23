@@ -7,12 +7,13 @@
           <i class="pi pi-bell"></i>
           <div>
             <h1>Tableau de Bord des Alertes</h1>
-            <p>Surveillance et gestion des alertes KPI en temps réel</p>
+            <p>Contrôles calculés sur les données réelles de la plateforme</p>
           </div>
         </div>
         <div class="header-actions">
           <PeriodSelector
             v-model="selectedPeriod"
+            :show-custom="false"
             @change="loadAlerts"
           />
           <Button
@@ -42,10 +43,6 @@
               <span class="stat-label">Alertes Critiques</span>
             </div>
           </div>
-          <div class="stat-trend">
-            <i class="pi pi-arrow-up"></i>
-            <span>+3 depuis hier</span>
-          </div>
         </template>
       </Card>
 
@@ -57,10 +54,6 @@
               <span class="stat-value">{{ stats.warning }}</span>
               <span class="stat-label">Avertissements</span>
             </div>
-          </div>
-          <div class="stat-trend">
-            <i class="pi pi-minus"></i>
-            <span>Stable</span>
           </div>
         </template>
       </Card>
@@ -74,10 +67,6 @@
               <span class="stat-label">Informations</span>
             </div>
           </div>
-          <div class="stat-trend">
-            <i class="pi pi-arrow-down"></i>
-            <span>-2 depuis hier</span>
-          </div>
         </template>
       </Card>
 
@@ -89,10 +78,6 @@
               <span class="stat-value">{{ stats.resolved }}</span>
               <span class="stat-label">Résolues</span>
             </div>
-          </div>
-          <div class="stat-trend">
-            <i class="pi pi-arrow-up"></i>
-            <span>+12 aujourd'hui</span>
           </div>
         </template>
       </Card>
@@ -178,7 +163,14 @@
 
       <template #content>
         <!-- Vue Liste -->
-        <div v-if="viewMode === 'list'" class="alerts-timeline">
+        <Message v-if="loadError" severity="error" :closable="false">{{ loadError }}</Message>
+        <Message v-else-if="!canPersistResolution" severity="info" :closable="false">
+          La résolution des alertes sera disponible après l’activation de l’historique.
+        </Message>
+        <div v-if="!loading && !loadError && !filteredAlerts.length" class="text-center p-5 text-600">
+          Aucune alerte pour ces filtres.
+        </div>
+        <div v-else-if="viewMode === 'list'" class="alerts-timeline">
           <Timeline :value="filteredAlerts" align="left" class="custom-timeline">
             <template #marker="{ item }">
               <div class="timeline-marker" :class="`marker-${item.severity}`">
@@ -189,13 +181,13 @@
               <div class="timeline-content">
                 <div class="alert-header">
                   <h3>{{ item.title }}</h3>
-                  <Tag :value="item.severity.toUpperCase()" :severity="item.severity" />
+                  <Tag :value="alertSeverityLabel(item.severity)" :severity="alertTagSeverity(item.severity)" />
                 </div>
                 <p class="alert-message">{{ item.message }}</p>
                 <div class="alert-meta">
                   <span class="alert-kpi">
                     <i class="pi pi-chart-bar"></i>
-                    {{ getKpiLabel(item.kpiId) }}
+                    {{ item.kpiLabel }}
                   </span>
                   <span class="alert-time">
                     <i class="pi pi-clock"></i>
@@ -204,14 +196,14 @@
                 </div>
                 <div class="alert-actions">
                   <Button
-                    v-if="!item.resolved"
+                    v-if="!item.resolved && canPersistResolution"
                     label="Résoudre"
                     icon="pi pi-check"
                     size="small"
                     @click="resolveAlert(item)"
                   />
                   <Button
-                    :label="item.action || 'Voir Détails'"
+                    :label="item.actionLabel || 'Voir'"
                     icon="pi pi-arrow-right"
                     size="small"
                     outlined
@@ -242,13 +234,13 @@
           </Column>
           <Column field="severity" header="Sévérité" sortable>
             <template #body="{ data }">
-              <Tag :value="data.severity.toUpperCase()" :severity="data.severity" />
+              <Tag :value="alertSeverityLabel(data.severity)" :severity="alertTagSeverity(data.severity)" />
             </template>
           </Column>
           <Column field="title" header="Alerte" sortable />
           <Column field="kpiId" header="KPI">
             <template #body="{ data }">
-              {{ getKpiLabel(data.kpiId) }}
+              {{ data.kpiLabel }}
             </template>
           </Column>
           <Column field="value" header="Valeur" sortable />
@@ -256,7 +248,7 @@
             <template #body="{ data }">
               <div class="table-actions">
                 <Button
-                  v-if="!data.resolved"
+                  v-if="!data.resolved && canPersistResolution"
                   icon="pi pi-check"
                   rounded
                   text
@@ -278,7 +270,7 @@
 
         <!-- Vue Graphique -->
         <div v-else-if="viewMode === 'chart'" class="alerts-chart">
-          <Chart type="line" :data="chartData" :options="chartOptions" />
+          <Chart type="bar" :data="chartData" :options="chartOptions" />
         </div>
       </template>
     </Card>
@@ -318,16 +310,12 @@
         <div class="export-settings">
           <h4>Options</h4>
           <div class="setting-item">
-            <Checkbox v-model="exportSettings.includeResolved" inputId="resolved" />
+            <Checkbox v-model="exportSettings.includeResolved" binary inputId="resolved" />
             <label for="resolved">Inclure les alertes résolues</label>
           </div>
           <div class="setting-item">
-            <Checkbox v-model="exportSettings.includeStats" inputId="stats" />
-            <label for="stats">Inclure les statistiques</label>
-          </div>
-          <div class="setting-item">
-            <Checkbox v-model="exportSettings.includeCharts" inputId="charts" />
-            <label for="charts">Inclure les graphiques</label>
+            <Checkbox v-model="exportSettings.includeStats" binary inputId="stats" />
+            <label for="stats">Inclure les statistiques (PDF)</label>
           </div>
         </div>
       </div>
@@ -350,12 +338,23 @@ import Dialog from 'primevue/dialog'
 import Checkbox from 'primevue/checkbox'
 import Divider from 'primevue/divider'
 import Chart from 'primevue/chart'
+import Message from 'primevue/message'
+import { useToast } from 'primevue/usetoast'
 import PeriodSelector from '@/components/admin/widgets/PeriodSelector.vue'
-import intelligentAlerts from '@/service/intelligentAlertsService'
+import {
+  alertSeverityLabel,
+  alertTagSeverity,
+  fetchAdminAlerts,
+  resolveAdminAlert,
+  toCsv
+} from '@/service/adminAlertsService'
 
 const router = useRouter()
+const toast = useToast()
 
 const loading = ref(false)
+const loadError = ref('')
+const canPersistResolution = ref(true)
 const alerts = ref([])
 const stats = ref({
   total: 0,
@@ -377,8 +376,7 @@ const filters = ref({
 
 const exportSettings = ref({
   includeResolved: false,
-  includeStats: true,
-  includeCharts: false
+  includeStats: true
 })
 
 const severityOptions = [
@@ -388,18 +386,15 @@ const severityOptions = [
 ]
 
 const typeOptions = [
-  { label: 'Chute Critique', value: 'critical' },
-  { label: 'Hausse Anormale', value: 'warning' },
-  { label: 'Seuil', value: 'threshold' },
-  { label: 'Tendance', value: 'trend' }
+  { label: 'Chute importante', value: 'critical' },
+  { label: 'Hausse inhabituelle', value: 'warning' },
+  { label: 'Qualité des données', value: 'quality' },
+  { label: 'Source en erreur', value: 'source' }
 ]
 
 const kpiOptions = computed(() => {
-  const uniqueKpis = [...new Set(alerts.value.map(a => a.kpiId))]
-  return uniqueKpis.map(id => ({
-    label: getKpiLabel(id),
-    value: id
-  }))
+  const labels = new Map(alerts.value.map(a => [a.kpiId, a.kpiLabel]))
+  return [...labels].map(([value, label]) => ({ label, value }))
 })
 
 const statusOptions = [
@@ -430,22 +425,17 @@ const filteredAlerts = computed(() => {
 })
 
 const chartData = computed(() => {
-  // Données pour le graphique temporel des alertes
-  const dates = {}
+  const counts = { error: 0, warn: 0, info: 0 }
   filteredAlerts.value.forEach(alert => {
-    const date = new Date(alert.timestamp).toLocaleDateString()
-    dates[date] = (dates[date] || 0) + 1
+    counts[alert.severity] = (counts[alert.severity] || 0) + 1
   })
-
   return {
-    labels: Object.keys(dates),
+    labels: ['Critiques', 'Avertissements', 'Informations'],
     datasets: [
       {
-        label: 'Nombre d\'alertes',
-        data: Object.values(dates),
-        fill: false,
-        borderColor: '#FF6384',
-        tension: 0.4
+        label: 'Alertes',
+        data: [counts.error, counts.warn, counts.info],
+        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6']
       }
     ]
   }
@@ -456,29 +446,19 @@ const chartOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      display: true
+      display: false
     }
   }
 }
 
 function getAlertIcon(type) {
   const icons = {
-    critical: 'pi pi-times-circle',
-    warning: 'pi pi-exclamation-triangle',
-    threshold: 'pi pi-chart-line',
-    trend: 'pi pi-arrow-down-right'
+    critical: 'pi pi-arrow-down-right',
+    warning: 'pi pi-arrow-up-right',
+    quality: 'pi pi-exclamation-triangle',
+    source: 'pi pi-times-circle'
   }
   return icons[type] || 'pi pi-bell'
-}
-
-function getKpiLabel(kpiId) {
-  const labels = {
-    total_users: 'Utilisateurs Totaux',
-    activeChallenges: 'Défis Actifs',
-    places: 'Places',
-    institutions: 'Institutions'
-  }
-  return labels[kpiId] || kpiId
 }
 
 function formatDateTime(timestamp) {
@@ -491,113 +471,131 @@ function formatDateTime(timestamp) {
   })
 }
 
+function applyAlerts(payload) {
+  alerts.value = payload.alerts
+  stats.value = payload.stats
+  canPersistResolution.value = payload.canPersistResolution !== false
+}
+
+function requestPeriod() {
+  return typeof selectedPeriod.value === 'string' ? selectedPeriod.value : 'month'
+}
+
 async function loadAlerts() {
   loading.value = true
+  loadError.value = ''
   try {
-    alerts.value = intelligentAlerts.getActiveAlerts()
-    stats.value = intelligentAlerts.getAlertStats()
+    applyAlerts(await fetchAdminAlerts({ period: requestPeriod() }))
   } catch (error) {
     console.error('Erreur chargement alertes:', error)
+    loadError.value = 'Impossible de charger les alertes. Les compteurs ne sont pas à jour.'
   } finally {
     loading.value = false
   }
 }
 
-function resolveAlert(alert) {
-  intelligentAlerts.resolveAlert(alert.timestamp)
-  loadAlerts()
+async function resolveAlert(alert) {
+  try {
+    applyAlerts(await resolveAdminAlert(alert.key, { period: requestPeriod() }))
+    toast.add({ severity: 'success', summary: 'Alerte résolue', detail: alert.title, life: 2500 })
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Résolution impossible',
+      detail: error?.message || 'Réessayez plus tard.',
+      life: 4000
+    })
+  }
 }
 
 function viewAlertDetails(alert) {
-  // Implémenter la vue détails
-  console.log('Détails alerte:', alert)
+  if (alert.link) router.push(alert.link)
+}
+
+function exportRows() {
+  return filteredAlerts.value.filter(alert => exportSettings.value.includeResolved || !alert.resolved)
+}
+
+function exportFileName(extension) {
+  return `alertes_kpi_${new Date().toISOString().slice(0, 10)}.${extension}`
 }
 
 async function exportToExcel() {
   const XLSX = await import('xlsx')
-  const data = filteredAlerts.value.map(alert => ({
+  const data = exportRows().map(alert => ({
     'Date': formatDateTime(alert.timestamp),
-    'Sévérité': alert.severity.toUpperCase(),
+    'Sévérité': alertSeverityLabel(alert.severity),
     'Type': alert.type,
     'Titre': alert.title,
     'Message': alert.message,
-    'KPI': getKpiLabel(alert.kpiId),
-    'Valeur': alert.value,
-    'Statut': alert.resolved ? 'Résolu' : 'Actif'
+    'KPI': alert.kpiLabel,
+    'Valeur': alert.value ?? '',
+    'Statut': alert.resolved ? 'Résolue' : 'Active'
   }))
 
   const ws = XLSX.utils.json_to_sheet(data)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Alertes')
-  XLSX.writeFile(wb, `alertes_kpi_${Date.now()}.xlsx`)
-  
+  XLSX.writeFile(wb, exportFileName('xlsx'))
   showExportDialog.value = false
 }
 
 async function exportToPDF() {
-  const [{ default: jsPDF }] = await Promise.all([
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
     import('jspdf-autotable')
   ])
   const doc = new jsPDF()
-  
-  // Titre
   doc.setFontSize(18)
-  doc.text('Rapport des Alertes KPI', 14, 20)
-  
-  // Statistiques
+  doc.text('Rapport des alertes KPI', 14, 20)
+
+  let startY = 30
   if (exportSettings.value.includeStats) {
-    doc.setFontSize(12)
-    doc.text('Statistiques', 14, 35)
     doc.setFontSize(10)
-    doc.text(`Critiques: ${stats.value.critical}`, 14, 45)
-    doc.text(`Avertissements: ${stats.value.warning}`, 14, 52)
-    doc.text(`Informations: ${stats.value.info}`, 14, 59)
+    doc.text(`Critiques : ${stats.value.critical}`, 14, 32)
+    doc.text(`Avertissements : ${stats.value.warning}`, 14, 39)
+    doc.text(`Informations : ${stats.value.info}`, 14, 46)
+    doc.text(`Résolues : ${stats.value.resolved}`, 14, 53)
+    startY = 60
   }
-  
-  // Table
-  const tableData = filteredAlerts.value.map(alert => [
-    formatDateTime(alert.timestamp),
-    alert.severity.toUpperCase(),
-    alert.title,
-    getKpiLabel(alert.kpiId),
-    alert.value?.toString() || '-'
-  ])
-  
-  doc.autoTable({
-    head: [['Date', 'Sévérité', 'Alerte', 'KPI', 'Valeur']],
-    body: tableData,
-    startY: 70
+
+  autoTable(doc, {
+    head: [['Date', 'Sévérité', 'Alerte', 'KPI', 'Valeur', 'Statut']],
+    body: exportRows().map(alert => [
+      formatDateTime(alert.timestamp),
+      alertSeverityLabel(alert.severity),
+      alert.message,
+      alert.kpiLabel,
+      alert.value ?? '-',
+      alert.resolved ? 'Résolue' : 'Active'
+    ]),
+    startY
   })
-  
-  doc.save(`alertes_kpi_${Date.now()}.pdf`)
+  doc.save(exportFileName('pdf'))
   showExportDialog.value = false
 }
 
 function exportToCSV() {
-  const headers = ['Date', 'Sévérité', 'Type', 'Titre', 'Message', 'KPI', 'Valeur']
-  const rows = filteredAlerts.value.map(alert => [
-    formatDateTime(alert.timestamp),
-    alert.severity,
-    alert.type,
-    alert.title,
-    alert.message,
-    getKpiLabel(alert.kpiId),
-    alert.value || ''
-  ])
-  
-  let csv = headers.join(',') + '\n'
-  rows.forEach(row => {
-    csv += row.map(cell => `"${cell}"`).join(',') + '\n'
-  })
-  
-  const blob = new Blob([csv], { type: 'text/csv' })
+  const csv = toCsv(
+    ['Date', 'Sévérité', 'Type', 'Titre', 'Message', 'KPI', 'Valeur', 'Statut'],
+    exportRows().map(alert => [
+      formatDateTime(alert.timestamp),
+      alertSeverityLabel(alert.severity),
+      alert.type,
+      alert.title,
+      alert.message,
+      alert.kpiLabel,
+      alert.value ?? '',
+      alert.resolved ? 'Résolue' : 'Active'
+    ])
+  )
+  const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' })
   const url = window.URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `alertes_kpi_${Date.now()}.csv`
+  a.download = exportFileName('csv')
   a.click()
-  
+  window.URL.revokeObjectURL(url)
   showExportDialog.value = false
 }
 

@@ -286,6 +286,7 @@ function comparisonLabel(comparison) {
     const prefix = percent > 0 ? '+' : ''
     return `${prefix}${percent}% vs période précédente`
   }
+  if (comparison?.error === 'FILTERED_HISTORY_UNAVAILABLE') return 'Non comparable avec ces filtres'
   return 'Historique indisponible'
 }
 

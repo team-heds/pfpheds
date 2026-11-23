@@ -25,6 +25,7 @@ const {
   loadDashboardFilterOptions,
   parseDashboardFilters,
   resolveProfileClass,
+  resolveProfileTrack,
   validateFilterCombination
 } = require('../dashboard/adminDashboardFilters')
 
@@ -92,6 +93,10 @@ function createFakeClient(options = {}) {
       },
       gte(column, value) {
         state.filters.push(['gte', column, value])
+        return query
+      },
+      lte(column, value) {
+        state.filters.push(['lte', column, value])
         return query
       },
       lt(column, value) {
@@ -170,7 +175,7 @@ test('the v1 contract contains deterministic aggregates from real table sources'
   assert.equal(response.period.start, '2026-07-31T22:00:00.000Z')
   assert.equal(response.previousPeriod.start, '2026-06-30T22:00:00.000Z')
   assert.equal(response.period.timezone, 'Europe/Zurich')
-  assert.equal(response.domains.general.metrics.users.value, 17)
+  assert.equal(response.domains.general.metrics.users.value, 5)
   assert.equal(response.domains.general.metrics.permissions.value, 23)
   assert.equal(response.domains.pfp.metrics.students.value, 2)
   assert.equal(response.domains.pfp.metrics.pfpInProgress.value, 4)
@@ -183,10 +188,10 @@ test('the v1 contract contains deterministic aggregates from real table sources'
   assert.equal(response.domains.gamification.metrics.completedQuests.value, 7)
   assert.equal(response.domains.gamification.metrics.activeUsers.value, 2)
   assert.equal(response.domains.general.metrics.routes.source, 'public.dynamic_routes')
-  assert.equal(queries.length, 22)
-  assert.equal(response.domains.general.metrics.users.semantics, 'flow')
-  assert.equal(response.domains.general.metrics.users.comparison.value, 17)
-  assert.equal(response.domains.general.metrics.users.comparison.percentChange, 0)
+  assert.equal(response.domains.general.metrics.users.semantics, 'snapshot')
+  assert.equal(response.domains.general.metrics.users.comparison.status, 'unavailable')
+  assert.equal(response.previousPeriod.end, '2026-07-26T08:00:00.000Z')
+  assert.equal(response.previousPeriod.toDate, true)
   assert.equal(response.domains.general.metrics.roles.semantics, 'snapshot')
   assert.equal(response.domains.general.metrics.roles.comparison.status, 'unavailable')
 
@@ -206,6 +211,49 @@ test('the v1 contract contains deterministic aggregates from real table sources'
         )
     )
   )
+})
+
+test('stock metrics compare with the latest daily snapshot of the previous period', async () => {
+  const { client } = createFakeClient({
+    rows: {
+      admin_kpi_snapshots: [
+        { snapshot_date: '2026-07-25', domain: 'general', metric: 'routes', value: 80 },
+        { snapshot_date: '2026-07-10', domain: 'general', metric: 'routes', value: 70 }
+      ]
+    }
+  })
+  const service = createAdminDashboardStatsService({
+    client,
+    now: () => new Date('2026-08-26T08:00:00.000Z')
+  })
+  const unfiltered = await service.loadStats(['general'])
+  assert.equal(unfiltered.domains.general.metrics.routes.comparison.value, 80)
+  assert.equal(unfiltered.domains.general.metrics.routes.comparison.percentChange, 13.8)
+
+  const filtered = await service.loadStats(['general'], { key: 'month' }, { class: ['BA25'] })
+  assert.equal(filtered.domains.general.metrics.routes.comparison.status, 'unavailable')
+  assert.equal(filtered.domains.general.metrics.routes.comparison.error, 'FILTERED_HISTORY_UNAVAILABLE')
+})
+
+test('a missing history table leaves comparison unavailable without an error', async () => {
+  const events = []
+  const { client } = createFakeClient({ errors: { admin_kpi_snapshots: { code: '42P01', message: 'missing' } } })
+  const service = createAdminDashboardStatsService({
+    client,
+    now: () => new Date('2026-08-26T08:00:00.000Z'),
+    onMetricError: (event) => events.push(event)
+  })
+  const response = await service.loadStats(['general'])
+  assert.equal(response.domains.general.status, 'ok')
+  assert.equal(response.domains.general.metrics.routes.comparison.status, 'unavailable')
+  assert.equal(events.length, 0)
+})
+
+test('the track filter falls back on the authoritative primary role', () => {
+  assert.equal(resolveProfileTrack({ primary_track_id: 'ALPIN', role: 'EtudiantPhysio' }), 'ALPIN')
+  assert.equal(resolveProfileTrack({ role: 'EnseignantSoins', permissions: ['EnseignantPhysio'] }), 'SI')
+  assert.equal(resolveProfileTrack({ role: 'user', permissions: ['EtudiantPhysio'] }), 'PHY')
+  assert.equal(resolveProfileTrack({ role: 'admin', permissions: ['EtudiantPhysio'] }), '')
 })
 
 test('academic inventory metrics are global snapshots independent of the selected period', async () => {
@@ -299,7 +347,7 @@ test('a previous-period failure preserves the current value and marks comparison
   const { client } = createFakeClient({
     resolveError(state) {
       const lowerBound = state.filters.find(([operator]) => operator === 'gte')?.[2]
-      if (state.table === 'dynamic_routes' && lowerBound === '2026-07-31T22:00:00.000Z') {
+      if (state.table === 'user_badges' && lowerBound === '2026-07-31T22:00:00.000Z') {
         return { code: 'PGRST500', message: 'sensitive previous period detail' }
       }
       return null
@@ -311,16 +359,16 @@ test('a previous-period failure preserves the current value and marks comparison
     onMetricError: (event) => events.push(event)
   })
 
-  const response = await service.loadStats(['general'], { key: 'month' })
-  const metric = response.domains.general.metrics.routes
+  const response = await service.loadStats(['gamification'], { key: 'month' })
+  const metric = response.domains.gamification.metrics.badges
 
-  assert.equal(metric.value, 91)
+  assert.equal(metric.value, 11)
   assert.equal(metric.status, 'ok')
   assert.equal(metric.comparison.status, 'error')
   assert.equal(metric.comparison.error, 'PGRST500')
   assert.equal(metric.comparison.value, null)
-  assert.equal(response.domains.general.status, 'partial')
-  assert.equal(events[0].key, 'routes.previous')
+  assert.equal(response.domains.gamification.status, 'partial')
+  assert.equal(events[0].key, 'badges.previous')
   assert.equal(JSON.stringify(response).includes('sensitive previous period detail'), false)
 })
 

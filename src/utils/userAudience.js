@@ -1,5 +1,6 @@
 const STUDENT_TOKENS = new Set(['student', 'etudiant', 'etudiantphysio', 'studentphysio'])
 const SI_TEACHER_TOKENS = new Set(['enseignantsoins'])
+const PHYSIO_TEACHER_TOKENS = new Set(['enseignantphysio'])
 const GENERIC_ROLE_TOKENS = new Set(['', 'user', 'authenticated', 'member'])
 const ARCHIVED_TOKENS = new Set(['archivedstudent', 'studentarchived', 'archiveetudiant'])
 
@@ -66,6 +67,8 @@ export function isSITeacherProfile(profile) {
 
 export const filterStudentProfiles = profiles => (profiles || []).filter(isStudentProfile)
 export const filterSITeacherProfiles = profiles => (profiles || []).filter(isSITeacherProfile)
+export const filterPhysioTeacherProfiles = profiles =>
+  (profiles || []).filter(profile => belongsToAudience(profile, PHYSIO_TEACHER_TOKENS))
 
 // Un compte peut être enseignant en rôle principal et admin par ses permissions.
 export function hasAdminNavigationAccess(profile) {

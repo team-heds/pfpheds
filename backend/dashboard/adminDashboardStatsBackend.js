@@ -5,6 +5,7 @@ const {
   loadRecentGamificationActivity
 } = require('./adminDashboardStatsService')
 const { PERIOD_KEYS, parseReference } = require('./adminDashboardPeriod')
+const { loadAdminAlerts, resolveAdminAlert } = require('./adminDashboardAlerts')
 const { isAdmin } = require('../middleware/auth')
 const { logStructured, upstreamErrorContext } = require('../observability/logger')
 const {
@@ -153,6 +154,98 @@ function createAdminDashboardStatsRouter(options = {}) {
     }
   })
 
+  function alertService(req) {
+    return createAdminDashboardStatsService({
+      client,
+      now,
+      onMetricError({ key, domain, source, error }) {
+        logStructured(
+          'error',
+          upstreamErrorContext(error, {
+            event: 'admin-dashboard.alert-metric-error',
+            requestId: req.id,
+            service: 'supabase',
+            operation: 'admin-dashboard-alerts',
+            domain,
+            metric: key,
+            source
+          }),
+          logger
+        )
+      }
+    })
+  }
+
+  function sendAlertError(req, res, error) {
+    if ([400, 404, 503].includes(error.status)) {
+      return res.status(error.status).json({ error: error.message })
+    }
+    logStructured(
+      'error',
+      upstreamErrorContext(error, {
+        event: 'admin-dashboard.alerts-error',
+        requestId: req.id,
+        service: 'supabase',
+        operation: 'admin-dashboard-alerts'
+      }),
+      logger
+    )
+    return res.status(500).json({ error: 'Impossible de charger les alertes admin.' })
+  }
+
+  router.get('/v1/alerts', async (req, res) => {
+    try {
+      const domains = allowedDashboardDomains(req.auth)
+      if (!domains.length) return res.status(403).json({ error: 'Permission dashboard insuffisante.' })
+      const { key: periodKey } = parsePeriodOptions({ period: req.query?.period })
+      return res.json(
+        await loadAdminAlerts({
+          client,
+          statsService: alertService(req),
+          domains,
+          periodKey,
+          onRuleError: ({ key, domain, source, error }) =>
+            logStructured(
+              'error',
+              upstreamErrorContext(error, {
+                event: 'admin-dashboard.alert-rule-error',
+                requestId: req.id,
+                service: 'supabase',
+                operation: 'admin-dashboard-alerts',
+                domain,
+                metric: key,
+                source
+              }),
+              logger
+            )
+        })
+      )
+    } catch (error) {
+      return sendAlertError(req, res, error)
+    }
+  })
+
+  router.post('/v1/alerts/:key/resolve', async (req, res) => {
+    try {
+      if (!isAdmin(req.auth)) {
+        return res.status(403).json({ error: 'Seul un administrateur peut résoudre une alerte.' })
+      }
+      const { key: periodKey } = parsePeriodOptions({ period: req.query?.period })
+      return res.json(
+        await resolveAdminAlert({
+          client,
+          statsService: alertService(req),
+          domains: allowedDashboardDomains(req.auth),
+          periodKey,
+          alertKey: String(req.params.key || ''),
+          userId: req.auth?.userId
+        })
+      )
+    } catch (error) {
+      return sendAlertError(req, res, error)
+    }
+  })
+
   router.get('/v1/gamification/activity', async (req, res) => {
     try {
       if (!allowedDashboardDomains(req.auth).includes('gamification')) {
@@ -178,10 +271,39 @@ function createAdminDashboardStatsRouter(options = {}) {
   return router
 }
 
+const SNAPSHOT_INTERVAL_MS = 60 * 60 * 1000
+
+// La capture est rejouable : une exécution par heure garantit une valeur par jour,
+// même après un redémarrage, sans dupliquer les formules des KPI en SQL.
+function startAdminKpiSnapshotJob({ client, logger = console, intervalMs = SNAPSHOT_INTERVAL_MS }) {
+  const service = createAdminDashboardStatsService({ client })
+  const run = async () => {
+    try {
+      await service.captureDailySnapshot()
+    } catch (error) {
+      if (['42P01', 'PGRST205'].includes(error?.code)) return
+      logStructured(
+        'error',
+        upstreamErrorContext(error, {
+          event: 'admin-dashboard.snapshot-error',
+          service: 'supabase',
+          operation: 'admin-dashboard-snapshot'
+        }),
+        logger
+      )
+    }
+  }
+  run()
+  const timer = setInterval(run, intervalMs)
+  timer.unref?.()
+  return timer
+}
+
 module.exports = {
   DOMAIN_PERMISSIONS,
   allowedDashboardDomains,
   createAdminDashboardStatsRouter,
   parsePeriodOptions,
-  parseRequestedDomains
+  parseRequestedDomains,
+  startAdminKpiSnapshotJob
 }

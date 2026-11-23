@@ -5,7 +5,7 @@ const {
   createMetric,
   unavailableComparison
 } = require('./adminDashboardContract')
-const { resolveDashboardPeriods } = require('./adminDashboardPeriod')
+const { DASHBOARD_TIMEZONE, resolveDashboardPeriods } = require('./adminDashboardPeriod')
 const {
   filterStudentProfiles,
   filterTeacherProfiles,
@@ -120,7 +120,55 @@ function snapshot(load, semantics = 'snapshot', reason = 'HISTORY_UNAVAILABLE') 
   return Object.freeze({ semantics, load, reason })
 }
 
-async function safeMetric({ key, domain, source, asOf, definition, periods, onMetricError }) {
+function zurichDate(value) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: DASHBOARD_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date(value))
+}
+
+function isMissingRelation(error) {
+  const code = error?.cause?.code || error?.code
+  return code === '42P01' || code === 'PGRST205'
+}
+
+// Dernière valeur connue de chaque KPI de stock dans la période de comparaison.
+// Les photos sont globales : elles ne servent pas quand un filtre est actif.
+async function loadSnapshotHistory(client, domains, period, filters, onMetricError) {
+  if (Object.keys(filters || {}).length) {
+    return { values: new Map(), reason: 'FILTERED_HISTORY_UNAVAILABLE' }
+  }
+  try {
+    const lastIncludedInstant = new Date(new Date(period.end).getTime() - 1)
+    const rows = await selectAllRows(
+      client,
+      'admin_kpi_snapshots',
+      'snapshot_date,domain,metric,value',
+      (query) =>
+        query
+          .in('domain', domains)
+          .gte('snapshot_date', zurichDate(period.start))
+          .lte('snapshot_date', zurichDate(lastIncludedInstant))
+          .order('snapshot_date', { ascending: false })
+    )
+    const values = new Map()
+    for (const row of rows) {
+      const key = `${row.domain}.${row.metric}`
+      const value = Number(row.value)
+      if (!values.has(key) && Number.isFinite(value)) values.set(key, value)
+    }
+    return { values, reason: null }
+  } catch (error) {
+    if (!isMissingRelation(error)) {
+      onMetricError?.({ key: 'history', domain: 'all', source: 'public.admin_kpi_snapshots', error })
+    }
+    return { values: new Map(), reason: null }
+  }
+}
+
+async function safeMetric({ key, domain, source, asOf, definition, periods, history, onMetricError }) {
   let value
   try {
     value = await definition.load(periods.current)
@@ -138,13 +186,16 @@ async function safeMetric({ key, domain, source, asOf, definition, periods, onMe
   }
 
   if (definition.semantics !== 'flow') {
+    const previousValue = history?.values.get(`${domain}.${key}`)
     return createMetric({
       value,
       source,
       asOf,
       period: periods.current,
       semantics: definition.semantics,
-      comparison: unavailableComparison(periods.previous, definition.reason)
+      comparison: Number.isFinite(previousValue)
+        ? createComparison({ currentValue: value, previousValue, period: periods.previous })
+        : unavailableComparison(periods.previous, history?.reason || definition.reason)
     })
   }
 
@@ -175,7 +226,7 @@ async function safeMetric({ key, domain, source, asOf, definition, periods, onMe
   }
 }
 
-async function loadMetrics(domain, definitions, asOf, periods, onMetricError) {
+async function loadMetrics(domain, definitions, asOf, periods, history, onMetricError) {
   const entries = await Promise.all(
     Object.entries(definitions).map(async ([key, definition]) => [
       key,
@@ -186,6 +237,7 @@ async function loadMetrics(domain, definitions, asOf, periods, onMetricError) {
         asOf,
         definition,
         periods,
+        history,
         onMetricError
       })
     ])
@@ -199,26 +251,18 @@ function hasPeopleFilters(filters) {
 
 function generalDefinitions(client, filters = {}) {
   return {
-    users: flow(async (period) => {
-      if (!hasPeopleFilters(filters)) {
-        return countRows(client, 'user_profiles', 'user_id', (query) =>
-          applyPeriod(query.eq('is_active', true), 'created_at', period)
-        )
-      }
-      const profiles = await selectRows(
+    users: snapshot(async () => {
+      const profiles = await selectAllRows(
         client,
         'user_profiles',
-        'role,permissions,is_active,classe,pfp_cohort,primary_track_id',
-        (query) => applyPeriod(query, 'created_at', period)
+        'role,permissions,is_active,classe,pfp_cohort,primary_track_id'
       )
       return filterProfiles(profiles.filter(isActiveProfile), filters).length
     }),
     roles: snapshot(() => countRows(client, 'roles', 'id')),
     permissions: snapshot(() => countRows(client, 'permissions', 'slug')),
-    routes: flow((period) =>
-      countRows(client, 'dynamic_routes', 'id', (query) =>
-        applyPeriod(query.eq('is_active', true), 'created_at', period)
-      )
+    routes: snapshot(() =>
+      countRows(client, 'dynamic_routes', 'id', (query) => query.eq('is_active', true))
     )
   }
 }
@@ -237,7 +281,7 @@ function pfpDefinitions(client, filters = {}) {
     institutions: snapshot(
       () =>
         countRows(client, 'institutions', 'InstitutionId', (query) =>
-          applyColumnFilter(query, 'Name', filters.institution)
+          applyColumnFilter(query.or('is_hidden.is.null,is_hidden.eq.false'), 'Name', filters.institution)
         ),
       'snapshot',
       'SOURCE_HAS_NO_CREATED_AT'
@@ -276,7 +320,9 @@ function academicDefinitions(client, filters = {}) {
     }),
     courses: snapshot(() => countRows(client, 'courses', 'id')),
     media: snapshot(() => countRows(client, 'video_library', 'id')),
-    modules: snapshot(() => countRows(client, 'modules', 'id'))
+    modules: snapshot(() =>
+      countRows(client, 'modules', 'id', (query) => applyColumnFilter(query, 'track_id', filters.track))
+    )
   }
 }
 
@@ -344,6 +390,13 @@ function createAdminDashboardStatsService(options) {
         if (!DOMAIN_DEFINITIONS[domain]) throw new Error(`Domaine dashboard inconnu: ${domain}`)
       }
 
+      const history = await loadSnapshotHistory(
+        client,
+        uniqueDomains,
+        periods.previous,
+        filters,
+        onMetricError
+      )
       const domains = Object.fromEntries(
         await Promise.all(
           uniqueDomains.map(async (domain) => [
@@ -353,6 +406,7 @@ function createAdminDashboardStatsService(options) {
               DOMAIN_DEFINITIONS[domain](client, filters, asOf),
               asOf,
               periods,
+              history,
               onMetricError
             )
           ])
@@ -365,6 +419,32 @@ function createAdminDashboardStatsService(options) {
         previousPeriod: periods.previous,
         appliedFilters: filters
       })
+    },
+
+    // Enregistre la valeur du jour des KPI de stock, sans filtre. Rejouable.
+    async captureDailySnapshot() {
+      const asOf = now().toISOString()
+      const periods = resolveDashboardPeriods({ key: 'day', now })
+      const snapshotDate = zurichDate(asOf)
+      const rows = []
+      for (const [domain, createDefinitions] of Object.entries(DOMAIN_DEFINITIONS)) {
+        const definitions = createDefinitions(client, {}, asOf)
+        for (const [metric, definition] of Object.entries(definitions)) {
+          if (definition.semantics === 'flow') continue
+          try {
+            const value = await definition.load(periods.current)
+            rows.push({ snapshot_date: snapshotDate, domain, metric, value, captured_at: asOf })
+          } catch (error) {
+            onMetricError?.({ key: metric, domain, source: SOURCES[metric], error })
+          }
+        }
+      }
+      if (!rows.length) return 0
+      const { error } = await client
+        .from('admin_kpi_snapshots')
+        .upsert(rows, { onConflict: 'snapshot_date,domain,metric' })
+      if (error) throw queryError('admin_kpi_snapshots', error)
+      return rows.length
     }
   }
 }

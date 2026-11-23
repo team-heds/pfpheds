@@ -6,7 +6,7 @@
         Comparaison de périodes
       </h3>
       <p class="text-600 m-0">
-        Données pour {{ periodLabel.toLowerCase() }}, comparées à la période précédente selon l’historique disponible.
+        Période sélectionnée : {{ periodLabel.toLowerCase() }}. Comparaison au même temps écoulé de la période précédente.
       </p>
     </div>
 
@@ -41,6 +41,10 @@
     <Message v-else severity="info" :closable="false">
       L'historique nécessaire à la comparaison n'est pas disponible pour cette période.
     </Message>
+
+    <p v-if="comparisonData.length && unavailableKpis.length" class="text-600 text-sm mt-3 mb-0">
+      Sans base comparable : {{ unavailableKpis.join(', ') }}.
+    </p>
   </section>
 </template>
 
@@ -74,13 +78,18 @@ const comparisonData = computed(() => props.kpis.flatMap((kpi) => {
   }]
 }))
 
+const unavailableKpis = computed(() => {
+  const comparable = new Set(comparisonData.value.map((kpi) => kpi.id))
+  return props.kpis.filter((kpi) => !comparable.has(kpi.id)).map((kpi) => kpi.label)
+})
+
 const format = (value) => value.toLocaleString('fr-CH')
 const variation = (kpi) => Number.isFinite(kpi.percentChange)
   ? kpi.percentChange
   : (kpi.previousValue === 0 ? null : ((kpi.currentValue - kpi.previousValue) / kpi.previousValue) * 100)
 const variationText = (kpi) => {
   const value = variation(kpi)
-  if (value === null) return 'N/A'
+  if (value === null) return kpi.currentValue > 0 ? 'Nouveau' : 'Stable'
   const rounded = Math.round(value * 10) / 10
   return `${rounded > 0 ? '+' : ''}${rounded}%`
 }

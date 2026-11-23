@@ -41,7 +41,10 @@ const adminUsersRoutes = require('./supabase/adminUsersBackend.js')
 const vimeoRoutes = require('./supabase/vimeoBackend.js')
 const githubRoutes = require('./supabase/githubBackend.js')
 const audienceDirectoryRoutes = require('./supabase/audienceDirectoryBackend.js')
-const { createAdminDashboardStatsRouter } = require('./dashboard/adminDashboardStatsBackend.js')
+const {
+  createAdminDashboardStatsRouter,
+  startAdminKpiSnapshotJob
+} = require('./dashboard/adminDashboardStatsBackend.js')
 const {
   createPasswordRecoveryRequestRouter
 } = require('./supabase/passwordRecoveryRequestBackend.js')
@@ -223,6 +226,7 @@ const PORT = process.env.PORT || 3000
 if (require.main === module) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`)
+    startAdminKpiSnapshotJob({ client: supabaseAdmin })
   })
 }
 
