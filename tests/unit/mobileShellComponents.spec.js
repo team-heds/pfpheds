@@ -97,10 +97,10 @@ const settle = async () => {
 }
 
 describe('barre d’onglets', () => {
-  it('affiche cinq pictogrammes nommés, signale l’onglet actif et émet le choix', async () => {
+  it('affiche cinq onglets avec libellé, signale l’onglet actif et émet le choix', async () => {
     const wrapper = mount(MobileTabBar, { props: { tabs: buildTabs(USER), active: 'search' } })
     expect(wrapper.findAll('button').map((button) => button.attributes('aria-label'))).toEqual(['Carte', 'Institutions', 'Accueil', 'Recherche', 'Profil'])
-    expect(wrapper.findAll('button').every((button) => button.text() === '')).toBe(true)
+    expect(wrapper.findAll('.m-tabs__label').map((label) => label.text())).toEqual(['Carte', 'Institutions', 'Accueil', 'Recherche', 'Profil'])
     expect(wrapper.get('[aria-current="page"]').attributes('aria-label')).toBe('Recherche')
     await wrapper.findAll('button')[0].trigger('click')
     expect(wrapper.emitted('select')[0]).toEqual(['map'])

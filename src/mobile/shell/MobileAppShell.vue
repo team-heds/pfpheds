@@ -4,7 +4,7 @@
       v-if="chrome && showHeader"
       :title="title"
       :can-go-back="canGoBack"
-      :heading="Boolean(nativeScreen)"
+      :heading="Boolean(nativeScreen) || (!store.pageHeading && !NATIVE_PAGES[route.name] && Boolean(route.meta?.title))"
       :actions="headerActions"
       @back="goBack"
       @action="onHeaderAction"
@@ -259,12 +259,16 @@ const readDocumentTitle = () => {
   const value = document.title.replace(/\s+—\s+HEdS$/, '').trim()
   liveTitle.value = /^(Plateforme|HEdS)?$/.test(value) ? '' : value
 }
-watch(() => route.path, () => { liveTitle.value = '' })
+watch(() => route.path, () => {
+  liveTitle.value = ''
+  store.pageHeading = ''
+})
 
 const title = computed(() => {
   const tab = tabs.value.find((item) => item.key === store.activeTab)
-  if (nativeScreen.value || !store.canGoBack) return tab?.label || 'HEdS'
-  return NATIVE_PAGES[route.name]?.title || route.meta?.title || liveTitle.value || tab?.label || 'HEdS'
+  // Le nom de l'onglet n'est le titre que sur la page racine de cet onglet.
+  if (nativeScreen.value || route.path === tab?.root) return tab?.label || 'HEdS'
+  return NATIVE_PAGES[route.name]?.title || route.meta?.title || liveTitle.value || store.pageHeading || 'HEdS'
 })
 
 const headerActions = computed(() => {
@@ -360,7 +364,7 @@ onBeforeUnmount(() => {
   --m-tabbar-space: 0px;
 }
 .m-shell--with-tabs {
-  --m-tabbar-space: calc(57px + var(--m-safe-bottom));
+  --m-tabbar-space: calc(var(--m-tabbar-height, 60px) + var(--m-safe-bottom));
 }
 .m-shell__overlays {
   display: contents;
@@ -600,6 +604,51 @@ onBeforeUnmount(() => {
 }
 .m-shell .m-page > * {
   max-width: 100%;
+}
+/* Pages existantes dans l'application : 44 px de zone tactile, y compris dans les fenêtres. */
+html.m-app :is(.m-page select, .p-dropdown, .p-paginator-page, .p-paginator-first, .p-paginator-prev, .p-paginator-next, .p-paginator-last, .p-message-close, .p-toast-icon-close, .p-dialog-header-icon) {
+  min-block-size: 44px;
+}
+html.m-app :is(.p-button-icon-only, .p-paginator-page, .p-paginator-first, .p-paginator-prev, .p-paginator-next, .p-paginator-last, .p-message-close, .p-toast-icon-close, .p-dialog-header-icon) {
+  min-inline-size: 44px;
+}
+.m-shell .m-page .toggle-container input[type='checkbox'] {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: 0 4px 0 -10px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: none;
+  cursor: pointer;
+}
+.m-shell .m-page .toggle-container input[type='checkbox']::before {
+  content: '';
+  position: absolute;
+  inset: 11px;
+  border: 2px solid var(--text-color-secondary);
+  border-radius: 6px;
+}
+.m-shell .m-page .toggle-container input[type='checkbox']:checked::before {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+}
+.m-shell .m-page .toggle-container input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  width: 7px;
+  height: 13px;
+  border: solid var(--primary-color-text);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.m-shell .m-page .toggle-container input[type='checkbox']:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
 }
 /* Modules de gamification ouverts en écran empilé : l'en-tête de la coque porte
    déjà le titre et le retour. Le titre de la page reste lisible par les lecteurs

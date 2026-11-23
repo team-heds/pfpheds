@@ -38,6 +38,8 @@ export const useMobileShellStore = defineStore('mobileShell', {
     immersiveCount: 0,
     /** Clavier du téléphone ouvert : la barre se cache. */
     keyboardOpen: false,
+    /** Titre h1 de la page existante affichée, repris par l'en-tête. */
+    pageHeading: '',
   }),
 
   getters: {

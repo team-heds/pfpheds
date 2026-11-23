@@ -15,6 +15,7 @@
         <img :src="avatarUrl" alt="" @error="avatarFailed = true" />
       </span>
       <MIcon v-else :name="tab.icon" />
+      <span class="m-tabs__label" aria-hidden="true">{{ tab.label }}</span>
     </button>
   </nav>
 </template>
@@ -71,10 +72,13 @@ watch(() => props.avatarUrl, () => {
   position: relative;
   flex: 1 1 0;
   min-width: 0;
-  min-height: 52px;
-  display: grid;
-  place-items: center;
-  padding: 0;
+  min-height: calc(var(--m-tabbar-height, 60px) - 3px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 2px;
   border: 0;
   border-radius: 14px;
   background: none;
@@ -100,13 +104,26 @@ watch(() => props.avatarUrl, () => {
 .m-tabs__item.is-active::after {
   content: '';
   position: absolute;
-  bottom: 3px;
+  top: 0;
   left: 50%;
   width: 18px;
   height: 3px;
   border-radius: 2px;
   background: var(--m-accent);
   transform: translateX(-50%);
+}
+.m-tabs__label {
+  max-width: 100%;
+  overflow: hidden;
+  /* Plafonné : à 200 % de texte, les cinq libellés restent sur une ligne. */
+  font-size: min(0.6875rem, 13px);
+  font-weight: 500;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.m-tabs__item.is-active .m-tabs__label {
+  font-weight: 700;
 }
 .m-tabs__item:active {
   transform: scale(0.92);
@@ -117,9 +134,9 @@ watch(() => props.avatarUrl, () => {
 }
 .m-tabs__avatar {
   display: block;
-  width: 30px;
-  height: 30px;
-  padding: 2px;
+  width: 28px;
+  height: 28px;
+  padding: 1px;
   border: 2px solid transparent;
   border-radius: 50%;
 }
@@ -132,6 +149,11 @@ watch(() => props.avatarUrl, () => {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .m-tabs__label {
+    display: none;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .m-tabs,

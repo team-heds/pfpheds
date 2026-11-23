@@ -18,6 +18,7 @@ defineProps({
   bare: { type: Boolean, default: false },
 })
 
+const shell = useMobileShellStore()
 const scrollerRef = ref(null)
 const active = ref(true)
 const kept = useKeptScroll(scrollerRef, () => active.value)
@@ -39,6 +40,7 @@ function hideDuplicateTitle() {
   const root = scrollerRef.value
   if (!root) return
   const heading = [...root.querySelectorAll('h1')].find((el) => !el.closest('.m-sr-only, [hidden]'))
+  if (active.value) shell.pageHeading = heading?.textContent?.trim() || ''
   if (!heading || heading.classList.contains('m-page__title-hidden')) return
   const offset = heading.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
   if (offset < TITLE_ZONE) heading.classList.add('m-page__title-hidden')
@@ -60,7 +62,7 @@ function watchTitle() {
 onMounted(watchTitle)
 onBeforeUnmount(stopWatching)
 
-const { scrollTopSignal } = storeToRefs(useMobileShellStore())
+const { scrollTopSignal } = storeToRefs(shell)
 watch(scrollTopSignal, () => {
   if (active.value) kept.scrollToTop()
 })
