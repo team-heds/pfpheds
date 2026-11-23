@@ -1,19 +1,17 @@
 ﻿<template>
-  <div class="autherror-container">
-    <h2>AuthError</h2>
-    <p>Composant en cours de dÃ©veloppement</p>
-  </div>
+  <StatusPage
+    title="Connexion impossible"
+    description="Nous n’avons pas pu vous connecter. Réessayez depuis la page de connexion."
+    icon="pi-exclamation-triangle"
+  >
+    <Button label="Retour à la connexion" icon="pi pi-sign-in" @click="router.push('/home')" />
+  </StatusPage>
 </template>
 
-<script>
-export default {
-  name: 'AuthErrorView'
-}
-</script>
+<script setup>
+import { useRouter } from 'vue-router'
+import Button from 'primevue/button'
+import StatusPage from '@/components/common/feedback/StatusPage.vue'
 
-<style scoped>
-.autherror-container {
-  padding: 20px;
-  text-align: center;
-}
-</style>
+const router = useRouter()
+</script>

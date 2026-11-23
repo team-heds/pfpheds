@@ -70,13 +70,13 @@ const onDeleteTask = async (deletedTask) => {
 
 const openEditDialog = (task) => {
   dialogConfig.value.visible = true;
-  dialogConfig.value.header = 'Edit Task';
+  dialogConfig.value.header = 'Modifier la tâche';
   selectedTask.value = task;
 };
 
 const openCreateDialog = () => {
   dialogConfig.value.visible = true;
-  dialogConfig.value.header = 'Create Task';
+  dialogConfig.value.header = 'Nouvelle tâche';
   selectedTask.value = null;
 };
 
@@ -88,8 +88,8 @@ const onSaveDialog = async (task) => {
   await saveTaskToFirebase(task);
   toast.add({
     severity: task.id ? 'success' : 'info',
-    summary: task.id ? 'Task Updated' : 'Task Created',
-    detail: `Task "${task.name}" ${task.id ? 'updated' : 'created'} successfully.`,
+    summary: task.id ? 'Tâche modifiée' : 'Tâche créée',
+    detail: `« ${task.name} » a été ${task.id ? 'modifiée' : 'créée'}.`,
     life: 3000,
   });
   dialogConfig.value.visible = false;
@@ -100,11 +100,11 @@ const onSaveDialog = async (task) => {
   <Navbar />
   <div class="card">
     <div class="flex justify-content-between align-items-center mb-5">
-      <span class="text-900 text-xl font-semibold">Task List</span>
-      <Button class="font-semibold" outlined icon="pi pi-plus" label="Create Task" @click="openCreateDialog()" />
+      <span class="text-900 text-xl font-semibold">Tâches</span>
+      <Button class="font-semibold" outlined icon="pi pi-plus" label="Nouvelle tâche" @click="openCreateDialog()" />
     </div>
-    <List :task-list="todo" title="ToDo" @checkbox:change="onCheckboxChange" @delete:task="onDeleteTask" @open:edit:dialog="openEditDialog" />
-    <List :task-list="completed" title="Completed" @checkbox:change="onCheckboxChange" @delete:task="onDeleteTask" @open:edit:dialog="openEditDialog" />
+    <List :task-list="todo" title="À faire" @checkbox:change="onCheckboxChange" @delete:task="onDeleteTask" @open:edit:dialog="openEditDialog" />
+    <List :task-list="completed" title="Terminées" @checkbox:change="onCheckboxChange" @delete:task="onDeleteTask" @open:edit:dialog="openEditDialog" />
   </div>
 
   <Dialog

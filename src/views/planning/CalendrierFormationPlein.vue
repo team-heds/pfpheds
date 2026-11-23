@@ -32,10 +32,6 @@
           </div>
         </Panel>
       </div>
-
-      <div class="col-12">
-        <Message severity="info">Lecture depuis Supabase: semestres, semaines (calendar_cells), et cellules par jour pour la semaine sélectionnée.</Message>
-      </div>
     </div>
   </div>
 </template>
@@ -43,7 +39,6 @@
 <script setup>
 import TheNavbar from '@/components/TheNavbar.vue'
 import Panel from 'primevue/panel'
-import Message from 'primevue/message'
 import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
 import { ref, onMounted, watch } from 'vue'

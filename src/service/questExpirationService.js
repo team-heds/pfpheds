@@ -3,6 +3,9 @@ import { supabase } from '@/supabase'
 /**
  * Service pour gérer l'expiration automatique des quêtes
  */
+const isNetworkFailure = (error) =>
+  /Failed to fetch|NetworkError|Load failed/i.test(`${error?.message || ''} ${error?.details || ''}`)
+
 class QuestExpirationService {
   
   /**
@@ -70,7 +73,9 @@ class QuestExpirationService {
       return expiredQuests.length
       
     } catch (error) {
-      console.error('❌ Erreur mise à jour quêtes expirées:', error)
+      if (!isNetworkFailure(error)) {
+        console.error('❌ Erreur mise à jour quêtes expirées:', error)
+      }
       throw error
     }
   }
@@ -115,12 +120,27 @@ class QuestExpirationService {
    */
   startPeriodicCheck(intervalMinutes = 5) {
     // Vérification immédiate
-    this.updateExpiredQuests()
+    void this.runScheduledCheck()
     
     // Puis toutes les X minutes
     return setInterval(() => {
-      this.updateExpiredQuests()
+      void this.runScheduledCheck()
     }, intervalMinutes * 60 * 1000)
+  }
+
+  /**
+   * Vérification de fond : une coupure réseau attend simplement le prochain passage.
+   * @returns {Promise<number>} Nombre de quêtes mises à jour
+   */
+  async runScheduledCheck() {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return 0
+
+    try {
+      return await this.updateExpiredQuests()
+    } catch {
+      // Déjà journalisé si ce n'est pas une coupure réseau.
+      return 0
+    }
   }
   
   /**

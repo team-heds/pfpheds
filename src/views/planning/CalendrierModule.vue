@@ -11,7 +11,7 @@
         </Panel>
       </div>
       <div class="col-12 md:col-8">
-        <Panel header="Planification du module (exemple)">
+        <Panel header="Planification du module">
           <DataTable :value="rows" size="small">
             <Column field="week" header="Semaine" />
             <Column field="content" header="Contenu" />

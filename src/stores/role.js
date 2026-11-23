@@ -115,6 +115,25 @@ export const useRoleStore = defineStore('role', () => {
         }
       }
  
+      // C) rôles de filière actifs, au format « SI.ADMIN » comme côté backend
+      if (user) {
+        const { data: trackRoles, error: trackRolesError } = await supabase
+          .from('user_track_roles')
+          .select('track_id, role, expires_at')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+
+        if (trackRolesError) {
+          console.warn('user_track_roles read error:', trackRolesError)
+        } else if (Array.isArray(trackRoles)) {
+          const now = Date.now()
+          for (const entry of trackRoles) {
+            const isExpired = entry?.expires_at && Date.parse(entry.expires_at) <= now
+            if (entry?.track_id && entry?.role && !isExpired) permsSet.add(`${entry.track_id}.${entry.role}`)
+          }
+        }
+      }
+
       const resolvedPermissions = Array.from(permsSet)
       if (session.value?.user?.id === requestedUserId) {
         perms.value = resolvedPermissions

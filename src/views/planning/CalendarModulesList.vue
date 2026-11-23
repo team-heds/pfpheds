@@ -1,9 +1,9 @@
 <template>
   <TheNavbar />
   <div class="p-4">
-    <h1 class="text-3xl mb-4">Calendar - Modules</h1>
+    <h1 class="text-3xl mb-4">Modules</h1>
     <p class="text-700 mb-3">Liste des modules (vue calendrier).</p>
-    <Panel header="Créer un module">
+    <Panel v-if="canEditCalendar" header="Créer un module">
       <div class="grid" style="row-gap:.5rem">
         <div class="col-12 md:col-3"><InputText class="w-full" v-model="draft.code" placeholder="Code (ex: MOD-A)" /></div>
         <div class="col-12 md:col-3"><InputText class="w-full" v-model="draft.name" placeholder="Nom" /></div>
@@ -22,8 +22,8 @@
           <template #body="{ data }">
             <div class="flex gap-2">
               <Button size="small" label="Voir" icon="pi pi-eye" @click="go(`/calendar/module/${data.id}`)" />
-              <Button size="small" label="Éditer" icon="pi pi-pencil" @click="go(`/calendar/module/${data.id}/edit`)" />
-              <Button size="small" icon="pi pi-trash" severity="danger" outlined @click="remove(data.id)" />
+              <Button v-if="canEditCalendar" size="small" label="Éditer" icon="pi pi-pencil" @click="go(`/calendar/module/${data.id}/edit`)" />
+              <Button v-if="canEditCalendar" size="small" icon="pi pi-trash" severity="danger" outlined aria-label="Supprimer le module" @click="remove(data.id)" />
             </div>
           </template>
         </Column>
@@ -40,9 +40,13 @@ import Column from 'primevue/column'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import { useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useModulesStore } from '@/views/planning/stores/modulesStore.js'
+import { useRoleStore } from '@/stores/role'
+import { CALENDAR_EDIT_NEED } from '@/config/calendarAccess'
 
+const roleStore = useRoleStore()
+const canEditCalendar = computed(() => roleStore.can([...CALENDAR_EDIT_NEED]))
 const router = useRouter()
 const go = (p) => router.push(p)
 
@@ -55,7 +59,7 @@ const load = async () => {
 }
 
 const createModule = async () => {
-  if (!draft.value.name) return
+  if (!canEditCalendar.value || !draft.value.name) return
   const created = await store.createOne({ ...draft.value })
   if (created) {
     draft.value = { code: '', name: '', color: '', syllabus_url: '' }
@@ -64,6 +68,7 @@ const createModule = async () => {
 }
 
 const remove = async (id) => {
+  if (!canEditCalendar.value) return
   await store.removeOne(id)
   await load()
 }

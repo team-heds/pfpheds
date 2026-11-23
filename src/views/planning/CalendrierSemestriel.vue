@@ -15,7 +15,7 @@
         </Panel>
       </div>
       <div class="col-12 md:col-8">
-        <Panel header="Semaines du semestre (exemple)">
+        <Panel header="Semaines du semestre">
           <DataTable :value="weeks" size="small" :rows="10" paginator :rowsPerPageOptions="[10,20,50]">
             <Column field="num" header="Semaine" />
             <Column field="label" header="Contenu" />
