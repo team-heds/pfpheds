@@ -14,6 +14,7 @@ import router from './router';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import { bootstrapApplication } from '@/service/appBootstrap';
+import { bootstrapFailureMessage, markStartupConnectivity } from '@/service/startupConnectivity';
 import { installPageNavigation } from '@/service/pageNavigationService';
 import { clearPageListContexts, disposePageListContexts } from '@/composables/usePageListContext';
 
@@ -69,6 +70,8 @@ async function bootstrap() {
   const userStore = useUserStore();
 
   const showBootstrapFailure = (error, { retry }) => {
+    // Sans réseau, l'écran « Hors ligne » est le seul message.
+    if (markStartupConnectivity(error)) return;
     queueMicrotask(() => {
       let notice = document.getElementById('bootstrap-retry-notice');
       if (!notice) {
@@ -76,10 +79,13 @@ async function bootstrap() {
         notice.id = 'bootstrap-retry-notice';
         notice.setAttribute('role', 'alert');
         notice.style.cssText = 'position:fixed;inset:auto 1rem 1rem;z-index:10000;padding:1rem;border-radius:.75rem;background:#07182c;color:#fff;box-shadow:0 1rem 3rem rgba(0,0,0,.35);display:flex;gap:.75rem;align-items:center;justify-content:center;';
-        notice.innerHTML = '<span>Le chargement a pris trop de temps.</span><button type="button" style="border:0;border-radius:.5rem;padding:.65rem 1rem;background:#f3c300;color:#07182c;font-weight:700;cursor:pointer">Réessayer</button>';
+        notice.innerHTML = '<span></span><button type="button" style="border:0;border-radius:.5rem;padding:.65rem 1rem;background:#f3c300;color:#07182c;font-weight:700;cursor:pointer">Réessayer</button>';
         document.body.appendChild(notice);
+        // Une coupure survenue pendant le chargement : on repart dès le retour du réseau.
+        window.addEventListener('online', () => window.location.reload(), { once: true });
       }
 
+      notice.querySelector('span').textContent = bootstrapFailureMessage(error);
       const button = notice.querySelector('button');
       button.onclick = async () => {
         button.disabled = true;
@@ -108,6 +114,7 @@ async function bootstrap() {
     }),
     waitForRouter: () => router.isReady(),
     mount: () => {
+      markStartupConnectivity();
       app.mount('#app');
       hideAppSplash();
       void pageNavigation.refresh();

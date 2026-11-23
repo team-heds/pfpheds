@@ -15,17 +15,19 @@
       <ConfirmDialog />
       <!-- Téléphone, connecté : application mobile (coque et onglets).
            Sinon : les pages habituelles, inchangées. -->
-      <MobileAppShell v-if="mobileAppActive" />
+      <!-- Démarrage sans réseau : un seul écran, sans page vide derrière. -->
+      <OfflineScreen v-if="startupOffline" />
+      <MobileAppShell v-else-if="mobileAppActive" />
       <router-view v-else />
-      <VersionningComponent v-if="!isImmersiveRoute" />
+      <VersionningComponent v-if="!isImmersiveRoute && !startupOffline" />
       <PwaInstallPrompt v-if="installPromptAllowed" />
-      <OfflineBanner />
+      <OfflineBanner v-if="!startupOffline" />
       <PwaUpdatePrompt />
       <!-- Intégration du widget ConvAI -->
       <!-- <ConvaiWidget /> -->
       <!-- Centre de notifications gamification -->
       <GamificationNotification
-        v-if="gamificationUserJourneyEnabled && gamificationUserId"
+        v-if="gamificationUserJourneyEnabled && gamificationUserId && !startupOffline"
         :user-id="gamificationUserId"
         :realtime-enabled="realtimeEnabled"
       />
@@ -48,6 +50,8 @@ const MobileAppShell = defineAsyncComponent(() => import('@/mobile/shell/MobileA
 import { useMobileViewport } from '@/mobile/shell/useMobileViewport';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import OfflineBanner from '@/components/common/utils/OfflineBanner.vue';
+import OfflineScreen from '@/components/common/utils/OfflineScreen.vue';
+import { startupOffline } from '@/service/startupConnectivity';
 import PwaUpdatePrompt from '@/components/common/utils/PwaUpdatePrompt.vue';
 import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
 import questExpirationService from '@/service/questExpirationService';
@@ -70,11 +74,12 @@ export default {
     MobileAppShell,
     PwaInstallPrompt,
     OfflineBanner,
+    OfflineScreen,
     PwaUpdatePrompt,
     GamificationNotification,
   },
   setup() {
-    return { isMobileViewport: useMobileViewport() };
+    return { isMobileViewport: useMobileViewport(), startupOffline };
   },
   data() {
     return {
@@ -106,7 +111,7 @@ export default {
       return this.$route.meta?.immersive === true;
     },
     installPromptAllowed() {
-      return isInstallPromptAllowed(this.gamificationUserId, this.$route.meta);
+      return !this.startupOffline && isInstallPromptAllowed(this.gamificationUserId, this.$route.meta);
     },
     showHeaderIconsMobile() {
       const routeName = this.$route.name;
