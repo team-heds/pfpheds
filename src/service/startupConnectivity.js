@@ -6,6 +6,7 @@ export const startupOffline = ref(false)
 const RECOVERY_INTERVAL_MS = 5000
 const PROBE_TIMEOUT_MS = 3000
 const NETWORK_ERROR = /failed to fetch|load failed|networkerror|network request failed/i
+const CHUNK_ERROR = /dynamically imported module|importing a module script failed|unable to preload css/i
 
 export function isNetworkFailure(error) {
   if (!error) return false
@@ -27,6 +28,14 @@ export function bootstrapFailureMessage(error) {
   return error?.code === 'BOOTSTRAP_TIMEOUT'
     ? 'Le chargement a pris trop de temps.'
     : 'Le chargement a échoué.'
+}
+
+/** Un écran jamais visité n'est pas en cache : sans réseau, on affiche « Hors ligne ». */
+export async function handleChunkLoadFailure(error, { probe = probeOrigin } = {}) {
+  if (!CHUNK_ERROR.test(String(error?.message || ''))) return false
+  if (await probe()) return false
+  startupOffline.value = true
+  return true
 }
 
 /** Toute réponse HTTP prouve que le site est joignable. */

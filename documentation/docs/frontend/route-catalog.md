@@ -141,7 +141,6 @@ Vues principales:
 Vues principales:
 
 - `apps/tasklist/Index.vue`
-- `apps/chat/IndexChat.vue`
 - `apps/files/FilesView.vue`
 - `apps/mail/Index.vue`
 - `apps/notes/NotesWorkspaceView.vue`

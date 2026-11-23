@@ -7,8 +7,10 @@ import VueDevTools from 'vite-plugin-vue-devtools'
 import { VitePWA } from 'vite-plugin-pwa';
 import Components from 'unplugin-vue-components/vite'
 import { PrimeVueResolver } from 'unplugin-vue-components/resolvers'
+import { createShellPrecache } from './scripts/pwa/shellPrecache.mjs'
 
 const stagingProxyTarget = process.env.VITE_STAGING_PROXY_TARGET || null
+const shellPrecache = createShellPrecache()
 
 function presentationDevAssets() {
   return {
@@ -129,6 +131,7 @@ export default defineConfig({
       dts: 'src/components.d.ts',
       resolvers: [PrimeVueResolver()],
     }),
+    shellPrecache.plugin,
     VitePWA({
       disable: process.env.NODE_ENV === 'development', // Désactiver en dev
       strategies: 'injectManifest',
@@ -139,6 +142,8 @@ export default defineConfig({
       injectManifest: {
         // woff2 : polices et icônes restent lisibles hors ligne.
         globPatterns: ['**/*.{js,css,html,woff2}'],
+        // Seule la coque est préchargée ; les écrans sont mis en cache à leur première visite.
+        manifestTransforms: [shellPrecache.transform],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
       },
       manifest: {

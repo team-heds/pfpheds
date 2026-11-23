@@ -64,31 +64,6 @@
     </div>
   </div>
 
-  <!-- Nouvelle card Messagerie détachée -->
-  <div class="messaging-card" v-if="authStore.isFirebaseUser">
-    <div class="flex justify-content-between align-items-center mb-3">
-      <h4 class="m-0">Messagerie</h4>
-      <Button aria-label="Voir tous les chats"
-        icon="pi pi-arrow-right"
-        class="p-button-text p-button-sm"
-        @click="goToChat"
-        v-tooltip.top="'Voir tous les chats'"
-      />
-    </div>
-    <div class="scrollable-content">
-      <div v-if="recentConversations.length === 0" class="text-center text-600 mt-4">
-        Aucune conversation récente
-      </div>
-      <UserCard
-        v-for="user in recentConversations"
-        :key="user.id"
-        :user="user"
-        :lastReceivedMessageAt="user.lastReceivedMessageAt"
-        @click="openChat(user)"
-      />
-    </div>
-  </div>
-
   <!-- Section Événements à venir -->
   <div class="upcoming-events-section">
     <div class="flex justify-content-between align-items-center mb-3">
@@ -171,9 +146,8 @@
 <script>
 import { defineAsyncComponent } from 'vue';
 import Toast from "primevue/toast";
-import { getDatabase, ref as dbRef, get, onValue } from "firebase/database";
+import { getDatabase, ref as dbRef, get } from "firebase/database";
 import { supabase } from '@/supabase.js';
-import UserCard from '@/views/apps/chat/UserCard.vue';
 import { useEventStore } from '@/stores/eventStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
@@ -192,7 +166,7 @@ import defaultAvatar from '@/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, Toast, AsyncEventDetail, Dialog, Button, QuestsSidebarCard, HouseQuizSidebarPrompt },
+  components: { Toast, AsyncEventDetail, Dialog, Button, QuestsSidebarCard, HouseQuizSidebarPrompt },
   props: {
     // Masque la carte gamification du sidebar (utilisé sur le profil pour la présentation)
     hideGamification: { type: Boolean, default: false }
@@ -220,7 +194,6 @@ export default {
         PhotoURL: "" || defaultAvatar,
         id: ""
       },
-      recentConversations: [], // 6 dernières conversations
       showEventDetail: false, // Variable pour afficher/masquer le dialog
       selectedEvent: null, // Variable pour stocker l'événement sélectionné
       avatarUploading: false,
@@ -460,54 +433,6 @@ export default {
         };
       }
     },
-    async fetchRecentConversations() {
-      const currentUser = this.authStore.user;
-      if (!currentUser) return;
-      
-      // Pour Firebase uniquement (Supabase n'a pas cette fonctionnalité pour l'instant)
-      if (!this.authStore.isFirebaseUser) {
-        return;
-      }
-      
-      const userId = currentUser.uid;
-      const db = getDatabase();
-      const conversationsRef = dbRef(db, 'conversations');
-      onValue(conversationsRef, async (snapshot) => {
-        const data = snapshot.val() || {};
-        let convs = Object.entries(data)
-          .filter(([key, conv]) => key.includes(userId))
-          .map(([key, conv]) => {
-            const [id1, id2] = key.split('-');
-            const otherUserId = id1 === userId ? id2 : id1;
-            return {
-              id: key,
-              otherUserId,
-              lastReceivedMessageAt: conv.lastReceivedMessageAt || 0
-            };
-          });
-        convs.sort((a, b) => (b.lastReceivedMessageAt || 0) - (a.lastReceivedMessageAt || 0));
-        convs = convs.slice(0, 4);
-        const dbUsers = dbRef(db, 'Users');
-        const usersSnap = await get(dbUsers);
-        const usersData = usersSnap.val() || {};
-        this.recentConversations = convs.map(conv => {
-          const userData = usersData[conv.otherUserId];
-          if (!userData) return null;
-          return {
-            ...userData,
-            id: conv.otherUserId,
-            lastReceivedMessageAt: conv.lastReceivedMessageAt
-          };
-        }).filter(u => u && u.id);
-      });
-    },
-    openChat(user) {
-      const currentUser = this.authStore.user;
-      if (!currentUser || !this.authStore.isFirebaseUser) return;
-      const userId = currentUser.uid;
-      const conversationId = [userId, user.id].sort().join('-');
-      this.$router.push({ name: 'IndexChat', query: { id: conversationId, user: user.id } });
-    },
     triggerFileInput() {
       if (!this.avatarUploading) this.$refs.fileInput?.click();
     },
@@ -581,9 +506,6 @@ export default {
     goToEventManagement() {
       this.$router.push("/event-management");
     },
-    goToChat() {
-      this.$router.push("/chat");
-    },
   },
   async mounted() {
     // Initialiser l'état d'authentification
@@ -595,7 +517,6 @@ export default {
         // Logique Firebase complète
         this.user.id = currentUser.uid;
         await this.fetchUserProfile(currentUser.uid);
-        this.fetchRecentConversations();
       } else if (this.authStore.isSupabaseUser) {
         // Logique Supabase - charger depuis user_profiles
         this.user.id = currentUser.id;
@@ -632,15 +553,6 @@ export default {
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   font-weight: bold;
   text-align: left;
-  margin-left: 4rem;
-}
-
-.messaging-card {
-  margin-top: 1.5rem;
-  padding: 1.5rem;
-  border-radius: 1.2rem;
-  background: var(--surface-card);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   margin-left: 4rem;
 }
 
@@ -893,7 +805,7 @@ export default {
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
-/* Bordures rondes comme UserCard */
+/* Bordures rondes des cartes */
 .border-circles {
   border-radius: 12px;
 }

@@ -1,9 +1,7 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { usePushStore } from '@/stores/pushStore'
 import { supabase } from '@/supabase'
- 
-onMounted(() => push.refreshStatus())
  
 const push = usePushStore()
 const userProfile = ref(null)
@@ -11,6 +9,7 @@ const currentUserId = ref(null)
 const currentUserRole = ref(null)
  
 const adminCount = ref(0)
+const msg = computed(() => push.error || `Notifications : ${push.statusText}`)
  
 async function loadUserProfile() {
   try {
@@ -80,7 +79,6 @@ async function onSendToAdmins () {
     <div class="text-sm mb-2">
       <div>Permission : <strong>{{ push.permission }}</strong></div>
       <div>Abonné : <strong>{{ push.isSubscribed ? 'oui' : 'non' }}</strong></div>
-      <div v-if="push.endpoint" class="break-all text-xs opacity-70">Endpoint: {{ push.endpoint }}</div>
       <div class="text-xs mt-1" :class="push.error ? 'text-red-600' : 'text-green-700'">{{ msg }}</div>
     </div>
  
