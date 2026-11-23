@@ -35,7 +35,7 @@
           <div class="flex gap-3 align-items-end flex-wrap">
             <div class="flex-1">
               <label class="block mb-2 font-bold">Année académique :</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Année académique" 
                 v-model="selectedYear"
                 :options="yearOptions"
                 optionLabel="label"
@@ -186,7 +186,7 @@
                 <Column header="Actions" style="width: 10rem">
                   <template #body="slotProps">
                     <div class="flex gap-2">
-                      <Button 
+                      <Button aria-label="Éditer" 
                         icon="pi pi-pencil"
                         @click="editWeek(slotProps.data.weekNumber)"
                         text
@@ -194,7 +194,7 @@
                         severity="info"
                         v-tooltip="'Éditer'"
                       />
-                      <Button 
+                      <Button aria-label="Voir" 
                         icon="pi pi-eye"
                         @click="viewWeek(slotProps.data.weekNumber)"
                         text
@@ -248,7 +248,7 @@
                 <Column header="Actions" style="width: 10rem">
                   <template #body="slotProps">
                     <div class="flex gap-2">
-                      <Button 
+                      <Button aria-label="Éditer" 
                         icon="pi pi-pencil"
                         @click="editWeek(slotProps.data.weekNumber)"
                         text
@@ -256,7 +256,7 @@
                         severity="info"
                         v-tooltip="'Éditer'"
                       />
-                      <Button 
+                      <Button aria-label="Voir" 
                         icon="pi pi-eye"
                         @click="viewWeek(slotProps.data.weekNumber)"
                         text

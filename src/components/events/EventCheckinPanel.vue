@@ -9,7 +9,7 @@
       </p>
       <div class="checkin__settings">
         <label :for="inputId">Points accordés par présence (de {{ MIN_CHECKIN_XP }} à {{ MAX_CHECKIN_XP }})</label>
-        <InputNumber
+        <InputNumber :ariaLabel="`Points accordés par présence (de ${MIN_CHECKIN_XP} à ${MAX_CHECKIN_XP})`"
           v-model="xpReward"
           :input-id="inputId"
           :min="MIN_CHECKIN_XP"

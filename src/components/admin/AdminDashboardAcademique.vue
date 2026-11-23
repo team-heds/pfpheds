@@ -41,7 +41,7 @@
                 size="small"
               />
             </ButtonGroup>
-            <Button icon="pi pi-refresh" @click="refresh" :loading="refreshing" outlined />
+            <Button aria-label="Actualiser" icon="pi pi-refresh" @click="refresh" :loading="refreshing" outlined />
           </div>
         </div>
       </div>

@@ -19,7 +19,7 @@
 
     <div class="mb-4">
       <label :for="ids.password" class="sr-only">Mot de passe</label>
-      <Password
+      <Password ariaLabel="Mot de passe"
         :id="ids.password"
         v-model="modelPassword"
         :placeholder="passwordPlaceholder"

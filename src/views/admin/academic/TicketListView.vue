@@ -47,7 +47,7 @@
         <div class="search-bar">
           <span class="p-input-icon-left w-full">
             <i class="pi pi-search"></i>
-            <InputText 
+            <InputText aria-label="Rechercher un ticket" 
               v-model="searchQuery" 
               placeholder="Rechercher un ticket..." 
               class="w-full"
@@ -56,7 +56,7 @@
         </div>
 
         <div class="filters-row">
-          <Dropdown 
+          <Dropdown ariaLabel="Statut" 
             v-model="filterStatus" 
             :options="[{ label: 'Tous les statuts', value: null }, ...statusOptions]"
             optionLabel="label"
@@ -66,7 +66,7 @@
             showClear
           />
           
-          <Dropdown 
+          <Dropdown ariaLabel="Type" 
             v-model="filterType" 
             :options="[{ label: 'Tous les types', value: null }, ...typeOptions]"
             optionLabel="label"
@@ -76,7 +76,7 @@
             showClear
           />
 
-          <Dropdown 
+          <Dropdown ariaLabel="Priorité" 
             v-model="filterPriority" 
             :options="[{ label: 'Toutes les priorités', value: null }, ...priorityOptions]"
             optionLabel="label"
@@ -86,7 +86,7 @@
             showClear
           />
 
-          <Dropdown 
+          <Dropdown ariaLabel="Assigné à" 
             v-model="filterAssignee" 
             :options="[{ label: 'Toutes les assignations', value: null }, ...users]"
             optionLabel="label"
@@ -108,7 +108,7 @@
           @click="selectTicket(ticket)"
         >
           <div class="ticket-checkbox">
-            <Checkbox v-model="selectedTickets" :value="ticket.id" />
+            <Checkbox :ariaLabel="`Sélectionner le ticket ${ticket.id}`" v-model="selectedTickets" :value="ticket.id" />
           </div>
 
           <div class="ticket-id">
@@ -163,7 +163,7 @@
           </div>
 
           <div class="ticket-actions">
-            <Button 
+            <Button aria-label="Plus d’actions" 
               icon="pi pi-ellipsis-v" 
               text 
               rounded

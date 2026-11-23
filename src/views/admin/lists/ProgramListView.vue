@@ -61,13 +61,13 @@
       <div class="surface-card p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-4">
-            <Dropdown v-model="filterFiliere" :options="filieres" placeholder="Toutes les filières" class="w-full" showClear />
+            <Dropdown ariaLabel="Filières" v-model="filterFiliere" :options="filieres" placeholder="Toutes les filières" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-4">
-            <Dropdown v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
+            <Dropdown ariaLabel="Statuts" v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-4">
-            <InputText v-model="searchQuery" placeholder="Rechercher programme..." class="w-full" />
+            <InputText aria-label="Rechercher programme" v-model="searchQuery" placeholder="Rechercher programme..." class="w-full" />
           </div>
         </div>
       </div>
@@ -106,9 +106,9 @@
           </Column>
           <Column header="Actions">
             <template #body="slotProps">
-              <Button icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
-              <Button icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
-              <Button icon="pi pi-trash" class="p-button-text p-button-sm" severity="danger" />
+              <Button aria-label="Voir" icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
+              <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-text p-button-sm" severity="danger" />
             </template>
           </Column>
         </DataTable>
@@ -120,34 +120,34 @@
           <div class="grid">
             <div class="col-6">
               <label class="block mb-2 font-semibold">Code *</label>
-              <InputText v-model="newProgram.code" class="w-full" />
+              <InputText aria-label="Code" v-model="newProgram.code" class="w-full" />
             </div>
             <div class="col-6">
               <label class="block mb-2 font-semibold">Filière *</label>
-              <Dropdown v-model="newProgram.filiere" :options="filieres" class="w-full" />
+              <Dropdown ariaLabel="Filière" v-model="newProgram.filiere" :options="filieres" class="w-full" />
             </div>
           </div>
           <div>
             <label class="block mb-2 font-semibold">Nom du Programme *</label>
-            <InputText v-model="newProgram.nom" class="w-full" />
+            <InputText aria-label="Nom du Programme" v-model="newProgram.nom" class="w-full" />
           </div>
           <div class="grid">
             <div class="col-4">
               <label class="block mb-2 font-semibold">Niveau</label>
-              <Dropdown v-model="newProgram.niveau" :options="niveaux" class="w-full" />
+              <Dropdown ariaLabel="Niveau" v-model="newProgram.niveau" :options="niveaux" class="w-full" />
             </div>
             <div class="col-4">
               <label class="block mb-2 font-semibold">Crédits ECTS</label>
-              <InputNumber v-model="newProgram.credits" class="w-full" />
+              <InputNumber ariaLabel="Crédits ECTS" v-model="newProgram.credits" class="w-full" />
             </div>
             <div class="col-4">
               <label class="block mb-2 font-semibold">Durée (semestres)</label>
-              <InputNumber v-model="newProgram.duree" class="w-full" />
+              <InputNumber ariaLabel="Durée (semestres)" v-model="newProgram.duree" class="w-full" />
             </div>
           </div>
           <div>
             <label class="block mb-2 font-semibold">Description</label>
-            <Textarea v-model="newProgram.description" rows="3" class="w-full" />
+            <Textarea aria-label="Description" v-model="newProgram.description" rows="3" class="w-full" />
           </div>
         </div>
         <template #footer>

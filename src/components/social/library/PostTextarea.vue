@@ -1,6 +1,6 @@
 <template>
   <div class="post-textarea">
-    <textarea
+    <textarea :aria-label="placeholder"
       v-model="localValue"
       :placeholder="placeholder"
       class="form-control"

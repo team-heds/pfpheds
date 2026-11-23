@@ -22,13 +22,13 @@
               <div class="mb-3">
               <span class="p-input-icon-right w-full">
                 <i class="pi pi-search"></i>
-                <InputText placeholder="Search" class="w-full" />
+                <InputText aria-label="Search" placeholder="Search" class="w-full" />
               </span>
               </div>
               <!-- Dynamically create canton filters -->
               <div class="flex w-full justify-content-between" v-for="canton in visibleCantons" :key="canton.name">
                 <div class="field-checkbox">
-                  <Checkbox :value="canton.name" :id="canton.name" v-model="selectedBrand_1"></Checkbox>
+                  <Checkbox :ariaLabel="`${canton.name}`" :value="canton.name" :id="canton.name" v-model="selectedBrand_1"></Checkbox>
                   <label :for="canton.name" class="text-900">{{ canton.name }}</label>
                 </div>
                 <Badge :value="canton.count" class="mr-2 bg-gray-200 text-gray-900 p-0 border-circle"></Badge>

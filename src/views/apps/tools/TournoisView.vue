@@ -66,13 +66,13 @@
             </template>
             <template #footer>
               <div class="card-actions">
-                <Button 
+                <Button aria-label="Voir" 
                   icon="pi pi-eye" 
                   class="p-button-text p-button-sm"
                   @click.stop="openTournoi(tournoi)"
                   v-tooltip.top="'Voir'"
                 />
-                <Button 
+                <Button aria-label="Supprimer" 
                   icon="pi pi-trash" 
                   class="p-button-text p-button-danger p-button-sm"
                   @click.stop="confirmDeleteTournoi(tournoi)"
@@ -94,7 +94,7 @@
     >
       <div class="form-group">
         <label>Nom du tournoi</label>
-        <InputText 
+        <InputText aria-label="Nom du tournoi" 
           v-model="newTournoi.nom" 
           placeholder="Ex: Tournoi de Noël 2025"
           class="w-full"
@@ -103,7 +103,7 @@
       
       <div class="form-group">
         <label>Type de tournoi</label>
-        <Dropdown 
+        <Dropdown ariaLabel="Type de tournoi" 
           v-model="newTournoi.type" 
           :options="typeOptions" 
           optionLabel="label" 
@@ -116,7 +116,7 @@
       <div class="form-group">
         <label>Nombre d'équipes</label>
         <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <InputNumber 
+          <InputNumber ariaLabel="Nombre d’équipes" 
             v-model="newTournoi.nombreEquipes" 
             :min="4" 
             :max="64"
@@ -142,7 +142,7 @@
       
       <div v-if="newTournoi.type === 'poule' || newTournoi.type === 'hybride' || newTournoi.type === 'multibracket'" class="form-group">
         <label>Nombre de poules</label>
-        <InputNumber 
+        <InputNumber ariaLabel="Nombre de poules" 
           v-model="newTournoi.nombrePoules" 
           :min="2" 
           :max="12"
@@ -153,7 +153,7 @@
       
       <div v-if="newTournoi.type === 'hybride'" class="form-group">
         <label>Qualifiés par poule pour le bracket final</label>
-        <InputNumber 
+        <InputNumber ariaLabel="Qualifiés par poule pour le bracket final" 
           v-model="newTournoi.qualifiesParPoule" 
           :min="1" 
           :max="4"
@@ -191,7 +191,7 @@
               <template #title>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span>{{ liste.nom }}</span>
-                  <Button 
+                  <Button aria-label="Supprimer" 
                     icon="pi pi-trash" 
                     class="p-button-danger p-button-text p-button-sm"
                     @click="supprimerListe(liste.id)"
@@ -254,7 +254,7 @@
     >
       <div class="form-group">
         <label>Nom de la liste</label>
-        <InputText 
+        <InputText aria-label="Nom de la liste" 
           v-model="nouvelleListe.nom" 
           placeholder="Ex: Équipes HES-SO 2025"
           class="w-full"
@@ -263,7 +263,7 @@
       
       <div class="form-group">
         <label>Noms des équipes (une par ligne)</label>
-        <textarea 
+        <textarea aria-label="Noms des équipes (une par ligne)" 
           v-model="nouvelleListe.equipesTexte"
           rows="12"
           class="equipes-textarea"

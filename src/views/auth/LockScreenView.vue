@@ -46,7 +46,7 @@ const navigateToDashboard = () => {
             <div class="flex flex-column">
                 <IconField iconPosition="left" class="w-full mb-4">
                     <InputIcon class="pi pi-lock" />
-                    <InputText id="password" type="password" class="w-full md:w-25rem" placeholder="Password" />
+                    <InputText aria-label="Mot de passe" id="password" type="password" class="w-full md:w-25rem" placeholder="Password" />
                 </IconField>
                 <Button icon="pi pi-lock-open" label="Unlock" class="w-full" @click="navigateToDashboard"></Button>
             </div>

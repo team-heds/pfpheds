@@ -137,7 +137,7 @@
                 <span class="resource-name">{{ resource.name }}</span>
                 <span class="resource-meta">{{ resource.size }} - {{ formatDate(resource.date) }}</span>
               </div>
-              <Button icon="pi pi-download" class="p-button-sm p-button-text" @click="downloadResource(resource)" />
+              <Button aria-label="Télécharger" icon="pi pi-download" class="p-button-sm p-button-text" @click="downloadResource(resource)" />
             </div>
             <div v-if="resources.length === 0" class="empty-resources">
               <i class="pi pi-inbox"></i>

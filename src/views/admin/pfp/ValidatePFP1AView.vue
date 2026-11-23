@@ -77,16 +77,16 @@
       <div class="surface-card p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
+            <Dropdown ariaLabel="Statuts" v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterClasse" :options="classes" placeholder="Toutes les classes" class="w-full" showClear />
+            <Dropdown ariaLabel="Classes" v-model="filterClasse" :options="classes" placeholder="Toutes les classes" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterInstitution" :options="institutions" optionLabel="nom" placeholder="Institution" class="w-full" showClear />
+            <Dropdown ariaLabel="Institution" v-model="filterInstitution" :options="institutions" optionLabel="nom" placeholder="Institution" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <InputText v-model="searchQuery" placeholder="Rechercher étudiant..." class="w-full" />
+            <InputText aria-label="Rechercher étudiant" v-model="searchQuery" placeholder="Rechercher étudiant..." class="w-full" />
           </div>
         </div>
       </div>
@@ -143,27 +143,27 @@
           <Column header="Actions">
             <template #body="slotProps">
               <div class="flex gap-1">
-                <Button 
+                <Button aria-label="Voir détails" 
                   icon="pi pi-eye" 
                   class="p-button-text p-button-sm" 
                   v-tooltip.top="'Voir détails'"
                   @click="viewDetails(slotProps.data)" 
                 />
-                <Button 
+                <Button aria-label="Valider" 
                   icon="pi pi-check" 
                   class="p-button-text p-button-sm" 
                   severity="success"
                   v-tooltip.top="'Valider'"
                   @click="validate(slotProps.data)" 
                 />
-                <Button 
+                <Button aria-label="Refuser" 
                   icon="pi pi-times" 
                   class="p-button-text p-button-sm" 
                   severity="danger"
                   v-tooltip.top="'Refuser'"
                   @click="reject(slotProps.data)" 
                 />
-                <Button 
+                <Button aria-label="Commentaire" 
                   icon="pi pi-comment" 
                   class="p-button-text p-button-sm"
                   v-tooltip.top="'Commentaire'"
@@ -196,17 +196,17 @@
             <div class="flex align-items-center gap-2">
               <i class="pi pi-file-check"></i>
               <span>Convention de stage</span>
-              <Button icon="pi pi-download" text size="small" />
+              <Button aria-label="Télécharger" icon="pi pi-download" text size="small" />
             </div>
             <div class="flex align-items-center gap-2">
               <i class="pi pi-file-pdf"></i>
               <span>Rapport de stage</span>
-              <Button icon="pi pi-download" text size="small" />
+              <Button aria-label="Télécharger" icon="pi pi-download" text size="small" />
             </div>
             <div class="flex align-items-center gap-2">
               <i class="pi pi-star"></i>
               <span>Évaluation praticien</span>
-              <Button icon="pi pi-download" text size="small" />
+              <Button aria-label="Télécharger" icon="pi pi-download" text size="small" />
             </div>
           </div>
         </div>
@@ -218,7 +218,7 @@
 
       <!-- Dialog Commentaire -->
       <Dialog v-model:visible="showCommentDialog" header="Ajouter un commentaire" :style="{ width: '500px' }" modal>
-        <Textarea v-model="comment" rows="5" class="w-full" placeholder="Votre commentaire..." />
+        <Textarea aria-label="Votre commentaire" v-model="comment" rows="5" class="w-full" placeholder="Votre commentaire..." />
         <template #footer>
           <Button label="Annuler" @click="showCommentDialog = false" text />
           <Button label="Enregistrer" @click="saveComment" />

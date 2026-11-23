@@ -22,9 +22,9 @@
             </div>
           </div>
           <div class="flex align-items-center gap-2 flex-wrap">
-            <InputSwitch v-model="limitToPfp1Places" />
+            <InputSwitch ariaLabel="Limiter aux places avec offre PFP1" v-model="limitToPfp1Places" />
             <span class="text-600 text-sm">Limiter aux places avec offre PFP1</span>
-            <Button icon="pi pi-refresh" outlined :loading="loading" @click="loadData" />
+            <Button aria-label="Actualiser" icon="pi pi-refresh" outlined :loading="loading" @click="loadData" />
           </div>
         </div>
         <ProgressBar v-if="loading" mode="indeterminate" style="height: 4px" class="mt-3" />
@@ -54,14 +54,14 @@
       <div class="surface-card fp-dark p-3 border-round shadow-2 mb-3">
         <div class="grid">
           <div class="col-12 md:col-5">
-            <InputText
+            <InputText aria-label="Rechercher un étudiant, une place ou une institution"
               v-model="searchTerm"
               placeholder="Rechercher un étudiant, une place ou une institution"
               class="w-full"
             />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown
+            <Dropdown ariaLabel="Statuts"
               v-model="statusFilter"
               :options="statusOptions"
               optionLabel="label"
@@ -120,7 +120,7 @@
 
           <Column header="Nouvelle place" :style="{ minWidth: '420px' }">
             <template #body="{ data }">
-              <Dropdown
+              <Dropdown ariaLabel="Sélectionner une place"
                 v-model="selectedPlaceIds[data.row_key]"
                 :options="placeOptions"
                 optionLabel="label"
@@ -157,7 +157,7 @@
                   :loading="savingUserIds[data.row_key] === true"
                   @click="saveRow(data)"
                 />
-                <Button
+                <Button aria-label="Retirer"
                   icon="pi pi-times"
                   outlined
                   size="small"

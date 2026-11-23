@@ -11,7 +11,7 @@
             </div>
           </div>
           <div class="flex gap-2">
-            <Button icon="pi pi-refresh" outlined @click="loadPlaces" />
+            <Button aria-label="Actualiser" icon="pi pi-refresh" outlined @click="loadPlaces" />
             <Button icon="pi pi-plus" label="Nouvelle Place" severity="success" @click="showDialog = true" />
           </div>
         </div>
@@ -77,16 +77,16 @@
       <div class="surface-card p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterType" :options="typesPFP" placeholder="Type PFP" class="w-full" showClear />
+            <Dropdown ariaLabel="Type PFP" v-model="filterType" :options="typesPFP" placeholder="Type PFP" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterStatus" :options="statusOptions" placeholder="Statut" class="w-full" showClear />
+            <Dropdown ariaLabel="Statut" v-model="filterStatus" :options="statusOptions" placeholder="Statut" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterInstitution" :options="institutions" optionLabel="nom" placeholder="Institution" class="w-full" showClear />
+            <Dropdown ariaLabel="Institution" v-model="filterInstitution" :options="institutions" optionLabel="nom" placeholder="Institution" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-full">
+            <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." class="w-full">
               <template #prefix>
                 <i class="pi pi-search"></i>
               </template>
@@ -102,7 +102,7 @@
             <div class="flex justify-content-between align-items-center">
               <span class="text-xl text-900 font-bold">Liste des Places</span>
               <div class="flex gap-2">
-                <Button icon="pi pi-filter" outlined />
+                <Button aria-label="Filtrer" icon="pi pi-filter" outlined />
                 <Button icon="pi pi-download" label="Exporter" outlined />
               </div>
             </div>
@@ -135,9 +135,9 @@
           </Column>
           <Column header="Actions">
             <template #body="slotProps">
-              <Button icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
-              <Button icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
-              <Button icon="pi pi-trash" class="p-button-text p-button-sm" severity="danger" />
+              <Button aria-label="Voir" icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
+              <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-text p-button-sm" severity="danger" />
             </template>
           </Column>
         </DataTable>
@@ -148,24 +148,24 @@
         <div class="flex flex-column gap-3 p-4">
           <div>
             <label class="block mb-2 font-semibold">Institution</label>
-            <Dropdown v-model="newPlace.institution" :options="institutions" optionLabel="nom" placeholder="Sélectionner" class="w-full" />
+            <Dropdown ariaLabel="Institution" v-model="newPlace.institution" :options="institutions" optionLabel="nom" placeholder="Sélectionner" class="w-full" />
           </div>
           <div>
             <label class="block mb-2 font-semibold">Service/Département</label>
-            <InputText v-model="newPlace.service" placeholder="Ex: Physiothérapie" class="w-full" />
+            <InputText aria-label="Service/Département" v-model="newPlace.service" placeholder="Ex: Physiothérapie" class="w-full" />
           </div>
           <div>
             <label class="block mb-2 font-semibold">Type PFP</label>
-            <Dropdown v-model="newPlace.typePFP" :options="typesPFP" placeholder="Sélectionner" class="w-full" />
+            <Dropdown ariaLabel="Type PFP" v-model="newPlace.typePFP" :options="typesPFP" placeholder="Sélectionner" class="w-full" />
           </div>
           <div class="grid">
             <div class="col-6">
               <label class="block mb-2 font-semibold">Capacité</label>
-              <InputNumber v-model="newPlace.capacite" :min="1" class="w-full" />
+              <InputNumber ariaLabel="Capacité" v-model="newPlace.capacite" :min="1" class="w-full" />
             </div>
             <div class="col-6">
               <label class="block mb-2 font-semibold">Période</label>
-              <InputText v-model="newPlace.periode" placeholder="2024-2025" class="w-full" />
+              <InputText aria-label="Période" v-model="newPlace.periode" placeholder="2024-2025" class="w-full" />
             </div>
           </div>
         </div>

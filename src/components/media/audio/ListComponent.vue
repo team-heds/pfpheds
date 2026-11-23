@@ -27,7 +27,7 @@
       <!-- InputNumber -->
       <div class="p-mb-3">
         <label for="inputnumber">InputNumber</label>
-        <InputNumber id="inputnumber" v-model="numberValue" :min="0" :max="100" />
+        <InputNumber ariaLabel="InputNumber" id="inputnumber" v-model="numberValue" :min="0" :max="100" />
       </div>
       <!-- Textarea -->
       <div class="p-mb-3">
@@ -37,17 +37,17 @@
       <!-- Password -->
       <div class="p-mb-3">
         <label for="password">Password</label>
-        <Password id="password" v-model="password" feedback />
+        <Password ariaLabel="Mot de passe" id="password" v-model="password" feedback />
       </div>
       <!-- Checkbox -->
       <div class="p-mb-3">
-        <Checkbox v-model="checked" binary />
+        <Checkbox ariaLabel="Checkbox" v-model="checked" binary />
         <label class="p-checkbox-label">Checkbox</label>
       </div>
       <!-- RadioButton -->
       <div class="p-mb-3">
-        <RadioButton v-model="radioValue" :value="1" /> Option 1
-        <RadioButton v-model="radioValue" :value="2" class="p-ml-3" /> Option 2
+        <RadioButton ariaLabel="Option 1" v-model="radioValue" :value="1" /> Option 1
+        <RadioButton ariaLabel="Option 2" v-model="radioValue" :value="2" class="p-ml-3" /> Option 2
       </div>
       <!-- ToggleButton -->
       <div class="p-mb-3">
@@ -61,12 +61,12 @@
       <!-- ColorPicker -->
       <div class="p-mb-3">
         <label for="colorpicker">ColorPicker</label>
-        <ColorPicker id="colorpicker" v-model="colorValue" />
+        <ColorPicker :pt="{ input: { 'aria-label': 'ColorPicker' } }" id="colorpicker" v-model="colorValue" />
       </div>
       <!-- Calendar -->
       <div class="p-mb-3">
         <label for="calendar">Calendar</label>
-        <Calendar id="calendar" v-model="calendarValue" dateFormat="dd/mm/yy" />
+        <Calendar ariaLabel="Calendar" id="calendar" v-model="calendarValue" dateFormat="dd/mm/yy" />
       </div>
     </section>
 
@@ -76,12 +76,12 @@
       <!-- Dropdown -->
       <div class="p-mb-3">
         <label for="dropdown">Dropdown</label>
-        <Dropdown id="dropdown" v-model="dropdownValue" :options="dropdownOptions" optionLabel="label" placeholder="S├®lectionnez une option" />
+        <Dropdown ariaLabel="Dropdown" id="dropdown" v-model="dropdownValue" :options="dropdownOptions" optionLabel="label" placeholder="S├®lectionnez une option" />
       </div>
       <!-- MultiSelect -->
       <div class="p-mb-3">
         <label for="multiselect">MultiSelect</label>
-        <MultiSelect id="multiselect" v-model="multiSelectValue" :options="dropdownOptions" optionLabel="label" placeholder="S├®lectionnez plusieurs options" />
+        <MultiSelect ariaLabel="MultiSelect" id="multiselect" v-model="multiSelectValue" :options="dropdownOptions" optionLabel="label" placeholder="S├®lectionnez plusieurs options" />
       </div>
       <!-- ListBox -->
       <div class="p-mb-3">

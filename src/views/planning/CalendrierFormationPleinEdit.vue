@@ -8,24 +8,24 @@
       <div class="col-12 md:col-3">
         <Panel header="Outils">
           <div class="flex flex-column gap-2">
-            <Dropdown :options="semesterOptions" optionLabel="name" optionValue="id" v-model="semesterId" placeholder="Semestre" class="w-full" />
+            <Dropdown ariaLabel="Semestre" :options="semesterOptions" optionLabel="name" optionValue="id" v-model="semesterId" placeholder="Semestre" class="w-full" />
             <div class="flex gap-2 align-items-center">
-              <Button icon="pi pi-chevron-left" outlined @click="prevWeek" :disabled="!weekNumber" />
-              <InputText class="w-full" v-model.number="weekNumber" placeholder="Semaine (ex. 37)" />
-              <Button icon="pi pi-chevron-right" outlined @click="nextWeek" :disabled="!weekNumber" />
+              <Button aria-label="Précédent" icon="pi pi-chevron-left" outlined @click="prevWeek" :disabled="!weekNumber" />
+              <InputText aria-label="Semaine (ex. 37)" class="w-full" v-model.number="weekNumber" placeholder="Semaine (ex. 37)" />
+              <Button aria-label="Suivant" icon="pi pi-chevron-right" outlined @click="nextWeek" :disabled="!weekNumber" />
             </div>
-            <Dropdown :options="dayOptions" v-model="dayOfWeek" optionLabel="label" optionValue="value" placeholder="Jour (1-7)" class="w-full" />
-            <Dropdown :options="tools" v-model="tool" placeholder="Type de case" class="w-full" />
-            <Dropdown :options="moduleOptions" optionLabel="name" optionValue="id" v-model="selectedModule" placeholder="Module (si type=module)" class="w-full" />
-            <InputText class="w-full" v-model="notes" placeholder="Notes (facultatif)" />
+            <Dropdown ariaLabel="Jour (1-7)" :options="dayOptions" v-model="dayOfWeek" optionLabel="label" optionValue="value" placeholder="Jour (1-7)" class="w-full" />
+            <Dropdown ariaLabel="Type de case" :options="tools" v-model="tool" placeholder="Type de case" class="w-full" />
+            <Dropdown ariaLabel="Module (si type=module)" :options="moduleOptions" optionLabel="name" optionValue="id" v-model="selectedModule" placeholder="Module (si type=module)" class="w-full" />
+            <InputText aria-label="Notes (facultatif)" class="w-full" v-model="notes" placeholder="Notes (facultatif)" />
             <div class="flex gap-2">
               <Button label="Appliquer" icon="pi pi-check" :disabled="!semesterId || !weekNumber || !dayOfWeek || !tool" @click="applyCell" />
               <Button label="Effacer la case" icon="pi pi-eraser" severity="secondary" :disabled="!semesterId || !weekNumber || !dayOfWeek" @click="clearCell" />
             </div>
             <div class="mt-3 text-800">Dupliquer une semaine</div>
             <div class="flex gap-2">
-              <InputText class="w-full" v-model.number="dupSrcWeek" placeholder="Semaine source (ex. 37)" />
-              <InputText class="w-full" v-model.number="dupDstWeek" placeholder="Semaine cible (ex. 38)" />
+              <InputText aria-label="Semaine source (ex. 37)" class="w-full" v-model.number="dupSrcWeek" placeholder="Semaine source (ex. 37)" />
+              <InputText aria-label="Semaine cible (ex. 38)" class="w-full" v-model.number="dupDstWeek" placeholder="Semaine cible (ex. 38)" />
             </div>
             <Button label="Dupliquer" icon="pi pi-copy" :disabled="!semesterId || !dupSrcWeek || !dupDstWeek || dupSrcWeek===dupDstWeek" @click="duplicateWeek" />
           </div>

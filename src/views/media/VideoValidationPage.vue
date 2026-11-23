@@ -2,7 +2,7 @@
   <AdminLayout class="video-validation-page">
     <!-- Header -->
     <div class="page-header">
-      <Button 
+      <Button aria-label="Retour" 
         icon="pi pi-arrow-left" 
         @click="goBack"
         class="back-btn"
@@ -19,13 +19,13 @@
       </div>
 
       <div class="header-actions">
-        <Button 
+        <Button aria-label="Copier le lien" 
           icon="pi pi-link" 
           @click="copyVideoLink"
           v-tooltip="'Copier le lien'"
           outlined
         />
-        <Button 
+        <Button aria-label="Télécharger" 
           icon="pi pi-download" 
           @click="downloadVideo"
           v-tooltip="'Télécharger'"
@@ -118,7 +118,7 @@
           
           <div class="form-group">
             <label>Type de commentaire</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Type de commentaire" 
               v-model="newComment.type"
               :options="commentTypes"
               option-label="label"
@@ -130,7 +130,7 @@
 
           <div class="form-group">
             <label>Commentaire</label>
-            <Textarea 
+            <Textarea aria-label="Commentaire" 
               v-model="newComment.text"
               placeholder="Votre commentaire..."
               rows="4"
@@ -140,7 +140,7 @@
 
           <div class="form-group">
             <label>Timecode (optionnel)</label>
-            <InputText 
+            <InputText aria-label="Timecode (optionnel)" 
               v-model="newComment.timecode"
               placeholder="ex: 02:35"
               class="w-full"
@@ -198,13 +198,13 @@
             </div>
 
             <div class="comment-actions">
-              <Button 
+              <Button aria-label="Répondre" 
                 icon="pi pi-reply" 
                 @click="replyToComment(comment)"
                 text
                 size="small"
               />
-              <Button 
+              <Button aria-label="Supprimer" 
                 icon="pi pi-trash" 
                 @click="deleteComment(comment.id)"
                 text

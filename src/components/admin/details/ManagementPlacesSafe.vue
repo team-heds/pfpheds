@@ -7,7 +7,7 @@
     <div class="container">
       <!-- Barre de recherche -->
       <div class="text-center mb-3">
-        <InputText
+        <InputText aria-label="Recherche par nom de place ou remarques"
           v-model="search"
           placeholder="Recherche par nom de place ou remarques"
           class="w-50"
@@ -84,7 +84,7 @@
           <!-- Colonnes PFP (éditables avec confirmation) -->
           <Column header="PFP2">
             <template #body="slotProps">
-              <InputText
+              <InputText aria-label="PFP2"
                 v-model="slotProps.data.PFP2"
                 @change="confirmAndUpdatePlace(slotProps.data, 'PFP2', slotProps.data.PFP2)"
                 class="p-inputtext-sm small-input"
@@ -93,7 +93,7 @@
           </Column>
           <Column header="PFP1A">
             <template #body="slotProps">
-              <InputText
+              <InputText aria-label="PFP1A"
                 v-model="slotProps.data.PFP1A"
                 @change="confirmAndUpdatePlace(slotProps.data, 'PFP1A', slotProps.data.PFP1A)"
                 class="p-inputtext-sm small-input"
@@ -102,7 +102,7 @@
           </Column>
           <Column header="PFP1B">
             <template #body="slotProps">
-              <InputText
+              <InputText aria-label="PFP1B"
                 v-model="slotProps.data.PFP1B"
                 @change="confirmAndUpdatePlace(slotProps.data, 'PFP1B', slotProps.data.PFP1B)"
                 class="p-inputtext-sm small-input"
@@ -111,7 +111,7 @@
           </Column>
           <Column header="PFP4">
             <template #body="slotProps">
-              <InputText
+              <InputText aria-label="PFP4"
                 v-model="slotProps.data.PFP4"
                 @change="confirmAndUpdatePlace(slotProps.data, 'PFP4', slotProps.data.PFP4)"
                 class="p-inputtext-sm small-input"
@@ -120,7 +120,7 @@
           </Column>
           <Column header="PFP3">
             <template #body="slotProps">
-              <InputText
+              <InputText aria-label="PFP3"
                 v-model="slotProps.data.PFP3"
                 @change="confirmAndUpdatePlace(slotProps.data, 'PFP3', slotProps.data.PFP3)"
                 class="p-inputtext-sm small-input"
@@ -140,7 +140,7 @@
           <!-- Colonne Remarques (maintenant éditable via InputTextArea + confirmation) -->
           <Column header="Remarques">
             <template #body="slotProps">
-              <textarea
+              <textarea aria-label="Remarques"
                 v-model="slotProps.data.Remarques"
                 @change="confirmAndUpdatePlace(slotProps.data, 'Remarques', slotProps.data.Remarques)"
                 class="p-inputtext p-inputtext-sm small-input"

@@ -24,30 +24,30 @@
               <label class="font-semibold text-sm">Recherche :</label>
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="searchQuery" placeholder="Nom ou prénom..." class="w-full md:w-14rem" />
+                <InputText aria-label="Nom ou prénom" v-model="searchQuery" placeholder="Nom ou prénom..." class="w-full md:w-14rem" />
               </span>
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe :</label>
-              <Dropdown v-model="filterClasse" :options="classesList" placeholder="Toutes" class="w-full md:w-8rem" showClear />
+              <Dropdown ariaLabel="Classe" v-model="filterClasse" :options="classesList" placeholder="Toutes" class="w-full md:w-8rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP :</label>
-              <Dropdown v-model="filterPFP" :options="pfpOptions" placeholder="Tous" class="w-full md:w-8rem" showClear />
+              <Dropdown ariaLabel="PFP" v-model="filterPFP" :options="pfpOptions" placeholder="Tous" class="w-full md:w-8rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Statut :</label>
-              <Dropdown v-model="filterStatut" :options="statutOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-10rem" showClear />
+              <Dropdown ariaLabel="Statut" v-model="filterStatut" :options="statutOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-10rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Type :</label>
-              <Dropdown v-model="filterType" :options="typeOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-10rem" showClear />
+              <Dropdown ariaLabel="Type" v-model="filterType" :options="typeOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-10rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
                 <Button icon="pi pi-download" label="Export Excel" outlined class="p-button-sm" @click="exportXLSX" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="refreshAllData" v-tooltip="'Rafraîchir'" :loading="loading" />
+                <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="refreshAllData" v-tooltip="'Rafraîchir'" :loading="loading" />
               </div>
             </div>
           </div>

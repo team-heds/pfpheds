@@ -4,7 +4,7 @@
     <!-- Dialog création classeur -->
     <Dialog v-model:visible="showNotebookDialog" header="Nouveau classeur" :modal="true" :closable="false">
       <div class="p-fluid">
-        <InputText v-model="newNotebookName" placeholder="Nom du classeur" />
+        <InputText aria-label="Nom du classeur" v-model="newNotebookName" placeholder="Nom du classeur" />
       </div>
       <template #footer>
         <Button label="Annuler" class="p-button-text" @click="showNotebookDialog = false" />
@@ -14,7 +14,7 @@
     <!-- Dialog renommage classeur -->
     <Dialog v-model:visible="showEditNotebookDialog" header="Renommer le classeur" :modal="true" :closable="false">
       <div class="p-fluid">
-        <InputText v-model="editNotebookName" placeholder="Nouveau nom du classeur" />
+        <InputText aria-label="Nouveau nom du classeur" v-model="editNotebookName" placeholder="Nouveau nom du classeur" />
       </div>
       <template #footer>
         <Button label="Annuler" class="p-button-text" @click="showEditNotebookDialog = false" />
@@ -32,7 +32,7 @@
     <!-- Dialog création feuille -->
     <Dialog v-model:visible="showPageDialog" header="Nouvelle feuille" :modal="true" :closable="false">
       <div class="p-fluid">
-        <InputText v-model="newPageTitle" placeholder="Titre de la feuille" />
+        <InputText aria-label="Titre de la feuille" v-model="newPageTitle" placeholder="Titre de la feuille" />
       </div>
       <template #footer>
         <Button label="Annuler" class="p-button-text" @click="showPageDialog = false" />
@@ -42,7 +42,7 @@
     <!-- Dialog renommage feuille -->
     <Dialog v-model:visible="showEditPageDialog" header="Renommer la feuille" :modal="true" :closable="false">
       <div class="p-fluid">
-        <InputText v-model="editPageTitle" placeholder="Nouveau titre de la feuille" />
+        <InputText aria-label="Nouveau titre de la feuille" v-model="editPageTitle" placeholder="Nouveau titre de la feuille" />
       </div>
       <template #footer>
         <Button label="Annuler" class="p-button-text" @click="showEditPageDialog = false" />

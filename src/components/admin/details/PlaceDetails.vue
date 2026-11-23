@@ -6,7 +6,7 @@
         <div class="p-col-12 p-md-6 p-lg-4">
           <div class="form-group">
             <label for="annee_civil" class="form-label">Année Académique :</label>
-            <Dropdown id="annee_civil" v-model="annee_civil" :options="anneescivils" placeholder="Sélectionnez une année" class="w-full" />
+            <Dropdown ariaLabel="Année Académique" id="annee_civil" v-model="annee_civil" :options="anneescivils" placeholder="Sélectionnez une année" class="w-full" />
           </div>
         </div>
         <div class="p-col-12 p-md-6 p-lg-4">
@@ -24,57 +24,57 @@
               <Column field="NpmPractitionerTrainer" header="Praticien Formateur" />
               <Column field="AIGU" header="AIGU">
                 <template #body="slotProps">
-                  <Checkbox v-model="slotProps.data.AIGU" @change="updateFirebase('AIGU', slotProps.data)" />
+                  <Checkbox ariaLabel="AIGU" v-model="slotProps.data.AIGU" @change="updateFirebase('AIGU', slotProps.data)" />
                 </template>
               </Column>
               <Column field="REA" header="REA">
                 <template #body="slotProps">
-                  <Checkbox v-model="slotProps.data.REA" @change="updateFirebase('REA', slotProps.data)" />
+                  <Checkbox ariaLabel="REA" v-model="slotProps.data.REA" @change="updateFirebase('REA', slotProps.data)" />
                 </template>
               </Column>
               <Column field="MSQ" header="MSQ">
                 <template #body="slotProps">
-                  <Checkbox v-model="slotProps.data.MSQ" @change="updateFirebase('MSQ', slotProps.data)" />
+                  <Checkbox ariaLabel="MSQ" v-model="slotProps.data.MSQ" @change="updateFirebase('MSQ', slotProps.data)" />
                 </template>
               </Column>
               <Column field="SYSINT" header="SYSINT">
                 <template #body="slotProps">
-                  <Checkbox v-model="slotProps.data.SYSINT" @change="updateFirebase('SYSINT', slotProps.data)" />
+                  <Checkbox ariaLabel="SYSINT" v-model="slotProps.data.SYSINT" @change="updateFirebase('SYSINT', slotProps.data)" />
                 </template>
               </Column>
               <Column field="NEUROGER" header="NEUROGER">
                 <template #body="slotProps">
-                  <Checkbox v-model="slotProps.data.NEUROGER" @change="updateFirebase('NEUROGER', slotProps.data)" />
+                  <Checkbox ariaLabel="NEUROGER" v-model="slotProps.data.NEUROGER" @change="updateFirebase('NEUROGER', slotProps.data)" />
                 </template>
               </Column>
               <Column field="AMBU" header="AMBU">
                 <template #body="slotProps">
-                  <Checkbox v-model="slotProps.data.AMBU" @change="updateFirebase('AMBU', slotProps.data)" />
+                  <Checkbox ariaLabel="AMBU" v-model="slotProps.data.AMBU" @change="updateFirebase('AMBU', slotProps.data)" />
                 </template>
               </Column>
               <Column field="PFP2" header="PFP2">
                 <template #body="slotProps">
-                  <Checkbox :checked="isStageChecked('PFP2', slotProps.data.id)" @change="toggleStage('PFP2', slotProps.data.id, slotProps.data, $event.target.checked)" />
+                  <Checkbox ariaLabel="PFP2" :checked="isStageChecked('PFP2', slotProps.data.id)" @change="toggleStage('PFP2', slotProps.data.id, slotProps.data, $event.target.checked)" />
                 </template>
               </Column>
               <Column field="PFP1A" header="PFP1A">
                 <template #body="slotProps">
-                  <Checkbox :checked="isStageChecked('PFP1A', slotProps.data.id)" @change="toggleStage('PFP1A', slotProps.data.id, slotProps.data, $event.target.checked)" />
+                  <Checkbox ariaLabel="PFP1A" :checked="isStageChecked('PFP1A', slotProps.data.id)" @change="toggleStage('PFP1A', slotProps.data.id, slotProps.data, $event.target.checked)" />
                 </template>
               </Column>
               <Column field="PFP1B" header="PFP1B">
                 <template #body="slotProps">
-                  <Checkbox :checked="isStageChecked('PFP1B', slotProps.data.id)" @change="toggleStage('PFP1B', slotProps.data.id, slotProps.data, $event.target.checked)" />
+                  <Checkbox ariaLabel="PFP1B" :checked="isStageChecked('PFP1B', slotProps.data.id)" @change="toggleStage('PFP1B', slotProps.data.id, slotProps.data, $event.target.checked)" />
                 </template>
               </Column>
               <Column field="PFP3" header="PFP3">
                 <template #body="slotProps">
-                  <Checkbox :checked="isStageChecked('PFP3', slotProps.data.id)" @change="toggleStage('PFP3', slotProps.data.id, slotProps.data, $event.target.checked)" />
+                  <Checkbox ariaLabel="PFP3" :checked="isStageChecked('PFP3', slotProps.data.id)" @change="toggleStage('PFP3', slotProps.data.id, slotProps.data, $event.target.checked)" />
                 </template>
               </Column>
               <Column field="PFP4" header="PFP4">
                 <template #body="slotProps">
-                  <Checkbox :checked="isStageChecked('PFP4', slotProps.data.id)" @change="toggleStage('PFP4', slotProps.data.id, slotProps.data, $event.target.checked)" />
+                  <Checkbox ariaLabel="PFP4" :checked="isStageChecked('PFP4', slotProps.data.id)" @change="toggleStage('PFP4', slotProps.data.id, slotProps.data, $event.target.checked)" />
                 </template>
               </Column>
             </DataTable>

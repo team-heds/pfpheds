@@ -24,12 +24,12 @@
               <label class="font-semibold text-sm">Recherche :</label>
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="searchQuery" placeholder="Nom ou localité..." class="w-full md:w-14rem" />
+                <InputText aria-label="Nom ou localité" v-model="searchQuery" placeholder="Nom ou localité..." class="w-full md:w-14rem" />
               </span>
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Canton :</label>
-              <Dropdown
+              <Dropdown ariaLabel="Canton"
                 v-model="filterCanton"
                 :options="cantonOptions"
                 placeholder="Tous"
@@ -39,7 +39,7 @@
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Statut docs :</label>
-              <Dropdown
+              <Dropdown ariaLabel="Statut docs"
                 v-model="filterStatus"
                 :options="statusFilterOptions"
                 optionLabel="label"
@@ -53,7 +53,7 @@
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
                 <Button icon="pi pi-download" label="Export CSV" outlined class="p-button-sm" @click="exportCSV" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchInstitutions" v-tooltip="'Rafraîchir'" :loading="loading" />
+                <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchInstitutions" v-tooltip="'Rafraîchir'" :loading="loading" />
               </div>
             </div>
           </div>
@@ -177,7 +177,7 @@
                 </span>
                 <Tag v-else value="Manquante" severity="warning" class="text-xs" />
               </div>
-              <Calendar
+              <Calendar ariaLabel="Date"
                 v-else
                 v-model="editingRow.ConventionDate"
                 dateFormat="dd-mm-yy"
@@ -197,7 +197,7 @@
                 </span>
                 <Tag v-else value="Manquant" severity="warning" class="text-xs" />
               </div>
-              <Calendar
+              <Calendar ariaLabel="Date"
                 v-else
                 v-model="editingRow.AccordCadreDate"
                 dateFormat="dd-mm-yy"
@@ -221,7 +221,7 @@
           <Column header="Actions" :exportable="false" style="min-width: 7rem">
             <template #body="{ data }">
               <div class="flex gap-1">
-                <Button
+                <Button aria-label="Éditer les dates"
                   v-if="!editingRow || editingRow.InstitutionId !== data.InstitutionId"
                   icon="pi pi-pencil"
                   class="p-button-rounded p-button-text p-button-sm"
@@ -229,20 +229,20 @@
                   v-tooltip.top="'Éditer les dates'"
                 />
                 <template v-else>
-                  <Button
+                  <Button aria-label="Sauvegarder"
                     icon="pi pi-check"
                     class="p-button-rounded p-button-text p-button-success p-button-sm"
                     @click="saveEdit()"
                     v-tooltip.top="'Sauvegarder'"
                   />
-                  <Button
+                  <Button aria-label="Annuler"
                     icon="pi pi-times"
                     class="p-button-rounded p-button-text p-button-danger p-button-sm"
                     @click="cancelEdit()"
                     v-tooltip.top="'Annuler'"
                   />
                 </template>
-                <Button
+                <Button :aria-label="data.MailChef"
                   v-if="data.MailChef"
                   icon="pi pi-envelope"
                   class="p-button-rounded p-button-text p-button-sm"

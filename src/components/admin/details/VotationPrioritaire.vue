@@ -99,7 +99,7 @@
           </Column>
           <Column header="Choix">
             <template #body="slotProps">
-              <RadioButton
+              <RadioButton ariaLabel="Choix"
                 v-model="selectedPlace"
                 :value="slotProps.data"
                 :disabled="votedPlace !== null"
@@ -184,7 +184,7 @@
               </Column>
               <Column header="Choix">
                 <template #body="slotProps">
-                  <RadioButton
+                  <RadioButton ariaLabel="Choix"
                     v-model="selectedPlace"
                     :value="slotProps.data"
                     :disabled="votedPlace !== null"

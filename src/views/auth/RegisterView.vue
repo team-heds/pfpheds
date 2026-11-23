@@ -129,10 +129,10 @@ const handleSignUp = async () => {
                 </IconField>
                 <IconField iconPosition="left" class="w-full mb-4">
                     <InputIcon class="pi pi-lock z-2" />
-                    <Password id="password" placeholder="Mot de passe (min. 6 caractères)" v-model="password" class="w-full" :inputStyle="{ paddingLeft: '2.5rem' }" inputClass="w-full md:w-25rem" toggleMask></Password>
+                    <Password ariaLabel="Mot de passe (min. 6 caractères)" id="password" placeholder="Mot de passe (min. 6 caractères)" v-model="password" class="w-full" :inputStyle="{ paddingLeft: '2.5rem' }" inputClass="w-full md:w-25rem" toggleMask></Password>
                 </IconField>
                 <div class="mb-4 flex flex-wrap">
-                    <Checkbox name="checkbox" v-model="confirmed" class="mr-2" binary></Checkbox>
+                    <Checkbox ariaLabel="J'ai lu et j'accepte les" name="checkbox" v-model="confirmed" class="mr-2" binary></Checkbox>
                     <label for="checkbox" class="text-900 font-medium mr-2"> J'ai lu et j'accepte les </label>
                     <RouterLink to="/terms_of_use" class="text-600 hover:text-primary">Conditions d'utilisation</RouterLink>
                 </div>

@@ -31,7 +31,7 @@
 
     <div class="form-group">
       <label for="event-type">Type d'événement <span aria-hidden="true">*</span></label>
-      <Dropdown
+      <Dropdown ariaLabel="Type d'événement"
         inputId="event-type"
         v-model="form.type"
         :options="typeOptions"
@@ -44,7 +44,7 @@
 
     <div v-if="form.type === 'private'" class="form-group">
       <label for="event-role">Rôle dédié <span aria-hidden="true">*</span></label>
-      <Dropdown
+      <Dropdown ariaLabel="Rôle dédié"
         inputId="event-role"
         v-model="form.role"
         :options="roleOptions"

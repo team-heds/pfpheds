@@ -46,16 +46,16 @@
       <div class="surface-card p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterProgram" :options="programs" optionLabel="nom" placeholder="Tous les programmes" class="w-full" showClear />
+            <Dropdown ariaLabel="Programmes" v-model="filterProgram" :options="programs" optionLabel="nom" placeholder="Tous les programmes" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterSemestre" :options="semestres" placeholder="Tous les semestres" class="w-full" showClear />
+            <Dropdown ariaLabel="Semestres" v-model="filterSemestre" :options="semestres" placeholder="Tous les semestres" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
+            <Dropdown ariaLabel="Statuts" v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <InputText v-model="searchQuery" placeholder="Rechercher module..." class="w-full" />
+            <InputText aria-label="Rechercher module" v-model="searchQuery" placeholder="Rechercher module..." class="w-full" />
           </div>
         </div>
       </div>
@@ -90,9 +90,9 @@
           </Column>
           <Column header="Actions" style="min-width: 150px">
             <template #body="slotProps">
-              <Button icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
-              <Button icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
-              <Button icon="pi pi-calendar" class="p-button-text p-button-sm" />
+              <Button aria-label="Voir" icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
+              <Button aria-label="Ouvrir le calendrier" icon="pi pi-calendar" class="p-button-text p-button-sm" />
             </template>
           </Column>
         </DataTable>
@@ -104,38 +104,38 @@
           <div class="grid">
             <div class="col-4">
               <label class="block mb-2 font-semibold">Code *</label>
-              <InputText v-model="newModule.code" class="w-full" />
+              <InputText aria-label="Code" v-model="newModule.code" class="w-full" />
             </div>
             <div class="col-8">
               <label class="block mb-2 font-semibold">Titre *</label>
-              <InputText v-model="newModule.titre" class="w-full" />
+              <InputText aria-label="Titre" v-model="newModule.titre" class="w-full" />
             </div>
           </div>
           <div>
             <label class="block mb-2 font-semibold">Programme *</label>
-            <Dropdown v-model="newModule.program" :options="programs" optionLabel="nom" class="w-full" />
+            <Dropdown ariaLabel="Programme" v-model="newModule.program" :options="programs" optionLabel="nom" class="w-full" />
           </div>
           <div class="grid">
             <div class="col-4">
               <label class="block mb-2 font-semibold">Semestre</label>
-              <Dropdown v-model="newModule.semestre" :options="semestres" class="w-full" />
+              <Dropdown ariaLabel="Semestre" v-model="newModule.semestre" :options="semestres" class="w-full" />
             </div>
             <div class="col-4">
               <label class="block mb-2 font-semibold">Crédits ECTS</label>
-              <InputNumber v-model="newModule.credits" class="w-full" :min="1" :max="30" />
+              <InputNumber ariaLabel="Crédits ECTS" v-model="newModule.credits" class="w-full" :min="1" :max="30" />
             </div>
             <div class="col-4">
               <label class="block mb-2 font-semibold">Heures</label>
-              <InputNumber v-model="newModule.heures" class="w-full" :min="1" />
+              <InputNumber ariaLabel="Heures" v-model="newModule.heures" class="w-full" :min="1" />
             </div>
           </div>
           <div>
             <label class="block mb-2 font-semibold">Enseignant responsable</label>
-            <Dropdown v-model="newModule.enseignant" :options="enseignants" optionLabel="nom" class="w-full" />
+            <Dropdown ariaLabel="Enseignant responsable" v-model="newModule.enseignant" :options="enseignants" optionLabel="nom" class="w-full" />
           </div>
           <div>
             <label class="block mb-2 font-semibold">Description</label>
-            <Textarea v-model="newModule.description" rows="3" class="w-full" />
+            <Textarea aria-label="Description" v-model="newModule.description" rows="3" class="w-full" />
           </div>
         </div>
         <template #footer>

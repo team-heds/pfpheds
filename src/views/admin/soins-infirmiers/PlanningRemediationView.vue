@@ -94,7 +94,7 @@
               </div>
               <div class="field-inline">
                 <label for="si-remediation-category">Anomalie</label>
-                <Dropdown
+                <Dropdown ariaLabel="Anomalie"
                   inputId="si-remediation-category"
                   v-model="categoryFilter"
                   :options="categoryOptions"
@@ -104,7 +104,7 @@
               </div>
               <div class="field-inline">
                 <label for="si-remediation-confidence">Niveau de décision</label>
-                <Dropdown
+                <Dropdown ariaLabel="Niveau de décision"
                   inputId="si-remediation-confidence"
                   v-model="confidenceFilter"
                   :options="confidenceOptions"
@@ -114,7 +114,7 @@
               </div>
               <div class="field-inline">
                 <label for="si-remediation-class">Classe</label>
-                <Dropdown
+                <Dropdown ariaLabel="Classe"
                   inputId="si-remediation-class"
                   v-model="classFilter"
                   :options="classOptions"

@@ -89,7 +89,7 @@
         <div class="filters">
           <div class="filter-group">
             <label>Sévérité</label>
-            <MultiSelect
+            <MultiSelect ariaLabel="Sévérité"
               v-model="filters.severity"
               :options="severityOptions"
               optionLabel="label"
@@ -100,7 +100,7 @@
           </div>
           <div class="filter-group">
             <label>Type</label>
-            <MultiSelect
+            <MultiSelect ariaLabel="Type"
               v-model="filters.type"
               :options="typeOptions"
               optionLabel="label"
@@ -111,7 +111,7 @@
           </div>
           <div class="filter-group">
             <label>KPI</label>
-            <MultiSelect
+            <MultiSelect ariaLabel="KPI"
               v-model="filters.kpiIds"
               :options="kpiOptions"
               optionLabel="label"
@@ -139,19 +139,19 @@
         <div class="card-header">
           <h2>Historique des Alertes</h2>
           <div class="view-toggle">
-            <Button
+            <Button aria-label="Afficher la liste"
               icon="pi pi-list"
               :severity="viewMode === 'list' ? 'primary' : 'secondary'"
               text
               @click="viewMode = 'list'"
             />
-            <Button
+            <Button aria-label="Afficher en tableau"
               icon="pi pi-table"
               :severity="viewMode === 'table' ? 'primary' : 'secondary'"
               text
               @click="viewMode = 'table'"
             />
-            <Button
+            <Button aria-label="Voir les statistiques"
               icon="pi pi-chart-line"
               :severity="viewMode === 'chart' ? 'primary' : 'secondary'"
               text
@@ -247,7 +247,7 @@
           <Column header="Actions">
             <template #body="{ data }">
               <div class="table-actions">
-                <Button
+                <Button aria-label="Résoudre"
                   v-if="!data.resolved && canPersistResolution"
                   icon="pi pi-check"
                   rounded
@@ -256,7 +256,7 @@
                   @click="resolveAlert(data)"
                   v-tooltip="'Résoudre'"
                 />
-                <Button
+                <Button aria-label="Détails"
                   icon="pi pi-eye"
                   rounded
                   text

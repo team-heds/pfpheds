@@ -55,7 +55,7 @@
           </div>
           <div class="filter-field">
               <label for="case-class" class="font-semibold text-sm">Classe</label>
-              <Dropdown
+              <Dropdown ariaLabel="Classe"
                 inputId="case-class"
                 v-model="filterClasse"
                 :options="classesList"
@@ -66,7 +66,7 @@
           </div>
           <div v-if="activeTab === 0" class="filter-field">
               <label for="case-color" class="font-semibold text-sm">Couleur</label>
-              <Dropdown
+              <Dropdown ariaLabel="Couleur"
                 inputId="case-color"
                 v-model="filterColor"
                 :options="colorFilterOptions"
@@ -79,7 +79,7 @@
           </div>
           <div v-if="activeTab === 0" class="filter-field">
               <label for="case-display" class="font-semibold text-sm">État du suivi</label>
-              <Dropdown
+              <Dropdown ariaLabel="État du suivi"
                 inputId="case-display"
                 v-model="filterDisplay"
                 :options="displayOptions"
@@ -310,13 +310,13 @@
           <div class="flex gap-3 flex-wrap mb-3 align-items-end">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année :</label>
-              <Dropdown v-model="lesedFilterYear" :options="lesedYears" placeholder="Toutes" class="w-full md:w-10rem" showClear />
+              <Dropdown ariaLabel="Année" v-model="lesedFilterYear" :options="lesedYears" placeholder="Toutes" class="w-full md:w-10rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP :</label>
-              <Dropdown v-model="lesedFilterPfp" :options="lesedPfpTypes" placeholder="Tous" class="w-full md:w-10rem" showClear />
+              <Dropdown ariaLabel="PFP" v-model="lesedFilterPfp" :options="lesedPfpTypes" placeholder="Tous" class="w-full md:w-10rem" showClear />
             </div>
-            <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchLesedStudents" v-tooltip="'Rafraîchir'" :loading="loadingLesed" />
+            <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchLesedStudents" v-tooltip="'Rafraîchir'" :loading="loadingLesed" />
           </div>
 
           <div v-for="group in groupedLesed" :key="group.year + '-' + group.pfpType" class="surface-card p-3 border-round shadow-2 mb-3">
@@ -374,13 +374,13 @@
           <div class="flex gap-3 flex-wrap mb-3 align-items-end">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année :</label>
-              <Dropdown v-model="echecFilterYear" :options="echecYears" placeholder="Toutes" class="w-full md:w-10rem" showClear />
+              <Dropdown ariaLabel="Année" v-model="echecFilterYear" :options="echecYears" placeholder="Toutes" class="w-full md:w-10rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP :</label>
-              <Dropdown v-model="echecFilterPfp" :options="echecPfpTypes" placeholder="Tous" class="w-full md:w-10rem" showClear />
+              <Dropdown ariaLabel="PFP" v-model="echecFilterPfp" :options="echecPfpTypes" placeholder="Tous" class="w-full md:w-10rem" showClear />
             </div>
-            <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchEchecsStudents" v-tooltip="'Rafraîchir'" :loading="loadingEchecs" />
+            <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchEchecsStudents" v-tooltip="'Rafraîchir'" :loading="loadingEchecs" />
           </div>
 
           <div v-for="group in groupedEchecs" :key="group.year + '-' + group.pfpType" class="surface-card p-3 border-round shadow-2 mb-3">
@@ -434,7 +434,7 @@
           <div class="surface-card p-3 border-round shadow-2 mb-3">
             <label class="font-semibold block mb-2">Marquer un étudiant SAE</label>
             <div class="flex gap-2 align-items-center flex-wrap">
-              <AutoComplete
+              <AutoComplete ariaLabel="Rechercher un étudiant par nom"
                 v-model="saeSearchSelection"
                 :suggestions="saeSearchSuggestions"
                 optionLabel="etudiant"
@@ -529,7 +529,7 @@
               size="small"
             />
           </div>
-          <Textarea
+          <Textarea aria-label="Résumé rapide (optionnel)"
             v-model="editingCell.commentaire"
             rows="2"
             class="w-full"
@@ -544,7 +544,7 @@
         <div class="surface-card p-3 border-round border-1 surface-border">
           <label class="font-semibold block mb-2">Ajouter un événement</label>
           <div class="flex flex-column gap-2">
-            <Dropdown
+            <Dropdown ariaLabel="Type d’événement"
               v-model="newEvent.type_evenement"
               :options="eventTypeOptions"
               optionLabel="label"
@@ -554,14 +554,14 @@
             <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
               <div class="flex-1 flex flex-column gap-1">
                 <label class="text-xs text-600">Ancienne date</label>
-                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+                <Calendar ariaLabel="Ancienne date" v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
               </div>
               <div class="flex-1 flex flex-column gap-1">
                 <label class="text-xs text-600">Nouvelle date</label>
-                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+                <Calendar ariaLabel="Nouvelle date" v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
               </div>
             </div>
-            <Textarea
+            <Textarea aria-label="Détails, raison du changement"
               v-model="newEvent.description"
               rows="2"
               class="w-full"
@@ -637,7 +637,7 @@
               size="small"
             />
           </div>
-          <Textarea
+          <Textarea aria-label="Indiquer le motif ici"
             v-model="editingCell.commentaire"
             rows="2"
             class="w-full"
@@ -651,7 +651,7 @@
         <div class="surface-card p-3 border-round border-1 surface-border">
           <label class="font-semibold block mb-2">Ajouter un événement</label>
           <div class="flex flex-column gap-2">
-            <Dropdown
+            <Dropdown ariaLabel="Type d’événement"
               v-model="newEvent.type_evenement"
               :options="eventTypeOptions"
               optionLabel="label"
@@ -661,14 +661,14 @@
             <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
               <div class="flex-1 flex flex-column gap-1">
                 <label class="text-xs text-600">Ancienne date</label>
-                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+                <Calendar ariaLabel="Ancienne date" v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
               </div>
               <div class="flex-1 flex flex-column gap-1">
                 <label class="text-xs text-600">Nouvelle date</label>
-                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+                <Calendar ariaLabel="Nouvelle date" v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
               </div>
             </div>
-            <Textarea
+            <Textarea aria-label="Détails, raison du changement"
               v-model="newEvent.description"
               rows="2"
               class="w-full"
@@ -736,7 +736,7 @@
         <div class="surface-ground p-3 border-round">
           <label class="font-semibold block mb-2">Motif</label>
 
-          <Textarea
+          <Textarea aria-label="Motif"
             v-model="editingCell.commentaire"
             rows="2"
             class="w-full"
@@ -750,7 +750,7 @@
         <div class="surface-card p-3 border-round border-1 surface-border">
           <label class="font-semibold block mb-2">Ajouter un événement</label>
           <div class="flex flex-column gap-2">
-            <Dropdown
+            <Dropdown ariaLabel="Type d’événement"
               v-model="newEvent.type_evenement"
               :options="eventTypeOptions"
               optionLabel="label"
@@ -760,14 +760,14 @@
             <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
               <div class="flex-1 flex flex-column gap-1">
                 <label class="text-xs text-600">Ancienne date</label>
-                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+                <Calendar ariaLabel="Ancienne date" v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
               </div>
               <div class="flex-1 flex flex-column gap-1">
                 <label class="text-xs text-600">Nouvelle date</label>
-                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+                <Calendar ariaLabel="Nouvelle date" v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
               </div>
             </div>
-            <Textarea
+            <Textarea aria-label="Détails, raison du changement"
               v-model="newEvent.description"
               rows="2"
               class="w-full"
@@ -835,7 +835,7 @@
           <label class="font-semibold block mb-2">Particularités</label>
           <div class="flex flex-column gap-2">
 
-            <Textarea
+            <Textarea aria-label="Entrer les particularités du statut SAE ici"
               v-model="editingCell.commentaire"
               rows="2"
               class="w-full"
@@ -851,7 +851,7 @@
         <div class="surface-card p-3 border-round border-1 surface-border">
           <label class="font-semibold block mb-2">Ajouter un événement</label>
           <div class="flex flex-column gap-2">
-            <Dropdown
+            <Dropdown ariaLabel="Type d’événement"
               v-model="newEvent.type_evenement"
               :options="eventTypeOptions"
               optionLabel="label"
@@ -861,14 +861,14 @@
             <div v-if="newEvent.type_evenement === 'changement_date'" class="flex gap-2">
               <div class="flex-1 flex flex-column gap-1">
                 <label class="text-xs text-600">Ancienne date</label>
-                <Calendar v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+                <Calendar ariaLabel="Ancienne date" v-model="newEvent.ancienne_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
               </div>
               <div class="flex-1 flex flex-column gap-1">
                 <label class="text-xs text-600">Nouvelle date</label>
-                <Calendar v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
+                <Calendar ariaLabel="Nouvelle date" v-model="newEvent.nouvelle_date" dateFormat="dd/mm/yy" showIcon class="w-full" />
               </div>
             </div>
-            <Textarea
+            <Textarea aria-label="Détails, raison du changement"
               v-model="newEvent.description"
               rows="2"
               class="w-full"
@@ -937,7 +937,7 @@
       <div class="flex flex-column gap-3 p-3">
         <div class="flex flex-column gap-2">
           <label class="font-semibold">Commentaire sur l'étudiant :</label>
-          <Textarea
+          <Textarea aria-label="Commentaire sur l'étudiant"
             v-model="editingInfo.commentaire"
             rows="6"
             class="w-full"

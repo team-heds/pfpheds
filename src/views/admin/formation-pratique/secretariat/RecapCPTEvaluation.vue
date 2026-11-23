@@ -24,12 +24,12 @@
               <label class="font-semibold text-sm">Recherche :</label>
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="searchText" placeholder="Nom ou prénom..." class="w-full md:w-14rem" />
+                <InputText aria-label="Nom ou prénom" v-model="searchText" placeholder="Nom ou prénom..." class="w-full md:w-14rem" />
               </span>
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe :</label>
-              <Dropdown
+              <Dropdown ariaLabel="Classe"
                 v-model="filterClasse"
                 :options="classeOptions"
                 placeholder="Toutes"
@@ -39,7 +39,7 @@
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Statut :</label>
-              <Dropdown
+              <Dropdown ariaLabel="Statut"
                 v-model="filterStatus"
                 :options="statusOptions"
                 optionLabel="label"
@@ -53,7 +53,7 @@
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
                 <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportCSV" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchData" v-tooltip="'Rafraîchir'" :loading="loading" />
+                <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchData" v-tooltip="'Rafraîchir'" :loading="loading" />
               </div>
             </div>
           </div>

@@ -39,7 +39,7 @@
               @click="exportStatsCsv"
               size="small"
             />
-            <Button
+            <Button aria-label="Actualiser"
               icon="pi pi-refresh"
               @click="refreshAll"
               :loading="refreshing"
@@ -83,9 +83,9 @@
                 <h2 class="text-xl font-semibold text-900 m-0">Statistiques détaillées</h2>
               </div>
               <div class="flex align-items-center gap-2">
-                <Button icon="pi pi-chevron-left" text rounded size="small" @click="shiftPeriod(-1)" v-tooltip.top="'Période précédente'" />
+                <Button aria-label="Période précédente" icon="pi pi-chevron-left" text rounded size="small" @click="shiftPeriod(-1)" v-tooltip.top="'Période précédente'" />
                 <Tag :value="periodRangeLabel" severity="info" rounded class="cursor-pointer" @click="resetToToday" v-tooltip.top="'Revenir à aujourd\'hui'" />
-                <Button icon="pi pi-chevron-right" text rounded size="small" @click="shiftPeriod(1)" :disabled="isCurrentPeriod" v-tooltip.top="'Période suivante'" />
+                <Button aria-label="Période suivante" icon="pi pi-chevron-right" text rounded size="small" @click="shiftPeriod(1)" :disabled="isCurrentPeriod" v-tooltip.top="'Période suivante'" />
               </div>
             </div>
             <!-- Skeleton pendant chargement -->

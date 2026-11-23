@@ -10,17 +10,17 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label class="block text-sm font-medium mb-1">Institution</label>
-          <input v-model="institution" type="text" class="w-full p-inputtext p-component" placeholder="ex: CHVR, HEdS, Clinique-X" />
+          <input aria-label="Institution" v-model="institution" type="text" class="w-full p-inputtext p-component" placeholder="ex: CHVR, HEdS, Clinique-X" />
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">Sous-dossier (optionnel)</label>
-          <input v-model="folder" type="text" class="w-full p-inputtext p-component" placeholder="ex: syllabus, feed, contrats" />
+          <input aria-label="Sous-dossier (optionnel)" v-model="folder" type="text" class="w-full p-inputtext p-component" placeholder="ex: syllabus, feed, contrats" />
         </div>
       </div>
 
       <div>
         <label class="block text-sm font-medium mb-1">Utilisateur (détecté)</label>
-        <input :value="effectiveUserId" type="text" class="w-full p-inputtext p-component" disabled />
+        <input aria-label="Utilisateur (détecté)" :value="effectiveUserId" type="text" class="w-full p-inputtext p-component" disabled />
       </div>
 
       <div class="border-2 border-dashed rounded-md p-4 text-center bg-gray-50"

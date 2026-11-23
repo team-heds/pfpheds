@@ -8,9 +8,9 @@
       <div class="col-12 md:col-4">
         <Panel header="Filtre rapide">
           <div class="flex flex-column gap-2">
-            <Dropdown :options="years" v-model="year" placeholder="Année académique" class="w-full" />
-            <Dropdown :options="semesters" v-model="semester" optionLabel="name" optionValue="id" placeholder="Semestre" class="w-full" />
-            <Dropdown :options="weeks" v-model="week" optionLabel="label" optionValue="value" placeholder="Semaine" class="w-full" />
+            <Dropdown ariaLabel="Année académique" :options="years" v-model="year" placeholder="Année académique" class="w-full" />
+            <Dropdown ariaLabel="Semestre" :options="semesters" v-model="semester" optionLabel="name" optionValue="id" placeholder="Semestre" class="w-full" />
+            <Dropdown ariaLabel="Semaine" :options="weeks" v-model="week" optionLabel="label" optionValue="value" placeholder="Semaine" class="w-full" />
             <Button label="Appliquer" @click="refresh" />
           </div>
         </Panel>

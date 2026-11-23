@@ -51,16 +51,16 @@
               <div class="flex gap-3 align-items-center flex-wrap">
                 <IconField iconPosition="left">
                   <InputIcon class="pi pi-search" />
-                  <InputText v-model="globalFilter" placeholder="Rechercher..." class="w-20rem" />
+                  <InputText aria-label="Rechercher" v-model="globalFilter" placeholder="Rechercher..." class="w-20rem" />
                 </IconField>
-                <Dropdown
+                <Dropdown ariaLabel="Filtrer par rôle"
                   v-model="selectedRole"
                   :options="availableRoles"
                   placeholder="Filtrer par rôle"
                   showClear
                   class="w-16rem"
                 />
-                <Dropdown
+                <Dropdown ariaLabel="Filtrer par permission"
                   v-model="selectedPermission"
                   :options="availablePermissions"
                   placeholder="Filtrer par permission"
@@ -82,7 +82,7 @@
               {{ data.Name }}
             </template>
             <template #filter="{ filterModel }">
-              <InputText
+              <InputText aria-label="Rechercher par nom"
                 type="text"
                 v-model="filterModel.value"
                 class="p-column-filter"
@@ -95,7 +95,7 @@
               {{ data.Forname }}
             </template>
             <template #filter="{ filterModel }">
-              <InputText
+              <InputText aria-label="Rechercher par prénom"
                 type="text"
                 v-model="filterModel.value"
                 class="p-column-filter"
@@ -132,7 +132,7 @@
               {{ data.Mail }}
             </template>
             <template #filter="{ filterModel }">
-              <InputText
+              <InputText aria-label="Rechercher par email"
                 type="text"
                 v-model="filterModel.value"
                 class="p-column-filter"

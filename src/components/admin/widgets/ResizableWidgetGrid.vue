@@ -36,13 +36,13 @@
         <!-- Controls en mode édition -->
         <div v-if="editMode" class="widget-controls">
           <div class="control-header">
-            <Button
+            <Button aria-label="Glisser pour déplacer"
               icon="pi pi-arrows-alt"
               class="p-button-rounded p-button-text p-button-sm drag-handle"
               severity="secondary"
               v-tooltip.top="'Glisser pour déplacer'"
             />
-            <Button
+            <Button :aria-label="widget.hidden ? 'Afficher' : 'Masquer'"
               :icon="widget.hidden ? 'pi pi-eye-slash' : 'pi pi-eye'"
               @click.stop="toggleVisibility(widget)"
               class="p-button-rounded p-button-text p-button-sm"

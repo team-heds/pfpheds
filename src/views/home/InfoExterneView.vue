@@ -6,7 +6,7 @@
     </div>
     <div class="content text-center">
       <h3>Entrez le code pour accéder aux documents:</h3>
-      <InputText v-model="codeSecret" placeholder="Entrez le code ici" class="p-inputtext-lg w-full md:w-30rem" />
+      <InputText aria-label="Entrez le code pour accéder aux documents" v-model="codeSecret" placeholder="Entrez le code ici" class="p-inputtext-lg w-full md:w-30rem" />
       <br>
       <Button label="Valider" class="p-button-primary mt-3" @click="validerCode" />
       <div v-if="afficherDocuments" class="documents mt-4">

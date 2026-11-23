@@ -61,7 +61,7 @@
         <div v-else class="dashboard-filter-grid" :aria-busy="loading">
           <div v-for="definition in visibleDefinitions" :key="definition.key" class="dashboard-filter-field">
             <label :for="`dashboard-filter-${definition.key}`">{{ definition.label }}</label>
-            <MultiSelect
+            <MultiSelect :ariaLabel="`${definition.label}`"
               :input-id="`dashboard-filter-${definition.key}`"
               v-model="draft[definition.key]"
               :options="definition.options"

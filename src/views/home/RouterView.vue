@@ -6,7 +6,7 @@
     <div class="router-manager">
 
     <div class="toolbar">
-      <input v-model="q" placeholder="Filtrer par nom, chemin ou permission (need)" />
+      <input aria-label="Filtrer par nom, chemin ou permission (need)" v-model="q" placeholder="Filtrer par nom, chemin ou permission (need)" />
       <label class="toggle">
         <input type="checkbox" v-model="onlyProtected" />
         <span>Uniquement routes protégées (avec need)</span>

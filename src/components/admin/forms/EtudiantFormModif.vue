@@ -30,7 +30,7 @@
       <!-- Dropdown pour PFP1 (institution de stage) -->
       <div class="field mb-4 col-6">
         <label for="pfp1" class="block text-xl mb-2">PFP1 - Institution</label>
-        <Dropdown
+        <Dropdown ariaLabel="PFP1 - Institution"
           id="pfp1"
           v-model="selectedPFP1"
           :options="institutionOptions"

@@ -13,7 +13,7 @@
           <div class="flex gap-2">
             <Button icon="pi pi-print" label="Imprimer" outlined />
             <Button icon="pi pi-download" label="Exporter PDF" outlined />
-            <Button icon="pi pi-refresh" @click="loadData" />
+            <Button aria-label="Actualiser" icon="pi pi-refresh" @click="loadData" />
           </div>
         </div>
       </div>
@@ -22,15 +22,15 @@
         <div class="grid align-items-end">
           <div class="col-12 md:col-3">
             <label class="block mb-2 font-semibold">Année académique</label>
-            <Dropdown v-model="selectedYear" :options="years" class="w-full" />
+            <Dropdown ariaLabel="Année académique" v-model="selectedYear" :options="years" class="w-full" />
           </div>
           <div class="col-12 md:col-3">
             <label class="block mb-2 font-semibold">Type PFP</label>
-            <Dropdown v-model="filterType" :options="typesPFP" placeholder="Tous" class="w-full" showClear />
+            <Dropdown ariaLabel="Type PFP" v-model="filterType" :options="typesPFP" placeholder="Tous" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
             <label class="block mb-2 font-semibold">Filière</label>
-            <Dropdown v-model="filterFiliere" :options="filieres" placeholder="Toutes" class="w-full" showClear />
+            <Dropdown ariaLabel="Filière" v-model="filterFiliere" :options="filieres" placeholder="Toutes" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
             <label class="block mb-2 font-semibold">Vue</label>
@@ -70,9 +70,9 @@
         <div class="gantt-header flex align-items-center justify-content-between mb-3">
           <h3 class="text-lg font-bold text-900 m-0">Planning {{ selectedYear }}</h3>
           <div class="flex gap-2">
-            <Button icon="pi pi-chevron-left" text @click="previousPeriod" />
+            <Button aria-label="Précédent" icon="pi pi-chevron-left" text @click="previousPeriod" />
             <Button label="Aujourd'hui" text @click="goToToday" />
-            <Button icon="pi pi-chevron-right" text @click="nextPeriod" />
+            <Button aria-label="Suivant" icon="pi pi-chevron-right" text @click="nextPeriod" />
           </div>
         </div>
 

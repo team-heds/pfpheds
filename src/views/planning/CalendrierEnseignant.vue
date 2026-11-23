@@ -7,7 +7,7 @@
     <div class="grid" style="row-gap:1rem">
       <div class="col-12 md:col-4">
         <Panel header="Enseignant">
-          <Dropdown class="w-full" :options="teachers" v-model="teacherId" optionLabel="name" optionValue="id" placeholder="Choisir un enseignant" />
+          <Dropdown ariaLabel="Choisir un enseignant" class="w-full" :options="teachers" v-model="teacherId" optionLabel="name" optionValue="id" placeholder="Choisir un enseignant" />
         </Panel>
       </div>
       <div class="col-12 md:col-8">

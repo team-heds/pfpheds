@@ -100,19 +100,19 @@
         </div>
         <div class="grid">
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="Tous les PFP" class="w-full" showClear />
+            <Dropdown ariaLabel="PFP" v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="Tous les PFP" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterYear" :options="years" placeholder="Toutes les années" class="w-full" showClear />
+            <Dropdown ariaLabel="Années" v-model="filterYear" :options="years" placeholder="Toutes les années" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterClasse" :options="classes" placeholder="Toutes les classes" class="w-full" showClear />
+            <Dropdown ariaLabel="Classes" v-model="filterClasse" :options="classes" placeholder="Toutes les classes" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
+            <Dropdown ariaLabel="Statuts" v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <InputText v-model="searchQuery" placeholder="Rechercher un étudiant..." class="w-full" />
+            <InputText aria-label="Rechercher un étudiant" v-model="searchQuery" placeholder="Rechercher un étudiant..." class="w-full" />
           </div>
           <div class="col-12 md:col-3">
             <small class="text-500">
@@ -297,14 +297,14 @@
               <Column header="Actions" :style="{ minWidth: '120px' }">
                 <template #body="slotProps">
                   <div class="flex gap-1">
-                    <Button 
+                    <Button aria-label="Voir les détails" 
                       v-if="slotProps.data.status !== 'Non voté'" 
                       icon="pi pi-eye" 
                       class="p-button-text p-button-sm" 
                       @click="viewDetails(slotProps.data)"
                       v-tooltip.top="'Voir les détails'"
                     />
-                    <Button 
+                    <Button :aria-label="'Relancer l\'étudiant'" 
                       v-if="slotProps.data.status === 'Non voté'" 
                       icon="pi pi-send" 
                       class="p-button-text p-button-sm" 

@@ -21,11 +21,11 @@
           <div class="flex align-items-center gap-3">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Recherche :</label>
-              <InputText v-model="filterName" placeholder="Nom" class="w-full md:w-10rem" />
+              <InputText aria-label="Recherche" v-model="filterName" placeholder="Nom" class="w-full md:w-10rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année :</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Année" 
                 v-model="filterYear"
                 :options="years" 
                 placeholder="Année" 
@@ -35,7 +35,7 @@
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe :</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Classe" 
                 v-model="filterClass" 
                 :options="classOptions" 
                 placeholder="Classe" 
@@ -45,7 +45,7 @@
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP (statut) :</label>
-              <Dropdown 
+              <Dropdown ariaLabel="PFP (statut)" 
                 v-model="filterStatusPfp" 
                 :options="pfpStatusOptions" 
                 optionLabel="label" 
@@ -55,7 +55,7 @@
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Statut :</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Statut" 
                 v-model="filterStatus" 
                 :options="statusOptions" 
                 optionLabel="label" 
@@ -97,7 +97,7 @@
           </template>
           <Column header="" style="width: 3rem;">
             <template #body="{ data }">
-              <button class="expand-toggle" type="button" @click="openPfpDialog(data)">
+              <button aria-label="Ajouter" class="expand-toggle" type="button" @click="openPfpDialog(data)">
                 <i class="pi pi-plus"></i>
               </button>
             </template>
@@ -108,7 +108,7 @@
           <Column header="PFP1">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown v-model="data.pfp1" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="onPfp1Change(data)" />
+                <Dropdown ariaLabel="Note" v-model="data.pfp1" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="onPfp1Change(data)" />
                 <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp1, data.pfp1_retake))">
                   {{ getPfpFinalStatus(data.pfp1, data.pfp1_retake) }}
                 </span>
@@ -118,7 +118,7 @@
           <Column v-if="showRetakePfp1" header="Rattrap. PFP1">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown
+                <Dropdown ariaLabel="Rattrapage"
                   v-if="getNoteStatusByValue(data.pfp1) === 'Échec'"
                   v-model="data.pfp1_retake"
                   :options="gradeOptions"
@@ -142,7 +142,7 @@
           <Column header="PFP2">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown v-model="data.pfp2" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="queueSave(data)" />
+                <Dropdown ariaLabel="Note" v-model="data.pfp2" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="queueSave(data)" />
                 <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp2, data.pfp2_retake))">
                   {{ getPfpFinalStatus(data.pfp2, data.pfp2_retake) }}
                 </span>
@@ -152,7 +152,7 @@
           <Column v-if="showRetakePfp2" header="Rattrap. PFP2">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown
+                <Dropdown ariaLabel="Rattrapage"
                   v-if="getNoteStatusByValue(data.pfp2) === 'Échec'"
                   v-model="data.pfp2_retake"
                   :options="gradeOptions"
@@ -176,7 +176,7 @@
           <Column header="PFP3">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown v-model="data.pfp3" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="queueSave(data)" />
+                <Dropdown ariaLabel="Note" v-model="data.pfp3" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="queueSave(data)" />
                 <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp3, data.pfp3_retake))">
                   {{ getPfpFinalStatus(data.pfp3, data.pfp3_retake) }}
                 </span>
@@ -186,7 +186,7 @@
           <Column v-if="showRetakePfp3" header="Rattrap. PFP3">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown
+                <Dropdown ariaLabel="Rattrapage"
                   v-if="getNoteStatusByValue(data.pfp3) === 'Échec'"
                   v-model="data.pfp3_retake"
                   :options="gradeOptions"
@@ -210,7 +210,7 @@
           <Column header="PFP4">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown v-model="data.pfp4" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="queueSave(data)" />
+                <Dropdown ariaLabel="Note" v-model="data.pfp4" :options="gradeOptions" optionLabel="label" optionValue="value" placeholder="Note" class="note-dropdown" @update:modelValue="queueSave(data)" />
                 <span class="status-badge status-compact" :class="statusClass(getPfpFinalStatus(data.pfp4, data.pfp4_retake))">
                   {{ getPfpFinalStatus(data.pfp4, data.pfp4_retake) }}
                 </span>
@@ -220,7 +220,7 @@
           <Column v-if="showRetakePfp4" header="Rattrap. PFP4">
             <template #body="{ data }">
               <div class="note-cell">
-                <Dropdown
+                <Dropdown ariaLabel="Rattrapage"
                   v-if="getNoteStatusByValue(data.pfp4) === 'Échec'"
                   v-model="data.pfp4_retake"
                   :options="gradeOptions"
@@ -283,7 +283,7 @@
             <div class="pfp-dialog-grid">
               <div v-for="pfp in pfpMeta" :key="pfp.key" :class="['pfp-dialog-row', { 'is-disabled': isPfpLocked(pfp.key, selectedStudent) }]">
                 <div class="pfp-label">{{ pfp.label }}</div>
-                <InputNumber
+                <InputNumber ariaLabel="Jours"
                   v-model="selectedStudent[pfpAbsenceKey(pfp.key)]"
                   :min="0"
                   :step="0.5"
@@ -292,7 +292,7 @@
                   class="pfp-absence"
                   @update:modelValue="queueSave(selectedStudent)"
                 />
-                <Textarea
+                <Textarea aria-label="Remarques"
                   v-model="selectedStudent[pfpRemarkKey(pfp.key)]"
                   :disabled="isPfpLocked(pfp.key, selectedStudent)"
                   placeholder="Remarques"

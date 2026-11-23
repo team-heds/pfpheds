@@ -385,7 +385,7 @@
         </div>
         <div class="field">
           <label for="base-branch">Branche de base</label>
-          <Dropdown 
+          <Dropdown ariaLabel="Branche de base" 
             id="base-branch"
             v-model="baseBranch" 
             :options="['prod', 'develop', 'main']"
@@ -1644,7 +1644,7 @@ function handleAvatarError(event) {
   height: 32px;
   border-radius: 50%;
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   display: flex;
   align-items: center;
   justify-content: center;

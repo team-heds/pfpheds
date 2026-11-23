@@ -61,7 +61,7 @@
             </div>
             <div class="quiz-field">
               <label for="quiz-theme">Thème</label>
-              <Dropdown
+              <Dropdown ariaLabel="Thème"
                 v-model="form.theme"
                 input-id="quiz-theme"
                 :options="themeSuggestions"
@@ -72,7 +72,7 @@
             </div>
             <div class="quiz-field">
               <label for="quiz-classes">Classes visées</label>
-              <MultiSelect
+              <MultiSelect ariaLabel="Classes visées"
                 v-model="form.target_classes"
                 input-id="quiz-classes"
                 :options="classOptions"
@@ -85,7 +85,7 @@
             </div>
             <div class="quiz-field">
               <label for="quiz-opens">Ouverture (facultatif)</label>
-              <Calendar
+              <Calendar ariaLabel="Ouverture (facultatif)"
                 v-model="form.opens_at"
                 input-id="quiz-opens"
                 show-time
@@ -97,7 +97,7 @@
             </div>
             <div class="quiz-field">
               <label for="quiz-closes">Fermeture (facultatif)</label>
-              <Calendar
+              <Calendar ariaLabel="Fermeture (facultatif)"
                 v-model="form.closes_at"
                 input-id="quiz-closes"
                 show-time

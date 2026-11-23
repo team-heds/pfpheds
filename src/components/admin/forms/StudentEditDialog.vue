@@ -72,7 +72,7 @@
         <!-- SAE (Cas Particulier) -->
         <div class="field col-12 md:col-6">
           <div class="flex align-items-center">
-            <Checkbox 
+            <Checkbox ariaLabel="SAE (Cas Particulier)" 
               id="sae" 
               v-model="formData.sae" 
               :binary="true"

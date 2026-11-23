@@ -8,7 +8,7 @@
       <!-- Toolbar -->
       <div class="toolbar">
         <Button label="Nouvelle Route" icon="pi pi-plus" @click="openCreateDialog" />
-        <InputText v-model="searchQuery" placeholder="Rechercher..." style="flex: 1; max-width: 400px" />
+        <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." style="flex: 1; max-width: 400px" />
         <Button label="Rafraîchir" icon="pi pi-refresh" @click="loadRoutes" :loading="loading" text />
       </div>
 
@@ -54,15 +54,15 @@
 
         <Column header="Actions" style="width: 180px">
           <template #body="{ data }">
-            <Button icon="pi pi-pencil" text @click="openEditDialog(data)" v-tooltip.top="'Éditer'" />
-            <Button icon="pi pi-copy" text @click="duplicateRoute(data)" v-tooltip.top="'Dupliquer'" />
-            <Button 
+            <Button aria-label="Éditer" icon="pi pi-pencil" text @click="openEditDialog(data)" v-tooltip.top="'Éditer'" />
+            <Button aria-label="Dupliquer" icon="pi pi-copy" text @click="duplicateRoute(data)" v-tooltip.top="'Dupliquer'" />
+            <Button :aria-label="data.is_active ? 'Désactiver' : 'Activer'" 
               :icon="data.is_active ? 'pi pi-eye-slash' : 'pi pi-eye'" 
               text 
               @click="toggleActive(data)" 
               v-tooltip.top="data.is_active ? 'Désactiver' : 'Activer'"
             />
-            <Button icon="pi pi-trash" text severity="danger" @click="confirmDelete(data)" v-tooltip.top="'Supprimer'" />
+            <Button aria-label="Supprimer" icon="pi pi-trash" text severity="danger" @click="confirmDelete(data)" v-tooltip.top="'Supprimer'" />
           </template>
         </Column>
       </DataTable>
@@ -79,46 +79,46 @@
           <!-- Path -->
           <div class="field">
             <label>Chemin (path) *</label>
-            <InputText v-model="formData.path" placeholder="/admin/example" />
+            <InputText aria-label="Chemin (path)" v-model="formData.path" placeholder="/admin/example" />
           </div>
 
           <!-- Name -->
           <div class="field">
             <label>Nom (unique) *</label>
-            <InputText v-model="formData.name" placeholder="ExampleView" />
+            <InputText aria-label="Nom (unique)" v-model="formData.name" placeholder="ExampleView" />
           </div>
 
           <!-- Component Path -->
           <div class="field col-12">
             <label>Composant Vue (chemin) *</label>
-            <InputText v-model="formData.component_path" placeholder="@/views/admin/ExampleView.vue" />
+            <InputText aria-label="Composant Vue (chemin)" v-model="formData.component_path" placeholder="@/views/admin/ExampleView.vue" />
             <small>Exemple: @/views/admin/DashboardView.vue</small>
           </div>
 
           <!-- Menu Section -->
           <div class="field">
             <label>Section Menu</label>
-            <Dropdown v-model="formData.menu_section" :options="menuSections" placeholder="Choisir..." editable />
+            <Dropdown ariaLabel="Section Menu" v-model="formData.menu_section" :options="menuSections" placeholder="Choisir..." editable />
             <small>Vous pouvez choisir ou saisir une nouvelle section</small>
           </div>
 
           <!-- Menu Label -->
           <div class="field">
             <label>Label Menu</label>
-            <InputText v-model="formData.menu_label" placeholder="Mon Dashboard" />
+            <InputText aria-label="Libellé du menu" v-model="formData.menu_label" placeholder="Mon Dashboard" />
           </div>
 
           <!-- Menu Icon -->
           <div class="field">
             <label>Icône Menu</label>
-            <InputText v-model="formData.menu_icon" placeholder="pi pi-home" />
+            <InputText aria-label="Icône Menu" v-model="formData.menu_icon" placeholder="pi pi-home" />
             <small>Icons PrimeIcons: pi pi-home, pi pi-user, etc.</small>
           </div>
 
           <!-- Menu Order -->
           <div class="field">
             <label>Ordre Menu</label>
-            <InputNumber v-model="formData.menu_order" :min="0" :max="9999" />
+            <InputNumber ariaLabel="Ordre Menu" v-model="formData.menu_order" :min="0" :max="9999" />
           </div>
 
           <!-- Requires Auth -->
@@ -132,7 +132,7 @@
           <!-- Permission (need) -->
           <div class="field col-12">
             <label>Permission(s) requise(s) (need) - JSON</label>
-            <Textarea v-model="formData.need_json" rows="3" placeholder='null ou "admin" ou ["admin", "editor"]' />
+            <Textarea aria-label="Permission(s) requise(s) (need) - JSON" v-model="formData.need_json" rows="3" placeholder='null ou "admin" ou ["admin", "editor"]' />
             <small>
               Format JSON: <code>null</code> (aucune), <code>"admin"</code> (une seule), ou <code>["admin", "editor"]</code> (plusieurs)
             </small>
@@ -157,7 +157,7 @@
           <!-- Description -->
           <div class="field col-12">
             <label>Description</label>
-            <Textarea v-model="formData.description" rows="2" placeholder="Description de la route..." />
+            <Textarea aria-label="Description" v-model="formData.description" rows="2" placeholder="Description de la route..." />
           </div>
         </div>
 
