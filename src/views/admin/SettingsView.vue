@@ -37,14 +37,6 @@
               <i class="pi pi-video"></i>
               <span>Vimeo</span>
             </div>
-            <div
-              class="menu-item"
-              :class="{ active: activeTab === 'videolibrary' }"
-              @click="activeTab = 'videolibrary'"
-            >
-              <i class="pi pi-play-circle"></i>
-              <span>Bibliothèque Vidéo</span>
-            </div>
           </div>
 
           <div class="menu-section">
@@ -64,14 +56,6 @@
             >
               <i class="pi pi-palette"></i>
               <span>Apparence</span>
-            </div>
-            <div
-              class="menu-item"
-              :class="{ active: activeTab === 'notifications' }"
-              @click="activeTab = 'notifications'"
-            >
-              <i class="pi pi-bell"></i>
-              <span>Notifications</span>
             </div>
           </div>
 
@@ -117,120 +101,19 @@
             <Divider />
             
             <div class="vimeo-config">
-              <div class="config-item">
-                <label>Identifiants Vimeo</label>
-                <div class="input-group">
-                  <InputText 
-                    v-model="vimeoToken" 
-                    type="password"
-                    placeholder="Configuré sur le serveur"
-                    disabled
-                    class="flex-1"
-                  />
-                  <Button 
-                    :icon="showToken ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                    @click="showToken = !showToken"
-                    text
-                    disabled
-                  />
-                </div>
-                <small class="text-secondary">Le token est protégé dans l'environnement du backend.</small>
-              </div>
+              <Message severity="info" :closable="false">
+                Les identifiants Vimeo sont configurés sur le serveur et ne se modifient pas ici.
+              </Message>
 
               <div class="mt-4">
-                <Button 
-                  label="Géré côté serveur"
-                  icon="pi pi-save"
-                  @click="saveVimeoToken"
-                  disabled
-                />
                 <Button 
                   label="Tester la connexion" 
                   icon="pi pi-check"
                   @click="testVimeoConnection"
                   outlined
-                  class="ml-2"
                 />
               </div>
 
-              <Message severity="info" :closable="false" class="mt-3">
-                Pour obtenir un token Vimeo, visitez : 
-                <a href="https://developer.vimeo.com/apps" target="_blank" class="link">developer.vimeo.com</a>
-              </Message>
-            </div>
-          </div>
-
-          <!-- Video Library Settings -->
-          <div v-else-if="activeTab === 'videolibrary'" class="settings-section">
-            <div class="section-header">
-              <div class="header-icon library">
-                <i class="pi pi-play-circle"></i>
-              </div>
-              <div>
-                <h3>Bibliothèque Vidéo</h3>
-                <p class="text-secondary">Configuration de l'affichage et du comportement</p>
-              </div>
-            </div>
-            <Divider />
-
-            <div class="library-settings">
-              <div class="setting-item">
-                <div class="setting-info">
-                  <strong>Vue par défaut</strong>
-                  <p>Choisir entre vue grille ou vue par modules</p>
-                </div>
-                <Dropdown 
-                  v-model="librarySettings.defaultView" 
-                  :options="viewOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  class="w-12rem"
-                />
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <strong>Vidéos par page</strong>
-                  <p>Nombre de vidéos affichées par page</p>
-                </div>
-                <Dropdown 
-                  v-model="librarySettings.itemsPerPage" 
-                  :options="[12, 24, 48, 96]"
-                  class="w-8rem"
-                />
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <strong>Auto-archivage depuis tickets</strong>
-                  <p>Archiver automatiquement les vidéos des tickets terminés</p>
-                </div>
-                <InputSwitch v-model="librarySettings.autoArchive" />
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <strong>Afficher les tags Vimeo</strong>
-                  <p>Afficher les tags sur les cards vidéo</p>
-                </div>
-                <InputSwitch v-model="librarySettings.showTags" />
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <strong>Lecture automatique</strong>
-                  <p>Lire automatiquement la vidéo au clic</p>
-                </div>
-                <InputSwitch v-model="librarySettings.autoPlay" />
-              </div>
-            </div>
-
-            <div class="mt-4">
-              <Button 
-                label="Sauvegarder les préférences" 
-                icon="pi pi-save"
-                @click="saveLibrarySettings"
-              />
             </div>
           </div>
 
@@ -254,59 +137,17 @@
                   <p>Mode clair ou mode sombre</p>
                 </div>
                 <Dropdown 
-                  v-model="appearanceSettings.theme" 
+                  :modelValue="theme.preference.value"
                   :options="themeOptions"
                   optionLabel="label"
                   optionValue="value"
-                  @change="applyTheme"
+                  @update:modelValue="theme.setPreference"
                   class="w-12rem"
                 />
               </div>
 
-              <div class="setting-item">
-                <div class="setting-info">
-                  <strong>Densité d'affichage</strong>
-                  <p>Espacement entre les éléments</p>
-                </div>
-                <Dropdown 
-                  v-model="appearanceSettings.density" 
-                  :options="densityOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  class="w-12rem"
-                />
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <strong>Taille de police</strong>
-                  <p>Ajuster la taille du texte</p>
-                </div>
-                <Dropdown 
-                  v-model="appearanceSettings.fontSize" 
-                  :options="fontSizeOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  class="w-12rem"
-                />
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <strong>Animations</strong>
-                  <p>Activer les animations de l'interface</p>
-                </div>
-                <InputSwitch v-model="appearanceSettings.animations" />
-              </div>
             </div>
 
-            <div class="mt-4">
-              <Button 
-                label="Appliquer les changements" 
-                icon="pi pi-check"
-                @click="saveAppearanceSettings"
-              />
-            </div>
           </div>
 
           <!-- Profile Settings -->
@@ -336,54 +177,6 @@
                   <Message severity="info" :closable="false" class="mt-3">
                     Les paramètres de profil sont gérés via Supabase Auth.
                   </Message>
-                </div>
-          </div>
-
-          <!-- Notifications Settings -->
-          <div v-else-if="activeTab === 'notifications'" class="settings-section">
-                <div class="section-header">
-                  <div class="header-icon notifications">
-                    <i class="pi pi-bell"></i>
-                  </div>
-                  <div>
-                    <h3>Notifications</h3>
-                    <p class="text-secondary">Gérez vos préférences de notification</p>
-                  </div>
-                </div>
-                <Divider />
-
-                <div class="notification-settings">
-                  <div class="setting-item">
-                    <div class="setting-info">
-                      <strong>Notifications de tickets</strong>
-                      <p>Recevoir des notifications quand un ticket est assigné</p>
-                    </div>
-                    <InputSwitch v-model="notifSettings.tickets" />
-                  </div>
-
-                  <div class="setting-item">
-                    <div class="setting-info">
-                      <strong>Notifications de modules</strong>
-                      <p>Recevoir des notifications pour les nouveaux modules</p>
-                    </div>
-                    <InputSwitch v-model="notifSettings.modules" />
-                  </div>
-
-                  <div class="setting-item">
-                    <div class="setting-info">
-                      <strong>Notifications email</strong>
-                      <p>Recevoir des notifications par email</p>
-                    </div>
-                    <InputSwitch v-model="notifSettings.email" />
-                  </div>
-                </div>
-
-                <div class="mt-4">
-                  <Button 
-                    label="Sauvegarder les préférences" 
-                    icon="pi pi-save"
-                    @click="saveNotificationSettings"
-                  />
                 </div>
           </div>
 
@@ -417,12 +210,6 @@
                   @click="exportModules"
                   outlined
                 />
-                <Button 
-                  label="Exporter les préférences" 
-                  icon="pi pi-download"
-                  @click="exportPreferences"
-                  outlined
-                />
               </div>
 
               <Divider />
@@ -443,20 +230,6 @@
                     <span class="stat-label">Modules</span>
                   </div>
                 </div>
-                <div class="stat-box">
-                  <i class="pi pi-tag"></i>
-                  <div>
-                    <span class="stat-value">{{ dataStats.tags }}</span>
-                    <span class="stat-label">Tags</span>
-                  </div>
-                </div>
-                <div class="stat-box">
-                  <i class="pi pi-ticket"></i>
-                  <div>
-                    <span class="stat-value">{{ dataStats.tickets }}</span>
-                    <span class="stat-label">Tickets</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -469,33 +242,15 @@
                   </div>
                   <div>
                     <h3>Paramètres avancés</h3>
-                    <p class="text-secondary">Options de développement et debugging</p>
+                    <p class="text-secondary">Maintenance locale de ce navigateur</p>
                   </div>
                 </div>
                 <Divider />
 
                 <div class="advanced-settings">
-                  <div class="setting-item">
-                    <div class="setting-info">
-                      <strong>Mode développement</strong>
-                      <p>Afficher les logs détaillés dans la console</p>
-                    </div>
-                    <InputSwitch v-model="advancedSettings.devMode" />
-                  </div>
-
-                  <div class="setting-item">
-                    <div class="setting-info">
-                      <strong>Cache local</strong>
-                      <p>Utiliser le cache pour améliorer les performances</p>
-                    </div>
-                    <InputSwitch v-model="advancedSettings.cache" />
-                  </div>
-
-                  <Divider />
-
-                  <div class="danger-zone">
-                    <h4>Zone de danger</h4>
-                    <p class="text-secondary mb-3">Actions irréversibles</p>
+<div class="danger-zone">
+                    <h4>Cache des statistiques</h4>
+                    <p class="text-secondary mb-3">Recharge les statistiques et retire les anciens réglages inutilisés. Votre session et vos dashboards sont conservés.</p>
                     
                     <div class="danger-actions">
                       <Button 
@@ -527,12 +282,12 @@ import GitHubSettings from '@/components/admin/GitHubSettings.vue'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import Divider from 'primevue/divider'
-import InputSwitch from 'primevue/inputswitch'
-import InputText from 'primevue/inputtext'
 import Dropdown from 'primevue/dropdown'
 import Toast from 'primevue/toast'
 import { supabase } from '@/supabase'
 import { testVimeoAuth } from '@/service/vimeoService'
+import { clearAdminDashboardStatsCache } from '@/service/adminDashboardStatsService'
+import { useTheme } from '@/theme/useTheme'
 
 const router = useRouter()
 const toast = useToast()
@@ -540,69 +295,18 @@ const toast = useToast()
 const activeTab = ref('github')
 const currentUser = ref(null)
 
-// Vimeo
-const vimeoToken = ref('')
-const showToken = ref(false)
-
-// Bibliothèque vidéo
-const librarySettings = ref({
-  defaultView: 'grid',
-  itemsPerPage: 24,
-  autoArchive: true,
-  showTags: true,
-  autoPlay: false
-})
-
-const viewOptions = [
-  { label: 'Vue grille', value: 'grid' },
-  { label: 'Vue par modules', value: 'modules' }
-]
-
-// Apparence
-const appearanceSettings = ref({
-  theme: 'light',
-  density: 'normal',
-  fontSize: 'medium',
-  animations: true
-})
+const theme = useTheme()
 
 const themeOptions = [
+  { label: 'Sombre', value: 'dim' },
   { label: 'Clair', value: 'light' },
-  { label: 'Sombre', value: 'dark' },
   { label: 'Auto (système)', value: 'auto' }
-]
-
-const densityOptions = [
-  { label: 'Compact', value: 'compact' },
-  { label: 'Normal', value: 'normal' },
-  { label: 'Confortable', value: 'comfortable' }
-]
-
-const fontSizeOptions = [
-  { label: 'Petit', value: 'small' },
-  { label: 'Moyen', value: 'medium' },
-  { label: 'Grand', value: 'large' }
 ]
 
 // Statistiques
 const dataStats = ref({
   videos: 0,
-  modules: 0,
-  tags: 0,
-  tickets: 0
-})
-
-// Paramètres de notifications
-const notifSettings = ref({
-  tickets: true,
-  modules: true,
-  email: false
-})
-
-// Paramètres avancés
-const advancedSettings = ref({
-  devMode: false,
-  cache: true
+  modules: 0
 })
 
 // Charger l'utilisateur actuel
@@ -610,45 +314,9 @@ onMounted(async () => {
   const { data: { user } } = await supabase.auth.getUser()
   currentUser.value = user
 
-  // Charger les préférences depuis localStorage
-  loadSettings()
-  
   // Charger les statistiques
   await loadDataStats()
 })
-
-// Charger les paramètres
-function loadSettings() {
-  // Vimeo
-  const savedToken = null
-  if (savedToken) {
-    vimeoToken.value = savedToken
-  }
-
-  // Bibliothèque
-  const savedLibrary = localStorage.getItem('library_settings')
-  if (savedLibrary) {
-    librarySettings.value = JSON.parse(savedLibrary)
-  }
-
-  // Apparence
-  const savedAppearance = localStorage.getItem('appearance_settings')
-  if (savedAppearance) {
-    appearanceSettings.value = JSON.parse(savedAppearance)
-  }
-
-  // Notifications
-  const savedNotif = localStorage.getItem('notification_settings')
-  if (savedNotif) {
-    notifSettings.value = JSON.parse(savedNotif)
-  }
-
-  // Avancé
-  const savedAdvanced = localStorage.getItem('advanced_settings')
-  if (savedAdvanced) {
-    advancedSettings.value = JSON.parse(savedAdvanced)
-  }
-}
 
 // Charger les statistiques
 async function loadDataStats() {
@@ -665,23 +333,9 @@ async function loadDataStats() {
     
     dataStats.value.videos = videoCount || 0
     dataStats.value.modules = moduleCount || 0
-    dataStats.value.tags = 0 // À calculer si nécessaire
-    dataStats.value.tickets = 0 // À calculer si nécessaire
   } catch (error) {
     console.error('Erreur chargement stats:', error)
   }
-}
-
-// === VIMEO ===
-function saveVimeoToken() {
-  // Vimeo credentials are configured server-side only.
-  
-  toast.add({
-    severity: 'success',
-    summary: 'Token sauvegardé',
-    detail: 'Le token Vimeo a été enregistré',
-    life: 3000
-  })
 }
 
 async function testVimeoConnection() {
@@ -703,51 +357,9 @@ async function testVimeoConnection() {
     toast.add({
       severity: 'error',
       summary: 'Échec de la connexion',
-      detail: 'Vérifiez votre token Vimeo',
+      detail: 'Vérifiez la configuration Vimeo du serveur',
       life: 4000
     })
-  }
-}
-
-// === BIBLIOTHÈQUE VIDÉO ===
-function saveLibrarySettings() {
-  localStorage.setItem('library_settings', JSON.stringify(librarySettings.value))
-  
-  toast.add({
-    severity: 'success',
-    summary: 'Paramètres sauvegardés',
-    detail: 'Vos préférences de bibliothèque ont été enregistrées',
-    life: 3000
-  })
-}
-
-// === APPARENCE ===
-function saveAppearanceSettings() {
-  localStorage.setItem('appearance_settings', JSON.stringify(appearanceSettings.value))
-  applyTheme()
-  
-  toast.add({
-    severity: 'success',
-    summary: 'Apparence mise à jour',
-    detail: 'Vos préférences d\'apparence ont été appliquées',
-    life: 3000
-  })
-}
-
-function applyTheme() {
-  const theme = appearanceSettings.value.theme
-  
-  if (theme === 'dark') {
-    document.documentElement.classList.add('dark-mode')
-  } else if (theme === 'light') {
-    document.documentElement.classList.remove('dark-mode')
-  } else if (theme === 'auto') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    if (prefersDark) {
-      document.documentElement.classList.add('dark-mode')
-    } else {
-      document.documentElement.classList.remove('dark-mode')
-    }
   }
 }
 
@@ -818,57 +430,16 @@ async function exportModules() {
   }
 }
 
-function exportPreferences() {
-  const prefs = {
-    library: librarySettings.value,
-    appearance: appearanceSettings.value,
-    notifications: notifSettings.value,
-    advanced: advancedSettings.value
-  }
-  
-  const json = JSON.stringify(prefs, null, 2)
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `preferences_${new Date().toISOString().split('T')[0]}.json`
-  a.click()
-  
-  toast.add({
-    severity: 'success',
-    summary: 'Export réussi',
-    detail: 'Préférences exportées',
-    life: 3000
-  })
-}
-
-// Sauvegarder les paramètres de notifications
-function saveNotificationSettings() {
-  localStorage.setItem('notification_settings', JSON.stringify(notifSettings.value))
-  
-  toast.add({
-    severity: 'success',
-    summary: 'Paramètres sauvegardés',
-    detail: 'Vos préférences de notification ont été enregistrées',
-    life: 3000
-  })
-}
-
 // Vider le cache
 function clearCache() {
-  const keysToKeep = ['notification_settings', 'advanced_settings']
-  const allKeys = Object.keys(localStorage)
-  
-  allKeys.forEach(key => {
-    if (!keysToKeep.includes(key)) {
-      localStorage.removeItem(key)
-    }
-  })
-  
+  clearAdminDashboardStatsCache()
+  ;['library_settings', 'appearance_settings', 'notification_settings', 'advanced_settings']
+    .forEach(key => localStorage.removeItem(key))
+
   toast.add({
     severity: 'success',
     summary: 'Cache vidé',
-    detail: 'Le cache local a été supprimé',
+    detail: 'Les statistiques seront rechargées. Votre session est conservée.',
     life: 3000
   })
 }

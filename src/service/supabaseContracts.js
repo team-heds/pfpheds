@@ -91,10 +91,10 @@ export const SUPABASE_SELECTS = Object.freeze({
   pfpStudents: 'user_id,email,display_name,forname,family_name,pfp_cohort',
   studentPhysioCriteria:
     'user_id,class,msq,sysint,neuroger,aigu,rehab,ambu,fr,de,sae,cas_particulier,canton',
-  dashboardPlaces: 'PlaceId,InstitutionId,NomPlace,fileurl,CreatedAt,UpdatedAt',
+  dashboardPlaces: 'PlaceId,InstitutionId,InstitutionName,NomPlace,fileurl,CreatedAt,UpdatedAt,PFP1A,PFP1B,PFP2,PFP3,PFP4',
   dashboardRecentPlaces: 'PlaceId,NomPlace,CreatedAt',
   dashboardVotes:
-    'id,status,pfp_type,pfp_validee,pfp_echec,pfp_arret,assigned_place_id,created_at,updated_at',
+    'id,user_id,year,status,pfp_type,pfp_validee,pfp_echec,pfp_arret,assigned_place_id,assigned_institution_name,created_at,updated_at',
   dashboardSessions: 'id,pfp_type,target_class,status,is_priority,opened_at,closed_at',
   dashboardInstitutions: 'InstitutionId,Canton'
 })

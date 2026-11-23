@@ -227,6 +227,10 @@
                       <div class="flex align-items-center gap-2">
                         <i :class="kpi.icon" :style="{ color: kpi.color }"></i>
                         <span class="font-semibold">{{ kpi.label }}</span>
+                        <Tag
+                          :value="alertStateLabel(kpi)"
+                          :severity="alertStateSeverity(kpi)"
+                        />
                       </div>
                       <div class="flex gap-1">
                         <Button
@@ -261,10 +265,6 @@
                       <div class="flex align-items-center justify-content-between text-sm">
                         <span class="text-600">Seuil:</span>
                         <span class="font-bold">{{ kpi.alert.threshold }}</span>
-                      </div>
-                      <div class="flex align-items-center justify-content-between text-sm">
-                        <span class="text-600">Notification:</span>
-                        <i :class="kpi.alert.notify ? 'pi pi-check text-green-500' : 'pi pi-times text-red-500'"></i>
                       </div>
                     </div>
                   </template>
@@ -504,6 +504,7 @@ import KpiAlertManager from '@/components/admin/widgets/KpiAlertManager.vue'
 import PeriodSelector from '@/components/admin/widgets/PeriodSelector.vue'
 import AdminDashboardFilters from '@/components/admin/widgets/AdminDashboardFilters.vue'
 import AlertsWidget from '@/components/admin/widgets/AlertsWidget.vue'
+import { evaluateKpiAlert } from '@/service/adminAlertsService'
 import PfpCohortKpiWidget from '@/components/admin/widgets/PfpCohortKpiWidget.vue'
 import TrackStatsWidget from '@/components/admin/widgets/TrackStatsWidget.vue'
 import TabView from 'primevue/tabview'
@@ -717,6 +718,18 @@ function handleComparison(data) {
     detail: `${data.currentPeriod} vs ${data.comparePeriod}`,
     life: 3000
   })
+}
+
+function alertStateLabel(kpi) {
+  const triggered = evaluateKpiAlert(kpi.alert, kpi)
+  if (triggered === null) return 'Donnée indisponible'
+  return triggered ? 'Déclenchée' : 'Normale'
+}
+
+function alertStateSeverity(kpi) {
+  const triggered = evaluateKpiAlert(kpi.alert, kpi)
+  if (triggered === null) return 'secondary'
+  return triggered ? 'danger' : 'success'
 }
 
 function editAlert(kpi) {

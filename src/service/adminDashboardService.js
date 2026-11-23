@@ -15,7 +15,7 @@
  */
 import { supabase } from '@/supabase'
 import { validateEmail, validateId } from '@/composables/useInputValidation'
-import { filterSITeacherProfiles } from '@/utils/userAudience'
+import { filterPhysioTeacherProfiles, filterSITeacherProfiles } from '@/utils/userAudience'
 
 /**
  * Récupère les stats globales par filière
@@ -44,13 +44,14 @@ export async function getGlobalStats() {
     if (siTeachersError) throw siTeachersError
     const siTeacherCount = filterSITeacherProfiles(siTeachers).length
 
-    // Enseignants PHY depuis user_profiles
+    // Enseignants PHY : le rôle principal fait foi, comme pour le backend.
     const { data: phyTeachers, error: phyTeachersError } = await supabase
       .from('user_profiles')
-      .select('user_id')
+      .select('user_id, role, permissions, is_active')
       .or('role.eq.EnseignantPhysio,permissions.cs.["EnseignantPhysio"]')
+      .eq('is_active', true)
     if (phyTeachersError) throw phyTeachersError
-    const phyTeacherCount = phyTeachers?.length || 0
+    const phyTeacherCount = filterPhysioTeacherProfiles(phyTeachers).length
 
     // Utilisateurs avec un rôle non-null
     const { data: usersWithRoles, error: usersWithRolesError } = await supabase

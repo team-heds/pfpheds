@@ -35,6 +35,7 @@ const inFlightRequests = new Map()
 const UI_METRIC_KEYS = Object.freeze({
   general: Object.freeze({
     users: 'users',
+    connectedUsers: 'usersConnected',
     roles: 'roles',
     permissions: 'permissions',
     routes: 'routes',
@@ -44,6 +45,7 @@ const UI_METRIC_KEYS = Object.freeze({
     institutions: 'institutions',
     places: 'places',
     pfpInProgress: 'pfpEnCours',
+    pfpValidationsPending: 'pfpValidationsPending',
   }),
   academic: Object.freeze({
     teachers: 'enseignants',
@@ -286,6 +288,7 @@ function comparisonLabel(comparison) {
     const prefix = percent > 0 ? '+' : ''
     return `${prefix}${percent}% vs période précédente`
   }
+  if (comparison?.error === 'FILTERED_HISTORY_UNAVAILABLE') return 'Non comparable avec ces filtres'
   return 'Historique indisponible'
 }
 

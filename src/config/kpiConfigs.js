@@ -11,7 +11,7 @@ export const kpiConfigurations = {
     {
       id: 'total_users',
       label: 'Utilisateurs Totaux',
-      subtitle: 'Évolution utilisateurs',
+      subtitle: 'Comptes activés',
       icon: 'pi pi-users',
       color: '#3b82f6',
       dataKey: 'users',
@@ -26,6 +26,21 @@ export const kpiConfigurations = {
       order: 1,
       visible: true,
       roles: ['admin', 'super.all'] // Qui peut voir ce KPI
+    },
+    {
+      id: 'connected_users',
+      label: 'Connectés (30 jours)',
+      subtitle: 'Comptes actifs connectés',
+      icon: 'pi pi-sign-in',
+      color: '#0ea5e9',
+      dataKey: 'usersConnected',
+      showChart: false,
+      animated: true,
+      clickable: false,
+      fetchFn: 'fetchGeneralKpis',
+      order: 1.5,
+      visible: true,
+      roles: ['admin', 'super.all']
     },
     {
       id: 'total_roles',
@@ -147,7 +162,7 @@ export const kpiConfigurations = {
     {
       id: 'pfp_ongoing',
       label: 'PFP en cours',
-      subtitle: 'Évolution stages',
+      subtitle: 'Année académique active',
       icon: 'pi pi-calendar',
       color: '#f59e0b',
       dataKey: 'pfpEnCours',
@@ -159,6 +174,22 @@ export const kpiConfigurations = {
       clickable: false,
       fetchFn: 'fetchPfpKpis',
       order: 4,
+      visible: true,
+      roles: ['admin', 'page1.access', 'EnseignantPhysio']
+    },
+    {
+      id: 'pfp_validations_pending',
+      label: 'Validations à saisir',
+      subtitle: 'PFP des années précédentes',
+      icon: 'pi pi-verified',
+      color: '#ef4444',
+      dataKey: 'pfpValidationsPending',
+      showChart: false,
+      animated: true,
+      clickable: true,
+      actionLabel: 'Saisir',
+      fetchFn: 'fetchPfpKpis',
+      order: 5,
       visible: true,
       roles: ['admin', 'page1.access', 'EnseignantPhysio']
     }
@@ -309,7 +340,7 @@ export const kpiConfigurations = {
     {
       id: 'users_active',
       label: 'Utilisateurs Actifs',
-      subtitle: 'Avec une activité XP sur la période',
+      subtitle: 'Action réelle, hors système et gamemasters',
       icon: 'pi pi-users',
       color: '#3b82f6',
       dataKey: 'usersActive',

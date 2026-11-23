@@ -171,10 +171,24 @@ function resolveDashboardPeriods(options = {}) {
   const currentStart = periodStart(localDate, key)
   const currentEnd = adjacentBoundary(currentStart, key, 1)
   const previousStart = adjacentBoundary(currentStart, key, -1)
+  const current = createPeriod(key, currentStart, currentEnd)
+  const fullPrevious = createPeriod(key, previousStart, currentStart)
 
+  // Sans date de référence explicite, la période courante est incomplète :
+  // on la compare au même temps écoulé de la période précédente.
+  const isLive = options.reference === undefined || options.reference === null || options.reference === ''
+  if (!isLive) return Object.freeze({ current, previous: fullPrevious })
+
+  const elapsedMs = reference.getTime() - new Date(current.start).getTime()
+  const previousStartMs = new Date(fullPrevious.start).getTime()
+  const previousEndMs = Math.min(previousStartMs + elapsedMs, new Date(fullPrevious.end).getTime())
   return Object.freeze({
-    current: createPeriod(key, currentStart, currentEnd),
-    previous: createPeriod(key, previousStart, currentStart)
+    current,
+    previous: Object.freeze({
+      ...fullPrevious,
+      end: new Date(previousEndMs).toISOString(),
+      toDate: previousEndMs < new Date(fullPrevious.end).getTime()
+    })
   })
 }
 

@@ -88,15 +88,6 @@
           />
         </div>
 
-        <!-- Notification -->
-        <div class="flex align-items-center justify-content-between">
-          <div>
-            <label class="font-semibold">Envoyer une notification</label>
-            <p class="text-600 text-sm m-0">Recevoir un email quand l'alerte se déclenche</p>
-          </div>
-          <InputSwitch v-model="alertConfig.notify" />
-        </div>
-
         <!-- Prévisualisation -->
         <Divider />
         
@@ -160,8 +151,7 @@ const alertConfig = ref({
   threshold: 0,
   condition: 'above',
   severity: 'warn',
-  customMessage: '',
-  notify: false
+  customMessage: ''
 })
 
 const alertTypes = [
@@ -284,8 +274,7 @@ watch(() => props.kpi, (kpi) => {
       threshold: 0,
       condition: 'above',
       severity: 'warn',
-      customMessage: '',
-      notify: false
+      customMessage: ''
     }
   }
 }, { immediate: true })

@@ -64,31 +64,31 @@ const periodOptions = [
     value: 'day',
     label: 'Jour',
     icon: 'pi pi-calendar',
-    description: 'Depuis hier'
+    description: 'Aujourd’hui'
   },
   {
     value: 'week',
     label: 'Semaine',
     icon: 'pi pi-calendar',
-    description: 'Depuis la semaine dernière'
+    description: 'Semaine en cours'
   },
   {
     value: 'month',
     label: 'Mois',
     icon: 'pi pi-calendar',
-    description: 'Depuis le mois dernier'
+    description: 'Mois en cours'
   },
   {
     value: 'quarter',
     label: 'Trimestre',
     icon: 'pi pi-chart-bar',
-    description: 'Depuis le trimestre dernier'
+    description: 'Trimestre en cours'
   },
   {
     value: 'year',
     label: 'Année',
     icon: 'pi pi-chart-line',
-    description: 'Depuis l\'année dernière'
+    description: 'Année civile en cours'
   }
 ]
 

@@ -46,6 +46,18 @@
         </div>
       </div>
 
+      <AdminDashboardFilters
+        :model-value="filters.filters.value"
+        :active-filters="filters.activeFilters.value"
+        :catalog="filters.catalog.value"
+        :loading="filters.loading.value"
+        :error="filters.error.value"
+        @apply="applyFilters"
+        @remove="removeFilter"
+        @reset="resetFilters"
+        @retry="loadFilterOptions"
+      />
+
       <!-- KPI Cards modulables -->
       <div class="kpi-grid mb-4">
         <KpiCard
@@ -118,6 +130,8 @@ import KpiCard from './widgets/KpiCard.vue'
 import Button from 'primevue/button'
 import ButtonGroup from 'primevue/buttongroup'
 import ProgressSpinner from 'primevue/progressspinner'
+import AdminDashboardFilters from './widgets/AdminDashboardFilters.vue'
+import { useAdminDashboardFilters } from '@/composables/useAdminDashboardFilters'
 import { useAdminDashboardStats } from '@/composables/useAdminDashboardStats'
 import { getKpisForRole } from '@/config/kpiConfigs'
 import { useRoleStore } from '@/stores/role'
@@ -126,7 +140,8 @@ const router = useRouter()
 
 const roleStore = useRoleStore()
 const period = ref('month')
-const stats = useAdminDashboardStats({ domains: ['academic'], period })
+const filters = useAdminDashboardFilters({ domains: ['academic'], period })
+const stats = useAdminDashboardStats({ domains: ['academic'], period, filters: filters.filters })
 const configurations = computed(() => getKpisForRole('academique', roleStore.perms || [], roleStore.isSuper))
 const kpisWithData = stats.mapKpis('academic', configurations)
 const { loading, refreshing } = stats
@@ -136,6 +151,20 @@ const changePeriod = async (nextPeriod) => {
   period.value = nextPeriod
   await refresh()
 }
+
+const applyFilters = async (nextFilters) => {
+  await filters.setFilters(nextFilters)
+  await refresh()
+}
+const removeFilter = async (key, value) => {
+  await filters.removeFilter(key, value)
+  await refresh()
+}
+const resetFilters = async () => {
+  await filters.resetFilters()
+  await refresh()
+}
+const loadFilterOptions = () => filters.loadOptions().catch(() => undefined)
 
 const navigateTo = (path) => {
   router.push(path)
@@ -154,7 +183,7 @@ const handleKpiAction = (kpi) => {
 }
 
 onMounted(async () => {
-  await loadKpis()
+  await Promise.all([loadFilterOptions(), loadKpis()])
 })
 </script>
 

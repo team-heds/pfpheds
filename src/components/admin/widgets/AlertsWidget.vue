@@ -16,13 +16,6 @@
             @click="refresh"
             :loading="loading"
           />
-          <Button
-            icon="pi pi-cog"
-            rounded
-            text
-            severity="secondary"
-            @click="showSettings = true"
-          />
         </div>
       </div>
     </template>
@@ -59,14 +52,14 @@
       <div v-if="alerts.length === 0" class="empty-state">
         <i class="pi pi-check-circle"></i>
         <p>Aucune alerte active</p>
-        <small>Vos KPI sont dans les normes</small>
+        <small>Aucun contrôle ne signale d’écart</small>
       </div>
 
       <div v-else class="alerts-list">
         <TransitionGroup name="alert-list">
           <div
             v-for="alert in paginatedAlerts"
-            :key="alert.timestamp"
+            :key="alert.key"
             class="alert-item"
             :class="`alert-${alert.severity}`"
           >
@@ -77,8 +70,8 @@
               <div class="alert-header">
                 <span class="alert-title">{{ alert.title }}</span>
                 <Tag
-                  :value="alert.severity.toUpperCase()"
-                  :severity="alert.severity"
+                  :value="alertSeverityLabel(alert.severity)"
+                  :severity="alertTagSeverity(alert.severity)"
                   size="small"
                 />
               </div>
@@ -89,8 +82,8 @@
                   {{ formatTime(alert.timestamp) }}
                 </small>
                 <Button
-                  v-if="alert.action"
-                  :label="alert.action"
+                  v-if="alert.link"
+                  :label="alert.actionLabel || 'Voir'"
                   size="small"
                   text
                   severity="primary"
@@ -100,6 +93,7 @@
             </div>
             <div class="alert-actions">
               <Button
+                v-if="canPersistResolution"
                 icon="pi pi-check"
                 rounded
                 text
@@ -144,27 +138,6 @@
   </Card>
 
   <!-- Dialog paramètres -->
-  <Dialog
-    v-model:visible="showSettings"
-    header="Paramètres des Alertes"
-    :modal="true"
-    :style="{ width: '500px' }"
-  >
-    <div class="settings-content">
-      <div class="setting-item">
-        <label>Notifications sonores</label>
-        <InputSwitch v-model="settings.soundEnabled" />
-      </div>
-      <div class="setting-item">
-        <label>Notifications push</label>
-        <InputSwitch v-model="settings.pushEnabled" />
-      </div>
-      <div class="setting-item">
-        <label>Afficher les alertes résolues</label>
-        <InputSwitch v-model="settings.showResolved" />
-      </div>
-    </div>
-  </Dialog>
 </template>
 
 <script setup>
@@ -176,9 +149,12 @@ import Button from 'primevue/button'
 import Divider from 'primevue/divider'
 import Tag from 'primevue/tag'
 import Paginator from 'primevue/paginator'
-import Dialog from 'primevue/dialog'
-import InputSwitch from 'primevue/inputswitch'
-import intelligentAlerts from '@/service/intelligentAlertsService'
+import {
+  alertSeverityLabel,
+  alertTagSeverity,
+  fetchAdminAlerts,
+  resolveAdminAlert
+} from '@/service/adminAlertsService'
 
 const props = defineProps({
   maxItems: {
@@ -208,13 +184,9 @@ const stats = ref({
 })
 const currentPage = ref(0)
 const itemsPerPage = ref(props.maxItems)
-const showSettings = ref(false)
-const settings = ref({
-  soundEnabled: true,
-  pushEnabled: false,
-  showResolved: false
-})
 const hasNewAlerts = ref(false)
+const canPersistResolution = ref(true)
+const dismissedKeys = ref(new Set())
 
 const activeAlertCount = computed(() => {
   return alerts.value.filter(a => !a.resolved).length
@@ -234,8 +206,8 @@ function getAlertIcon(type) {
   const icons = {
     critical: 'pi pi-times-circle',
     warning: 'pi pi-exclamation-triangle',
-    threshold: 'pi pi-chart-line',
-    trend: 'pi pi-arrow-down-right',
+    quality: 'pi pi-exclamation-triangle',
+    source: 'pi pi-times-circle',
     info: 'pi pi-info-circle'
   }
   return icons[type] || 'pi pi-bell'
@@ -252,24 +224,24 @@ function formatTime(timestamp) {
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
 }
 
+function applyAlerts(payload) {
+  const next = payload.alerts.filter(a => !a.resolved && !dismissedKeys.value.has(a.key))
+  const knownKeys = new Set(alerts.value.map(a => a.key))
+  if (alerts.value.length && next.some(a => !knownKeys.has(a.key))) {
+    hasNewAlerts.value = true
+    setTimeout(() => {
+      hasNewAlerts.value = false
+    }, 3000)
+  }
+  alerts.value = next
+  stats.value = payload.stats
+  canPersistResolution.value = payload.canPersistResolution !== false
+}
+
 async function refresh() {
   loading.value = true
   try {
-    const allAlerts = intelligentAlerts.getActiveAlerts()
-    
-    // Détecter nouvelles alertes
-    if (allAlerts.length > alerts.value.length) {
-      hasNewAlerts.value = true
-      if (settings.value.soundEnabled) {
-        playNotificationSound()
-      }
-      setTimeout(() => {
-        hasNewAlerts.value = false
-      }, 3000)
-    }
-    
-    alerts.value = allAlerts
-    stats.value = intelligentAlerts.getAlertStats()
+    applyAlerts(await fetchAdminAlerts())
   } catch (error) {
     console.error('Erreur chargement alertes:', error)
   } finally {
@@ -277,19 +249,21 @@ async function refresh() {
   }
 }
 
-function resolveAlert(alert) {
-  intelligentAlerts.resolveAlert(alert.timestamp)
-  alerts.value = alerts.value.filter(a => a.timestamp !== alert.timestamp)
-  stats.value = intelligentAlerts.getAlertStats()
+async function resolveAlert(alert) {
+  try {
+    applyAlerts(await resolveAdminAlert(alert.key))
+  } catch (error) {
+    console.error('Erreur résolution alerte:', error)
+  }
 }
 
 function dismissAlert(alert) {
-  alerts.value = alerts.value.filter(a => a.timestamp !== alert.timestamp)
+  dismissedKeys.value.add(alert.key)
+  alerts.value = alerts.value.filter(a => a.key !== alert.key)
 }
 
 function handleAction(alert) {
-  // Navigation ou action selon le type d'alerte
-  console.log('Action alerte:', alert.action)
+  if (alert.link) router.push(alert.link)
 }
 
 function onPageChange(event) {
@@ -298,13 +272,6 @@ function onPageChange(event) {
 
 function goToAlertsPage() {
   router.push('/admin/alerts')
-}
-
-function playNotificationSound() {
-  // Audio notification (optionnel)
-  const audio = new Audio('/notification.mp3')
-  audio.volume = 0.3
-  audio.play().catch(() => {})
 }
 
 // Auto-refresh
