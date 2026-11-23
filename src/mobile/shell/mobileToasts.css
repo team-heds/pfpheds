@@ -3,10 +3,21 @@
    d'une grande carte en haut à droite qui cache le titre de l'écran.
    Limité à html.m-app (application mobile active, sous 768 px). */
 
+html.m-app {
+  --m-tabbar-height: 60px;
+}
+
+/* Téléphone en paysage : la barre laisse la place au contenu. */
+@media (orientation: landscape) and (max-height: 500px) {
+  html.m-app {
+    --m-tabbar-height: 44px;
+  }
+}
+
 html.m-app .p-toast {
   top: auto !important;
   right: 12px !important;
-  bottom: calc(57px + env(safe-area-inset-bottom, 0px) + 8px) !important;
+  bottom: calc(var(--m-tabbar-height, 60px) + env(safe-area-inset-bottom, 0px) + 8px) !important;
   left: 12px !important;
   width: auto !important;
   max-width: none !important;

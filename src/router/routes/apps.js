@@ -9,11 +9,11 @@ const featureGuard = (feature) => () => (
 // Routes applications, outils, mobile & spéciales
 export default [
   // Applications & outils
-  { path: '/tasklist', component: () => import('@/views/apps/tasklist/Index.vue'), name: 'Index', meta: { requiresAuth: true, need: ['editor', 'admin'] } },
+  { path: '/tasklist', component: () => import('@/views/apps/tasklist/Index.vue'), name: 'Index', meta: { requiresAuth: true, title: 'Tâches', need: ['editor', 'admin'] } },
   { path: '/chat', component: () => import('@/views/apps/chat/IndexChat.vue'), name: 'IndexChat', meta: { requiresAuth: true } },
   { path: '/files', redirect: '/feed' },
   { path: '/mail', redirect: '/feed' },
-  { path: '/notes', component: () => import('@/views/apps/notes/NotesWorkspaceView.vue'), name: 'NotesWorkspaceView', meta: { requiresAuth: true } },
+  { path: '/notes', component: () => import('@/views/apps/notes/NotesWorkspaceView.vue'), name: 'NotesWorkspaceView', meta: { requiresAuth: true, title: 'Notes' } },
   // Scan d'un QR code de la plateforme (présence à un événement). Le lien du QR mène ici :
   // sans session, on passe par la connexion puis on revient valider le code.
   { path: '/scan', component: () => import('@/views/apps/scan/ScanCodeView.vue'), name: 'ScanCode', beforeEnter: featureGuard('eventCheckin'), meta: { requiresAuth: true, loginRedirect: true, mobileImmersive: true, title: 'Présences' } },
@@ -68,7 +68,7 @@ export default [
   { path: '/mot-du-jour', redirect: to => ({ path: '/mot-de-la-semaine', query: to.query, hash: to.hash }) },
   { path: '/ventriglisse3d', component: () => import('@/components/games/Ventriglisse3D.vue'), name: 'Ventriglisse3D', beforeEnter: featureGuard('ventriglisse'), meta: { requiresAuth: true } },
   { path: '/qr', component: () => import('@/components/ui/QrCodeGenerator.vue'), name: 'QRCodePage', meta: { requiresAuth: false } },
-  { path: '/outils', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },
+  { path: '/outils', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true, title: 'Outils' } },
   { path: '/outils/formations', component: () => import('@/views/apps/tools/AdminTrainingHubView.vue'), name: 'AdminTrainingHubFr', meta: { requiresAuth: true, need: ['admin'] } },
   { path: '/outils/formations/:slug', component: () => import('@/views/apps/tools/AdminTrainingDetailView.vue'), name: 'AdminTrainingDetailFr', meta: { requiresAuth: true, need: ['admin'] } },
   { path: '/chatbotsi', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotSI', meta: { requiresAuth: true, requiredRole: ['admin', 'chatbotSi'] } },
