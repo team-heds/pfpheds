@@ -9,7 +9,7 @@
         <Column field="code" header="Code" />
         <Column header="Actions">
           <template #body="{ data }">
-            <Button size="small" label="Éditer" icon="pi pi-pencil" @click="goEdit(data.id)" />
+            <Button v-if="canEditCalendar" size="small" label="Éditer" icon="pi pi-pencil" @click="goEdit(data.id)" />
           </template>
         </Column>
       </DataTable>
@@ -24,9 +24,13 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import { useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { supabase } from '@/supabase.js'
+import { useRoleStore } from '@/stores/role'
+import { CALENDAR_EDIT_NEED } from '@/config/calendarAccess'
 
+const roleStore = useRoleStore()
+const canEditCalendar = computed(() => roleStore.can([...CALENDAR_EDIT_NEED]))
 const router = useRouter()
 const goEdit = (id) => router.push(`/calendar/module/${id}/edit`)
 

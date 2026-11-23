@@ -60,7 +60,7 @@ describe('accueil du planning', () => {
     }
   })
 
-  it('réserve le lien d’administration aux administrateurs', () => {
-    expect(page).toContain("roleStore.can('admin')")
+  it('réserve le lien d’administration aux éditeurs du calendrier', () => {
+    expect(page).toContain('roleStore.can([...CALENDAR_EDIT_NEED])')
   })
 })
