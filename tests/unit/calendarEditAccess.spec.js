@@ -79,6 +79,16 @@ describe('accès aux écrans d’édition du calendrier', () => {
     expect(await visit(target)).toBe(target)
   })
 
+  it.each(EDIT_PATHS)('ouvre %s à un rôle de filière ADMIN', async (target) => {
+    signInAs(['EnseignantSoins', 'RMSoins', 'SI.ADMIN'])
+    expect(await visit(target)).toBe(target)
+  })
+
+  it.each(EDIT_PATHS)('refuse %s à un rôle de filière enseignant', async (target) => {
+    signInAs(['EnseignantSoins', 'SI.TEACHER'])
+    expect(await visit(target)).toBe('/access')
+  })
+
   it.each(READ_PATHS)('laisse %s en lecture sans connexion', async (target) => {
     signInAs(null)
     expect(await visit(target)).toBe(target)
