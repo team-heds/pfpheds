@@ -19,7 +19,7 @@
       <OfflineScreen v-if="startupOffline" />
       <MobileAppShell v-else-if="mobileAppActive" />
       <router-view v-else />
-      <VersionningComponent v-if="!isImmersiveRoute && !startupOffline" />
+      <VersionningComponent v-if="!isImmersiveRoute && !startupOffline && !mobileAppActive" />
       <PwaInstallPrompt v-if="installPromptAllowed" />
       <OfflineBanner v-if="!startupOffline" />
       <PwaUpdatePrompt />
@@ -62,6 +62,8 @@ import { runtimeFeatures } from '@/config/runtimeFeatures';
 import gamificationIntegration from '@/service/gamificationIntegration';
 import { recordDailyVisit } from '@/utils/dailyVisit';
 import { isInstallPromptAllowed } from '@/utils/pwaInstall';
+import { installToastAnnouncements } from '@/utils/announcementQueue';
+import ToastEventBus from 'primevue/toasteventbus';
 import { installStandaloneViewportFix } from '@/mobile/shell/standaloneViewport';
 
 export default {
@@ -164,6 +166,7 @@ export default {
   mounted() {
     // iPhone, application installée : hauteur de l'écran entier (voir standaloneViewport.js).
     this.removeStandaloneViewportFix = installStandaloneViewportFix();
+    this.removeToastAnnouncements = installToastAnnouncements(ToastEventBus);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     // Simuler un chargement de données (par exemple, lors du démarrage de l'application)
     setTimeout(() => {
@@ -175,6 +178,7 @@ export default {
   },
   beforeUnmount() {
     this.removeStandaloneViewportFix?.();
+    this.removeToastAnnouncements?.();
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     // 🛑 Arrêter proprement la vérification à la fermeture de l'app
     if (this.expirationCheckInterval) {

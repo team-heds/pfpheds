@@ -147,6 +147,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
       },
       manifest: {
+        id: '/',
         name: 'HEdS',
         short_name: 'HEdS',
         description: 'Plateforme de formation pratique de la Haute Ecole de Santé : fil d’actualité, stages, documents et progression.',
@@ -157,6 +158,11 @@ export default defineConfig({
         // Android : l'application installée reste à la verticale.
         orientation: 'portrait',
         start_url: '.',
+        shortcuts: [
+          { name: 'Fil d’actualité', short_name: 'Fil', url: '/feed', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
+          { name: 'Institutions', short_name: 'Institutions', url: '/institution', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
+          { name: 'Recherche', short_name: 'Recherche', url: '/mobile-search', icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
+        ],
         // Chaque fichier a réellement la taille annoncée : Android refuse
         // l'installation quand une icône ne correspond pas à sa déclaration.
         icons: [
