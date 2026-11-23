@@ -147,7 +147,8 @@ function createFakeClient(options = {}) {
     return query
   }
 
-  const rpc = (name, args) => {
+  const rpc = (name, args, rpcOptions) => {
+    if (name === 'admin_recent_sign_in_user_ids') assert.equal(rpcOptions?.get, true)
     const sinceMs = Date.parse(args.p_since)
     const signIns = options.signIns || [
       { user_id: 'student-1', last_sign_in_at: '2026-08-20T07:00:00Z' },
