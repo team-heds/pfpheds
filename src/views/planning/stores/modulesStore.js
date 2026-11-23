@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '@/supabase.js'
 
+// Ces écrans sont publics : les visiteurs n'ont pas accès aux noms et e-mails des responsables.
+const PUBLIC_MODULE_COLUMNS = 'id,code,short_code,number,title,color,description,year,credits,heures_contact,track_id,created_at,updated_at'
+
 export const useModulesStore = defineStore('modulesStore', () => {
   const items = ref([])
   const loading = ref(false)
@@ -12,7 +15,7 @@ export const useModulesStore = defineStore('modulesStore', () => {
     error.value = null
     const { data, error: err } = await supabase
       .from('modules')
-      .select('*')
+      .select(PUBLIC_MODULE_COLUMNS)
       .order('name', { ascending: true })
     if (err) error.value = err.message
     else items.value = data || []
@@ -23,7 +26,7 @@ export const useModulesStore = defineStore('modulesStore', () => {
   const getById = async (id) => {
     const { data, error: err } = await supabase
       .from('modules')
-      .select('*')
+      .select(PUBLIC_MODULE_COLUMNS)
       .eq('id', id)
       .single()
     if (err) throw err

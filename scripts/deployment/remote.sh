@@ -20,6 +20,20 @@ prune_releases() {
   done <<< "$old"
   echo "Anciennes sauvegardes retirées : $(wc -l <<< "$old" | tr -d ' ') (les $keep plus récentes sont gardées)."
 }
+# Retire les anciens fichiers de build : ils restent sinon publics indéfiniment. Les plus
+# récents restent disponibles pour les navigateurs qui ont encore un ancien index.html.
+keep_asset_days=30
+prune_stale_assets() {
+  local assets="$1/assets" fresh="$2/assets" days="$3" stale
+  sudo test -d "$assets" && sudo test -d "$fresh" || return 0
+  stale=$(LC_ALL=C comm -23 \
+    <(sudo find "$assets" -maxdepth 1 -type f -mtime +"$days" | sed 's#.*/##' | LC_ALL=C sort) \
+    <(sudo find "$fresh" -maxdepth 1 -type f | sed 's#.*/##' | LC_ALL=C sort) \
+    | grep -E '^[A-Za-z0-9_.-]+-[A-Za-z0-9_-]{8}\.(js|css)$' || true)
+  [[ -n "$stale" ]] || return 0
+  sed "s#^#$assets/#" <<< "$stale" | tr '\n' '\0' | sudo xargs -0 rm -f --
+  echo "Anciens fichiers de build retirés : $(wc -l <<< "$stale" | tr -d ' ') (plus de $days jours)."
+}
 [[ "$(hostname)" == ov-7a3a52 ]] || { echo 'VPS inattendu'; exit 1; }
 sudo -n true
 test -d "$app"
@@ -89,6 +103,8 @@ else
 fi
 sudo docker exec "$caddy" caddy reload --config /etc/caddy/Caddyfile
 sudo docker ps --format 'table {{.Names}}\t{{.Status}}'
+# Après la publication : un échec du ménage ne doit pas faire échouer un site déjà en ligne.
+prune_stale_assets "$app" "$source_dir/frontend" "$keep_asset_days" || echo 'Ménage des anciens fichiers à reprendre.'
 sudo rm -rf "$source_dir"
 # Seulement après une publication réussie : un échec garde toutes les sauvegardes.
 prune_releases "$releases" "$keep_releases"
