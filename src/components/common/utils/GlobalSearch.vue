@@ -811,7 +811,7 @@ onUnmounted(() => {
   align-items: center;
   padding: 2px 8px;
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border-radius: 12px;
   font-size: 11px;
   font-weight: 600;

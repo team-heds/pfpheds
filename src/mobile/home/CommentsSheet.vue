@@ -188,7 +188,7 @@ async function onDelete(comment) {
 }
 /* Actions des commentaires (Répondre, Supprimer) : cible tactile agrandie. */
 .m-comments__list :deep(.comment-action) {
-  min-height: 32px;
+  min-height: 44px;
   padding-block: 6px;
 }
 .m-comments__composer {
@@ -205,8 +205,8 @@ async function onDelete(comment) {
   color: var(--m-muted);
 }
 .m-icon-button--small {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
 }
 .m-field {
   display: flex;

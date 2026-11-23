@@ -467,7 +467,7 @@ onMounted(async () => {
 .filter-buttons .p-button.active,
 .view-toggle .p-button.active {
   background-color: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border-color: var(--primary-color);
 }
 

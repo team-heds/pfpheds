@@ -283,7 +283,7 @@ onMounted(() => load())
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0 10px 0 14px;
   border: 1px solid var(--m-accent);
   border-radius: 99px;

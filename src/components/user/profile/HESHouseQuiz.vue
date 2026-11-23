@@ -734,7 +734,7 @@ onMounted(async () => {
 
 .next-button {
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border: none;
   padding: 1rem 2rem;
   border-radius: 25px;

@@ -270,7 +270,7 @@ function getStatusSeverity(status) {
 
 .module-tag {
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
   font-size: 0.85rem;

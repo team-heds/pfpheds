@@ -1710,7 +1710,7 @@ async function exportMyCoursesExcel() {
   min-width: 60px;
   padding: 0.5rem;
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border-radius: 0.5rem;
 }
 

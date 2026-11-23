@@ -506,7 +506,7 @@ onMounted(async () => {
 :deep(.fc-button) {
   background: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
-  color: white !important;
+  color: var(--app-color-on-brand) !important;
   text-transform: capitalize !important;
   padding: 0.5rem 1rem !important;
   border-radius: 8px !important;

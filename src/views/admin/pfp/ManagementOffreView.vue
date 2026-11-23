@@ -141,16 +141,17 @@
           class="p-datatable-sm"
         >
           <template #header>
-            <div class="flex justify-content-between align-items-center">
+            <div class="flex flex-wrap justify-content-between align-items-center gap-3">
               <span class="text-xl text-900 font-bold">Liste des Places de Formation</span>
-              <div class="flex gap-2 align-items-center">
+              <div class="flex flex-wrap gap-2 align-items-center">
                 <div class="flex align-items-center gap-2">
                   <span class="text-600">Année</span>
-                  <Dropdown ariaLabel="Année" :options="years" optionLabel="label" optionValue="value" v-model="selectedYear" class="w-9rem" @change="refreshPlaces" />
+                  <Dropdown ariaLabel="Année" :options="years" optionLabel="label" optionValue="value" v-model="selectedYear" class="w-10rem" @change="refreshPlaces" />
                 </div>
                 <Button
                   icon="pi pi-copy"
                   label="Reprendre N-1 (propositions)"
+                  class="white-space-nowrap flex-shrink-0"
                   outlined
                   :loading="isCopyingPreviousYear"
                   @click="copyPreviousYearPropositions"
@@ -158,6 +159,7 @@
                 <Button
                   icon="pi pi-copy"
                   label="Reprendre N-1 (offres)"
+                  class="white-space-nowrap flex-shrink-0"
                   outlined
                   severity="success"
                   :loading="isCopyingPreviousYearOffers"

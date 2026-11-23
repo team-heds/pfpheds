@@ -579,7 +579,7 @@ onBeforeUnmount(() => {
 
 .permission-tag {
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   padding: 0.25rem 0.75rem;
   border-radius: 1rem;
   font-size: 0.9rem;
@@ -689,7 +689,7 @@ onBeforeUnmount(() => {
 
 .btn-primary {
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
 }
 
 .btn-primary:hover:not(:disabled) {
