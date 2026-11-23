@@ -2,8 +2,10 @@
 /* eslint-disable no-undef */
 import { precacheAndRoute, cleanupOutdatedCaches, matchPrecache } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
-import { NetworkFirst, NetworkOnly } from 'workbox-strategies'
+import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies'
+import { ExpirationPlugin } from 'workbox-expiration'
 import { createNavigationHandler } from '@/utils/navigationFallback'
+import { cacheableAssetResponse, isBuildAsset } from '@/utils/assetCache'
 
 // ── Workbox Precache ──
 // self.__WB_MANIFEST is injected by VitePWA injectManifest. Its revisions
@@ -44,9 +46,24 @@ registerRoute(
   new NetworkOnly()
 )
 
-// Only HTML navigations use a runtime cache. Versioned build assets are
-// already handled by the precache manifest, avoiding mixed application
-// bundles after a deployment. Sans réseau, une page jamais visitée reçoit la
+// Les écrans hors de la coque sont gardés à leur première visite. Leur nom contient
+// une empreinte du contenu : une version déployée ne peut pas en remplacer une autre.
+registerRoute(
+  ({ url }) => isBuildAsset(url, self.location.origin),
+  new CacheFirst({
+    cacheName: 'app-assets-v1',
+    plugins: [
+      { cacheWillUpdate: async ({ response }) => cacheableAssetResponse(response) },
+      new ExpirationPlugin({
+        maxEntries: 150,
+        maxAgeSeconds: 30 * 24 * 60 * 60,
+        purgeOnQuotaError: true,
+      }),
+    ],
+  })
+)
+
+// Les navigations HTML ont leur propre cache. Sans réseau, une page jamais visitée reçoit la
 // coque précachée : c'est l'application qui affiche alors l'écran « Hors ligne ».
 registerRoute(
   ({ request, url }) => request.mode === 'navigate' && url.origin === self.location.origin,
