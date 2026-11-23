@@ -201,11 +201,15 @@ async function readOptions(client, table, columns, mapper) {
   return uniqueOptions((data || []).map(mapper))
 }
 
-async function readAllRows(client, table, columns) {
+async function readAllRows(client, table, columns, orderColumn) {
   const pageSize = 1000
   const rows = []
   for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await client.from(table).select(columns).range(offset, offset + pageSize - 1)
+    const { data, error } = await client
+      .from(table)
+      .select(columns)
+      .order(orderColumn, { ascending: true })
+      .range(offset, offset + pageSize - 1)
     if (error) {
       const wrapped = new Error(`Impossible de lire ${table}.`)
       wrapped.code = error.code || 'UPSTREAM_QUERY_FAILED'
@@ -228,7 +232,7 @@ async function loadDashboardFilterOptions(client, domains) {
       ),
       readOptions(client, 'roles', 'slug,label', (row) => option(row.slug, row.label || row.slug)),
       readOptions(client, 'classes', 'code,name', (row) => option(normalizeClassCode(row.code), row.code || row.name)),
-      readAllRows(client, 'user_profiles', 'classe,permissions')
+      readAllRows(client, 'user_profiles', 'classe,permissions', 'user_id')
     ])
     const classes = uniqueOptions([
       ...catalogClasses,

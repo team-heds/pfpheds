@@ -364,6 +364,11 @@ test('active users pagination is not capped by the PostgREST default page size',
 
   assert.equal(response.domains.gamification.metrics.activeUsers.value, 1005)
   assert.ok(queries.some((query) => query.table === 'xp_history' && query.range?.[0] === 1000))
+  assert.ok(
+    queries
+      .filter((query) => query.table === 'xp_history' && query.range)
+      .every((query) => query.order?.[0] === 'id')
+  )
   assert.ok(queries.some((query) => query.table === 'user_badges' && query.columns === 'badge_id'))
 })
 
