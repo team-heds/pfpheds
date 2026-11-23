@@ -83,12 +83,23 @@ async function selectRows(client, table, columns, configure = (query) => query) 
   return data || []
 }
 
+// Sans ordre total, PostgreSQL peut répéter ou sauter des lignes d'une page à l'autre.
+const PAGINATION_KEYS = Object.freeze({
+  admin_kpi_snapshots: ['domain', 'metric'],
+  places: ['PlaceId'],
+  user_profiles: ['user_id'],
+  xp_history: ['id']
+})
+
 async function selectAllRows(client, table, columns, configure = (query) => query) {
   const pageSize = 1000
   const rows = []
+  const keys = PAGINATION_KEYS[table] || []
   for (let offset = 0; ; offset += pageSize) {
     const page = await selectRows(client, table, columns, (query) =>
-      configure(query).range(offset, offset + pageSize - 1)
+      keys
+        .reduce((ordered, key) => ordered.order(key, { ascending: true }), configure(query))
+        .range(offset, offset + pageSize - 1)
     )
     rows.push(...page)
     if (page.length < pageSize) return rows
