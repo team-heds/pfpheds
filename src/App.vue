@@ -15,17 +15,19 @@
       <ConfirmDialog />
       <!-- Téléphone, connecté : application mobile (coque et onglets).
            Sinon : les pages habituelles, inchangées. -->
-      <MobileAppShell v-if="mobileAppActive" />
+      <!-- Démarrage sans réseau : un seul écran, sans page vide derrière. -->
+      <OfflineScreen v-if="startupOffline" />
+      <MobileAppShell v-else-if="mobileAppActive" />
       <router-view v-else />
-      <VersionningComponent v-if="!isImmersiveRoute" />
+      <VersionningComponent v-if="!isImmersiveRoute && !startupOffline && !mobileAppActive" />
       <PwaInstallPrompt v-if="installPromptAllowed" />
-      <OfflineBanner />
+      <OfflineBanner v-if="!startupOffline" />
       <PwaUpdatePrompt />
       <!-- Intégration du widget ConvAI -->
       <!-- <ConvaiWidget /> -->
       <!-- Centre de notifications gamification -->
       <GamificationNotification
-        v-if="gamificationUserJourneyEnabled && gamificationUserId"
+        v-if="gamificationUserJourneyEnabled && gamificationUserId && !startupOffline"
         :user-id="gamificationUserId"
         :realtime-enabled="realtimeEnabled"
       />
@@ -48,6 +50,8 @@ const MobileAppShell = defineAsyncComponent(() => import('@/mobile/shell/MobileA
 import { useMobileViewport } from '@/mobile/shell/useMobileViewport';
 import PwaInstallPrompt from '@/components/common/utils/PwaInstallPrompt.vue';
 import OfflineBanner from '@/components/common/utils/OfflineBanner.vue';
+import OfflineScreen from '@/components/common/utils/OfflineScreen.vue';
+import { startupOffline } from '@/service/startupConnectivity';
 import PwaUpdatePrompt from '@/components/common/utils/PwaUpdatePrompt.vue';
 import GamificationNotification from '@/components/gamification/notifications/GamificationNotification.vue';
 import questExpirationService from '@/service/questExpirationService';
@@ -58,6 +62,8 @@ import { runtimeFeatures } from '@/config/runtimeFeatures';
 import gamificationIntegration from '@/service/gamificationIntegration';
 import { recordDailyVisit } from '@/utils/dailyVisit';
 import { isInstallPromptAllowed } from '@/utils/pwaInstall';
+import { installToastAnnouncements } from '@/utils/announcementQueue';
+import ToastEventBus from 'primevue/toasteventbus';
 import { installStandaloneViewportFix } from '@/mobile/shell/standaloneViewport';
 
 export default {
@@ -70,11 +76,12 @@ export default {
     MobileAppShell,
     PwaInstallPrompt,
     OfflineBanner,
+    OfflineScreen,
     PwaUpdatePrompt,
     GamificationNotification,
   },
   setup() {
-    return { isMobileViewport: useMobileViewport() };
+    return { isMobileViewport: useMobileViewport(), startupOffline };
   },
   data() {
     return {
@@ -106,7 +113,7 @@ export default {
       return this.$route.meta?.immersive === true;
     },
     installPromptAllowed() {
-      return isInstallPromptAllowed(this.gamificationUserId, this.$route.meta);
+      return !this.startupOffline && isInstallPromptAllowed(this.gamificationUserId, this.$route.meta);
     },
     showHeaderIconsMobile() {
       const routeName = this.$route.name;
@@ -159,6 +166,7 @@ export default {
   mounted() {
     // iPhone, application installée : hauteur de l'écran entier (voir standaloneViewport.js).
     this.removeStandaloneViewportFix = installStandaloneViewportFix();
+    this.removeToastAnnouncements = installToastAnnouncements(ToastEventBus);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     // Simuler un chargement de données (par exemple, lors du démarrage de l'application)
     setTimeout(() => {
@@ -170,6 +178,7 @@ export default {
   },
   beforeUnmount() {
     this.removeStandaloneViewportFix?.();
+    this.removeToastAnnouncements?.();
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     // 🛑 Arrêter proprement la vérification à la fermeture de l'app
     if (this.expirationCheckInterval) {

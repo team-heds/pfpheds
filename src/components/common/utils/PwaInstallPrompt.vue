@@ -1,6 +1,6 @@
 <template>
   <transition name="slide-up">
-    <aside v-if="showPrompt" class="pwa-install-prompt" aria-label="Installer l’application HEdS">
+    <aside v-if="showPrompt && (forceVisible || isMyTurn)" class="pwa-install-prompt" aria-label="Installer l’application HEdS">
       <div class="pwa-install-content" :class="{ 'pwa-install-content--guide': iosGuide }">
         <img :src="hedsIcon" alt="" class="pwa-logo" />
         <span v-if="iosGuide" class="pwa-text">
@@ -19,9 +19,10 @@
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount, onMounted, watch } from 'vue';
+import { computed, ref, onBeforeUnmount, onMounted, watch } from 'vue';
 import hedsIcon from '@/assets/images/hespicto.png'
 import { isIosDevice, isStandaloneDisplay, markInstallPromptDismissed, wasInstallPromptDismissed } from '@/utils/pwaInstall'
+import { activeAnnouncement, hideAnnouncement, showAnnouncement } from '@/utils/announcementQueue'
 
 const props = defineProps({
   forceVisible: { type: Boolean, default: false },
@@ -29,6 +30,8 @@ const props = defineProps({
 })
 const emit = defineEmits(['install', 'dismiss'])
 const showPrompt = ref(props.forceVisible);
+const isMyTurn = computed(() => activeAnnouncement.value === 'install');
+watch(showPrompt, (visible) => (visible ? showAnnouncement('install') : hideAnnouncement('install')), { immediate: true });
 // iOS ne propose pas d'installation en un geste : on explique le chemin par le menu Partager.
 const iosGuide = ref(false);
 let deferredPrompt = null;
@@ -55,6 +58,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  hideAnnouncement('install');
   window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
   window.removeEventListener('appinstalled', handleInstalled);
 })

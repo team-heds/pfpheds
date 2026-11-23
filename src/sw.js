@@ -1,8 +1,12 @@
 /// <reference lib="webworker" />
 /* eslint-disable no-undef */
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
+import { precacheAndRoute, cleanupOutdatedCaches, matchPrecache } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
-import { NetworkFirst, NetworkOnly } from 'workbox-strategies'
+import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies'
+import { ExpirationPlugin } from 'workbox-expiration'
+import { createNavigationHandler } from '@/utils/navigationFallback'
+import { openNotificationTarget } from '@/utils/notificationClick'
+import { cacheableAssetResponse, isBuildAsset } from '@/utils/assetCache'
 
 // ── Workbox Precache ──
 // self.__WB_MANIFEST is injected by VitePWA injectManifest. Its revisions
@@ -43,14 +47,33 @@ registerRoute(
   new NetworkOnly()
 )
 
-// Only HTML navigations use a runtime cache. Versioned build assets are
-// already handled by the precache manifest, avoiding mixed application
-// bundles after a deployment.
+// Les écrans hors de la coque sont gardés à leur première visite. Leur nom contient
+// une empreinte du contenu : une version déployée ne peut pas en remplacer une autre.
+registerRoute(
+  ({ url }) => isBuildAsset(url, self.location.origin),
+  new CacheFirst({
+    cacheName: 'app-assets-v1',
+    plugins: [
+      { cacheWillUpdate: async ({ response }) => cacheableAssetResponse(response) },
+      new ExpirationPlugin({
+        maxEntries: 150,
+        maxAgeSeconds: 30 * 24 * 60 * 60,
+        purgeOnQuotaError: true,
+      }),
+    ],
+  })
+)
+
+// Les navigations HTML ont leur propre cache. Sans réseau, une page jamais visitée reçoit la
+// coque précachée : c'est l'application qui affiche alors l'écran « Hors ligne ».
 registerRoute(
   ({ request, url }) => request.mode === 'navigate' && url.origin === self.location.origin,
-  new NetworkFirst({
-    cacheName: NAVIGATION_CACHE,
-    networkTimeoutSeconds: 5,
+  createNavigationHandler({
+    strategy: new NetworkFirst({
+      cacheName: NAVIGATION_CACHE,
+      networkTimeoutSeconds: 5,
+    }),
+    matchShell: () => matchPrecache('/index.html'),
   })
 )
 
@@ -80,7 +103,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: payload.body || '',
     icon: '/assets/images/hespicto.png',
-    badge: '/assets/images/hespicto.png',
+    badge: '/icons/notification-badge.png',
     data: { url: payload.url || '/' },
     actions: payload.actions || []
   }
@@ -91,18 +114,9 @@ self.addEventListener('push', (event) => {
 // ── Notification Click ──
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  // Seuls les liens internes au site sont ouverts (protection contre l'hameçonnage).
-  let url = '/'
-  try {
-    const parsed = new URL(event.notification.data?.url || '/', self.location.origin)
-    if (parsed.origin === self.location.origin) url = parsed.pathname + parsed.search + parsed.hash
-  } catch (e) {
-    url = '/'
-  }
-  event.waitUntil((async () => {
-    const all = await clients.matchAll({ type: 'window', includeUncontrolled: true })
-    const target = all.find(c => new URL(c.url).pathname === new URL(url, self.location.origin).pathname)
-    if (target) return target.focus()
-    return clients.openWindow(url)
-  })())
+  event.waitUntil(openNotificationTarget({
+    rawUrl: event.notification.data?.url,
+    origin: self.location.origin,
+    clientsApi: clients,
+  }))
 })

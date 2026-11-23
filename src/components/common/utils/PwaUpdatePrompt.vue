@@ -1,8 +1,8 @@
 <template>
   <transition name="pwa-update">
-    <aside v-if="visible" class="pwa-update" role="status" aria-live="polite">
+    <aside v-if="visible && isMyTurn" class="pwa-update" role="status" aria-live="polite">
       <i class="pi pi-sync pwa-update__icon" aria-hidden="true"></i>
-      <span class="pwa-update__text">Une nouvelle version de HEdS est disponible.</span>
+      <span class="pwa-update__text">Nouvelle version<span class="pwa-update__more"> disponible</span></span>
       <button type="button" class="pwa-update__apply" :disabled="applying" @click="apply">
         {{ applying ? 'Mise à jour…' : 'Mettre à jour' }}
       </button>
@@ -14,11 +14,14 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { watchForAppUpdate } from '@/utils/pwaUpdate'
+import { activeAnnouncement, hideAnnouncement, showAnnouncement } from '@/utils/announcementQueue'
 
 const visible = ref(false)
 const applying = ref(false)
+const isMyTurn = computed(() => activeAnnouncement.value === 'update')
+watch(visible, (shown) => (shown ? showAnnouncement('update') : hideAnnouncement('update')))
 let watcher = null
 
 function apply() {
@@ -30,7 +33,10 @@ onMounted(() => {
   watcher = watchForAppUpdate({ onUpdateReady: () => { visible.value = true } })
 })
 
-onBeforeUnmount(() => watcher?.stop())
+onBeforeUnmount(() => {
+  hideAnnouncement('update')
+  watcher?.stop()
+})
 </script>
 
 <style scoped>
@@ -91,9 +97,16 @@ onBeforeUnmount(() => watcher?.stop())
   .pwa-update { bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px)); }
 }
 @media (max-width: 26rem) {
-  .pwa-update { grid-template-columns: auto minmax(0, 1fr) auto; }
-  .pwa-update__apply { grid-column: 1 / -1; grid-row: 2; }
-  .pwa-update__close { grid-column: 3; grid-row: 1; }
+  /* Petit téléphone : tout tient sur une ligne, sans l'icône décorative. */
+  .pwa-update {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.375rem;
+    padding-inline-start: 0.75rem;
+    font-size: 0.875rem;
+  }
+  .pwa-update__icon,
+  .pwa-update__more { display: none; }
+  .pwa-update__apply { padding-inline: 0.75rem; white-space: nowrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pwa-update-enter-active,
