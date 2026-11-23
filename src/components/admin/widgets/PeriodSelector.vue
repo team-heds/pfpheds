@@ -16,7 +16,7 @@
 
     <!-- Sélecteur personnalisé -->
     <div v-if="showCustom" class="custom-period">
-      <Calendar
+      <Calendar ariaLabel="Période personnalisée"
         v-model="customDates"
         selectionMode="range"
         :showIcon="true"

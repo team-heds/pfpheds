@@ -77,16 +77,16 @@
       <div class="surface-card p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterFiliere" :options="filieres" placeholder="Toutes les filières" class="w-full" showClear />
+            <Dropdown ariaLabel="Filières" v-model="filterFiliere" :options="filieres" placeholder="Toutes les filières" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterInstitution" :options="institutions" optionLabel="nom" placeholder="Institution" class="w-full" showClear />
+            <Dropdown ariaLabel="Institution" v-model="filterInstitution" :options="institutions" optionLabel="nom" placeholder="Institution" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterStatus" :options="statusOptions" placeholder="Statut" class="w-full" showClear />
+            <Dropdown ariaLabel="Statut" v-model="filterStatus" :options="statusOptions" placeholder="Statut" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-full">
+            <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." class="w-full">
               <template #prefix>
                 <i class="pi pi-search"></i>
               </template>
@@ -139,9 +139,9 @@
           </Column>
           <Column header="Actions">
             <template #body="slotProps">
-              <Button icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
-              <Button icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
-              <Button icon="pi pi-envelope" class="p-button-text p-button-sm" />
+              <Button aria-label="Voir" icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
+              <Button aria-label="Envoyer un e-mail" icon="pi pi-envelope" class="p-button-text p-button-sm" />
             </template>
           </Column>
         </DataTable>
@@ -153,34 +153,34 @@
           <div class="grid">
             <div class="col-6">
               <label class="block mb-2 font-semibold">Nom *</label>
-              <InputText v-model="newRepondant.nom" class="w-full" />
+              <InputText aria-label="Nom" v-model="newRepondant.nom" class="w-full" />
             </div>
             <div class="col-6">
               <label class="block mb-2 font-semibold">Prénom *</label>
-              <InputText v-model="newRepondant.prenom" class="w-full" />
+              <InputText aria-label="Prénom" v-model="newRepondant.prenom" class="w-full" />
             </div>
           </div>
           <div class="grid">
             <div class="col-6">
               <label class="block mb-2 font-semibold">Email *</label>
-              <InputText v-model="newRepondant.email" type="email" class="w-full" />
+              <InputText aria-label="Email" v-model="newRepondant.email" type="email" class="w-full" />
             </div>
             <div class="col-6">
               <label class="block mb-2 font-semibold">Téléphone</label>
-              <InputText v-model="newRepondant.telephone" class="w-full" />
+              <InputText aria-label="Téléphone" v-model="newRepondant.telephone" class="w-full" />
             </div>
           </div>
           <div>
             <label class="block mb-2 font-semibold">Institution *</label>
-            <Dropdown v-model="newRepondant.institution" :options="institutions" optionLabel="nom" placeholder="Sélectionner" class="w-full" />
+            <Dropdown ariaLabel="Institution" v-model="newRepondant.institution" :options="institutions" optionLabel="nom" placeholder="Sélectionner" class="w-full" />
           </div>
           <div>
             <label class="block mb-2 font-semibold">Filière *</label>
-            <Dropdown v-model="newRepondant.filiere" :options="filieres" placeholder="Sélectionner" class="w-full" />
+            <Dropdown ariaLabel="Filière" v-model="newRepondant.filiere" :options="filieres" placeholder="Sélectionner" class="w-full" />
           </div>
           <div>
             <label class="block mb-2 font-semibold">Spécialité</label>
-            <InputText v-model="newRepondant.specialite" class="w-full" />
+            <InputText aria-label="Spécialité" v-model="newRepondant.specialite" class="w-full" />
           </div>
         </div>
         <template #footer>

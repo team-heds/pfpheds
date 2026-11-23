@@ -67,7 +67,6 @@ const centerStyle = computed(() => (
 }
 
 .social-layout__side--left :deep(.sidebar),
-.social-layout__side--left :deep(.messaging-card),
 .social-layout__side--left :deep(.upcoming-events-section) {
   margin-inline-start: var(--social-side-inset);
 }

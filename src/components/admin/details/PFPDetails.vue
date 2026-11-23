@@ -7,7 +7,7 @@
         <div class="p-col-12 p-md-6 p-lg-4">
           <div class="form-group">
             <label for="pfpSelection" class="form-label">Sélectionnez un PFP</label>
-            <Dropdown id="pfpSelection" v-model="selectedPFP" @change="filterPlacedestage" :options="pfpOptions" optionLabel="label" placeholder="Tous les PFPs" class="w-full" />
+            <Dropdown ariaLabel="Sélectionnez un PFP" id="pfpSelection" v-model="selectedPFP" @change="filterPlacedestage" :options="pfpOptions" optionLabel="label" placeholder="Tous les PFPs" class="w-full" />
           </div>
         </div>
         <div class="p-col-12 p-md-6 p-lg-4">
@@ -19,13 +19,13 @@
         <div class="p-col-12 p-md-6 p-lg-4">
           <div class="form-group">
             <label for="dateDebut" class="form-label">Date de début</label>
-            <Calendar v-model="dateDebut" class="w-full" dateFormat="yy-mm-dd" showIcon />
+            <Calendar ariaLabel="Date de début" v-model="dateDebut" class="w-full" dateFormat="yy-mm-dd" showIcon />
           </div>
         </div>
         <div class="p-col-12 p-md-6 p-lg-4">
           <div class="form-group">
             <label for="dateFin" class="form-label">Date de fin</label>
-            <Calendar v-model="dateFin" class="w-full" dateFormat="yy-mm-dd" showIcon />
+            <Calendar ariaLabel="Date de fin" v-model="dateFin" class="w-full" dateFormat="yy-mm-dd" showIcon />
           </div>
         </div>
         <div class="p-col-12 p-md-6 p-lg-4">
@@ -42,42 +42,42 @@
         <Column field="sector" header="Secteur" />
         <Column field="AIGU" header="AIGU">
           <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.AIGU" />
+            <Checkbox ariaLabel="AIGU" v-model="slotProps.data.AIGU" />
           </template>
         </Column>
         <Column field="REA" header="REA">
           <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.REA" />
+            <Checkbox ariaLabel="REA" v-model="slotProps.data.REA" />
           </template>
         </Column>
         <Column field="MSQ" header="MSQ">
           <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.MSQ" />
+            <Checkbox ariaLabel="MSQ" v-model="slotProps.data.MSQ" />
           </template>
         </Column>
         <Column field="SYSINT" header="SYSINT">
           <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.SYSINT" />
+            <Checkbox ariaLabel="SYSINT" v-model="slotProps.data.SYSINT" />
           </template>
         </Column>
         <Column field="NEUROGER" header="NEUROGER">
           <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.NEUROGER" />
+            <Checkbox ariaLabel="NEUROGER" v-model="slotProps.data.NEUROGER" />
           </template>
         </Column>
         <Column field="AMBU" header="AMBU">
           <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.AMBU" />
+            <Checkbox ariaLabel="AMBU" v-model="slotProps.data.AMBU" />
           </template>
         </Column>
         <Column field="SAE" header="Cas particulier">
           <template #body="slotProps">
-            <Checkbox v-model="slotProps.data.SAE" />
+            <Checkbox ariaLabel="Cas particulier" v-model="slotProps.data.SAE" />
           </template>
         </Column>
         <Column field="selectedStudent" header="Étudiant SAE">
           <template #body="slotProps">
-            <Dropdown v-if="slotProps.data.SAE" v-model="slotProps.data.selectedStudent" :options="etudiants" optionLabel="name" />
+            <Dropdown ariaLabel="Étudiant" v-if="slotProps.data.SAE" v-model="slotProps.data.selectedStudent" :options="etudiants" optionLabel="name" />
           </template>
         </Column>
       </DataTable>

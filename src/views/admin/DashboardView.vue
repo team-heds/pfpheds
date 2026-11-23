@@ -10,7 +10,7 @@
               :label="userInitials"
               size="xlarge"
               shape="circle"
-              style="background-color: var(--primary-color); color: white"
+              style="background-color: var(--primary-color); color: var(--app-color-on-brand)"
             />
             <div>
               <h1>Bonjour{{ userName ? ', ' + userName : '' }}</h1>
@@ -233,14 +233,14 @@
                         />
                       </div>
                       <div class="flex gap-1">
-                        <Button
+                        <Button aria-label="Modifier"
                           icon="pi pi-pencil"
                           @click="editAlert(kpi)"
                           text
                           rounded
                           size="small"
                         />
-                        <Button
+                        <Button aria-label="Supprimer"
                           icon="pi pi-trash"
                           @click="removeAlert(kpi.id)"
                           text
@@ -445,7 +445,7 @@
     >
       <div class="flex flex-column gap-3">
         <p class="text-600">Collez votre configuration JSON:</p>
-        <Textarea
+        <Textarea aria-label="Configuration à importer"
           v-model="importConfigText"
           rows="10"
           placeholder='{"order": [...], "hidden": [...], ...}'
@@ -467,7 +467,7 @@
     >
       <div class="flex flex-column gap-3">
         <p class="text-600">Copiez cette configuration:</p>
-        <Textarea
+        <Textarea aria-label="Configuration exportée"
           :model-value="exportedConfig"
           rows="10"
           readonly
@@ -986,7 +986,7 @@ onMounted(async () => {
 :deep(.p-tabview-nav-link:focus),
 :deep(.p-highlight .p-tabview-nav-link) {
   background: var(--primary-color) !important;
-  color: white !important;
+  color: var(--app-color-on-brand) !important;
   box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3) !important;
 }
 

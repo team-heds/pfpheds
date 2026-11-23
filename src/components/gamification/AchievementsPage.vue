@@ -66,7 +66,7 @@
           
           <div class="sort-dropdown">
             <label class="sr-only" for="badge-sort">Trier les badges</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Trier les badges" 
               inputId="badge-sort"
               v-model="sortBy" 
               :options="sortOptions" 

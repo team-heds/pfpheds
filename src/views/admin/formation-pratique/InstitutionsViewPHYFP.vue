@@ -18,14 +18,14 @@
             </div>
           </div>
           <div class="flex align-items-center gap-2 flex-wrap">
-            <Dropdown
+            <Dropdown ariaLabel="Cantons"
               v-model="filterCanton"
               :options="cantonOptions"
               placeholder="Tous les cantons"
               showClear
               class="w-10rem"
             />
-            <Dropdown
+            <Dropdown ariaLabel="Localités"
               v-model="filterLocality"
               :options="localityOptions"
               placeholder="Toutes les localités"
@@ -33,7 +33,7 @@
               filter
               class="w-12rem"
             />
-            <Button icon="pi pi-refresh" outlined :disabled="loading" @click="loadInstitutions" />
+            <Button aria-label="Actualiser" icon="pi pi-refresh" outlined :disabled="loading" @click="loadInstitutions" />
           </div>
         </div>
         <ProgressBar v-if="loading" mode="indeterminate" style="height: 4px" class="mt-3" />
@@ -109,8 +109,8 @@
 
           <Column header="Actions" style="min-width: 10rem">
             <template #body="{ data }">
-              <Button icon="pi pi-eye" class="p-button-rounded p-button-info mr-2" size="small" v-tooltip.top="'Voir détails'" @click="goToDetails(data.InstitutionId)" />
-              <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="goToInstitutionFormModif(data.InstitutionId)" />
+              <Button aria-label="Voir détails" icon="pi pi-eye" class="p-button-rounded p-button-info mr-2" size="small" v-tooltip.top="'Voir détails'" @click="goToDetails(data.InstitutionId)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="goToInstitutionFormModif(data.InstitutionId)" />
               <Button
                 :icon="data.is_hidden ? 'pi pi-eye' : 'pi pi-eye-slash'"
                 :class="data.is_hidden ? 'p-button-rounded p-button-warning mr-2' : 'p-button-rounded p-button-secondary mr-2'"
@@ -118,7 +118,7 @@
                 :title="data.is_hidden ? 'Réafficher' : 'Masquer sans supprimer'"
                 @click="toggleHidden(data)"
               />
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
+              <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="handleDelete(data)" />
             </template>
           </Column>
         </DataTable>

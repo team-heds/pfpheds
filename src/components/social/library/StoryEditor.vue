@@ -30,11 +30,11 @@
               </div>
               <div class="p-field p-mb-3">
                 <label for="text-color">Couleur du texte</label>
-                <ColorPicker id="text-color" v-model="textColor" class="p-w-100" />
+                <ColorPicker :pt="{ input: { 'aria-label': 'Couleur du texte' } }" id="text-color" v-model="textColor" class="p-w-100" />
               </div>
               <div class="p-field p-mb-3">
                 <label for="text-size">Taille du texte</label>
-                <Dropdown
+                <Dropdown ariaLabel="Taille du texte"
                   id="text-size"
                   v-model="textSize"
                   :options="textSizeOptions"
@@ -49,7 +49,7 @@
             <TabPanel header="Emoji">
               <div class="p-field p-mb-3">
                 <label for="emoji">Sélectionner un emoji</label>
-                <Dropdown
+                <Dropdown ariaLabel="Sélectionner un emoji"
                   id="emoji"
                   v-model="selectedEmoji"
                   :options="emojis"
@@ -70,14 +70,14 @@
               </div>
               <div v-for="(opt, idx) in quizOptions" :key="idx" class="p-field p-mb-2">
                 <div class="p-inputgroup">
-                  <InputText v-model="quizOptions[idx]" :placeholder="`Option ${idx + 1}`" />
-                  <Button icon="pi pi-trash" class="p-button-danger" @click="quizOptions.splice(idx, 1)" v-if="quizOptions.length > 2" />
+                  <InputText :aria-label="`Option ${idx + 1}`" v-model="quizOptions[idx]" :placeholder="`Option ${idx + 1}`" />
+                  <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-danger" @click="quizOptions.splice(idx, 1)" v-if="quizOptions.length > 2" />
                 </div>
               </div>
               <Button label="Ajouter option" icon="pi pi-plus" class="p-button-outlined p-mb-3" @click="quizOptions.push('')" />
               <div class="p-field p-mb-3">
                 <label for="answer-idx">Bonne réponse</label>
-                <Dropdown
+                <Dropdown ariaLabel="Bonne réponse"
                   id="answer-idx"
                   v-model="quizAnswerIdx"
                   :options="quizOptions.map((opt, idx) => ({label: opt || `Option ${idx + 1}`, value: idx}))"
@@ -98,8 +98,8 @@
               </div>
               <div v-for="(opt, idx) in pollOptions" :key="idx" class="p-field p-mb-2">
                 <div class="p-inputgroup">
-                  <InputText v-model="pollOptions[idx]" :placeholder="`Option ${idx + 1}`" />
-                  <Button icon="pi pi-trash" class="p-button-danger" @click="pollOptions.splice(idx, 1)" v-if="pollOptions.length > 2" />
+                  <InputText :aria-label="`Option ${idx + 1}`" v-model="pollOptions[idx]" :placeholder="`Option ${idx + 1}`" />
+                  <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-danger" @click="pollOptions.splice(idx, 1)" v-if="pollOptions.length > 2" />
                 </div>
               </div>
               <Button label="Ajouter option" icon="pi pi-plus" class="p-button-outlined p-mb-3" @click="pollOptions.push('')" />
@@ -137,7 +137,7 @@
           </Column>
           <Column header="Actions">
             <template #body="slotProps">
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" @click="removeElement(slotProps.index)" />
+              <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text" @click="removeElement(slotProps.index)" />
             </template>
           </Column>
         </DataTable>

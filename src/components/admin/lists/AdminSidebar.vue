@@ -610,7 +610,7 @@ const menu = ref(adminMenu);
   height: 44px;
   border-radius: 50%;
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border: 2px solid var(--surface-card);
   cursor: pointer;
   display: flex;

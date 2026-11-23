@@ -9,11 +9,11 @@
     <TabView v-model:activeIndex="activeTab">
       <TabPanel header="Bibliothèque">
         <div class="filters">
-          <Dropdown v-model="selectedYear" :options="years" optionLabel="label" optionValue="id" placeholder="Sélectionner une année" class="mr-3 w-16rem" />
-          <Dropdown v-model="selectedModule" :options="modules" optionLabel="title" optionValue="id" placeholder="Sélectionner un module" class="mr-3 w-20rem" :disabled="!selectedYear" />
+          <Dropdown ariaLabel="Sélectionner une année" v-model="selectedYear" :options="years" optionLabel="label" optionValue="id" placeholder="Sélectionner une année" class="mr-3 w-16rem" />
+          <Dropdown ariaLabel="Sélectionner un module" v-model="selectedModule" :options="modules" optionLabel="title" optionValue="id" placeholder="Sélectionner un module" class="mr-3 w-20rem" :disabled="!selectedYear" />
           <span class="p-input-icon-left w-20rem">
             <i class="pi pi-search" />
-            <InputText v-model="searchText" placeholder="Rechercher une vidéo" class="w-full" />
+            <InputText aria-label="Rechercher une vidéo" v-model="searchText" placeholder="Rechercher une vidéo" class="w-full" />
           </span>
         </div>
 
@@ -84,7 +84,7 @@
         <div class="mb-3 flex align-items-center gap-2">
           <span class="p-input-icon-left w-20rem">
             <i class="pi pi-search" />
-            <InputText v-model="vimeoSearch" placeholder="Rechercher sur Vimeo" class="w-full" @keyup="onVimeoKeyup" />
+            <InputText aria-label="Rechercher sur Vimeo" v-model="vimeoSearch" placeholder="Rechercher sur Vimeo" class="w-full" @keyup="onVimeoKeyup" />
           </span>
           <Button label="Actualiser" icon="pi pi-refresh" class="p-button-text" @click="loadVimeoVideos" />
          </div>
@@ -167,11 +167,11 @@
          </div>
          <div class="field">
            <label for="tType">Type</label>
-           <Dropdown id="tType" v-model="ticketForm.type" :options="ticketTypes" />
+           <Dropdown ariaLabel="Type" id="tType" v-model="ticketForm.type" :options="ticketTypes" />
          </div>
          <div class="field">
            <label for="tPriority">Priorité</label>
-           <Dropdown id="tPriority" v-model="ticketForm.priority" :options="ticketPriorities" />
+           <Dropdown ariaLabel="Priorité" id="tPriority" v-model="ticketForm.priority" :options="ticketPriorities" />
          </div>
          <div class="field">
            <label for="tDesc">Description</label>

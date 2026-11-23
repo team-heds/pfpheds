@@ -49,7 +49,7 @@
           </h3>
           
           <div class="view-toggle">
-            <Button 
+            <Button aria-label="Vue grille" 
               icon="pi pi-th-large" 
               :class="{ 'active': libraryView === 'grid' }"
               @click="libraryView = 'grid'"
@@ -57,7 +57,7 @@
               rounded
               v-tooltip.top="'Vue grille'"
             />
-            <Button 
+            <Button aria-label="Vue par modules" 
               icon="pi pi-list" 
               :class="{ 'active': libraryView === 'modules' }"
               @click="libraryView = 'modules'"
@@ -100,7 +100,7 @@
         <div class="search-bar">
           <span class="p-input-icon-left w-full">
             <i class="pi pi-search"></i>
-            <InputText 
+            <InputText aria-label="Rechercher une vidéo" 
               v-model="searchQuery" 
               placeholder="Rechercher une vidéo..." 
               class="w-full"
@@ -109,7 +109,7 @@
         </div>
 
         <div class="filters-row">
-          <Dropdown 
+          <Dropdown ariaLabel="Filtrer par module" 
             v-model="filterModule" 
             :options="moduleOptions"
             optionLabel="label"
@@ -119,7 +119,7 @@
             showClear
           />
 
-          <Dropdown 
+          <Dropdown ariaLabel="Trier par" 
             v-model="sortBy" 
             :options="sortOptions"
             optionLabel="label"
@@ -959,7 +959,7 @@ onMounted(async () => {
 
 .view-toggle .p-button.active {
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
 }
 
 /* Vue par modules */

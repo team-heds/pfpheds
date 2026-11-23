@@ -1123,7 +1123,7 @@ function openWorkloadDiagnostics() {
 
 .calendar-day-count {
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   font-size: 0.7rem;
   font-weight: 700;
   width: 22px;

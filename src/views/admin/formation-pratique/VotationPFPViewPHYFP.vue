@@ -24,21 +24,21 @@
           <div class="flex align-items-center gap-3 flex-wrap">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" :disabled="!filterYear" />
+              <Dropdown ariaLabel="Classe" v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" :disabled="!filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse || !filterYear" />
+              <Dropdown ariaLabel="PFP" v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse || !filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterYear" :options="years" optionLabel="label" optionValue="value" placeholder="Année" class="w-full md:w-9rem" />
+              <Dropdown ariaLabel="Année" v-model="filterYear" :options="years" optionLabel="label" optionValue="value" placeholder="Année" class="w-full md:w-9rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Recherche :</label>
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="searchQuery" placeholder="Nom ou prénom..." class="w-full md:w-14rem" :disabled="!canShowResults" />
+                <InputText aria-label="Nom ou prénom" v-model="searchQuery" placeholder="Nom ou prénom..." class="w-full md:w-14rem" :disabled="!canShowResults" />
               </span>
             </div>
             <div class="flex flex-column gap-1">
@@ -46,8 +46,8 @@
               <div class="flex gap-2">
                 <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportData" :disabled="!canShowResults" />
                 <Button icon="pi pi-briefcase" label="Export opérationnel" outlined class="p-button-sm" severity="help" @click="exportOperationalSummary" :disabled="!canShowResults || !canExportOperational" v-tooltip="'Disponible après attribution'" />
-                <Button icon="pi pi-envelope" outlined class="p-button-sm" severity="warning" @click="remindAllNonVoters" v-tooltip="'Relancer non-votants'" :disabled="!canShowResults" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" v-tooltip="'Rafraîchir'" :loading="loading" :disabled="!canShowResults" />
+                <Button aria-label="Relancer non-votants" icon="pi pi-envelope" outlined class="p-button-sm" severity="warning" @click="remindAllNonVoters" v-tooltip="'Relancer non-votants'" :disabled="!canShowResults" />
+                <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" v-tooltip="'Rafraîchir'" :loading="loading" :disabled="!canShowResults" />
               </div>
             </div>
           </div>
@@ -621,14 +621,14 @@
               <Column header="Actions" :style="{ minWidth: '120px' }">
                 <template #body="slotProps">
                   <div class="flex gap-1">
-                    <Button 
+                    <Button aria-label="Voir les détails" 
                       v-if="slotProps.data.status !== 'Non voté'" 
                       icon="pi pi-eye" 
                       class="p-button-text p-button-sm" 
                       @click="viewDetails(slotProps.data)"
                       v-tooltip.top="'Voir les détails'"
                     />
-                    <Button 
+                    <Button :aria-label="'Relancer l\'étudiant'" 
                       v-if="slotProps.data.status === 'Non voté'" 
                       icon="pi pi-send" 
                       class="p-button-text p-button-sm" 
@@ -918,7 +918,7 @@
               <small class="text-500 ml-2">Exclus de la génération des propositions ET du tirage au sort</small>
             </div>
             <div class="flex gap-2 align-items-start flex-wrap">
-              <AutoComplete
+              <AutoComplete ariaLabel="Rechercher un étudiant à exclure"
                 v-model="excludeSearchValue"
                 :suggestions="excludeFilteredSuggestions"
                 optionLabel="name"
@@ -998,9 +998,9 @@
             <div class="flex align-items-center gap-3 mb-2">
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="pfp4SearchQuery" placeholder="Rechercher un étudiant..." class="w-14rem p-inputtext-sm" />
+                <InputText aria-label="Rechercher un étudiant" v-model="pfp4SearchQuery" placeholder="Rechercher un étudiant..." class="w-14rem p-inputtext-sm" />
               </span>
-              <Dropdown
+              <Dropdown ariaLabel="Filtrer par règle"
                 v-model="pfp4FilterRule"
                 :options="Object.entries(pfp4RuleLabels).map(([k, v]) => ({ label: v, value: k }))"
                 optionLabel="label"
@@ -1148,7 +1148,7 @@
               <Tag v-if="excludedStudentIds.length > 0" :value="`${excludedStudentIds.length} exclu(s)`" severity="danger" class="text-xs" />
             </div>
             <div class="flex gap-2 align-items-start flex-wrap">
-              <AutoComplete
+              <AutoComplete ariaLabel="Rechercher un étudiant à exclure"
                 v-model="excludeSearchValue"
                 :suggestions="excludeFilteredSuggestions"
                 optionLabel="name"
@@ -1211,7 +1211,7 @@
           <h3 class="text-lg font-bold text-900 m-0">Historique des sessions</h3>
           <Tag v-if="sessionHistory.length > 0" :value="sessionHistory.length" severity="secondary" rounded />
         </div>
-        <Button
+        <Button :aria-label="showHistoryPanel ? 'Réduire' : 'Développer'"
           :icon="showHistoryPanel ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
           text
           rounded

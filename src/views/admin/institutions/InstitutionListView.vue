@@ -26,7 +26,7 @@
             <Button label="Ajouter une institution" icon="pi pi-plus" outlined @click="goToInstitutionForm" class="ml-5" />
             <span style="flex: 1"></span>
             <span>
-              <InputText v-model="searchTerm" placeholder="Rechercher par nom..." />
+              <InputText aria-label="Rechercher par nom" v-model="searchTerm" placeholder="Rechercher par nom..." />
             </span>
           </div>
         </template>
@@ -48,9 +48,9 @@
         
         <Column header="Actions">
           <template #body="{ data }">
-            <Button icon="pi pi-eye" class="p-button-rounded p-button-info mr-2" @click="goToDetails(data.InstitutionId)" />
-            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="goToInstitutionFormModif(data.InstitutionId)" />
-            <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="handleDelete(data.InstitutionId)" />
+            <Button aria-label="Voir" icon="pi pi-eye" class="p-button-rounded p-button-info mr-2" @click="goToDetails(data.InstitutionId)" />
+            <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" @click="goToInstitutionFormModif(data.InstitutionId)" />
+            <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="handleDelete(data.InstitutionId)" />
           </template>
         </Column>
       </DataTable>

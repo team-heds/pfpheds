@@ -46,7 +46,7 @@
       <div class="filters-bar">
         <div class="filter-group">
           <label>Type</label>
-          <MultiSelect 
+          <MultiSelect ariaLabel="Type" 
             v-model="selectedTypes" 
             :options="typeOptions"
             optionLabel="label"
@@ -58,7 +58,7 @@
         
         <div class="filter-group">
           <label>Statut</label>
-          <MultiSelect 
+          <MultiSelect ariaLabel="Statut" 
             v-model="selectedStatuses" 
             :options="statusOptions"
             optionLabel="label"
@@ -70,7 +70,7 @@
 
         <div class="filter-group">
           <label>Assigné à</label>
-          <Dropdown 
+          <Dropdown ariaLabel="Assigné à" 
             v-model="selectedAssignee" 
             :options="[{ label: 'Tous', value: null }, ...users]"
             optionLabel="label"
@@ -506,7 +506,7 @@ onMounted(async () => {
 :deep(.fc-button) {
   background: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
-  color: white !important;
+  color: var(--app-color-on-brand) !important;
   text-transform: capitalize !important;
   padding: 0.5rem 1rem !important;
   border-radius: 8px !important;

@@ -154,7 +154,7 @@
                   <div class="match-content">
                     <div class="equipe">
                       <span class="equipe-nom">{{ match.equipe1.nom }}</span>
-                      <InputNumber 
+                      <InputNumber :ariaLabel="`${match.equipe1.nom}`" 
                         v-model="match.score1"
                         :min="0"
                         :max="99"
@@ -167,7 +167,7 @@
                     <div class="vs">VS</div>
                     
                     <div class="equipe">
-                      <InputNumber 
+                      <InputNumber ariaLabel="Score de l’équipe 2" 
                         v-model="match.score2"
                         :min="0"
                         :max="99"
@@ -265,7 +265,7 @@
               <template #title>
                 <div class="equipe-header">
                   <i class="pi pi-shield"></i>
-                  <InputText 
+                  <InputText aria-label="Nom de l’équipe" 
                     v-model="equipe.nom" 
                     class="equipe-name-input"
                     @input="synchroniserNomEquipe(equipe)"
@@ -1810,7 +1810,7 @@ function getRoundName(roundNum, totalRounds) {
   width: 30px;
   height: 30px;
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border-radius: 50%;
   font-weight: 700;
 }

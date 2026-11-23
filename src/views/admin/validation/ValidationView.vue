@@ -31,12 +31,12 @@
           <td>{{ result.Domaine }}</td>
           <td>{{ result.choiceNumber }}</td>
           <td>
-            <input
+            <input aria-label="Sélection"
               type="checkbox"
               v-model="result.selected"
               :disabled="result.validated"
             />
-            <Checkbox v-model="result.selected" :disabled="result.validated" />
+            <Checkbox ariaLabel="Sélection" v-model="result.selected" :disabled="result.validated" />
           </td>
           <td>
             <Button class=" primary" @click="openEditModal(result, index)">

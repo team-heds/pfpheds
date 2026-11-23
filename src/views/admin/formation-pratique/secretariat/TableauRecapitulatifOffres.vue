@@ -24,26 +24,26 @@
               <label class="font-semibold text-sm">Recherche :</label>
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="searchText" placeholder="Institution ou place..." class="w-full md:w-14rem" />
+                <InputText aria-label="Institution ou place" v-model="searchText" placeholder="Institution ou place..." class="w-full md:w-14rem" />
               </span>
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année :</label>
-              <Dropdown :options="years" v-model="selectedYear" class="w-full md:w-6rem" />
+              <Dropdown ariaLabel="Année" :options="years" v-model="selectedYear" class="w-full md:w-6rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Type PFP :</label>
-              <Dropdown :options="pfpOptions" optionLabel="label" optionValue="value" v-model="selectedPFP" class="w-full md:w-8rem" />
+              <Dropdown ariaLabel="Type PFP" :options="pfpOptions" optionLabel="label" optionValue="value" v-model="selectedPFP" class="w-full md:w-8rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Affichage :</label>
-              <Dropdown :options="displayOptions" optionLabel="label" optionValue="value" v-model="filterDisplay" class="w-full md:w-10rem" />
+              <Dropdown ariaLabel="Affichage" :options="displayOptions" optionLabel="label" optionValue="value" v-model="filterDisplay" class="w-full md:w-10rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
                 <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportCSV" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="refreshPlaces" v-tooltip="'Rafraîchir'" :loading="placesStore.loading" />
+                <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="refreshPlaces" v-tooltip="'Rafraîchir'" :loading="placesStore.loading" />
               </div>
             </div>
           </div>

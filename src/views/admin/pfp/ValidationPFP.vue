@@ -77,23 +77,23 @@
       <div class="surface-card p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-2 flex align-items-center gap-2">
-            <InputSwitch v-model="showAllStudents" />
+            <InputSwitch ariaLabel="Tous les étudiants" v-model="showAllStudents" />
             <span class="text-600">Tous les étudiants</span>
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterYear" :options="years" placeholder="Année" class="w-full" showClear />
+            <Dropdown ariaLabel="Année" v-model="filterYear" :options="years" placeholder="Année" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterType" :options="typesPFP" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full" showClear />
+            <Dropdown ariaLabel="PFP" v-model="filterType" :options="typesPFP" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterClasse" :options="classes" placeholder="Classe" class="w-full" showClear />
+            <Dropdown ariaLabel="Classe" v-model="filterClasse" :options="classes" placeholder="Classe" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterStatus" :options="statusList" optionLabel="label" optionValue="value" placeholder="Résultat" class="w-full" showClear />
+            <Dropdown ariaLabel="Résultat" v-model="filterStatus" :options="statusList" optionLabel="label" optionValue="value" placeholder="Résultat" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-4">
-            <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-full" />
+            <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." class="w-full" />
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@
         <div class="flex align-items-end gap-2 mb-3 flex-wrap">
           <div class="flex flex-column gap-1">
             <label class="text-sm font-semibold text-700">Validation en masse</label>
-            <Dropdown
+            <Dropdown ariaLabel="Validation en masse"
               v-model="bulkValidatePfpType"
               :options="typesPFP"
               optionLabel="label"
@@ -246,6 +246,7 @@
 </template>
 
 <script setup>
+import { joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentDirectoryService'
@@ -740,10 +741,9 @@ const loadPublishedAssignments = async () => {
         place?.institution_name ||
         (place?.InstitutionId ? (institutionsById.get(place.InstitutionId) || null) : null)
 
-      const assignedPraticienId = a?.assigned_praticien_id
-      const praticienNameFromAssignment = assignedPraticienId
-        ? (praticiensById.get(assignedPraticienId) || praticiensById.get(String(assignedPraticienId)) || null)
-        : null
+      const praticienNameFromAssignment = joinAssignedPraticiens(a, (id) =>
+        praticiensById.get(id) || praticiensById.get(String(id))
+      ) || null
 
       const praticiensList = Array.isArray(place?.praticiensFormateurs) ? place.praticiensFormateurs : []
       const praticienNameFromPlace = praticiensList.length

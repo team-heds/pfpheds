@@ -240,7 +240,7 @@
                 @click="toggleMySlotsView"
               />
               <label v-if="!mySlotsViewAll" class="sr-only" for="si-rm-week">Semaine de mes cours</label>
-              <Dropdown
+              <Dropdown ariaLabel="Semaine de mes cours"
                 v-if="!mySlotsViewAll"
                 inputId="si-rm-week"
                 v-model="mySlotsWeek"

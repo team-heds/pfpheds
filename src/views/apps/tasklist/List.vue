@@ -76,7 +76,7 @@ const toggleMenu = (event, i, task) => {
       class="flex flex-column gap-3 md:flex-row md:align-items-center p-2 border-bottom-1 surface-border"
     >
       <div class="flex align-items-center flex-1">
-        <Checkbox
+        <Checkbox :ariaLabel="`${task.name}`"
           binary
           @change="onCheckboxChange(task)"
           v-model="task.completed"
@@ -122,7 +122,7 @@ const toggleMenu = (event, i, task) => {
               ></Avatar>
             </AvatarGroup>
           </div>
-          <Button
+          <Button aria-label="Plus d’actions"
             type="button"
             icon="pi pi-ellipsis-v"
             class="z-3 ml-auto sm:ml-0"

@@ -40,13 +40,13 @@
       <div class="surface-card p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-4">
-            <Dropdown v-model="filterRole" :options="roles" placeholder="Tous les rôles" class="w-full" showClear />
+            <Dropdown ariaLabel="Rôles" v-model="filterRole" :options="roles" placeholder="Tous les rôles" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-4">
-            <Dropdown v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
+            <Dropdown ariaLabel="Statuts" v-model="filterStatus" :options="statusOptions" placeholder="Tous les statuts" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-4">
-            <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-full" />
+            <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." class="w-full" />
           </div>
         </div>
       </div>
@@ -85,7 +85,7 @@
           </Column>
           <Column header="Actions">
             <template #body="slotProps">
-              <Button icon="pi pi-pencil" class="p-button-text p-button-sm" severity="success" @click="editRole(slotProps.data)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text p-button-sm" severity="success" @click="editRole(slotProps.data)" />
             </template>
           </Column>
         </DataTable>

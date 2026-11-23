@@ -27,7 +27,7 @@
                   </div>
                   <div class="field col-12 md:col-6">
                     <label for="langue">Langue <span class="text-danger">*</span></label>
-                    <Dropdown
+                    <Dropdown ariaLabel="Langue"
                       id="langue"
                       v-model="institution.Language"
                       :options="langues"
@@ -42,7 +42,7 @@
                   </div>
                   <div class="field col-12 md:col-6">
                     <label for="canton">Canton <span class="text-danger">*</span></label>
-                    <Dropdown
+                    <Dropdown ariaLabel="Canton"
                       id="canton"
                       v-model="institution.Canton"
                       :options="cantons"
@@ -124,7 +124,7 @@
                 <div class="grid formgrid">
                   <div class="field col-12 md:col-6">
                     <label for="category">Catégorie</label>
-                    <Dropdown
+                    <Dropdown ariaLabel="Catégorie"
                       id="category"
                       v-model="institution.Category"
                       :options="categories"
@@ -135,7 +135,7 @@
                   </div>
                   <div class="field col-12 md:col-6">
                     <label for="conventionDate">Date de Convention</label>
-                    <Calendar
+                    <Calendar ariaLabel="Date de Convention"
                       id="conventionDate"
                       v-model="institution.ConventionDate"
                       :showIcon="true"
@@ -144,7 +144,7 @@
                   </div>
                   <div class="field col-12 md:col-6">
                     <label for="accordCadreDate">Date de l'Accord Cadre</label>
-                    <Calendar
+                    <Calendar ariaLabel="Date de l'Accord Cadre"
                       id="accordCadreDate"
                       v-model="institution.AccordCadreDate"
                       :showIcon="true"

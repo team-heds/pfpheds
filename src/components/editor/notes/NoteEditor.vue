@@ -1,25 +1,25 @@
 <template>
   <Panel header="Éditeur de note" class="note-editor">
     <div class="p-fluid">
-      <InputText v-model="title" placeholder="Titre de la feuille" class="note-title p-mb-3" />
+      <InputText aria-label="Titre de la feuille" v-model="title" placeholder="Titre de la feuille" class="note-title p-mb-3" />
       <div class="note-dates">
         <span v-if="page?.createdAt">Créée : {{ formatDate(page.createdAt) }}</span>
         <span v-if="page?.updatedAt">Dernière modif : {{ formatDate(page.updatedAt) }}</span>
       </div>
       <template v-if="editor">
         <div class="tiptap-toolbar">
-          <Button icon="pi pi-bold" class="p-button-text" @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" />
-          <Button icon="pi pi-italic" class="p-button-text" @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" />
-          <Button icon="pi pi-underline" class="p-button-text" @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" />
-          <Button icon="pi pi-list-ul" class="p-button-text" @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" />
-          <Button icon="pi pi-list-ol" class="p-button-text" @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" />
-          <Button icon="pi pi-check-square" class="p-button-text" @click="editor.chain().focus().toggleTaskList().run()" :class="{ 'is-active': editor.isActive('taskList') }" />
-          <Button icon="pi pi-quote-left" class="p-button-text" @click="editor.chain().focus().toggleBlockquote().run()" :class="{ 'is-active': editor.isActive('blockquote') }" />
-          <Button icon="pi pi-table" class="p-button-text" @click="addTable" />
-          <Button icon="pi pi-code" class="p-button-text" @click="editor.chain().focus().toggleCodeBlock().run()" :class="{ 'is-active': editor.isActive('codeBlock') }" />
-          <Button icon="pi pi-link" class="p-button-text" @click="setLink" />
-          <Button icon="pi pi-image" class="p-button-text" @click="addImage" />
-          <Button icon="pi pi-eraser" class="p-button-text" @click="editor.chain().focus().clearNodes().unsetAllMarks().run()" />
+          <Button aria-label="Gras" icon="pi pi-bold" class="p-button-text" @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }" />
+          <Button aria-label="Italique" icon="pi pi-italic" class="p-button-text" @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }" />
+          <Button aria-label="Souligné" icon="pi pi-underline" class="p-button-text" @click="editor.chain().focus().toggleUnderline().run()" :class="{ 'is-active': editor.isActive('underline') }" />
+          <Button aria-label="Liste à puces" icon="pi pi-list-ul" class="p-button-text" @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }" />
+          <Button aria-label="Liste numérotée" icon="pi pi-list-ol" class="p-button-text" @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }" />
+          <Button aria-label="Liste de tâches" icon="pi pi-check-square" class="p-button-text" @click="editor.chain().focus().toggleTaskList().run()" :class="{ 'is-active': editor.isActive('taskList') }" />
+          <Button aria-label="Citation" icon="pi pi-quote-left" class="p-button-text" @click="editor.chain().focus().toggleBlockquote().run()" :class="{ 'is-active': editor.isActive('blockquote') }" />
+          <Button aria-label="Insérer un tableau" icon="pi pi-table" class="p-button-text" @click="addTable" />
+          <Button aria-label="Bloc de code" icon="pi pi-code" class="p-button-text" @click="editor.chain().focus().toggleCodeBlock().run()" :class="{ 'is-active': editor.isActive('codeBlock') }" />
+          <Button aria-label="Copier le lien" icon="pi pi-link" class="p-button-text" @click="setLink" />
+          <Button aria-label="Choisir une image" icon="pi pi-image" class="p-button-text" @click="addImage" />
+          <Button aria-label="Effacer la mise en forme" icon="pi pi-eraser" class="p-button-text" @click="editor.chain().focus().clearNodes().unsetAllMarks().run()" />
         </div>
         <EditorContent :editor="editor" class="tiptap-editor" />
       </template>

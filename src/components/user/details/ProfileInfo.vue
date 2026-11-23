@@ -11,6 +11,7 @@
         <div>
           <!-- Affichage du composant CardNameProfile -->
           <CardNameProfile />
+          <ContactInstitutionNotice :userId="effectiveUserId" />
           <VotationResultProfil :userId="effectiveUserId" class="w-full" />
           <!-- Résumé du stage utilisateur -->
           <ResumStageUserProfile :userProfile="userProfile" :userId="effectiveUserId" class="w-full" />
@@ -66,6 +67,7 @@ import ResumStageUserProfile from '@/components/user/details/ResumStageUserProfi
 import LeftSidebar from '@/components/social/library/LeftSidebar.vue';
 import RightSidebar from '@/components/social/library/RightSidebar.vue';
 import VotationResultProfil from '@/components/user/details/VotationResultProfil.vue'
+import ContactInstitutionNotice from '@/components/user/details/ContactInstitutionNotice.vue'
 import SocialThreeColumnLayout from '@/components/common/layouts/SocialThreeColumnLayout.vue'
 
 const props = defineProps({

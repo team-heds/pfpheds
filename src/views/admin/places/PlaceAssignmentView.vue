@@ -136,7 +136,7 @@
               </a>
             </div>
             <div v-else>
-              <InputText
+              <InputText aria-label="ID Étudiant"
                 v-model="newAssignments[`${slotProps.data.IdPlace}-${slotProps.data.seatIndex}`]"
                 placeholder="ID Étudiant"
               />

@@ -15,22 +15,22 @@
         <div class="form-grid">
           <div class="form-field full-width">
             <label>Titre *</label>
-            <InputText v-model="form.title" placeholder="Ex: Analyse d'un cas clinique" />
+            <InputText aria-label="Titre" v-model="form.title" placeholder="Ex: Analyse d'un cas clinique" />
           </div>
 
           <div class="form-field full-width">
             <label>Question *</label>
-            <Textarea v-model="form.question" rows="4" placeholder="Énoncé de la question..." />
+            <Textarea aria-label="Question" v-model="form.question" rows="4" placeholder="Énoncé de la question..." />
           </div>
 
           <div class="form-field full-width">
             <label>Contexte</label>
-            <Textarea v-model="form.context" rows="3" placeholder="Contexte (optionnel)..." />
+            <Textarea aria-label="Contexte" v-model="form.context" rows="3" placeholder="Contexte (optionnel)..." />
           </div>
 
           <div class="form-field full-width">
             <label>Consignes</label>
-            <Textarea v-model="form.instructions" rows="3" placeholder="Consignes (optionnel)..." />
+            <Textarea aria-label="Consignes" v-model="form.instructions" rows="3" placeholder="Consignes (optionnel)..." />
           </div>
         </div>
       </div>
@@ -41,40 +41,40 @@
         <div class="form-grid">
           <div class="form-field full-width">
             <label>Prompt de correction</label>
-            <Textarea v-model="form.correction_prompt" rows="5" placeholder="Règles de correction, style, contraintes..." />
+            <Textarea aria-label="Prompt de correction" v-model="form.correction_prompt" rows="5" placeholder="Règles de correction, style, contraintes..." />
           </div>
 
           <div class="form-field full-width">
             <label>Exemple de réponse attendue</label>
-            <Textarea v-model="form.expected_answer" rows="5" placeholder="Réponse modèle..." />
+            <Textarea aria-label="Exemple de réponse attendue" v-model="form.expected_answer" rows="5" placeholder="Réponse modèle..." />
           </div>
 
           <div class="form-field full-width">
             <label>Critères (un par ligne)</label>
-            <Textarea v-model="criteriaText" rows="5" placeholder="Structure\nExactitude\nVocabulaire\nRaisonnement" />
+            <Textarea aria-label="Critères (un par ligne)" v-model="criteriaText" rows="5" placeholder="Structure\nExactitude\nVocabulaire\nRaisonnement" />
           </div>
 
           <div class="form-field">
             <label>Activer score</label>
             <div class="inline">
-              <Checkbox v-model="form.scoring_enabled" :binary="true" />
+              <Checkbox ariaLabel="Oui" v-model="form.scoring_enabled" :binary="true" />
               <span>Oui</span>
             </div>
           </div>
 
           <div class="form-field" v-if="form.scoring_enabled">
             <label>Score max</label>
-            <InputNumber v-model="form.max_score" :min="1" :max="100" />
+            <InputNumber ariaLabel="Score max" v-model="form.max_score" :min="1" :max="100" />
           </div>
 
           <div class="form-field">
             <label>Tonalité</label>
-            <Dropdown v-model="form.tone" :options="toneOptions" optionLabel="label" optionValue="value" placeholder="Tonalité" />
+            <Dropdown ariaLabel="Tonalité" v-model="form.tone" :options="toneOptions" optionLabel="label" optionValue="value" placeholder="Tonalité" />
           </div>
 
           <div class="form-field">
             <label>Langue</label>
-            <Dropdown v-model="form.language" :options="languageOptions" optionLabel="label" optionValue="value" placeholder="Langue" />
+            <Dropdown ariaLabel="Langue" v-model="form.language" :options="languageOptions" optionLabel="label" optionValue="value" placeholder="Langue" />
           </div>
         </div>
       </div>
@@ -84,7 +84,7 @@
         <div class="form-grid">
           <div class="form-field full-width">
             <label>Réponse fictive</label>
-            <Textarea v-model="testAnswer" rows="5" placeholder="Colle une réponse d'étudiant pour tester le feedback..." />
+            <Textarea aria-label="Réponse fictive" v-model="testAnswer" rows="5" placeholder="Colle une réponse d'étudiant pour tester le feedback..." />
           </div>
           <div class="form-field full-width">
             <Button label="Créer + Tester" icon="pi pi-play" class="p-button-outlined" :loading="loading" @click="createAndTest" />

@@ -59,10 +59,10 @@ const focus = (event) => {
             </div>
             <div class="flex flex-column">
                 <div class="flex justify-content-between w-full align-items-center mb-4 gap-3">
-                    <InputNumber inputId="val1" v-model="value1" inputClass="w-3rem text-center" :max="9" @keyup="focus($event)"></InputNumber>
-                    <InputNumber inputId="val2" v-model="value2" inputClass="w-3rem text-center" :max="9" @keyup="focus($event)"></InputNumber>
-                    <InputNumber inputId="val3" v-model="value3" inputClass="w-3rem text-center" :max="9" @keyup="focus($event)"></InputNumber>
-                    <InputNumber inputId="val4" v-model="value4" inputClass="w-3rem text-center" :max="9"></InputNumber>
+                    <InputNumber ariaLabel="Chiffre 1" inputId="val1" v-model="value1" inputClass="w-3rem text-center" :max="9" @keyup="focus($event)"></InputNumber>
+                    <InputNumber ariaLabel="Chiffre 2" inputId="val2" v-model="value2" inputClass="w-3rem text-center" :max="9" @keyup="focus($event)"></InputNumber>
+                    <InputNumber ariaLabel="Chiffre 3" inputId="val3" v-model="value3" inputClass="w-3rem text-center" :max="9" @keyup="focus($event)"></InputNumber>
+                    <InputNumber ariaLabel="Chiffre 4" inputId="val4" v-model="value4" inputClass="w-3rem text-center" :max="9"></InputNumber>
                 </div>
                 <div class="flex flex-wrap gap-2 justify-content-between">
                     <Button label="Cancel" class="flex-auto" outlined @click="navigateToDashboard"></Button>

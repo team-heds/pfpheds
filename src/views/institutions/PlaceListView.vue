@@ -11,7 +11,7 @@
                 <div class="input-group input-borderless">
                   <label class="sr-only" for="place-search">Rechercher une place</label>
                   <input id="place-search" v-model="searchTerm" class="form-control me-1" type="search" placeholder="Rechercher une place…">
-                  <button type="button" class="btn btn-primary mb-0 rounded z-index-1"><i class="fas fa-search"></i></button>
+                  <button aria-label="Rechercher" type="button" class="btn btn-primary mb-0 rounded z-index-1"><i class="fas fa-search"></i></button>
                 </div>
               </form>
             </div>
@@ -62,7 +62,7 @@
             <nav class="mt-4 d-flex justify-content-center" aria-label="navigation">
               <ul class="pagination pagination-primary-soft d-inline-block d-md-flex rounded mb-0">
                 <li class="page-item">
-                  <button class="page-link shadow-sm" @click="previousPage" :disabled="currentPage === 1">
+                  <button aria-label="Page précédente" class="page-link shadow-sm" @click="previousPage" :disabled="currentPage === 1">
                     <i class="fas fa-chevron-left"></i>
                   </button>
                 </li>
@@ -70,7 +70,7 @@
                   <button class="page-link shadow-sm" @click="currentPage = page">{{ page }}</button>
                 </li>
                 <li class="page-item">
-                  <button class="page-link shadow-sm" @click="nextPage" :disabled="currentPage === totalPages">
+                  <button aria-label="Page suivante" class="page-link shadow-sm" @click="nextPage" :disabled="currentPage === totalPages">
                     <i class="fas fa-chevron-right"></i>
                   </button>
                 </li>

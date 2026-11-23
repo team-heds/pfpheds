@@ -16,7 +16,7 @@
           <div class="flex gap-3 align-items-center flex-wrap">
             <div class="field-inline">
               <label for="si-daily-week">Semaine</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Semaine" 
                 inputId="si-daily-week"
                 v-model="selectedWeek" 
                 :options="weekOptions" 
@@ -29,7 +29,7 @@
             </div>
             <div class="field-inline">
               <label for="si-daily-day">Jour</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Jour" 
                 inputId="si-daily-day"
                 v-model="selectedDay" 
                 :options="dayOptions" 
@@ -42,7 +42,7 @@
             </div>
             <div class="field-inline">
               <label for="si-daily-class">Classe</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Classe" 
                 inputId="si-daily-class"
                 v-model="selectedClass" 
                 :options="classOptions" 

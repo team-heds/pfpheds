@@ -21,7 +21,7 @@
           <div class="filters-row">
             <div class="filter-group">
               <label>Filière</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Filière" 
                 v-model="selectedFiliere" 
                 :options="filiereOptions" 
                 optionLabel="label" 
@@ -32,7 +32,7 @@
             </div>
             <div class="filter-group">
               <label>Année</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Année" 
                 v-model="selectedYear" 
                 :options="yearOptions" 
                 optionLabel="label" 
@@ -43,7 +43,7 @@
             </div>
             <div class="filter-group">
               <label>Module</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Module" 
                 v-model="selectedModule" 
                 :options="moduleOptions" 
                 optionLabel="title" 
@@ -57,7 +57,7 @@
               <label>Recherche</label>
               <span class="p-input-icon-left w-full">
                 <i class="pi pi-search" />
-                <InputText v-model="searchTerm" placeholder="Rechercher un enseignant..." class="w-full" />
+                <InputText aria-label="Rechercher un enseignant" v-model="searchTerm" placeholder="Rechercher un enseignant..." class="w-full" />
               </span>
             </div>
           </div>
@@ -150,13 +150,13 @@
                   </div>
                 </div>
                 <div class="module-actions">
-                  <Button 
+                  <Button aria-label="Ajouter un enseignant" 
                     icon="pi pi-plus" 
                     v-tooltip="'Ajouter un enseignant'"
                     @click="openAssignToModule(module)"
                     class="p-button-rounded p-button-text"
                   />
-                  <Button 
+                  <Button aria-label="Voir le planning" 
                     icon="pi pi-calendar" 
                     v-tooltip="'Voir le planning'"
                     @click="viewModulePlanning(module)"
@@ -192,14 +192,14 @@
                       value="Vote enseignant"
                       severity="info"
                     />
-                    <Button
+                    <Button aria-label="Valider cette postulation"
                       v-if="teacher.role === 'postulation_vote'"
                       icon="pi pi-check"
                       @click="validatePostulationVote(module, teacher)"
                       class="p-button-rounded p-button-text p-button-success p-button-sm"
                       v-tooltip="'Valider cette postulation'"
                     />
-                    <Button 
+                    <Button aria-label="Retirer" 
                       icon="pi pi-times" 
                       @click="removeTeacher(module, teacher)"
                       class="p-button-rounded p-button-text p-button-danger p-button-sm"
@@ -235,7 +235,7 @@
             <h3><i class="pi pi-users"></i> Enseignants Disponibles</h3>
             <span class="p-input-icon-left">
               <i class="pi pi-search" />
-              <InputText v-model="teacherSearch" placeholder="Filtrer..." size="small" />
+              <InputText aria-label="Filtrer" v-model="teacherSearch" placeholder="Filtrer..." size="small" />
             </span>
           </div>
 
@@ -279,7 +279,7 @@
         <div class="assign-form">
           <div class="form-field">
             <label>Module</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Module" 
               v-model="assignForm.moduleId" 
               :options="modules" 
               optionLabel="title" 
@@ -291,7 +291,7 @@
           </div>
           <div class="form-field">
             <label>Enseignant</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Enseignant" 
               v-model="assignForm.teacherId" 
               :options="availableTeachers" 
               optionLabel="name" 
@@ -303,7 +303,7 @@
           </div>
           <div class="form-field">
             <label>Heures</label>
-            <InputNumber 
+            <InputNumber ariaLabel="Heures" 
               v-model="assignForm.hours" 
               :min="0" 
               :max="500"
@@ -313,7 +313,7 @@
           </div>
           <div class="form-field">
             <label>Rôle</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Rôle" 
               v-model="assignForm.role" 
               :options="roleOptions" 
               optionLabel="label" 

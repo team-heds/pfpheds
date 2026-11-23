@@ -15,13 +15,13 @@
             </div>
           </div>
           <div class="flex align-items-center gap-2 flex-wrap">
-            <Dropdown
+            <Dropdown ariaLabel="Année"
               v-model="selectedYear"
               :options="yearOptions"
               placeholder="Année"
               class="w-8rem"
             />
-            <Button
+            <Button aria-label="Rafraîchir"
               icon="pi pi-refresh"
               outlined
               class="p-button-sm"
@@ -103,20 +103,20 @@
         <div class="flex flex-wrap gap-3 align-items-center">
           <span class="p-input-icon-left flex-1" style="min-width: 200px">
             <i class="pi pi-search" />
-            <InputText
+            <InputText aria-label="Rechercher un étudiant, une place"
               v-model="searchQuery"
               placeholder="Rechercher un étudiant, une place..."
               class="w-full"
             />
           </span>
-          <Dropdown
+          <Dropdown ariaLabel="Classe"
             v-model="filterClasse"
             :options="classesList"
             placeholder="Classe"
             class="w-8rem"
             showClear
           />
-          <Dropdown
+          <Dropdown ariaLabel="Source"
             v-model="filterSource"
             :options="sourceOptions"
             optionLabel="label"
@@ -125,7 +125,7 @@
             class="w-10rem"
             showClear
           />
-          <Dropdown
+          <Dropdown ariaLabel="Statut"
             v-model="filterStatus"
             :options="statusOptions"
             optionLabel="label"
@@ -135,7 +135,7 @@
             showClear
           />
           <div class="flex align-items-center gap-2">
-            <InputSwitch v-model="showAllStudents" />
+            <InputSwitch ariaLabel="Tous les étudiants" v-model="showAllStudents" />
             <span class="text-600 text-sm white-space-nowrap">Tous les étudiants</span>
           </div>
         </div>
@@ -306,7 +306,7 @@
                   @click="openAssignDialog(data)"
                   v-tooltip.top="'Assigner manuellement une place'"
                 />
-                <Button
+                <Button aria-label="Modifier la place"
                   v-if="data.assigned_place_id"
                   icon="pi pi-pencil"
                   severity="info"
@@ -315,7 +315,7 @@
                   @click="openAssignDialog(data)"
                   v-tooltip.top="'Modifier la place'"
                 />
-                <Button
+                <Button aria-label="Publier"
                   v-if="data.assigned_place_id && data.status !== 'published'"
                   icon="pi pi-check-circle"
                   severity="success"
@@ -324,7 +324,7 @@
                   @click="publishOne(data)"
                   v-tooltip.top="'Publier'"
                 />
-                <Button
+                <Button aria-label="Dépublier"
                   v-if="data.status === 'published'"
                   icon="pi pi-times-circle"
                   severity="warning"
@@ -333,7 +333,7 @@
                   @click="unpublishOne(data)"
                   v-tooltip.top="'Dépublier'"
                 />
-                <Button
+                <Button aria-label="Voir profil"
                   icon="pi pi-eye"
                   severity="secondary"
                   text
@@ -379,7 +379,7 @@
 
           <div class="mb-3">
             <label class="block mb-2 font-semibold">Rechercher une place</label>
-            <InputText
+            <InputText aria-label="Rechercher une place"
               v-model="placeSearch"
               placeholder="Nom de la place ou institution..."
               class="w-full"
@@ -444,6 +444,7 @@
 </template>
 
 <script setup>
+import { joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
@@ -732,11 +733,9 @@ const enrichedRows = computed(() => {
     const praticiensList = Array.isArray(place?.praticiensFormateurs)
       ? place.praticiensFormateurs
       : []
-    const praticienAssigned = a.assigned_praticien_id
-      ? praticiensById.value.get(a.assigned_praticien_id) ||
-        praticiensById.value.get(String(a.assigned_praticien_id)) ||
-        null
-      : null
+    const praticienAssigned = joinAssignedPraticiens(a, (id) =>
+      praticiensById.value.get(id) || praticiensById.value.get(String(id))
+    ) || null
     const praticienFromPlace = praticiensList.length
       ? praticiensList
           .map((pid) => praticiensById.value.get(pid) || praticiensById.value.get(String(pid)))

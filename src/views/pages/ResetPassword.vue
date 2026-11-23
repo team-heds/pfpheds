@@ -136,7 +136,7 @@
 
             <div class="form-row">
               <label for="pwd1">Nouveau mot de passe</label>
-              <Password
+              <Password ariaLabel="Nouveau mot de passe"
                 id="pwd1"
                 ref="pwd1Field"
                 v-model="pwd1"
@@ -156,7 +156,7 @@
 
             <div class="form-row">
               <label for="pwd2">Confirmer le mot de passe</label>
-              <Password
+              <Password ariaLabel="Confirmer le mot de passe"
                 id="pwd2"
                 ref="pwd2Field"
                 v-model="pwd2"

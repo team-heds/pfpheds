@@ -17,7 +17,7 @@
             </div>
           </div>
           <div class="flex gap-2">
-            <SplitButton
+            <SplitButton :menuButtonProps="{ 'aria-label': 'Plus d’options' }"
               label="Assignation de masse"
               icon="pi pi-check-square"
               :model="bulkActions"
@@ -90,29 +90,29 @@
       <div class="surface-card fp-dark p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-1 flex align-items-center gap-2">
-            <InputSwitch v-model="showAllStudents" />
+            <InputSwitch ariaLabel="Afficher tous les étudiants" v-model="showAllStudents" />
             <span class="text-600 text-sm">Tous</span>
           </div>
           <div class="col-12 md:col-1">
-            <Dropdown v-model="filterYear" :options="years" placeholder="Année" class="w-full" showClear />
+            <Dropdown ariaLabel="Année" v-model="filterYear" :options="years" placeholder="Année" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-1">
-            <Dropdown v-model="filterType" :options="typesPFP" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full" showClear />
+            <Dropdown ariaLabel="PFP" v-model="filterType" :options="typesPFP" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-1">
-            <Dropdown v-model="filterClasse" :options="classes" placeholder="Classe" class="w-full" showClear />
+            <Dropdown ariaLabel="Classe" v-model="filterClasse" :options="classes" placeholder="Classe" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterRepondantHES" :options="repondantsHESList" optionLabel="label" optionValue="value" placeholder="Répondant HES" class="w-full" showClear />
+            <Dropdown ariaLabel="Répondant HES" v-model="filterRepondantHES" :options="repondantsHESList" optionLabel="label" optionValue="value" placeholder="Répondant HES" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterSignataireHES" :options="repondantsHESList" optionLabel="label" optionValue="value" placeholder="Signataire HES" class="w-full" showClear />
+            <Dropdown ariaLabel="Signataire HES" v-model="filterSignataireHES" :options="repondantsHESList" optionLabel="label" optionValue="value" placeholder="Signataire HES" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <Dropdown v-model="filterValidation" :options="validationOptions" optionLabel="label" optionValue="value" placeholder="Validation" class="w-full" showClear />
+            <Dropdown ariaLabel="Validation" v-model="filterValidation" :options="validationOptions" optionLabel="label" optionValue="value" placeholder="Validation" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-2">
-            <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-full" />
+            <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." class="w-full" />
           </div>
         </div>
       </div>
@@ -186,14 +186,14 @@
           </Column>
           <Column field="is_validated" header="Validé" sortable>
             <template #body="slotProps">
-              <Checkbox v-model="slotProps.data.is_validated" :binary="true" @change="toggleValidation(slotProps.data)" />
+              <Checkbox ariaLabel="Validé" v-model="slotProps.data.is_validated" :binary="true" @change="toggleValidation(slotProps.data)" />
             </template>
           </Column>
           <Column header="Actions">
             <template #body="slotProps">
-              <Button icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
-              <Button icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" @click="editRow(slotProps.data)" />
-              <Button icon="pi pi-print" class="p-button-text p-button-sm" />
+              <Button aria-label="Voir" icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" @click="editRow(slotProps.data)" />
+              <Button aria-label="Imprimer" icon="pi pi-print" class="p-button-text p-button-sm" />
             </template>
           </Column>
         </DataTable>
@@ -209,7 +209,7 @@
           <div class="grid">
             <div class="col-6">
               <label class="block mb-2 font-semibold">Répondant HES</label>
-              <Dropdown
+              <Dropdown ariaLabel="Répondant HES"
                 v-model="editingRow.repondant_hes"
                 :options="repondantsHESList"
                 optionLabel="label"
@@ -221,7 +221,7 @@
             </div>
             <div class="col-6">
               <label class="block mb-2 font-semibold">Signataire HES</label>
-              <Dropdown
+              <Dropdown ariaLabel="Signataire HES"
                 v-model="editingRow.signataire_hes"
                 :options="repondantsHESList"
                 optionLabel="label"
@@ -234,7 +234,7 @@
           </div>
           <div>
             <label class="block mb-2 font-semibold">Lieu de signature</label>
-            <Dropdown
+            <Dropdown ariaLabel="Lieu de signature"
               v-model="editingRow.lieu_signature"
               :options="lieuSignatureOptions"
               optionLabel="label"
@@ -261,6 +261,7 @@
 </template>
 
 <script setup>
+import { joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
@@ -482,7 +483,7 @@ const loadPublishedAssignments = async () => {
     // 1. Récupérer les assignations avec toutes les infos directement
     const { data: assignments, error } = await supabase
       .from('student_result_vote')
-      .select('id,user_id,pfp_type,year,assigned_place_id,assigned_place_name,assigned_institution_name,assigned_rank,status,assigned_praticien_id,repondant_hes,signataire_hes,lieu_signature,is_validated')
+      .select('id,user_id,pfp_type,year,assigned_place_id,assigned_place_name,assigned_institution_name,assigned_rank,status,assigned_praticien_id,assigned_praticien_2_id,repondant_hes,signataire_hes,lieu_signature,is_validated')
       .eq('status', 'published')
 
     if (error) throw error
@@ -527,9 +528,9 @@ const loadPublishedAssignments = async () => {
       const studentPhysioClass = physioByUserId.get(a.user_id)?.class || null
       const studentClass = studentPhysioClass || s?.Classe || s?.classe || null
 
-      const praticienFormateur = a.assigned_praticien_id
-        ? praticiensById.get(a.assigned_praticien_id) || praticiensById.get(String(a.assigned_praticien_id))
-        : null
+      const praticienFormateur = joinAssignedPraticiens(a, (id) =>
+        praticiensById.get(id) || praticiensById.get(String(id))
+      ) || null
 
       const studentPhysio = physioByUserId.get(a.user_id)
 

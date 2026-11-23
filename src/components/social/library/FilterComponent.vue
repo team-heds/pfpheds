@@ -11,7 +11,7 @@
       @change="handleFilterTypeChange"
     />-->
 
-    <Dropdown
+    <Dropdown ariaLabel="Sélectionner une option"
       v-if="localSelectedFilterType"
       v-model="localSelectedFilterValue"
       :options="filterOptions"

@@ -10,7 +10,7 @@
       <!-- Activer/Désactiver les alertes -->
       <div class="flex align-items-center justify-content-between">
         <label class="font-semibold">Alertes actives</label>
-        <InputSwitch v-model="alertConfig.enabled" />
+        <InputSwitch ariaLabel="Alertes actives" v-model="alertConfig.enabled" />
       </div>
 
       <Divider />
@@ -19,7 +19,7 @@
         <!-- Type d'alerte -->
         <div class="flex flex-column gap-2">
           <label class="font-semibold">Type d'alerte</label>
-          <Dropdown
+          <Dropdown ariaLabel="Type d'alerte"
             v-model="alertConfig.type"
             :options="alertTypes"
             optionLabel="label"
@@ -33,7 +33,7 @@
         <div class="flex flex-column gap-2">
           <label class="font-semibold">Seuil de déclenchement</label>
           <div class="p-inputgroup">
-            <InputNumber
+            <InputNumber ariaLabel="Seuil"
               v-model="alertConfig.threshold"
               :min="0"
               :max="alertConfig.type === 'percentage' ? 100 : undefined"
@@ -51,7 +51,7 @@
         <!-- Condition -->
         <div class="flex flex-column gap-2">
           <label class="font-semibold">Condition</label>
-          <Dropdown
+          <Dropdown ariaLabel="Condition"
             v-model="alertConfig.condition"
             :options="conditions"
             optionLabel="label"
@@ -80,7 +80,7 @@
         <!-- Message personnalisé -->
         <div class="flex flex-column gap-2">
           <label class="font-semibold">Message personnalisé (optionnel)</label>
-          <Textarea
+          <Textarea aria-label="Message personnalisé (optionnel)"
             v-model="alertConfig.customMessage"
             rows="3"
             placeholder="Ex: Attention, ce KPI nécessite votre attention"

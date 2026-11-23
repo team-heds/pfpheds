@@ -22,7 +22,7 @@
         <div class="flex gap-3 align-items-end">
           <div class="flex-1">
             <label class="block mb-2 font-semibold">Rechercher un répondant</label>
-            <InputText v-model="searchQuery" placeholder="Nom, prénom, institution..." class="w-full" />
+            <InputText aria-label="Rechercher un répondant" v-model="searchQuery" placeholder="Nom, prénom, institution..." class="w-full" />
           </div>
           <Button icon="pi pi-search" label="Rechercher" @click="searchRepondant" />
         </div>
@@ -148,7 +148,7 @@
         <!-- Commentaires & Notes -->
         <div class="col-12">
           <h3 class="text-lg font-bold mb-3">Commentaires</h3>
-          <Textarea v-model="comments" rows="4" class="w-full" placeholder="Ajouter un commentaire..." />
+          <Textarea aria-label="Commentaires" v-model="comments" rows="4" class="w-full" placeholder="Ajouter un commentaire..." />
           <Button label="Enregistrer" icon="pi pi-save" class="mt-2" />
         </div>
       </div>

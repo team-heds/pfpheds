@@ -24,14 +24,14 @@
             <div class="field color-field">
               <label for="qr-fg-color">Couleur du QR</label>
               <div class="color-picker-wrapper">
-                <ColorPicker inputId="qr-fg-color" v-model="fgColor" format="hex" />
+                <ColorPicker :pt="{ input: { 'aria-label': 'Couleur du QR' } }" inputId="qr-fg-color" v-model="fgColor" format="hex" />
                 <InputText v-model="fgColor" aria-label="Couleur du QR en hexadécimal" maxlength="7" class="hex-input" />
               </div>
             </div>
             <div class="field color-field">
               <label for="qr-bg-color">Couleur du fond</label>
               <div class="color-picker-wrapper">
-                <ColorPicker inputId="qr-bg-color" v-model="bgColor" format="hex" :disabled="transparentBg" />
+                <ColorPicker :pt="{ input: { 'aria-label': 'Couleur du fond' } }" inputId="qr-bg-color" v-model="bgColor" format="hex" :disabled="transparentBg" />
                 <InputText v-model="bgColor" aria-label="Couleur du fond en hexadécimal" maxlength="7" class="hex-input" :disabled="transparentBg" />
               </div>
             </div>

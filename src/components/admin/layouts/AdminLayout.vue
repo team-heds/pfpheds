@@ -151,8 +151,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', handleEscape))
   top: var(--space-4, 1rem);
   width: auto;
   height: auto;
-  background: #fff;
-  color: #111;
+  background: var(--app-color-brand);
+  color: var(--app-color-on-brand);
   padding: var(--space-2, .5rem) var(--space-3, .75rem);
   border-radius: var(--radius-sm, 8px);
   box-shadow: 0 0 0 2px #111;
@@ -227,7 +227,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', handleEscape))
 .admin-content :deep(button:focus-visible),
 .admin-content :deep(input:focus-visible),
 .admin-content :deep([tabindex="0"]:focus-visible) {
-  outline: 3px solid #ffcc00 !important;
+  outline: 3px solid var(--app-focus-ring) !important;
   outline-offset: 3px !important;
 }
 

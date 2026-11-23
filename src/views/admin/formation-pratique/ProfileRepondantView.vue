@@ -23,7 +23,7 @@
             <!-- Mode consultation pour les admins ou si autorisé -->
             <div v-if="!isActualRepondant || isAdmin" class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Voir en tant que :</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Voir en tant que" 
                 v-model="selectedRepondant" 
                 :options="repondantsHESList" 
                 optionLabel="label" 
@@ -85,7 +85,7 @@
                   <div class="flex gap-2 mt-2">
                     <span class="p-input-icon-left">
                       <i class="pi pi-filter" />
-                      <Dropdown 
+                      <Dropdown ariaLabel="Filtrer par classe" 
                         v-model="selectedClassFilter" 
                         :options="classFilterOptions" 
                         optionLabel="label" 
@@ -106,7 +106,7 @@
                 </div>
                 <span class="p-input-icon-left">
                   <i class="pi pi-search" />
-                  <InputText v-model="globalSearch" placeholder="Rechercher un étudiant..." />
+                  <InputText aria-label="Rechercher un étudiant" v-model="globalSearch" placeholder="Rechercher un étudiant..." />
                 </span>
               </div>
             </template>
@@ -219,6 +219,7 @@
 </template>
 
 <script setup>
+import { joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
@@ -418,7 +419,7 @@ const fetchAllStudentsData = async () => {
       supabase.from('StudentsPhysio').select('user_id, repondant_hes, pfp_valided, pfp2_data, year, updated_at, created_at'),
       supabase
         .from('student_result_vote')
-        .select('id, user_id, pfp_type, year, status, assigned_place_id, assigned_place_name, assigned_institution_name, assigned_praticien_id')
+        .select('id, user_id, pfp_type, year, status, assigned_place_id, assigned_place_name, assigned_institution_name, assigned_praticien_id, assigned_praticien_2_id')
         .order('year', { ascending: false }),
       supabase.from('praticiens_formateurs').select('id, prenom, nom, mail, email, telephone, phone'),
       supabase
@@ -558,9 +559,10 @@ const fetchAllStudentsData = async () => {
           const fallbackPlaceName = assignmentPlaceName || validatedPlaceName
           place = placeByName.get(normalizePlaceName(fallbackPlaceName)) || null
         }
-        const praticien = assignment?.assigned_praticien_id
-          ? (praticienById.get(assignment.assigned_praticien_id) || praticienById.get(String(assignment.assigned_praticien_id)))
-          : null
+        const assignedPraticienNames = joinAssignedPraticiens(assignment, (id) => {
+          const name = getPraticienName(praticienById.get(id) || praticienById.get(String(id)))
+          return name === '-' ? '' : name
+        })
 
         const criteriaFromPlace = getCriteriaText(place)
         const criteriaFromValidated = validatedStage ? getCriteriaText(validatedStage) : '-'
@@ -574,7 +576,7 @@ const fetchAllStudentsData = async () => {
           return {
             _id: assignment.id || `${assignment.user_id}_${assignment.pfp_type}_${assignment.year || 'na'}`,
             pfp_type: pfpType,
-            praticien_name: getPraticienName(praticien) !== '-' ? getPraticienName(praticien) : getLegacyPraticienName(validatedStage),
+            praticien_name: assignedPraticienNames || getLegacyPraticienName(validatedStage),
             institution_contact: institutionContact,
             institution_name: assignment.assigned_institution_name || place?.Institutionname || validatedStage?.Institution || validatedStage?.institution_name || '-',
             place_name: assignment.assigned_place_name || place?.NomPlace || validatedStage?.NomPlace || validatedStage?.nom_pfp || validatedStage?.Nom_PFP || '-',

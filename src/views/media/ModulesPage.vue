@@ -9,13 +9,13 @@
     <!-- Filtres et recherche -->
     <div class="filters-section">
       <div class="search-bar">
-        <InputText 
+        <InputText aria-label="Rechercher un module" 
           v-model="searchQuery" 
           placeholder="Rechercher un module..." 
           class="search-input"
         />
-        <Button icon="pi pi-search" class="search-btn" />
-        <Button 
+        <Button aria-label="Rechercher" icon="pi pi-search" class="search-btn" />
+        <Button aria-label="Actualiser les modules" 
           icon="pi pi-refresh" 
           @click="refreshModules"
           :loading="loading"
@@ -109,19 +109,19 @@
 
         <!-- Actions rapides -->
         <div class="module-actions">
-          <Button 
+          <Button aria-label="Voir les vidéos" 
             icon="pi pi-eye" 
             class="action-btn"
             @click.stop="navigateToModule(module.id)"
             v-tooltip="'Voir les vidéos'"
           />
-          <Button 
+          <Button aria-label="Partager le module" 
             icon="pi pi-share-alt" 
             class="action-btn"
             @click.stop="shareModule(module)"
             v-tooltip="'Partager le module'"
           />
-          <Button 
+          <Button aria-label="Paramètres" 
             icon="pi pi-cog" 
             class="action-btn"
             @click.stop="editModule(module)"
@@ -292,7 +292,7 @@ onMounted(async () => {
 
 .filter-buttons .p-button.active {
   background-color: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border-color: var(--primary-color);
 }
 

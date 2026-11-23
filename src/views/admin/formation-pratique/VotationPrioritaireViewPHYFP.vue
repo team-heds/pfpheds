@@ -24,20 +24,20 @@
           <div class="flex align-items-center gap-3 flex-wrap">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe</label>
-              <Dropdown v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" :disabled="!filterYear" />
+              <Dropdown ariaLabel="Classe" v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" :disabled="!filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP</label>
-              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse || !filterYear" />
+              <Dropdown ariaLabel="PFP" v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse || !filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année</label>
-              <Dropdown v-model="filterYear" :options="years" optionLabel="label" optionValue="value" placeholder="Année" class="w-full md:w-9rem" />
+              <Dropdown ariaLabel="Année" v-model="filterYear" :options="years" optionLabel="label" optionValue="value" placeholder="Année" class="w-full md:w-9rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" :loading="loading" :disabled="!canLoad" v-tooltip="'Rafraîchir'" />
+                <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" :loading="loading" :disabled="!canLoad" v-tooltip="'Rafraîchir'" />
                 <Button icon="pi pi-briefcase" label="Export opérationnel" outlined class="p-button-sm" severity="help" @click="exportOperationalSummary" :disabled="!canLoad || !canExportOperational" v-tooltip="'Disponible après attribution'" />
               </div>
             </div>
@@ -190,7 +190,7 @@
             </h3>
             <span class="p-input-icon-left">
               <i class="pi pi-search" />
-              <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-14rem" />
+              <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." class="w-14rem" />
             </span>
           </div>
 

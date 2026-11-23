@@ -1,5 +1,6 @@
 <template>
   <section ref="scrollerRef" class="m-profile" aria-label="Profil">
+    <ContactInstitutionNotice v-if="active" :userId="userId" />
     <div v-if="store.failed" class="m-state" role="alert">
       <span class="m-state__icon" aria-hidden="true"><MIcon name="alert" /></span>
       <p class="m-state__title">Ton profil ne se charge pas</p>
@@ -179,6 +180,7 @@ import { initialsOf } from '@/mobile/home/postMedia'
 import { useMobileInstitutionsStore } from '@/mobile/institutions/mobileInstitutionsStore'
 import { useMobileProfileStore } from '@/mobile/profile/mobileProfileStore'
 import MyStagesView from '@/mobile/institutions/MyStagesView.vue'
+import ContactInstitutionNotice from '@/components/user/details/ContactInstitutionNotice.vue'
 import { badgeIcon, displayNameOf, featuredChallenges, formatNumber, houseOf, levelSummary } from '@/mobile/profile/profileHelpers'
 
 const props = defineProps({
@@ -593,7 +595,7 @@ onMounted(() => reload())
 .m-profile__switch button {
   flex: 1;
   min-width: 0;
-  min-height: 40px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   background: none;

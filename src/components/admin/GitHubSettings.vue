@@ -69,7 +69,7 @@
       <div class="field">
         <label for="github-token">GitHub Token</label>
         <div class="token-input-group">
-          <Password 
+          <Password ariaLabel="GitHub Token" 
             id="github-token"
             v-model="token" 
             placeholder="ghp_xxxxxxxxxxxxxxxxxx"
@@ -476,7 +476,7 @@ function disconnect() {
   width: 32px;
   height: 32px;
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border-radius: 50%;
   display: flex;
   align-items: center;
