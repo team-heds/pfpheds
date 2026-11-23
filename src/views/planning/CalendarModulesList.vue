@@ -1,7 +1,7 @@
 <template>
   <TheNavbar />
   <div class="p-4">
-    <h1 class="text-3xl mb-4">Calendar - Modules</h1>
+    <h1 class="text-3xl mb-4">Modules</h1>
     <p class="text-700 mb-3">Liste des modules (vue calendrier).</p>
     <Panel header="Créer un module">
       <div class="grid" style="row-gap:.5rem">

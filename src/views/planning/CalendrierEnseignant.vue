@@ -11,7 +11,7 @@
         </Panel>
       </div>
       <div class="col-12 md:col-8">
-        <Panel header="Semaine actuelle (exemple)">
+        <Panel header="Semaine actuelle">
           <DataTable :value="rows" size="small">
             <Column field="day" header="Jour" />
             <Column field="content" header="Cours / Module" />

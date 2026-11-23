@@ -1,9 +1,9 @@
 <template>
   <TheNavbar />
   <div class="p-4">
-    <h1 class="text-3xl mb-4">Calendar - My Modules</h1>
-    <p class="text-700 mb-3">Liste de mes modules (rmodule) et liens d'édition (placeholder public, branchement Supabase selon roles à venir).</p>
-    <Panel header="Mes modules (exemple)">
+    <h1 class="text-3xl mb-4">Tous les modules</h1>
+    <p class="text-700 mb-3">La liste des modules et leur accès d’édition.</p>
+    <Panel header="Modules">
       <DataTable :value="rows" size="small">
         <Column field="name" header="Module" />
         <Column field="code" header="Code" />

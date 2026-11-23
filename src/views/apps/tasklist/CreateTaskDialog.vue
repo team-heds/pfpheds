@@ -93,8 +93,8 @@ const filterMembers = async (event) => {
   <div class="p-4">
     <div class="grid p-fluid formgrid">
       <div class="col-12 field">
-        <label for="name" class="text-900 font-semibold">Task Name</label>
-        <InputText id="name" type="text" placeholder="Title" v-model="task.name" />
+        <label for="name" class="text-900 font-semibold">Nom de la tâche</label>
+        <InputText id="name" type="text" placeholder="Titre" v-model="task.name" />
       </div>
       <div class="col-12 field">
         <label for="description" class="text-900 font-semibold">Description</label>
@@ -108,27 +108,27 @@ const filterMembers = async (event) => {
         />
       </div>
       <div class="col-6 field">
-        <label for="start" class="text-900 font-semibold">Start Date</label>
+        <label for="start" class="text-900 font-semibold">Date de début</label>
         <Calendar
           dateFormat="yy-mm-dd"
           :show-time="false"
           inputId="start"
-          placeholder="Start Date"
+          placeholder="Date de début"
           v-model="task.startDate"
         ></Calendar>
       </div>
       <div class="col-6 field">
-        <label for="end" class="text-900 font-semibold">Due Date</label>
+        <label for="end" class="text-900 font-semibold">Échéance</label>
         <Calendar
           dateFormat="yy-mm-dd"
           :show-time="false"
           inputId="end"
-          placeholder="End Date"
+          placeholder="Échéance"
           v-model="task.endDate"
         ></Calendar>
       </div>
       <div class="col-12 field">
-        <label for="members" class="text-900 font-semibold">Add Team Member</label>
+        <label for="members" class="text-900 font-semibold">Ajouter un membre</label>
         <AutoComplete
           inputId="members"
           v-model="task.members"
@@ -166,10 +166,10 @@ const filterMembers = async (event) => {
           class="w-8rem mr-3"
           outlined
           icon="pi pi-times"
-          label="Cancel"
+          label="Annuler"
           @click="onHide"
         ></Button>
-        <Button class="w-8rem" icon="pi pi-check" label="Save" @click="onSave"></Button>
+        <Button class="w-8rem" icon="pi pi-check" label="Enregistrer" @click="onSave"></Button>
       </div>
     </div>
   </div>
