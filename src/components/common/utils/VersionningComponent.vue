@@ -19,15 +19,17 @@ export default {
     };
   },
   mounted() {
-    const checkMobile = () => {
-      this.isMobile = window.innerWidth <= 600;
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    this.checkMobile();
+    window.addEventListener('resize', this.checkMobile);
   },
   beforeUnmount() {
     window.removeEventListener('resize', this.checkMobile);
-  }
+  },
+  methods: {
+    checkMobile() {
+      this.isMobile = window.innerWidth <= 600;
+    },
+  },
 };
 </script>
 

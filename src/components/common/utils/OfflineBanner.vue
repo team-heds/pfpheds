@@ -1,7 +1,7 @@
 <template>
   <transition name="offline-banner">
     <div
-      v-if="visible"
+      v-if="visible && isMyTurn"
       class="offline-banner p-message"
       :class="offline ? 'p-message-error' : 'p-message-success'"
       role="status"
@@ -21,7 +21,8 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { activeAnnouncement, hideAnnouncement, showAnnouncement } from '@/utils/announcementQueue'
 
 const OFFLINE_DISPLAY_DELAY = 2500
 const ONLINE_DISPLAY_DURATION = 3000
@@ -35,6 +36,8 @@ const FAILURES_BEFORE_OFFLINE = 2
 
 const offline = ref(typeof navigator !== 'undefined' && navigator.onLine === false)
 const visible = ref(offline.value)
+const isMyTurn = computed(() => activeAnnouncement.value === 'offline')
+watch(visible, (shown) => (shown ? showAnnouncement('offline') : hideAnnouncement('offline')), { immediate: true, flush: 'sync' })
 let hideTimer = null
 let offlineTimer = null
 let probeTimer = null
@@ -152,6 +155,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   mounted = false
+  hideAnnouncement('offline')
   clearTimeout(hideTimer)
   clearOfflineTimer()
   clearTimeout(probeTimer)
