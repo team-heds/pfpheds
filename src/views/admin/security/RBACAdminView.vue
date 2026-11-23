@@ -9,8 +9,8 @@
         <div class="col">
           <Panel header="Permissions">
             <div class="toolbar">
-              <InputText v-model="newPerm.slug" placeholder="permission ex: page1.access" />
-              <InputText v-model="newPerm.description" placeholder="description" />
+              <InputText aria-label="Permission" v-model="newPerm.slug" placeholder="permission ex: page1.access" />
+              <InputText aria-label="Description" v-model="newPerm.description" placeholder="description" />
               <Button label="Ajouter" icon="pi pi-plus" @click="createPermission" :disabled="!newPerm.slug" />
             </div>
             <DataTable :value="permissions" dataKey="slug" :loading="loading">
@@ -18,7 +18,7 @@
               <Column field="description" header="Description" />
               <Column header="Actions" style="width: 120px">
                 <template #body="slotProps">
-                  <Button icon="pi pi-trash" text @click="deletePermission(slotProps.data)" />
+                  <Button aria-label="Supprimer" icon="pi pi-trash" text @click="deletePermission(slotProps.data)" />
                 </template>
               </Column>
             </DataTable>
@@ -27,8 +27,8 @@
         <div class="col">
           <Panel header="Rôles">
             <div class="toolbar">
-              <InputText v-model="newRole.slug" placeholder="nom ex: admin" />
-              <InputText v-model="newRole.label" placeholder="label" />
+              <InputText aria-label="Nom du rôle" v-model="newRole.slug" placeholder="nom ex: admin" />
+              <InputText aria-label="Libellé" v-model="newRole.label" placeholder="label" />
               <Button label="Ajouter" icon="pi pi-plus" @click="createRole" :disabled="!newRole.slug" />
             </div>
             <DataTable :value="roles" dataKey="slug" :loading="loading">
@@ -36,7 +36,7 @@
               <Column field="label" header="Label" />
               <Column header="Actions" style="width: 120px">
                 <template #body="slotProps">
-                  <Button icon="pi pi-trash" text @click="deleteRole(slotProps.data)" />
+                  <Button aria-label="Supprimer" icon="pi pi-trash" text @click="deleteRole(slotProps.data)" />
                 </template>
               </Column>
             </DataTable>
@@ -46,14 +46,14 @@
 
       <Panel header="Attribution: Permissions d'un rôle" class="mt-4">
         <div class="assign">
-          <Dropdown v-model="selectedRoleId" :options="roles" optionLabel="slug" optionValue="id" placeholder="Choisir un rôle" style="min-width: 240px"/>
+          <Dropdown ariaLabel="Choisir un rôle" v-model="selectedRoleId" :options="roles" optionLabel="slug" optionValue="id" placeholder="Choisir un rôle" style="min-width: 240px"/>
           <div v-if="selectedRoleId" class="dual-list">
             <div class="list">
               <h4>Permissions disponibles</h4>
               <div class="items">
                 <div v-for="p in availablePerms" :key="p.slug" class="item">
                   <span>{{ p.slug }}</span>
-                  <Button icon="pi pi-angle-right" text @click="attachPermToRole(p.slug)" />
+                  <Button aria-label="Suivant" icon="pi pi-angle-right" text @click="attachPermToRole(p.slug)" />
                 </div>
               </div>
             </div>
@@ -61,7 +61,7 @@
               <h4>Permissions du rôle</h4>
               <div class="items">
                 <div v-for="p in rolePerms" :key="`${p.role_id}-${p.permission_slug}`" class="item">
-                  <Button icon="pi pi-times" text @click="detachPermFromRole(p.role_id, p.permission_slug)" />
+                  <Button aria-label="Fermer" icon="pi pi-times" text @click="detachPermFromRole(p.role_id, p.permission_slug)" />
                   <span>{{ p.permission_slug }}</span>
                 </div>
               </div>
@@ -72,14 +72,14 @@
 
       <Panel header="Attribution: Rôles d'un utilisateur" class="mt-4">
         <div class="assign">
-          <InputText v-model="selectedUserId" placeholder="User UUID" style="min-width: 300px" />
+          <InputText aria-label="User UUID" v-model="selectedUserId" placeholder="User UUID" style="min-width: 300px" />
           <div v-if="selectedUserId" class="dual-list">
             <div class="list">
               <h4>Rôles disponibles</h4>
               <div class="items">
                 <div v-for="r in availableRolesForUser" :key="r.id" class="item">
                   <span>{{ r.slug }}</span>
-                  <Button icon="pi pi-angle-right" text @click="attachRoleToUser(r.id)" />
+                  <Button aria-label="Suivant" icon="pi pi-angle-right" text @click="attachRoleToUser(r.id)" />
                 </div>
               </div>
             </div>
@@ -87,7 +87,7 @@
               <h4>Rôles de l'utilisateur</h4>
               <div class="items">
                 <div v-for="r in userRoles" :key="`${r.user_id}-${r.role_id}`" class="item">
-                  <Button icon="pi pi-times" text @click="detachRoleFromUser(r.user_id, r.role_id)" />
+                  <Button aria-label="Fermer" icon="pi pi-times" text @click="detachRoleFromUser(r.user_id, r.role_id)" />
                   <span>{{ roleNameById(r.role_id) }}</span>
                 </div>
               </div>

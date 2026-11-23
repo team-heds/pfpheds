@@ -17,9 +17,9 @@
             <div class="flex gap-2 align-items-center">
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="search" placeholder="Rechercher un enseignant..." style="width: 320px" />
+                <InputText aria-label="Rechercher un enseignant" v-model="search" placeholder="Rechercher un enseignant..." style="width: 320px" />
               </span>
-              <Button icon="pi pi-times" severity="secondary" size="small" @click="search = ''" v-tooltip.top="'Effacer'" />
+              <Button aria-label="Effacer" icon="pi pi-times" severity="secondary" size="small" @click="search = ''" v-tooltip.top="'Effacer'" />
             </div>
             <div class="flex gap-2 align-items-center">
               <Tag :value="`${filteredTeachers.length} / ${teachers.length} enseignants`" severity="info" />
@@ -70,7 +70,7 @@
 
             <Column header="Actions" style="width: 140px">
               <template #body="{ data }">
-                <Button 
+                <Button aria-label="Ouvrir la page profil" 
                   icon="pi pi-eye" 
                   severity="info" 
                   size="small" 

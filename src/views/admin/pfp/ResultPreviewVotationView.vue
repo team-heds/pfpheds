@@ -63,16 +63,16 @@
       <div class="surface-card p-3 border-round shadow-2 mb-4">
         <div class="grid">
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterClasse" :options="classes" placeholder="Toutes les classes" class="w-full" showClear />
+            <Dropdown ariaLabel="Classes" v-model="filterClasse" :options="classes" placeholder="Toutes les classes" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
-            <Dropdown v-model="filterResult" :options="resultOptions" placeholder="Tous les résultats" class="w-full" showClear />
+            <Dropdown ariaLabel="Résultats" v-model="filterResult" :options="resultOptions" placeholder="Tous les résultats" class="w-full" showClear />
           </div>
           <div class="col-12 md:col-3">
             <SelectButton v-model="viewMode" :options="viewModes" optionLabel="label" optionValue="value" class="w-full" />
           </div>
           <div class="col-12 md:col-3">
-            <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-full" />
+            <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." class="w-full" />
           </div>
         </div>
       </div>

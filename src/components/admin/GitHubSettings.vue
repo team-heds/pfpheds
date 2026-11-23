@@ -69,7 +69,7 @@
       <div class="field">
         <label for="github-token">GitHub Token</label>
         <div class="token-input-group">
-          <Password 
+          <Password ariaLabel="GitHub Token" 
             id="github-token"
             v-model="token" 
             placeholder="ghp_xxxxxxxxxxxxxxxxxx"

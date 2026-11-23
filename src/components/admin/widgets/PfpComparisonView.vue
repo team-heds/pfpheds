@@ -11,7 +11,7 @@
         <div class="surface-card border-round-xl p-4 shadow-2">
           <div class="flex justify-content-between align-items-center mb-4">
             <h3 class="text-lg font-bold m-0">Places par Cohorte</h3>
-            <Dropdown 
+            <Dropdown ariaLabel="Places par Cohorte" 
               v-model="comparisonType" 
               :options="comparisonOptions" 
               optionLabel="label"

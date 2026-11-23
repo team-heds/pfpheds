@@ -4,7 +4,7 @@
     <div class="viz-controls">
       <div class="viz-type-selector">
         <div class="viz-buttons">
-          <Button
+          <Button :aria-label="getTooltip(type)"
             v-for="type in availableTypes"
             :key="type.value"
             :icon="type.icon"
@@ -20,7 +20,7 @@
       </div>
       
       <div class="viz-actions">
-        <Button
+        <Button aria-label="Exporter en CSV"
           v-if="showExport"
           icon="pi pi-download"
           @click="exportData"
@@ -29,7 +29,7 @@
           size="small"
           v-tooltip.bottom="'Exporter en CSV'"
         />
-        <Button
+        <Button aria-label="Actualiser"
           v-if="showRefresh"
           icon="pi pi-refresh"
           @click="$emit('refresh')"

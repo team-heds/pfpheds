@@ -39,7 +39,7 @@
               </div>
               <div class="selection-content">
                 <label class="selection-label">Année académique</label>
-                <Dropdown 
+                <Dropdown ariaLabel="Année académique" 
                   v-model="selectedYear"
                   :options="yearOptions"
                   optionLabel="label"
@@ -60,7 +60,7 @@
               </div>
               <div class="selection-content">
                 <label class="selection-label">Mode d'affichage</label>
-                <Dropdown 
+                <Dropdown ariaLabel="Mode d'affichage" 
                   v-model="viewMode"
                   :options="viewModeOptions"
                   optionLabel="label"
@@ -90,14 +90,14 @@
               <div class="selection-content">
                 <label class="selection-label">Semaine</label>
                 <div class="week-navigation">
-                  <Button 
+                  <Button aria-label="Semaine précédente" 
                     icon="pi pi-chevron-left" 
                     @click="previousWeek"
                     outlined
                     rounded
                     v-tooltip="'Semaine précédente'"
                   />
-                  <Dropdown 
+                  <Dropdown ariaLabel="Semaine" 
                     v-model="selectedWeek"
                     :options="weekOptions"
                     optionLabel="label"
@@ -106,7 +106,7 @@
                     filter
                     class="flex-1 selection-dropdown"
                   />
-                  <Button 
+                  <Button aria-label="Semaine suivante" 
                     icon="pi pi-chevron-right" 
                     @click="nextWeek"
                     outlined
@@ -367,7 +367,7 @@
                   />
                 </div>
                 <div v-else class="flex gap-2">
-                  <Button 
+                  <Button aria-label="Modifier" 
                     icon="pi pi-pencil"
                     @click="openSlotDialog(slotProps.data)"
                     size="small"
@@ -375,7 +375,7 @@
                     text
                     v-tooltip="'Modifier'"
                   />
-                  <Button 
+                  <Button aria-label="Dupliquer" 
                     icon="pi pi-copy"
                     @click="duplicateSlot(slotProps.data)"
                     size="small"
@@ -383,7 +383,7 @@
                     text
                     v-tooltip="'Dupliquer'"
                   />
-                  <Button 
+                  <Button aria-label="Supprimer" 
                     icon="pi pi-trash"
                     @click="deleteSlot(slotProps.data.id)"
                     size="small"
@@ -408,7 +408,7 @@
         <div class="grid gap-3">
           <div class="col-12 md:col-6">
             <label class="block mb-2 font-bold">Jour :</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Jour" 
               v-model="slotForm.day"
               :options="['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'distance']"
               placeholder="Sélectionner un jour"
@@ -418,7 +418,7 @@
           
           <div class="col-12 md:col-6">
             <label class="block mb-2 font-bold">Date :</label>
-            <InputText 
+            <InputText aria-label="Date" 
               v-model="slotForm.date"
               placeholder="Ex: 16.02.2026"
               class="w-full"
@@ -427,7 +427,7 @@
           
           <div class="col-12 md:col-6">
             <label class="block mb-2 font-bold">Heure de début :</label>
-            <InputText 
+            <InputText aria-label="Heure de début" 
               v-model="slotForm.startTime"
               placeholder="Ex: 09h00"
               class="w-full"
@@ -436,7 +436,7 @@
           
           <div class="col-12 md:col-6">
             <label class="block mb-2 font-bold">Heure de fin :</label>
-            <InputText 
+            <InputText aria-label="Heure de fin" 
               v-model="slotForm.endTime"
               placeholder="Ex: 11h00"
               class="w-full"
@@ -445,7 +445,7 @@
           
           <div class="col-12">
             <label class="block mb-2 font-bold">Module :</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Module" 
               v-model="slotForm.moduleCode"
               :options="moduleOptions"
               optionLabel="label"
@@ -459,7 +459,7 @@
           
           <div class="col-12">
             <label class="block mb-2 font-bold">Titre du module :</label>
-            <InputText 
+            <InputText aria-label="Titre du module" 
               v-model="slotForm.moduleTitle"
               placeholder="Ex: M1012 - Raisonnement clinique 1b"
               class="w-full"
@@ -468,7 +468,7 @@
           
           <div class="col-12">
             <label class="block mb-2 font-bold">Nom du cours (affiché dans le planning) :</label>
-            <Textarea 
+            <Textarea aria-label="Nom du cours (affiché dans le planning)" 
               v-model="slotForm.courseTitle"
               placeholder="Ex: Introduction Module: questions-réponses en lien avec la vidéo et le guide du module"
               :rows="2"
@@ -479,7 +479,7 @@
           
           <div class="col-6">
             <label class="block mb-2 font-bold">Type d'activité :</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Type d'activité" 
               v-model="slotForm.activityType"
               :options="activityTypeOptions"
               optionLabel="label"
@@ -491,7 +491,7 @@
           </div>
           <div class="col-6">
             <label class="block mb-2 font-bold">Détails / Activité complémentaire :</label>
-            <Textarea 
+            <Textarea aria-label="Détails / Activité complémentaire" 
               v-model="slotForm.activity"
               placeholder="Détails supplémentaires ou notes"
               :rows="2"
@@ -501,7 +501,7 @@
           
           <div class="col-12">
             <label class="block mb-2 font-bold">Enseignants :</label>
-            <AutoComplete 
+            <AutoComplete ariaLabel="Enseignants" 
               v-model="slotForm.teachers"
               :suggestions="filteredTeachers"
               @complete="searchTeachers"
@@ -529,7 +529,7 @@
           
           <div class="col-12 md:col-6">
             <label class="block mb-2 font-bold">Salle :</label>
-            <InputText 
+            <InputText aria-label="Salle" 
               v-model="slotForm.room"
               placeholder="Numéro de salle"
               class="w-full"
@@ -538,7 +538,7 @@
           
           <div class="col-12 md:col-6">
             <label class="block mb-2 font-bold">Notes :</label>
-            <InputText 
+            <InputText aria-label="Notes" 
               v-model="slotForm.notes"
               placeholder="Notes additionnelles"
               class="w-full"
@@ -562,7 +562,7 @@
         <div class="grid gap-3">
           <div class="col-12">
             <label class="block mb-2 font-bold">Semaine source :</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Semaine source" 
               v-model="duplicateFrom"
               :options="weekOptions"
               optionLabel="label"
@@ -575,7 +575,7 @@
           
           <div class="col-12">
             <label class="block mb-2 font-bold">Semaine destination :</label>
-            <Dropdown 
+            <Dropdown ariaLabel="Semaine destination" 
               v-model="duplicateTo"
               :options="weekOptions"
               optionLabel="label"

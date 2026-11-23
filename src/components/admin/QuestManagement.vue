@@ -378,7 +378,7 @@
                   <label for="points" class="block text-900 font-bold mb-2">
                     <i class="pi pi-flag text-orange-500 mr-2"></i>Points (Classement) *
                   </label>
-                  <InputNumber 
+                  <InputNumber ariaLabel="Points (Classement)" 
                     id="points"
                     v-model="questForm.points" 
                     :min="1"
@@ -401,7 +401,7 @@
                   <label for="xp" class="block text-900 font-bold mb-2">
                     <i class="pi pi-star-fill text-yellow-500 mr-2"></i>XP (Progression)
                   </label>
-                  <InputNumber 
+                  <InputNumber ariaLabel="XP (Progression)" 
                     id="xp"
                     v-model="questForm.xp_reward" 
                     :min="0"
@@ -422,7 +422,7 @@
                   <label for="badges" class="block text-900 font-bold mb-2">
                     <i class="pi pi-trophy text-purple-500 mr-2"></i>Badges Récompenses
                   </label>
-                  <MultiSelect 
+                  <MultiSelect ariaLabel="Badges Récompenses" 
                     id="badges"
                     v-model="questForm.rewardBadges" 
                     :options="badgeOptions" 
@@ -455,7 +455,7 @@
                   <label for="minLevel" class="block text-900 font-bold mb-2">
                     <i class="pi pi-angle-up text-green-500 mr-2"></i>Niveau Minimum
                   </label>
-                  <InputNumber 
+                  <InputNumber ariaLabel="Niveau Minimum" 
                     id="minLevel"
                     v-model="questForm.minLevel" 
                     :min="1"
@@ -472,7 +472,7 @@
                   <label for="duration" class="block text-900 font-bold mb-2">
                     <i class="pi pi-clock text-blue-500 mr-2"></i>Durée Limite (heures)
                   </label>
-                  <InputNumber 
+                  <InputNumber ariaLabel="Durée Limite (heures)" 
                     id="duration"
                     v-model="questForm.duration" 
                     :min="1"
@@ -489,7 +489,7 @@
                   <label class="block text-900 font-bold mb-2">
                     <i class="pi pi-users text-purple-500 mr-2"></i>Maisons Ciblées
                   </label>
-                  <MultiSelect 
+                  <MultiSelect ariaLabel="Maisons Ciblées" 
                     v-model="questForm.targetHouses" 
                     :options="houseOptions" 
                     optionLabel="label"
@@ -521,7 +521,7 @@
                     </label>
                   </div>
                   
-                  <Dropdown 
+                  <Dropdown ariaLabel="Fréquence de récurrence" 
                     v-if="questForm.isRecurring"
                     v-model="questForm.recurringType" 
                     :options="recurringOptions" 
@@ -541,7 +541,7 @@
                   <label for="startDate" class="block text-900 font-bold mb-2">
                     <i class="pi pi-calendar text-green-500 mr-2"></i>Date de Début
                   </label>
-                  <Calendar 
+                  <Calendar ariaLabel="Date de Début" 
                     id="startDate"
                     v-model="questForm.startDate" 
                     dateFormat="dd/mm/yy"
@@ -558,7 +558,7 @@
                   <label for="endDate" class="block text-900 font-bold mb-2">
                     <i class="pi pi-calendar text-red-500 mr-2"></i>Date de Fin
                   </label>
-                  <Calendar 
+                  <Calendar ariaLabel="Date de Fin" 
                     id="endDate"
                     v-model="questForm.endDate" 
                     dateFormat="dd/mm/yy"
@@ -618,7 +618,7 @@
                 
                 <div class="grid">
                   <div class="col-12">
-                    <InputText 
+                    <InputText aria-label="Titre de l'étape" 
                       v-model="step.title" 
                       placeholder="Titre de l'étape..."
                       class="w-full mb-2"
@@ -626,7 +626,7 @@
                   </div>
                   
                   <div class="col-12">
-                    <Textarea 
+                    <Textarea aria-label="Description détaillée (optionnel)" 
                       v-model="step.description" 
                       placeholder="Description détaillée (optionnel)..."
                       rows="2"
@@ -643,7 +643,7 @@
 
                   <div class="col-12 md:col-4">
                     <label :for="`action${index}`" class="block text-900 font-bold mb-2">Action vérifiée *</label>
-                    <Dropdown
+                    <Dropdown ariaLabel="Action vérifiée"
                       :id="`action${index}`"
                       v-model="step.actionType"
                       :options="actionOptions"
@@ -686,7 +686,7 @@
               </label>
               <div class="flex flex-column gap-2">
                 <div v-for="(hint, index) in questForm.hints" :key="index" class="flex gap-2">
-                  <InputText 
+                  <InputText :aria-label="`Indice ${index + 1}`" 
                     v-model="questForm.hints[index]" 
                     placeholder="Ex: Cherchez dans la section histoire..."
                     class="flex-1"
@@ -711,7 +711,7 @@
               <label class="block text-900 font-bold mb-2">
                 <i class="pi pi-link text-blue-500 mr-2"></i>Quêtes Prérequises
               </label>
-              <MultiSelect 
+              <MultiSelect ariaLabel="Quêtes Prérequises" 
                 v-model="questForm.prerequisites" 
                 :options="quests" 
                 optionLabel="title"

@@ -82,7 +82,7 @@
         <form @submit.prevent="updateCommunityType" class="p-fluid">
           <div class="p-field">
             <label for="newCommunityType">Nouveau Type de Communauté</label>
-            <Dropdown
+            <Dropdown ariaLabel="Nouveau Type de Communauté"
               id="newCommunityType"
               v-model="newCommunityType"
               :options="communityTypeOptions"
@@ -165,7 +165,7 @@
             </Column>
             <Column header="Actions">
               <template #body="slotProps">
-                <Button
+                <Button aria-label="Supprimer"
                   icon="pi pi-trash"
                   class="p-button-danger p-button-sm"
                   @click="removeMember(slotProps.data.id)"

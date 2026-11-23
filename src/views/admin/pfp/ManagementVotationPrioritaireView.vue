@@ -18,20 +18,20 @@
           <div class="flex align-items-center gap-3 flex-wrap">
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" :disabled="!filterYear" />
+              <Dropdown ariaLabel="Classe" v-model="filterClasse" :options="classeOptions" optionLabel="label" optionValue="value" placeholder="Classe" class="w-full md:w-12rem" :disabled="!filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse || !filterYear" />
+              <Dropdown ariaLabel="PFP" v-model="filterPFP" :options="pfpTypes" optionLabel="label" optionValue="value" placeholder="PFP" class="w-full md:w-8rem" :disabled="!filterClasse || !filterYear" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année <span class="text-red-500">*</span></label>
-              <Dropdown v-model="filterYear" :options="years" optionLabel="label" optionValue="value" placeholder="Année" class="w-full md:w-9rem" />
+              <Dropdown ariaLabel="Année" v-model="filterYear" :options="years" optionLabel="label" optionValue="value" placeholder="Année" class="w-full md:w-9rem" />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" v-tooltip="'Rafraîchir'" :loading="loading" :disabled="!canShowResults" />
+                <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="loadData" v-tooltip="'Rafraîchir'" :loading="loading" :disabled="!canShowResults" />
               </div>
             </div>
           </div>
@@ -205,9 +205,9 @@
             <div class="flex align-items-center gap-3 mb-2">
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="pfp4SearchQuery" placeholder="Rechercher..." class="w-12rem p-inputtext-sm" />
+                <InputText aria-label="Rechercher" v-model="pfp4SearchQuery" placeholder="Rechercher..." class="w-12rem p-inputtext-sm" />
               </span>
-              <Dropdown v-model="pfp4FilterRule"
+              <Dropdown ariaLabel="Filtrer par règle" v-model="pfp4FilterRule"
                 :options="Object.entries(pfp4RuleLabels).map(([k, v]) => ({ label: v, value: k }))"
                 optionLabel="label" optionValue="value" placeholder="Filtrer par règle"
                 class="w-14rem" :showClear="true" />
@@ -320,7 +320,7 @@
             </Column>
             <Column header="Actions" style="min-width: 80px">
               <template #body="{ data }">
-                <Button icon="pi pi-times" severity="danger" text rounded size="small" @click="removePriorityStudent(data.userId)" v-tooltip.top="'Retirer'" />
+                <Button aria-label="Retirer" icon="pi pi-times" severity="danger" text rounded size="small" @click="removePriorityStudent(data.userId)" v-tooltip.top="'Retirer'" />
               </template>
             </Column>
           </DataTable>
@@ -335,7 +335,7 @@
             </div>
             <span class="p-input-icon-left">
               <i class="pi pi-search" />
-              <InputText v-model="searchQuery" placeholder="Rechercher..." class="w-full md:w-14rem" />
+              <InputText aria-label="Rechercher" v-model="searchQuery" placeholder="Rechercher..." class="w-full md:w-14rem" />
             </span>
           </div>
 
@@ -430,7 +430,7 @@
       <div class="flex flex-column gap-3">
         <div class="flex flex-column gap-2">
           <label class="font-semibold">Raison de la priorité</label>
-          <InputText v-model="manualReason" placeholder="Ex: Lésé PFP1A, Cas médical, etc." />
+          <InputText aria-label="Raison de la priorité" v-model="manualReason" placeholder="Ex: Lésé PFP1A, Cas médical, etc." />
         </div>
         <p class="text-500 text-sm m-0">
           Vous pouvez aussi ajouter des étudiants directement depuis le tableau ci-dessous en cliquant sur "Ajouter".

@@ -200,7 +200,7 @@ const definirEvenements = () => {
               </div>
               <div class="col-12 field">
                 <label for="couleur-entreprise" class="text-900 font-semibold">Couleur</label>
-                <Dropdown inputId="couleur-entreprise" :options="tags" v-model="evenementModifie.tag" optionLabel="nom">
+                <Dropdown ariaLabel="Couleur" inputId="couleur-entreprise" :options="tags" v-model="evenementModifie.tag" optionLabel="nom">
                   <template #option="slotProps">
                     <div class="flex align-items-center">
                       <div :style="{ 'background-color': slotProps.option.couleur }" class="flex-shrink-0 w-1rem h-1rem mr-2 border-circle"></div>

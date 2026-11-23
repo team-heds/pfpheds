@@ -233,14 +233,14 @@
                         />
                       </div>
                       <div class="flex gap-1">
-                        <Button
+                        <Button aria-label="Modifier"
                           icon="pi pi-pencil"
                           @click="editAlert(kpi)"
                           text
                           rounded
                           size="small"
                         />
-                        <Button
+                        <Button aria-label="Supprimer"
                           icon="pi pi-trash"
                           @click="removeAlert(kpi.id)"
                           text
@@ -445,7 +445,7 @@
     >
       <div class="flex flex-column gap-3">
         <p class="text-600">Collez votre configuration JSON:</p>
-        <Textarea
+        <Textarea aria-label="Configuration à importer"
           v-model="importConfigText"
           rows="10"
           placeholder='{"order": [...], "hidden": [...], ...}'
@@ -467,7 +467,7 @@
     >
       <div class="flex flex-column gap-3">
         <p class="text-600">Copiez cette configuration:</p>
-        <Textarea
+        <Textarea aria-label="Configuration exportée"
           :model-value="exportedConfig"
           rows="10"
           readonly

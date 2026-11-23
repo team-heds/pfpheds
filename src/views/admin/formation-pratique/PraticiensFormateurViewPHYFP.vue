@@ -17,11 +17,11 @@
             </div>
           </div>
           <div class="flex align-items-center gap-2 flex-wrap">
-            <InputText v-model="search" placeholder="Rechercher (nom, email, institution)" class="w-16rem" />
+            <InputText aria-label="Rechercher (nom, email, institution)" v-model="search" placeholder="Rechercher (nom, email, institution)" class="w-16rem" />
             <Button icon="pi pi-file-excel" label="Excel" outlined severity="success" @click="exportExcel" />
             <Button icon="pi pi-filter-slash" label="Réinitialiser" outlined severity="secondary" @click="resetFilters" />
             <Button icon="pi pi-plus" label="Ajouter" outlined @click="openCreate" />
-            <Button icon="pi pi-refresh" outlined :disabled="loading" @click="refresh" />
+            <Button aria-label="Actualiser" icon="pi pi-refresh" outlined :disabled="loading" @click="refresh" />
           </div>
         </div>
         <ProgressBar v-if="loading" mode="indeterminate" style="height: 4px" class="mt-3" />
@@ -94,8 +94,8 @@
           </Column>
           <Column header="Actions" style="min-width: 10rem">
             <template #body="{ data }">
-              <Button icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="openEdit(data)" />
-              <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="onDelete(data)" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" size="small" v-tooltip.top="'Modifier'" @click="openEdit(data)" />
+              <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-rounded p-button-danger" size="small" v-tooltip.top="'Supprimer'" @click="onDelete(data)" />
             </template>
           </Column>
         </DataTable>
@@ -144,7 +144,7 @@
 
           <div class="field mb-3">
             <label for="institution" class="font-semibold">Institution</label>
-            <Dropdown
+            <Dropdown ariaLabel="Institution"
               id="institution"
               v-model="form.selectedInstitutionId"
               :options="institutionOptions"

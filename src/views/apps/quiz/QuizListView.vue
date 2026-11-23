@@ -39,7 +39,7 @@
         <section class="quiz-panel quiz-filters" aria-label="Filtres">
           <div class="quiz-field">
             <label for="quiz-theme-filter">Thème</label>
-            <Dropdown
+            <Dropdown ariaLabel="Thème"
               v-model="themeFilter"
               input-id="quiz-theme-filter"
               :options="themeOptions"

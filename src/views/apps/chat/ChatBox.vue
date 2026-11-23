@@ -18,7 +18,7 @@
           <p class="text-700">Dernière activité {{ user.lastSeen }}</p>
         </div>
         <div class="flex align-items-center ml-auto">
-          <Button type="button" icon="pi pi-ellipsis-v" outlined severity="secondary" rounded></Button>
+          <Button aria-label="Plus d’actions" type="button" icon="pi pi-ellipsis-v" outlined severity="secondary" rounded></Button>
         </div>
     </div>
 
@@ -81,7 +81,7 @@
     <!-- Zone d'Entrée des Messages et Sélecteur d'Emojis -->
     <div v-if="user && defaultUserId" class="p-3 md:p-4 lg:p-6 flex flex-column sm:flex-row align-items-center mt-auto border-top-1 surface-border gap-3">
 
-      <InputText id="message" type="text" placeholder="Tapez un message..." class="flex-1 w-full sm:w-auto border-round" v-model="textContent" @keydown.enter="sendMessage()" />
+      <InputText aria-label="Tapez un message" id="message" type="text" placeholder="Tapez un message..." class="flex-1 w-full sm:w-auto border-round" v-model="textContent" @keydown.enter="sendMessage()" />
       <div class="flex w-full sm:w-auto gap-3">
         <Button class="p-button w-full sm:w-auto justify-content-center text-xl" severity="secondary" @click="(event) => $refs.op.toggle(event)">😀</Button>
         <Button label="Envoyer" icon="pi pi-send" class="w-full sm:w-auto" @click="sendMessage()" :disabled="!textContent.trim() || !defaultUserId"></Button>

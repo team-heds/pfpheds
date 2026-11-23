@@ -30,7 +30,7 @@
         <!-- Colonne pour Lieu signature avec Dropdown -->
         <Column header="Lieu signature">
           <template #body="{ data }">
-            <Dropdown
+            <Dropdown ariaLabel="Sélectionnez"
               v-model="lieuSignatureOverrides[data._key]"
               :options="signatureOptions"
               optionLabel="label"
@@ -44,7 +44,7 @@
         <!-- Colonne pour En charge de la signature -->
         <Column header="En charge de la signature">
           <template #body="{ data }">
-            <Dropdown
+            <Dropdown ariaLabel="Sélectionnez un enseignant"
               v-model="signatureInChargeOverrides[data._key]"
               :options="teachersOptions"
               optionLabel="label"
@@ -59,7 +59,7 @@
         <Column header="Remarque étudiant">
           <template #body="slotProps">
             <span>{{ slotProps.data.remarqueEtudiant || 'Aucune' }}</span>
-            <Button icon="pi pi-pencil" class="p-button-text" @click="openRemarkDialog(slotProps.data)" />
+            <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text" @click="openRemarkDialog(slotProps.data)" />
           </template>
         </Column>
 
@@ -74,7 +74,7 @@
         <Column header="Remarque Signature">
           <template #body="slotProps">
             <span>{{ signatureRemarks[slotProps.data._key] || 'Aucune' }}</span>
-            <Button icon="pi pi-pencil" class="p-button-text" @click="openSignatureRemarkDialog(slotProps.data)" />
+            <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text" @click="openSignatureRemarkDialog(slotProps.data)" />
           </template>
         </Column>
 
@@ -92,7 +92,7 @@
     <!-- Dialog pour StudentNote -->
     <Dialog header="Modifier le StudentNote de l'étudiant" v-model:visible="displayRemarkDialog" modal>
       <div class="remark-dialog">
-        <textarea v-model="editedRemarks" rows="5" style="width:100%;" placeholder="Saisir vos remarques ici..."></textarea>
+        <textarea aria-label="Saisir vos remarques ici" v-model="editedRemarks" rows="5" style="width:100%;" placeholder="Saisir vos remarques ici..."></textarea>
         <div class="dialog-buttons" style="margin-top:1em; text-align:right;">
           <Button label="Annuler" class="p-button-text" @click="cancelRemarkEdit" />
           <Button label="Confirmer" class="p-button-success" @click="confirmRemarkUpdate" />
@@ -103,7 +103,7 @@
     <!-- Dialog pour Remarque Signature -->
     <Dialog header="Modifier la Remarque Signature" v-model:visible="displaySignatureRemarkDialog" modal>
       <div class="remark-dialog">
-        <textarea v-model="editedSignatureRemark" rows="5" style="width:100%;" placeholder="Saisir la remarque signature ici..."></textarea>
+        <textarea aria-label="Saisir la remarque signature ici" v-model="editedSignatureRemark" rows="5" style="width:100%;" placeholder="Saisir la remarque signature ici..."></textarea>
         <div class="dialog-buttons" style="margin-top:1em; text-align:right;">
           <Button label="Annuler" class="p-button-text" @click="cancelSignatureRemarkEdit" />
           <Button label="Confirmer" class="p-button-success" @click="confirmSignatureRemarkUpdate" />

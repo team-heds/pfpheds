@@ -36,7 +36,7 @@
             />
             <IconField iconPosition="left">
               <InputIcon class="pi pi-search" />
-              <InputText
+              <InputText aria-label="Recherche globale"
                 v-model="filters['global'].value"
                 placeholder="Recherche globale"
                 style="width: 100%"

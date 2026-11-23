@@ -2,7 +2,7 @@
   <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background-color: #111827; overflow: hidden;">
     
     <!-- Bouton Quitter (Toujours visible) -->
-    <Button 
+    <Button aria-label="Fermer" 
       icon="pi pi-times" 
       class="p-button-rounded p-button-text p-button-secondary"
       style="position: absolute; top: 1rem; right: 1rem; z-index: 50; color: white;"

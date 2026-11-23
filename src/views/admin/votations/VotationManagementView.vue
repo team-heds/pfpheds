@@ -17,7 +17,7 @@
 
         <!-- Sélection du PFP -->
         <div class="pfp-selection text-center mb-3">
-          <select v-model="selectedPFP" class="form-select w-50 mx-auto" @change="fetchStudentsData">
+          <select aria-label="PFP" v-model="selectedPFP" class="form-select w-50 mx-auto" @change="fetchStudentsData">
             <option disabled value="">Sélectionnez un PFP</option>
             <!-- Assurez-vous que ces valeurs correspondent exactement aux champs dans vos données -->
             <option value="PFP1A">PFP1A</option>
@@ -30,7 +30,7 @@
 
         <!-- Barre de Recherche -->
         <div class="text-center mb-3">
-          <input v-model="search" placeholder="Recherche par nom ou prénom" class="form-control search-input w-50 mx-auto">
+          <input aria-label="Recherche par nom ou prénom" v-model="search" placeholder="Recherche par nom ou prénom" class="form-control search-input w-50 mx-auto">
         </div>
       </div>
 
@@ -62,26 +62,26 @@
             <td>{{ etudiant.Nom }}</td>
             <td>{{ etudiant.Prenom }}</td>
             <td>
-              <input type="checkbox" v-model="etudiant.SAE" @change="updateStudent(etudiant, 'SAE', etudiant.SAE)"
+              <input aria-label="Étudiant" type="checkbox" v-model="etudiant.SAE" @change="updateStudent(etudiant, 'SAE', etudiant.SAE)"
                      :disabled="etudiant.validated">
             </td>
             <td>
-              <input type="checkbox" v-model="etudiant.Lese" @change="updateStudent(etudiant, 'Lese', etudiant.Lese)"
+              <input aria-label="Étudiant" type="checkbox" v-model="etudiant.Lese" @change="updateStudent(etudiant, 'Lese', etudiant.Lese)"
                      :disabled="etudiant.validated">
             </td>
             <td>
-              <input type="checkbox" v-model="etudiant.CasParticulier"
+              <input aria-label="Étudiant" type="checkbox" v-model="etudiant.CasParticulier"
                      @change="updateStudent(etudiant, 'CasParticulier', etudiant.CasParticulier)"
                      :disabled="etudiant.validated">
             </td>
             <td>
-              <input type="text" v-model="etudiant.Remarque"
+              <input aria-label="Étudiant" type="text" v-model="etudiant.Remarque"
                      @change="updateStudent(etudiant, 'Remarque', etudiant.Remarque)"
                      :disabled="etudiant.validated">
             </td>
             <td>
               <!-- Sélection de la Place de Stage -->
-              <select
+              <select aria-label="Nom"
                 v-if="etudiant.PFPinfo && etudiant.PFPinfo[selectedPFP]"
                 v-model="etudiant.PFPinfo[selectedPFP].selectedStageName"
                 @change="handlePlaceChange(etudiant)"

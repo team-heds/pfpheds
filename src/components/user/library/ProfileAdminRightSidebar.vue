@@ -20,7 +20,7 @@
       </div>
       <div class="field">
         <label for="user-select">Étudiant</label>
-        <Dropdown
+        <Dropdown ariaLabel="Étudiant"
           id="user-select"
           v-model="selectedUserId"
           :options="filteredUsers"
@@ -47,7 +47,7 @@
       </div>
       <div class="field">
         <label for="ba-role-select">Cohorte</label>
-        <Dropdown
+        <Dropdown ariaLabel="Cohorte"
           id="ba-role-select"
           v-model="selectedRoleBA"
           :options="rolesBA"

@@ -23,7 +23,7 @@
             <!-- Mode consultation pour les admins ou si autorisé -->
             <div v-if="!isActualRepondant || isAdmin" class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Voir en tant que :</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Voir en tant que" 
                 v-model="selectedRepondant" 
                 :options="repondantsHESList" 
                 optionLabel="label" 
@@ -85,7 +85,7 @@
                   <div class="flex gap-2 mt-2">
                     <span class="p-input-icon-left">
                       <i class="pi pi-filter" />
-                      <Dropdown 
+                      <Dropdown ariaLabel="Filtrer par classe" 
                         v-model="selectedClassFilter" 
                         :options="classFilterOptions" 
                         optionLabel="label" 
@@ -106,7 +106,7 @@
                 </div>
                 <span class="p-input-icon-left">
                   <i class="pi pi-search" />
-                  <InputText v-model="globalSearch" placeholder="Rechercher un étudiant..." />
+                  <InputText aria-label="Rechercher un étudiant" v-model="globalSearch" placeholder="Rechercher un étudiant..." />
                 </span>
               </div>
             </template>

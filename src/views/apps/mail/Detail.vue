@@ -72,7 +72,7 @@ const goBack = () => {
     <div>
         <div class="flex flex-column md:flex-row md:align-items-center md:justify-content-between mb-5 pt-5 md:pt-0 gap-4 md:border-top-none border-top-1 surface-border">
             <div class="flex align-items-center md:justify-content-start">
-                <Button type="button" icon="pi pi-chevron-left" class="md:mr-3" text plain @click="goBack()"></Button>
+                <Button aria-label="Précédent" type="button" icon="pi pi-chevron-left" class="md:mr-3" text plain @click="goBack()"></Button>
                 <Avatar v-if="mail && mail.image" icon="pi pi-user" size="large" shape="circle" class="border-2 surface-border"></Avatar>
                 <div class="flex flex-column mx-3">
                     <span class="block text-900 font-bold text-lg">{{ mail?.from }}</span>
@@ -81,8 +81,8 @@ const goBack = () => {
             </div>
             <div class="flex align-items-center justify-content-end column-gap-3 px-4 md:px-0">
                 <span class="text-900 font-semibold white-space-nowrap mr-auto">{{ mail?.date }}</span>
-                <Button type="button" icon="pi pi-reply" class="flex-shrink-0" text plain></Button>
-                <Button type="button" icon="pi pi-ellipsis-v" class="flex-shrink-0" text plain></Button>
+                <Button aria-label="Répondre" type="button" icon="pi pi-reply" class="flex-shrink-0" text plain></Button>
+                <Button aria-label="Plus d’actions" type="button" icon="pi pi-ellipsis-v" class="flex-shrink-0" text plain></Button>
             </div>
         </div>
         <div class="surface-border border-1 border-round p-4">
@@ -98,8 +98,8 @@ const goBack = () => {
             />
 
             <div class="flex column-gap-3 justify-content-end mt-3">
-                <Button type="button" outlined icon="pi pi-image"></Button>
-                <Button type="button" outlined icon="pi pi-paperclip"></Button>
+                <Button aria-label="Choisir une image" type="button" outlined icon="pi pi-image"></Button>
+                <Button aria-label="Joindre un fichier" type="button" outlined icon="pi pi-paperclip"></Button>
                 <Button type="button" icon="pi pi-send" label="Send" @click="sendMail()"></Button>
             </div>
         </div>

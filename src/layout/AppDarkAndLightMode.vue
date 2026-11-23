@@ -39,7 +39,7 @@ const changeColorScheme = (newColorScheme) => {
 
 <template>
   <!-- Bouton pour ouvrir la configuration -->
-  <button
+  <button aria-label="Paramètres"
     class="layout-config-button config-link"
     type="button"
     @click="onConfigButtonClick"

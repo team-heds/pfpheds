@@ -62,7 +62,7 @@
         <!-- Colonne pour la classe -->
         <Column field="Classe" header="Classe" style="min-width: 8rem" class="text-center">
           <template #filter="{ filterModel }">
-            <Dropdown :options="classeOptions" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par classe" />
+            <Dropdown ariaLabel="Rechercher par classe" :options="classeOptions" v-model="filterModel.value" class="p-column-filter" placeholder="Rechercher par classe" />
           </template>
         </Column>
 
@@ -72,7 +72,7 @@
         <!-- Colonne pour indiquer si l'étudiant est un SAE -->
         <Column field="SAE" header="SAE" style="min-width: 8rem" class="text-center">
           <template #body="{ data }">
-            <input type="checkbox" :checked="data.SAE" disabled />
+            <input aria-label="SAE" type="checkbox" :checked="data.SAE" disabled />
           </template>
         </Column>
 
@@ -93,7 +93,7 @@
         <Column v-if="showCohortColumns" header="Modifier Cohorte" style="min-width: 12rem" class="text-center">
           <template #body="{ data }">
             <div class="flex align-items-center justify-content-center gap-2">
-              <Button
+              <Button aria-label="Modifier"
                 v-if="!isEditingCohort(data)"
                 icon="pi pi-pencil"
                 size="small"
@@ -101,7 +101,7 @@
                 @click="startEditCohort(data)"
               />
               <template v-else>
-                <Dropdown
+                <Dropdown ariaLabel="Modifier Cohorte"
                   v-model="cohortEditValue"
                   :options="pfpCohortOptions"
                   optionLabel="label"
@@ -109,7 +109,7 @@
                   placeholder="Sélectionner"
                   :loading="data.updating || savingCohortId === data.id"
                 />
-                <Button
+                <Button aria-label="Valider"
                   icon="pi pi-check"
                   size="small"
                   severity="success"
@@ -117,7 +117,7 @@
                   :loading="savingCohortId === data.id"
                   @click="saveEditCohort(data)"
                 />
-                <Button
+                <Button aria-label="Fermer"
                   icon="pi pi-times"
                   size="small"
                   severity="secondary"
@@ -137,7 +137,7 @@
               <template v-if="!isEditingRepondant(data)">
                 <span v-if="data.repondant_hes" class="text-primary font-medium">{{ data.repondant_hes }}</span>
                 <span v-else class="text-gray-400 italic">Non assigné</span>
-                <Button
+                <Button aria-label="Modifier"
                   icon="pi pi-pencil"
                   size="small"
                   outlined
@@ -145,7 +145,7 @@
                 />
               </template>
               <template v-else>
-                <Dropdown
+                <Dropdown ariaLabel="Répondant HES"
                   v-model="repondantEditValue"
                   :options="repondantsHESList"
                   optionLabel="label"
@@ -155,7 +155,7 @@
                   showClear
                   :loading="savingRepondantId === data.id"
                 />
-                <Button
+                <Button aria-label="Valider"
                   icon="pi pi-check"
                   size="small"
                   severity="success"
@@ -163,7 +163,7 @@
                   :loading="savingRepondantId === data.id"
                   @click="saveEditRepondant(data)"
                 />
-                <Button
+                <Button aria-label="Fermer"
                   icon="pi pi-times"
                   size="small"
                   severity="secondary"

@@ -14,16 +14,16 @@
           <div class="flex align-items-center gap-2">
             <IconField iconPosition="left">
               <InputIcon class="pi pi-search" />
-              <InputText v-model="search" placeholder="Rechercher nom/email" class="w-16rem" />
+              <InputText aria-label="Rechercher nom/email" v-model="search" placeholder="Rechercher nom/email" class="w-16rem" />
             </IconField>
-            <Dropdown
+            <Dropdown ariaLabel="Filtrer par rôle"
               v-model="roleFilter"
               :options="roleOptions"
               placeholder="Filtrer par rôle"
               showClear
               class="w-14rem"
             />
-            <Dropdown
+            <Dropdown ariaLabel="Actif"
               v-model="activeFilter"
               :options="activeOptions"
               optionLabel="label"
@@ -68,7 +68,7 @@
           ></Column>
           <Column header="Rôle" sortable frozen alignFrozen="left" style="min-width: 180px">
             <template #body="{ data }">
-              <Dropdown
+              <Dropdown ariaLabel="Rôle"
                 v-model="data.role"
                 :options="roleOptions"
                 class="w-12rem"
@@ -84,7 +84,7 @@
             style="min-width: 120px; text-align: center"
           >
             <template #body="{ data }">
-              <input
+              <input aria-label="Actif"
                 type="checkbox"
                 :checked="data.is_active"
                 @change="updateActive(data, $event.target.checked)"
@@ -94,7 +94,7 @@
           <template v-if="hasPermissionsColumn">
             <Column v-for="key in permissionKeys" :key="'perm-col-' + key" :header="key">
               <template #body="{ data }">
-                <input
+                <input :aria-label="key"
                   type="checkbox"
                   :checked="rowHasPerm(data, key)"
                   @change="togglePerm(data, key, $event.target.checked)"
@@ -122,23 +122,23 @@
           </div>
           <div class="col-12">
             <label class="block mb-2">Email</label>
-            <InputText v-model="form.email" class="w-full" disabled />
+            <InputText aria-label="Email" v-model="form.email" class="w-full" disabled />
           </div>
           <div class="col-12">
             <label class="block mb-2">Nom affiché</label>
-            <InputText v-model="form.display_name" class="w-full" />
+            <InputText aria-label="Nom affiché" v-model="form.display_name" class="w-full" />
           </div>
           <div class="col-6">
             <label class="block mb-2">Prénom</label>
-            <InputText v-model="form.forname" class="w-full" />
+            <InputText aria-label="Prénom" v-model="form.forname" class="w-full" />
           </div>
           <div class="col-6">
             <label class="block mb-2">Nom</label>
-            <InputText v-model="form.family_name" class="w-full" />
+            <InputText aria-label="Nom" v-model="form.family_name" class="w-full" />
           </div>
           <div class="col-12">
             <label class="block mb-2">Rôle</label>
-            <Dropdown
+            <Dropdown ariaLabel="Rôle"
               v-model="form.role"
               :options="roleOptions"
               placeholder="Choisir un rôle"
@@ -171,7 +171,7 @@
                 <div v-for="tr in userTrackRoles" :key="tr.id" class="track-role-item">
                   <Tag :value="tr.track_id" :severity="tr.track_id === 'SI' ? 'info' : 'success'" />
                   <Tag :value="getTrackRoleLabel(tr.role)" severity="secondary" class="ml-2" />
-                  <Button
+                  <Button aria-label="Retirer"
                     icon="pi pi-times"
                     class="p-button-rounded p-button-text p-button-danger p-button-sm ml-2"
                     @click="deleteTrackRole(tr.id)"
@@ -184,7 +184,7 @@
               <div class="add-track-role flex gap-2 align-items-end">
                 <div class="flex-1">
                   <label class="block mb-1 text-sm">Filière</label>
-                  <Dropdown
+                  <Dropdown ariaLabel="Filière"
                     v-model="newTrackRole.trackId"
                     :options="trackOptions"
                     optionLabel="label"
@@ -195,7 +195,7 @@
                 </div>
                 <div class="flex-1">
                   <label class="block mb-1 text-sm">Rôle</label>
-                  <Dropdown
+                  <Dropdown ariaLabel="Rôle"
                     v-model="newTrackRole.role"
                     :options="trackRoleOptions"
                     optionLabel="label"

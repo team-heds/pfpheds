@@ -128,7 +128,7 @@ Vous pouvez utiliser le Markdown :
       <!-- Module -->
       <div class="col-12 md:col-6">
         <label for="module" class="block mb-2 font-semibold">Module associé</label>
-        <Dropdown
+        <Dropdown ariaLabel="Module associé"
           inputId="module"
           v-model="formData.module_id"
           :options="modules"
@@ -147,7 +147,7 @@ Vous pouvez utiliser le Markdown :
         <label for="assigned_to" class="block mb-2 font-semibold">
           <i class="pi pi-user mr-2"></i>Assigné à
         </label>
-        <Dropdown
+        <Dropdown ariaLabel="Assigné à"
           inputId="assigned_to"
           v-model="formData.assigned_to"
           :options="users"
@@ -195,7 +195,7 @@ Vous pouvez utiliser le Markdown :
       <!-- Date de rendu -->
       <div class="col-12 md:col-6">
         <label for="due_date" class="block mb-2 font-semibold">Date de rendu</label>
-        <Calendar
+        <Calendar ariaLabel="Date de rendu"
           v-model="formData.due_date"
           id="due_date"
           dateFormat="dd/mm/yy"
@@ -208,7 +208,7 @@ Vous pouvez utiliser le Markdown :
       <!-- Priorité -->
       <div class="col-12 md:col-6">
         <label for="priority" class="block mb-2 font-semibold">Priorité</label>
-        <Dropdown
+        <Dropdown ariaLabel="Priorité"
           inputId="priority"
           v-model="formData.priority"
           :options="priorityOptions"
@@ -222,7 +222,7 @@ Vous pouvez utiliser le Markdown :
       <!-- Statut initial -->
       <div class="col-12 md:col-6">
         <label for="status" class="block mb-2 font-semibold">Statut initial</label>
-        <Dropdown
+        <Dropdown ariaLabel="Statut initial"
           inputId="status"
           v-model="formData.status"
           :options="statusOptions"
@@ -255,7 +255,7 @@ Vous pouvez utiliser le Markdown :
         <!-- Date de tournage -->
         <div class="col-12 md:col-6">
           <label for="filming_date" class="block mb-2 font-semibold">Date de tournage</label>
-          <Calendar
+          <Calendar ariaLabel="Date de tournage"
             v-model="formData.metadata.filming_date"
             id="filming_date"
             dateFormat="dd/mm/yy"
@@ -268,7 +268,7 @@ Vous pouvez utiliser le Markdown :
         <!-- Modalité -->
         <div class="col-12 md:col-6">
           <label for="modality" class="block mb-2 font-semibold">Modalité de production</label>
-          <Dropdown
+          <Dropdown ariaLabel="Modalité de production"
             inputId="modality"
             v-model="formData.metadata.modality"
             :options="modalityOptions"
@@ -282,7 +282,7 @@ Vous pouvez utiliser le Markdown :
         <!-- Durée estimée -->
         <div class="col-12 md:col-6">
           <label for="duration" class="block mb-2 font-semibold">Durée estimée (min)</label>
-          <InputNumber 
+          <InputNumber ariaLabel="Durée estimée (min)" 
             v-model="formData.metadata.duration_minutes" 
             id="duration"
             placeholder="Ex: 15"
@@ -326,7 +326,7 @@ Vous pouvez utiliser le Markdown :
         <!-- Type de développement -->
         <div class="col-12 md:col-6">
           <label for="dev_type" class="block mb-2 font-semibold">Type de développement</label>
-          <Dropdown
+          <Dropdown ariaLabel="Type de développement"
             inputId="dev_type"
             v-model="formData.metadata.dev_type"
             :options="devTypeOptions"
@@ -369,7 +369,7 @@ Vous pouvez utiliser le Markdown :
         <!-- Type de simulation -->
         <div class="col-12 md:col-6">
           <label for="sim_type" class="block mb-2 font-semibold">Type de simulation</label>
-          <Dropdown
+          <Dropdown ariaLabel="Type de simulation"
             inputId="sim_type"
             v-model="formData.metadata.sim_type"
             :options="simTypeOptions"
@@ -383,7 +383,7 @@ Vous pouvez utiliser le Markdown :
         <!-- Nombre de participants -->
         <div class="col-12 md:col-6">
           <label for="participants" class="block mb-2 font-semibold">Nombre de participants</label>
-          <InputNumber 
+          <InputNumber ariaLabel="Nombre de participants" 
             v-model="formData.metadata.participants_count" 
             id="participants"
             placeholder="Ex: 5"

@@ -34,7 +34,7 @@
               }"
             >
               <span class="team-name">{{ match.equipe1?.nom || 'En attente...' }}</span>
-              <InputNumber 
+              <InputNumber :ariaLabel="`${match.equipe1?.nom || 'En attente...'}`" 
                 v-if="match.equipe1 && match.equipe2 && !match.joue"
                 v-model="match.score1"
                 :min="0"
@@ -63,7 +63,7 @@
               }"
             >
               <span class="team-name">{{ match.equipe2?.nom || 'En attente...' }}</span>
-              <InputNumber 
+              <InputNumber :ariaLabel="`${match.equipe2?.nom || 'En attente...'}`" 
                 v-if="match.equipe1 && match.equipe2 && !match.joue"
                 v-model="match.score2"
                 :min="0"

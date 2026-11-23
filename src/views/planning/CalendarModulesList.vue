@@ -5,10 +5,10 @@
     <p class="text-700 mb-3">Liste des modules (vue calendrier).</p>
     <Panel v-if="canEditCalendar" header="Créer un module">
       <div class="grid" style="row-gap:.5rem">
-        <div class="col-12 md:col-3"><InputText class="w-full" v-model="draft.code" placeholder="Code (ex: MOD-A)" /></div>
-        <div class="col-12 md:col-3"><InputText class="w-full" v-model="draft.name" placeholder="Nom" /></div>
-        <div class="col-12 md:col-3"><InputText class="w-full" v-model="draft.color" placeholder="# Couleur" /></div>
-        <div class="col-12 md:col-3"><InputText class="w-full" v-model="draft.syllabus_url" placeholder="URL Syllabus" /></div>
+        <div class="col-12 md:col-3"><InputText aria-label="Code (ex: MOD-A)" class="w-full" v-model="draft.code" placeholder="Code (ex: MOD-A)" /></div>
+        <div class="col-12 md:col-3"><InputText aria-label="Nom" class="w-full" v-model="draft.name" placeholder="Nom" /></div>
+        <div class="col-12 md:col-3"><InputText aria-label="Couleur" class="w-full" v-model="draft.color" placeholder="# Couleur" /></div>
+        <div class="col-12 md:col-3"><InputText aria-label="URL Syllabus" class="w-full" v-model="draft.syllabus_url" placeholder="URL Syllabus" /></div>
         <div class="col-12"><Button size="small" label="Créer" icon="pi pi-plus" @click="createModule" /></div>
       </div>
     </Panel>

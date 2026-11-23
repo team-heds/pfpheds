@@ -2,7 +2,7 @@
   <div class="track-stats-widget">
     <div class="widget-header">
       <h3><i class="pi pi-chart-bar"></i> Stats par Filière</h3>
-      <Button icon="pi pi-refresh" class="p-button-text p-button-sm" @click="loadStats" :loading="loading" />
+      <Button aria-label="Actualiser" icon="pi pi-refresh" class="p-button-text p-button-sm" @click="loadStats" :loading="loading" />
     </div>
 
     <div v-if="loading" class="loading-state">

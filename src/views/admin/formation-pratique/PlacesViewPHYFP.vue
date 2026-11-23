@@ -19,32 +19,32 @@
           <div class="flex align-items-center gap-3 flex-wrap">
             <div class="flex align-items-center gap-2">
               <span class="text-600">Année</span>
-              <Dropdown :options="years" optionLabel="label" optionValue="value" v-model="selectedYear" class="w-10rem" />
+              <Dropdown ariaLabel="Année" :options="years" optionLabel="label" optionValue="value" v-model="selectedYear" class="w-10rem" />
             </div>
             <div class="flex align-items-center gap-2">
               <span class="text-600">Afficher</span>
-              <Dropdown :options="rowsOptions" optionLabel="label" optionValue="value" v-model="rowsPerPage" class="w-10rem" :disabled="showAll" />
+              <Dropdown ariaLabel="Afficher" :options="rowsOptions" optionLabel="label" optionValue="value" v-model="rowsPerPage" class="w-10rem" :disabled="showAll" />
               <div class="flex align-items-center gap-2">
-                <InputSwitch v-model="showAll" />
+                <InputSwitch ariaLabel="Afficher toutes les lignes" v-model="showAll" />
                 <span class="text-600">Tout</span>
               </div>
               <div class="flex align-items-center gap-2">
-                <InputSwitch v-model="showHalf" />
+                <InputSwitch ariaLabel="Moitié" v-model="showHalf" />
                 <span class="text-600">Moitié</span>
               </div>
               <div class="flex align-items-center gap-2">
-                <InputSwitch v-model="withPdfOnly" />
+                <InputSwitch ariaLabel="Avec PDF" v-model="withPdfOnly" />
                 <span class="text-600">Avec PDF</span>
               </div>
               <div class="flex align-items-center gap-2">
-                <InputSwitch v-model="compact" />
+                <InputSwitch ariaLabel="Compact" v-model="compact" />
                 <span class="text-600">Compact</span>
               </div>
             </div>
             <span class="flex-1"></span>
             <div class="flex align-items-center gap-2">
-              <Button icon="pi pi-eye" outlined @click="toggleColumnsPanel" v-tooltip.top="'Afficher/Masquer colonnes'" />
-              <Button icon="pi pi-refresh" outlined :disabled="loading" @click="reload" />
+              <Button aria-label="Afficher/Masquer colonnes" icon="pi pi-eye" outlined @click="toggleColumnsPanel" v-tooltip.top="'Afficher/Masquer colonnes'" />
+              <Button aria-label="Actualiser" icon="pi pi-refresh" outlined :disabled="loading" @click="reload" />
             </div>
           </div>
         </div>
@@ -157,14 +157,14 @@
           <Column header="" style="width: 8rem">
             <template #body="{ data }">
               <div class="flex gap-2">
-                <Button
+                <Button aria-label="Modifier"
                   v-if="!isEditingRow(data)"
                   icon="pi pi-pencil"
                   size="small"
                   outlined
                   @click="startEditRow(data)"
                 />
-                <Button
+                <Button aria-label="Valider"
                   v-else
                   icon="pi pi-check"
                   size="small"
@@ -173,7 +173,7 @@
                   :loading="savingRowId === data.PlaceId"
                   @click="saveEditRow(data)"
                 />
-                <Button
+                <Button aria-label="Fermer"
                   v-if="isEditingRow(data)"
                   icon="pi pi-times"
                   size="small"
@@ -187,7 +187,7 @@
           </Column>
           <Column header="Institution Name" sortable sortField="InstitutionNameSort">
             <template #body="{ data }">
-              <Dropdown
+              <Dropdown ariaLabel="Rechercher et sélectionner"
                 v-if="isEditingRow(data)"
                 v-model="editBuffer.InstitutionId"
                 :options="institutionsOptions"
@@ -205,7 +205,7 @@
           </Column>
           <Column header="Nom" sortable sortField="NomPlace">
             <template #body="{ data }">
-              <InputText
+              <InputText aria-label="Nom"
                 v-if="isEditingRow(data)"
                 v-model="editBuffer.NomPlace"
               />
@@ -214,7 +214,7 @@
           </Column>
           <Column header="PFP3">
             <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP3" class="p-inputtext-sm" />
+              <InputText aria-label="PFP3" v-if="isEditingRow(data)" v-model="editBuffer.PFP3" class="p-inputtext-sm" />
               <span v-else :class="(data.PFP3 && (data.PFP3[selectedYear] != null && data.PFP3[selectedYear] !== '') || (selectedYear === '2028' && data.PFP3 && data.PFP3['2027'] != null && data.PFP3['2027'] !== '')) ? 'font-semibold text-green-600' : 'text-400'">
                 {{ (data.PFP3 && (data.PFP3[selectedYear] || (selectedYear === '2028' ? data.PFP3['2027'] : null))) || '-' }}
               </span>
@@ -222,7 +222,7 @@
           </Column>
           <Column header="PFP2">
             <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP2" class="p-inputtext-sm" />
+              <InputText aria-label="PFP2" v-if="isEditingRow(data)" v-model="editBuffer.PFP2" class="p-inputtext-sm" />
               <span v-else :class="(data.PFP2 && data.PFP2[selectedYear] != null && data.PFP2[selectedYear] !== '') ? 'font-semibold text-green-600' : 'text-400'">
                 {{ (data.PFP2 && data.PFP2[selectedYear]) || '-' }}
               </span>
@@ -230,7 +230,7 @@
           </Column>
           <Column header="PFP1A">
             <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP1A" class="p-inputtext-sm" />
+              <InputText aria-label="PFP1A" v-if="isEditingRow(data)" v-model="editBuffer.PFP1A" class="p-inputtext-sm" />
               <span v-else :class="(data.PFP1A && data.PFP1A[selectedYear] != null && data.PFP1A[selectedYear] !== '') ? 'font-semibold text-green-600' : 'text-400'">
                 {{ (data.PFP1A && data.PFP1A[selectedYear]) || '-' }}
               </span>
@@ -238,7 +238,7 @@
           </Column>
           <Column header="PFP1B">
             <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP1B" class="p-inputtext-sm" />
+              <InputText aria-label="PFP1B" v-if="isEditingRow(data)" v-model="editBuffer.PFP1B" class="p-inputtext-sm" />
               <span v-else :class="(data.PFP1B && data.PFP1B[selectedYear] != null && data.PFP1B[selectedYear] !== '') ? 'font-semibold text-green-600' : 'text-400'">
                 {{ (data.PFP1B && data.PFP1B[selectedYear]) || '-' }}
               </span>
@@ -246,7 +246,7 @@
           </Column>
           <Column header="PFP4">
             <template #body="{ data }">
-              <InputText v-if="isEditingRow(data)" v-model="editBuffer.PFP4" class="p-inputtext-sm" />
+              <InputText aria-label="PFP4" v-if="isEditingRow(data)" v-model="editBuffer.PFP4" class="p-inputtext-sm" />
               <span v-else :class="(data.PFP4 && data.PFP4[selectedYear] != null && data.PFP4[selectedYear] !== '') ? 'font-semibold text-green-600' : 'text-400'">
                 {{ (data.PFP4 && data.PFP4[selectedYear]) || '-' }}
               </span>
@@ -254,49 +254,49 @@
           </Column>
           <Column header="MSQ" v-if="visibleColumns.MSQ">
             <template #body="{ data }">
-              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.MSQ" />
+              <InputSwitch ariaLabel="MSQ" v-if="isEditingRow(data)" v-model="editBuffer.MSQ" />
               <Tag v-else :value="isTrueFlag(data.MSQ) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.MSQ) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="SYSINT" v-if="visibleColumns.SYSINT">
             <template #body="{ data }">
-              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.SYSINT" />
+              <InputSwitch ariaLabel="SYSINT" v-if="isEditingRow(data)" v-model="editBuffer.SYSINT" />
               <Tag v-else :value="isTrueFlag(data.SYSINT) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.SYSINT) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="NEUROGER" v-if="visibleColumns.NEUROGER">
             <template #body="{ data }">
-              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.NEUROGER" />
+              <InputSwitch ariaLabel="NEUROGER" v-if="isEditingRow(data)" v-model="editBuffer.NEUROGER" />
               <Tag v-else :value="isTrueFlag(data.NEUROGER) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.NEUROGER) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="AIGU" v-if="visibleColumns.AIGU">
             <template #body="{ data }">
-              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.AIGU" />
+              <InputSwitch ariaLabel="AIGU" v-if="isEditingRow(data)" v-model="editBuffer.AIGU" />
               <Tag v-else :value="isTrueFlag(data.AIGU) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.AIGU) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="REHAB" v-if="visibleColumns.REHAB">
             <template #body="{ data }">
-              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.REHAB" />
+              <InputSwitch ariaLabel="REHAB" v-if="isEditingRow(data)" v-model="editBuffer.REHAB" />
               <Tag v-else :value="isTrueFlag(data.REHAB) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.REHAB) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="AMBU" v-if="visibleColumns.AMBU">
             <template #body="{ data }">
-              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.AMBU" />
+              <InputSwitch ariaLabel="AMBU" v-if="isEditingRow(data)" v-model="editBuffer.AMBU" />
               <Tag v-else :value="isTrueFlag(data.AMBU) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.AMBU) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="FR" v-if="visibleColumns.FR">
             <template #body="{ data }">
-              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.FR" />
+              <InputSwitch ariaLabel="Langue française" v-if="isEditingRow(data)" v-model="editBuffer.FR" />
               <Tag v-else :value="isTrueFlag(data.FR) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.FR) ? 'success' : 'secondary'" />
             </template>
           </Column>
           <Column header="DE" v-if="visibleColumns.DE">
             <template #body="{ data }">
-              <InputSwitch v-if="isEditingRow(data)" v-model="editBuffer.DE" />
+              <InputSwitch ariaLabel="Langue allemande" v-if="isEditingRow(data)" v-model="editBuffer.DE" />
               <Tag v-else :value="isTrueFlag(data.DE) ? 'Oui' : 'Non'" :severity="isTrueFlag(data.DE) ? 'success' : 'secondary'" />
             </template>
           </Column>
@@ -355,7 +355,7 @@
           </Column>
           <Column header="Remarques">
             <template #body="{ data }">
-              <Textarea :value="(data.Remarques && (data.Remarques[selectedYear] || data.Remarques['note'] || '')) || ''" @change="e => onChangeRemarques(data, e.target.value)" rows="2" class="w-full" />
+              <Textarea aria-label="Remarques" :value="(data.Remarques && (data.Remarques[selectedYear] || data.Remarques['note'] || '')) || ''" @change="e => onChangeRemarques(data, e.target.value)" rows="2" class="w-full" />
             </template>
           </Column>
           <Column header="Fiche">
@@ -365,7 +365,7 @@
                   <i class="pi pi-file-pdf"></i> PDF
                 </a>
                 <span v-else class="text-500">Aucun fichier</span>
-                <Button
+                <Button aria-label="Ajouter/Modifier le document"
                   icon="pi pi-upload"
                   text
                   rounded
@@ -378,7 +378,7 @@
           </Column>
           <Column header="Actions"  alignFrozen="right">
             <template #body="{ data }">
-              <Button
+              <Button aria-label="Supprimer la place"
                 icon="pi pi-trash"
                 severity="danger"
                 text
@@ -411,7 +411,7 @@
       <div class="mb-3">
         <label class="block text-sm font-semibold mb-2">Rechercher et sélectionner</label>
         <small class="text-500 block mb-2">{{ praticiensOptions.length }} praticiens disponibles</small>
-        <MultiSelect
+        <MultiSelect :ariaLabel="`${praticiensOptions.length} praticiens disponibles`"
           v-model="selectedPraticiens"
           :options="praticiensOptions"
           optionLabel="label"
@@ -479,7 +479,7 @@
             <div class="font-semibold">{{ selectedFile.name }}</div>
             <div class="text-sm text-500">{{ formatFileSize(selectedFile.size) }}</div>
           </div>
-          <Button
+          <Button aria-label="Retirer"
             icon="pi pi-times"
             text
             rounded

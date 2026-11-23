@@ -1,6 +1,6 @@
 <template>
   <Panel header="Feuilles" class="page-list page-list-panel">
-    <InputText v-model="search" placeholder="Rechercher une feuille..." class="p-mb-2 w-12 mb-5" />
+    <InputText aria-label="Rechercher une feuille" v-model="search" placeholder="Rechercher une feuille..." class="p-mb-2 w-12 mb-5" />
     <ul class="page-list-ul mb-3" v-if="filteredPages && filteredPages.length > 0">
       <li v-for="page in filteredPages" :key="page.id" :class="{active: selectedPageId === page.id}" class="mb-4">
         <button type="button" class="page-name" :aria-current="selectedPageId === page.id ? 'page' : undefined" @click="$emit('select', page)">

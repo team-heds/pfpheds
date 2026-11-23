@@ -17,7 +17,7 @@
         </FormField>
 
         <FormField for-id="password" label="Mot de passe" required hint="Au moins 8 caractères." :error="passwordError ? 'Le mot de passe doit contenir au moins 8 caractères.' : ''" v-slot="field">
-          <Password 
+          <Password ariaLabel="Mot de passe" 
             v-bind="field.controlAttrs"
             v-model="password" 
             placeholder="Au moins 8 caractères"

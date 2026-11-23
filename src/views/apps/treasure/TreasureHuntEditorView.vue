@@ -78,15 +78,15 @@
             </div>
             <div class="th-field">
               <label for="hunt-starts">Début</label>
-              <Calendar v-model="form.starts_at" input-id="hunt-starts" show-time hour-format="24" date-format="dd.mm.yy" show-icon />
+              <Calendar ariaLabel="Début" v-model="form.starts_at" input-id="hunt-starts" show-time hour-format="24" date-format="dd.mm.yy" show-icon />
             </div>
             <div class="th-field">
               <label for="hunt-ends">Fin</label>
-              <Calendar v-model="form.ends_at" input-id="hunt-ends" show-time hour-format="24" date-format="dd.mm.yy" show-icon />
+              <Calendar ariaLabel="Fin" v-model="form.ends_at" input-id="hunt-ends" show-time hour-format="24" date-format="dd.mm.yy" show-icon />
             </div>
             <div class="th-field">
               <label for="hunt-classes">Classes visées</label>
-              <MultiSelect
+              <MultiSelect ariaLabel="Classes visées"
                 v-model="form.target_classes"
                 input-id="hunt-classes"
                 :options="classOptions"
@@ -200,7 +200,7 @@
         </div>
         <div class="th-field">
           <label for="step-xp">Points (XP)</label>
-          <InputNumber v-model="stepForm.xp_reward" input-id="step-xp" :min="MIN_STEP_XP" :max="MAX_STEP_XP" show-buttons :step="5" aria-describedby="step-xp-help" />
+          <InputNumber ariaLabel="Points (XP)" v-model="stepForm.xp_reward" input-id="step-xp" :min="MIN_STEP_XP" :max="MAX_STEP_XP" show-buttons :step="5" aria-describedby="step-xp-help" />
           <small id="step-xp-help">Entre {{ MIN_STEP_XP }} et {{ MAX_STEP_XP }} XP, comptés aussi pour la maison.</small>
         </div>
         <p v-if="stepFormError" class="th-error" role="alert">{{ stepFormError }}</p>

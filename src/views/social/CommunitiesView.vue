@@ -24,7 +24,7 @@
                 <template #body="slotProps">
                   <div class="type-cell">
                     <Tag :value="displayType(slotProps.data.type)" :severity="typeSeverity(slotProps.data.type)" />
-                    <Dropdown
+                    <Dropdown ariaLabel="Type"
                       v-if="isOwner(slotProps.data) && canEditType(slotProps.data)"
                       v-model="slotProps.data.type"
                       :options="communityTypeOptions"
@@ -93,7 +93,7 @@
         </div>
         <div class="field">
           <label for="communityType">Type</label>
-          <Dropdown id="communityType" v-model="newCommunity.type" :options="communityTypeOptions" optionLabel="label"
+          <Dropdown ariaLabel="Type" id="communityType" v-model="newCommunity.type" :options="communityTypeOptions" optionLabel="label"
             optionValue="value" />
         </div>
         <div class="dialog-actions">

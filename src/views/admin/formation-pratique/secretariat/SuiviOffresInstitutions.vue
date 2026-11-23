@@ -24,30 +24,30 @@
               <label class="font-semibold text-sm">Recherche :</label>
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="searchQuery" placeholder="Nom d'institution..." class="w-full md:w-12rem" />
+                <InputText aria-label="Nom d'institution" v-model="searchQuery" placeholder="Nom d'institution..." class="w-full md:w-12rem" />
               </span>
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Année :</label>
-              <Dropdown v-model="selectedYear" :options="yearOptions" optionLabel="label" optionValue="value" placeholder="Toutes" class="w-full md:w-10rem" showClear />
+              <Dropdown ariaLabel="Année" v-model="selectedYear" :options="yearOptions" optionLabel="label" optionValue="value" placeholder="Toutes" class="w-full md:w-10rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">PFP :</label>
-              <Dropdown v-model="selectedPFP" :options="pfpOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-8rem" showClear />
+              <Dropdown ariaLabel="PFP" v-model="selectedPFP" :options="pfpOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-8rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Canton :</label>
-              <Dropdown v-model="filterCanton" :options="cantonOptions" placeholder="Tous" class="w-full md:w-8rem" showClear />
+              <Dropdown ariaLabel="Canton" v-model="filterCanton" :options="cantonOptions" placeholder="Tous" class="w-full md:w-8rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Statut :</label>
-              <Dropdown v-model="filterStatus" :options="statusFilterOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-12rem" showClear />
+              <Dropdown ariaLabel="Statut" v-model="filterStatus" :options="statusFilterOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-12rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
                 <Button icon="pi pi-file-excel" label="Excel" severity="success" outlined class="p-button-sm" @click="exportExcel" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="loadAll" v-tooltip="'Rafraîchir'" :loading="loading" />
+                <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="loadAll" v-tooltip="'Rafraîchir'" :loading="loading" />
               </div>
             </div>
           </div>
@@ -186,7 +186,7 @@
 
           <Column header="Contact" style="min-width: 7rem">
             <template #body="{ data }">
-              <Button
+              <Button :aria-label="data.MailChef"
                 v-if="data.MailChef"
                 icon="pi pi-envelope"
                 class="p-button-rounded p-button-text p-button-sm"

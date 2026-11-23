@@ -24,22 +24,22 @@
               <label class="font-semibold text-sm">Recherche :</label>
               <span class="p-input-icon-left">
                 <i class="pi pi-search" />
-                <InputText v-model="searchQuery" placeholder="Nom ou prénom..." class="w-full md:w-14rem" />
+                <InputText aria-label="Nom ou prénom" v-model="searchQuery" placeholder="Nom ou prénom..." class="w-full md:w-14rem" />
               </span>
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Classe :</label>
-              <Dropdown v-model="filterClasse" :options="classes" placeholder="Toutes" class="w-full md:w-8rem" showClear />
+              <Dropdown ariaLabel="Classe" v-model="filterClasse" :options="classes" placeholder="Toutes" class="w-full md:w-8rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">Statut :</label>
-              <Dropdown v-model="filterStatus" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-12rem" showClear />
+              <Dropdown ariaLabel="Statut" v-model="filterStatus" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Tous" class="w-full md:w-12rem" showClear />
             </div>
             <div class="flex flex-column gap-1">
               <label class="font-semibold text-sm">&nbsp;</label>
               <div class="flex gap-2">
                 <Button icon="pi pi-download" label="Export" outlined class="p-button-sm" @click="exportCSV" />
-                <Button icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchStudents" v-tooltip="'Rafraîchir'" :loading="loading" />
+                <Button aria-label="Rafraîchir" icon="pi pi-refresh" outlined class="p-button-sm" @click="fetchStudents" v-tooltip="'Rafraîchir'" :loading="loading" />
               </div>
             </div>
           </div>

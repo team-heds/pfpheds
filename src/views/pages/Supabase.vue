@@ -13,10 +13,10 @@
 
       <div class="grid" style="row-gap:.5rem">
         <div class="col-12">
-          <InputText v-model="email" placeholder="email" class="w-full" type="email" />
+          <InputText aria-label="Adresse e-mail" v-model="email" placeholder="email" class="w-full" type="email" />
         </div>
         <div class="col-12">
-          <InputText v-model="password" placeholder="mot de passe" class="w-full" type="password" />
+          <InputText aria-label="Mot de passe" v-model="password" placeholder="mot de passe" class="w-full" type="password" />
         </div>
 
         <div class="col-12 flex gap-2 justify-content-end">
@@ -35,10 +35,10 @@
         <div class="mb-2 text-800 font-medium">Définir un nouveau mot de passe</div>
         <div class="grid" style="row-gap:.5rem">
           <div class="col-12">
-            <InputText v-model="recovery.newPassword" type="password" placeholder="Nouveau mot de passe" class="w-full" />
+            <InputText aria-label="Nouveau mot de passe" v-model="recovery.newPassword" type="password" placeholder="Nouveau mot de passe" class="w-full" />
           </div>
           <div class="col-12">
-            <InputText v-model="recovery.newPassword2" type="password" placeholder="Confirmer le mot de passe" class="w-full" />
+            <InputText aria-label="Confirmer le mot de passe" v-model="recovery.newPassword2" type="password" placeholder="Confirmer le mot de passe" class="w-full" />
           </div>
           <div class="col-12 flex gap-2 justify-content-end">
             <Button size="small" label="Enregistrer" :loading="authLoading" @click="handleSetNewPassword" />
@@ -53,10 +53,10 @@
 
       <div class="grid" style="row-gap:.5rem; max-width:860px">
         <div class="col-12 md:col-4">
-          <InputText v-model="todo.draft.title" placeholder="Titre (obligatoire)" class="w-full" />
+          <InputText aria-label="Titre (obligatoire)" v-model="todo.draft.title" placeholder="Titre (obligatoire)" class="w-full" />
         </div>
         <div class="col-12 md:col-5">
-          <InputText v-model="todo.draft.content" placeholder="Contenu" class="w-full" />
+          <InputText aria-label="Contenu" v-model="todo.draft.content" placeholder="Contenu" class="w-full" />
         </div>
         <div class="col-12 md:col-3 flex gap-2 justify-content-end">
           <Button size="small" :loading="todo.mutating" label="Ajouter" @click="onAdd" v-if="!todo.draft.id"/>
@@ -86,8 +86,8 @@
           <Column header="Actions" :style="{ width: '160px' }">
             <template #body="slotProps">
               <div class="flex gap-2">
-                <Button size="small" icon="pi pi-pencil" class="p-button-text" @click="todo.edit(slotProps.data)" />
-                <Button size="small" icon="pi pi-trash" class="p-button-text p-button-danger" @click="onDelete(slotProps.data.id)" />
+                <Button aria-label="Modifier" size="small" icon="pi pi-pencil" class="p-button-text" @click="todo.edit(slotProps.data)" />
+                <Button aria-label="Supprimer" size="small" icon="pi pi-trash" class="p-button-text p-button-danger" @click="onDelete(slotProps.data.id)" />
               </div>
             </template>
           </Column>

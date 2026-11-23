@@ -43,7 +43,7 @@
         <div class="filters-grid mt-4">
           <div class="field m-0">
             <label for="coverage-year" class="font-semibold text-sm">Année académique <span aria-hidden="true">*</span></label>
-            <Dropdown
+            <Dropdown ariaLabel="Année académique"
               inputId="coverage-year"
               v-model="selectedYear"
               :options="yearOptions"
@@ -55,7 +55,7 @@
           </div>
           <div class="field m-0">
             <label for="coverage-pfp" class="font-semibold text-sm">PFP <span aria-hidden="true">*</span></label>
-            <Dropdown
+            <Dropdown ariaLabel="PFP"
               inputId="coverage-pfp"
               v-model="selectedPfp"
               :options="pfpOptions"
@@ -74,7 +74,7 @@
           </div>
           <div class="field m-0">
             <label for="coverage-canton" class="font-semibold text-sm">Canton</label>
-            <Dropdown
+            <Dropdown ariaLabel="Canton"
               inputId="coverage-canton"
               v-model="selectedCanton"
               :options="cantonOptions"
@@ -85,7 +85,7 @@
           </div>
           <div class="field m-0">
             <label for="coverage-status" class="font-semibold text-sm">Couverture</label>
-            <Dropdown
+            <Dropdown ariaLabel="Couverture"
               inputId="coverage-status"
               v-model="selectedStatus"
               :options="statusOptions"

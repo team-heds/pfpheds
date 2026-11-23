@@ -46,7 +46,7 @@
               <div class="col-12 md:col-4">
                 <div class="p-field">
                   <label for="canton">Canton</label>
-                  <Dropdown
+                  <Dropdown ariaLabel="Canton"
                     id="canton"
                     v-model="institution.Canton"
                     :options="cantons"
@@ -59,7 +59,7 @@
               <div class="col-12 md:col-4">
                 <div class="p-field">
                   <label for="langue">Langue</label>
-                  <Dropdown
+                  <Dropdown ariaLabel="Langue"
                     id="langue"
                     v-model="institution.Language"
                     :options="langues"
@@ -156,7 +156,7 @@
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="convention">Date de Convention</label>
-                  <Calendar
+                  <Calendar ariaLabel="Date de Convention"
                     id="convention"
                     v-model="institution.ConventionDate"
                     :showIcon="true"
@@ -168,7 +168,7 @@
               <div class="col-12 md:col-6">
                 <div class="p-field">
                   <label for="accordCadre">Date de l'Accord Cadre</label>
-                  <Calendar
+                  <Calendar ariaLabel="Date de l'Accord Cadre"
                     id="accordCadre"
                     v-model="institution.AccordCadreDate"
                     :showIcon="true"

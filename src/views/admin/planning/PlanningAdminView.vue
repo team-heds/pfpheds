@@ -33,7 +33,7 @@
                 v-tooltip="'Ajouter les numéros de module aux codes existants'"
               />
               
-              <SplitButton 
+              <SplitButton :menuButtonProps="{ 'aria-label': 'Plus d’options' }" 
                 label="Exporter JSON" 
                 icon="pi pi-download" 
                 @click="exportPlanning" 
@@ -78,7 +78,7 @@
               <label class="block text-900 font-semibold mb-2">
                 <i class="pi pi-calendar mr-2"></i>Année académique
               </label>
-              <Dropdown 
+              <Dropdown ariaLabel="Année académique" 
                 v-model="selectedYear" 
                 :options="yearOptions" 
                 optionLabel="label" 
@@ -109,7 +109,7 @@
     </Card>
 
     <!-- Grid d'édition -->
-    <Panel :toggleable="true" class="mb-4">
+    <Panel :toggleable="true" :toggleButtonProps="{ 'aria-label': 'Réduire ou développer la grille d’édition' }" class="mb-4">
       <template #header>
         <div class="flex align-items-center gap-2 flex-wrap">
           <div class="flex align-items-center gap-2">
@@ -206,7 +206,7 @@
       <div class="cell-editor-form">
         <div class="form-field">
           <label>Code de cours :</label>
-          <Dropdown 
+          <Dropdown ariaLabel="Code de cours" 
             v-model="editingCell.courseCode" 
             :options="courseCodeOptions" 
             optionLabel="label" 
@@ -222,7 +222,7 @@
 
         <div class="form-field">
           <label>Label d'affichage (optionnel) :</label>
-          <InputText 
+          <InputText aria-label="Libellé d’affichage (optionnel)" 
             v-model="editingCell.displayLabel" 
             placeholder="Ex: PFP1, IA1, etc."
           />
@@ -230,7 +230,7 @@
 
         <div class="form-field">
           <label>Notes (optionnelles) :</label>
-          <Textarea 
+          <Textarea aria-label="Notes (optionnelles)" 
             v-model="editingCell.notes" 
             rows="3"
             placeholder="Notes sur ce cours..."
@@ -267,7 +267,7 @@
     </Dialog>
 
     <!-- Gestion des codes de cours -->
-    <Panel :toggleable="true">
+    <Panel :toggleable="true" :toggleButtonProps="{ 'aria-label': 'Réduire ou développer les codes de cours' }">
       <template #header>
         <div class="flex align-items-center justify-content-between w-full pr-3">
           <div class="flex align-items-center gap-2">
@@ -292,7 +292,7 @@
       <div class="mb-4">
         <span class="p-input-icon-left w-full">
           <i class="pi pi-search" />
-          <InputText 
+          <InputText aria-label="Rechercher un code ou une description" 
             v-model="courseCodeSearch" 
             placeholder="Rechercher un code ou une description..."
             class="w-full"
@@ -338,7 +338,7 @@
         <Column header="Actions" style="width: 10rem">
           <template #body="slotProps">
             <div class="flex gap-2">
-              <Button 
+              <Button aria-label="Éditer" 
                 icon="pi pi-pencil" 
                 severity="info"
                 text
@@ -346,7 +346,7 @@
                 @click="editCourseCode(slotProps.data)"
                 v-tooltip="'Éditer'"
               />
-              <Button 
+              <Button aria-label="Supprimer" 
                 icon="pi pi-trash" 
                 severity="danger"
                 text
@@ -370,7 +370,7 @@
       <div class="course-code-form">
         <div class="form-field">
           <label>Code (ID unique) :</label>
-          <InputText 
+          <InputText aria-label="Code (ID unique)" 
             v-model="courseCodeForm.id" 
             placeholder="Ex: pfp1, ia1a, ..."
             :disabled="editingCourseCode !== null"
@@ -379,7 +379,7 @@
 
         <div class="form-field">
           <label>Numéro de module :</label>
-          <InputText 
+          <InputText aria-label="Numéro de module" 
             v-model="courseCodeForm.moduleNumber" 
             placeholder="Ex: 3014, PFP1, ..."
           />
@@ -387,7 +387,7 @@
 
         <div class="form-field">
           <label>Description :</label>
-          <InputText 
+          <InputText aria-label="Description" 
             v-model="courseCodeForm.label" 
             placeholder="Description du cours"
           />
@@ -395,8 +395,8 @@
 
         <div class="form-field">
           <label>Couleur :</label>
-          <ColorPicker v-model="courseCodeForm.color" />
-          <InputText 
+          <ColorPicker :pt="{ input: { 'aria-label': 'Couleur' } }" v-model="courseCodeForm.color" />
+          <InputText aria-label="Couleur hexadécimale" 
             v-model="courseCodeForm.color" 
             placeholder="#RRGGBB"
             style="margin-top: 0.5rem;"
@@ -405,7 +405,7 @@
 
         <div class="form-field">
           <label>Année :</label>
-          <Dropdown 
+          <Dropdown ariaLabel="Année" 
             v-model="courseCodeForm.year" 
             :options="[1, 2, 3]" 
             placeholder="Sélectionner l'année"

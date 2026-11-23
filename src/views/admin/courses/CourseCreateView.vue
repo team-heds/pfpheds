@@ -26,7 +26,7 @@
 
             <div class="form-field">
               <label for="type">Type de cours *</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Type de cours" 
                 id="type" 
                 v-model="course.type" 
                 :options="courseTypes" 
@@ -38,7 +38,7 @@
 
             <div class="form-field">
               <label for="module">Module *</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Module" 
                 id="module" 
                 v-model="course.moduleId" 
                 :options="modules" 
@@ -50,7 +50,7 @@
 
             <div class="form-field">
               <label for="teacher">Enseignant *</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Enseignant" 
                 id="teacher" 
                 v-model="course.teacherId" 
                 :options="teachers" 
@@ -62,7 +62,7 @@
 
             <div class="form-field">
               <label for="students">Nombre d'étudiants</label>
-              <InputNumber id="students" v-model="course.students" :min="0" placeholder="30" />
+              <InputNumber ariaLabel="Nombre d'étudiants" id="students" v-model="course.students" :min="0" placeholder="30" />
             </div>
 
             <div class="form-field full-width">
@@ -78,7 +78,7 @@
           <div class="form-grid">
             <div class="form-field">
               <label for="day">Jour *</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Jour" 
                 id="day" 
                 v-model="course.day" 
                 :options="days" 
@@ -90,12 +90,12 @@
 
             <div class="form-field">
               <label for="startTime">Heure de début *</label>
-              <Calendar id="startTime" v-model="course.startTime" timeOnly hourFormat="24" placeholder="08:00" />
+              <Calendar ariaLabel="Heure de début" id="startTime" v-model="course.startTime" timeOnly hourFormat="24" placeholder="08:00" />
             </div>
 
             <div class="form-field">
               <label for="endTime">Heure de fin *</label>
-              <Calendar id="endTime" v-model="course.endTime" timeOnly hourFormat="24" placeholder="10:00" />
+              <Calendar ariaLabel="Heure de fin" id="endTime" v-model="course.endTime" timeOnly hourFormat="24" placeholder="10:00" />
             </div>
 
             <div class="form-field">
@@ -105,12 +105,12 @@
 
             <div class="form-field">
               <label for="startDate">Date de début</label>
-              <Calendar id="startDate" v-model="course.startDate" dateFormat="dd/mm/yy" placeholder="Sélectionnez une date" />
+              <Calendar ariaLabel="Date de début" id="startDate" v-model="course.startDate" dateFormat="dd/mm/yy" placeholder="Sélectionnez une date" />
             </div>
 
             <div class="form-field">
               <label for="endDate">Date de fin</label>
-              <Calendar id="endDate" v-model="course.endDate" dateFormat="dd/mm/yy" placeholder="Sélectionnez une date" />
+              <Calendar ariaLabel="Date de fin" id="endDate" v-model="course.endDate" dateFormat="dd/mm/yy" placeholder="Sélectionnez une date" />
             </div>
 
             <div class="form-field full-width">
@@ -128,7 +128,7 @@
           <div class="form-grid">
             <div class="form-field">
               <label for="status">Statut</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Statut" 
                 id="status" 
                 v-model="course.status" 
                 :options="statusOptions" 
@@ -140,7 +140,7 @@
 
             <div class="form-field">
               <label for="maxStudents">Capacité maximale</label>
-              <InputNumber id="maxStudents" v-model="course.maxStudents" :min="0" placeholder="50" />
+              <InputNumber ariaLabel="Capacité maximale" id="maxStudents" v-model="course.maxStudents" :min="0" placeholder="50" />
             </div>
 
             <div class="form-field full-width">

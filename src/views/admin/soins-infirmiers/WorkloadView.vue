@@ -16,7 +16,7 @@
           <div class="flex gap-3 align-items-center flex-wrap">
             <div class="field-inline">
               <label for="si-workload-semester">Semestre</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Semestre" 
                 inputId="si-workload-semester"
                 v-model="selectedSemester" 
                 :options="semesterOptions" 
@@ -28,7 +28,7 @@
             </div>
             <div class="field-inline">
               <label for="si-workload-teacher">Enseignant</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Enseignant" 
                 inputId="si-workload-teacher"
                 v-model="selectedTeacher" 
                 :options="teacherFilterOptions" 
@@ -42,7 +42,7 @@
             </div>
             <div class="field-inline">
               <label for="si-workload-class">Classe</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Classe" 
                 inputId="si-workload-class"
                 v-model="selectedClass" 
                 :options="classFilterOptions" 
@@ -56,7 +56,7 @@
             </div>
             <div class="field-inline">
               <label for="si-workload-module">Module</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Module" 
                 inputId="si-workload-module"
                 v-model="selectedModule" 
                 :options="moduleFilterOptions" 
@@ -70,7 +70,7 @@
             </div>
             <div class="field-inline">
               <label for="si-workload-type">Type</label>
-              <Dropdown 
+              <Dropdown ariaLabel="Type" 
                 inputId="si-workload-type"
                 v-model="selectedType" 
                 :options="typeOptions" 
