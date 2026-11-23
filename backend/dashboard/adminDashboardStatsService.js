@@ -148,12 +148,13 @@ async function countPendingPfpValidations(client, filters = {}) {
 }
 
 // L'API d'administration ignore les comptes dont auth.users.aud est vide : on lit via une
-// fonction réservée au backend.
+// fonction réservée au backend. En GET, le proxy peut rejouer la lecture si PostgREST vient de
+// fermer une connexion inactive ; en POST, ce cas remonte en 502.
 async function loadRecentAuthUsers(client, sinceMs) {
   const ids = new Set()
   for (let offset = 0; ; offset += AUTH_PAGE_SIZE) {
     const { data, error } = await client
-      .rpc('admin_recent_sign_in_user_ids', { p_since: new Date(sinceMs).toISOString() })
+      .rpc('admin_recent_sign_in_user_ids', { p_since: new Date(sinceMs).toISOString() }, { get: true })
       .range(offset, offset + AUTH_PAGE_SIZE - 1)
     if (error) throw queryError('admin_recent_sign_in_user_ids', error)
     const rows = data || []
