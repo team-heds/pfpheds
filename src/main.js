@@ -14,7 +14,7 @@ import router from './router';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import { bootstrapApplication } from '@/service/appBootstrap';
-import { bootstrapFailureMessage, markStartupConnectivity } from '@/service/startupConnectivity';
+import { bootstrapFailureMessage, handleChunkLoadFailure, markStartupConnectivity } from '@/service/startupConnectivity';
 import { installPageNavigation } from '@/service/pageNavigationService';
 import { clearPageListContexts, disposePageListContexts } from '@/composables/usePageListContext';
 
@@ -32,6 +32,8 @@ const pinia = createPinia();
 
 app.use(pinia);
 app.use(router);
+router.onError((error) => { void handleChunkLoadFailure(error); });
+window.addEventListener('vite:preloadError', (event) => { void handleChunkLoadFailure(event.payload); });
 app.use(PrimeVue, { ripple: true, locale: primevueLocaleFr });
 app.use(ToastService);
 app.use(DialogService);
