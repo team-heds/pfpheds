@@ -5,6 +5,7 @@ import { registerRoute } from 'workbox-routing'
 import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
 import { createNavigationHandler } from '@/utils/navigationFallback'
+import { openNotificationTarget } from '@/utils/notificationClick'
 import { cacheableAssetResponse, isBuildAsset } from '@/utils/assetCache'
 
 // ── Workbox Precache ──
@@ -102,7 +103,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: payload.body || '',
     icon: '/assets/images/hespicto.png',
-    badge: '/assets/images/hespicto.png',
+    badge: '/icons/notification-badge.png',
     data: { url: payload.url || '/' },
     actions: payload.actions || []
   }
@@ -113,18 +114,9 @@ self.addEventListener('push', (event) => {
 // ── Notification Click ──
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  // Seuls les liens internes au site sont ouverts (protection contre l'hameçonnage).
-  let url = '/'
-  try {
-    const parsed = new URL(event.notification.data?.url || '/', self.location.origin)
-    if (parsed.origin === self.location.origin) url = parsed.pathname + parsed.search + parsed.hash
-  } catch (e) {
-    url = '/'
-  }
-  event.waitUntil((async () => {
-    const all = await clients.matchAll({ type: 'window', includeUncontrolled: true })
-    const target = all.find(c => new URL(c.url).pathname === new URL(url, self.location.origin).pathname)
-    if (target) return target.focus()
-    return clients.openWindow(url)
-  })())
+  event.waitUntil(openNotificationTarget({
+    rawUrl: event.notification.data?.url,
+    origin: self.location.origin,
+    clientsApi: clients,
+  }))
 })
