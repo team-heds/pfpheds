@@ -70,8 +70,7 @@ describe('LeftSidebar avatar Supabase', () => {
         stubs: {
           Toast: { template: '<div />', methods: { add: vi.fn() } },
           QuestsSidebarCard: true,
-          EventDetail: true,
-          UserCard: true
+          EventDetail: true
         }
       }
     })
@@ -95,8 +94,7 @@ describe('LeftSidebar avatar Supabase', () => {
         stubs: {
           Toast: { template: '<div />', methods: { add: vi.fn() } },
           QuestsSidebarCard: true,
-          EventDetail: true,
-          UserCard: true
+          EventDetail: true
         }
       }
     })

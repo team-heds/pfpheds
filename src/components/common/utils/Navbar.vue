@@ -39,19 +39,6 @@
           <!-- ­ƒöì Global Search -->
           <GlobalSearch />
 
-          <!-- ­ƒô® Messages
-          <ButtonNavbar
-            v-if="user"
-            icon="pi pi-inbox"
-            :bgColor="'var(--surface-overlay)'"
-            :hoverBgColor="'var(--surface-hover)'"
-            :iconColor="'var(--primary-color)'"
-            @click="navigateTo('/chat')"
-            class="mx-3"
-            title="Message"
-          />
-          -->
-
           <!-- ÔÜÖ´©Å Param├¿tres -->
           <ButtonNavbar
             v-if="user"

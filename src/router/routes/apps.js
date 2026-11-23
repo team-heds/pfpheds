@@ -10,7 +10,7 @@ const featureGuard = (feature) => () => (
 export default [
   // Applications & outils
   { path: '/tasklist', component: () => import('@/views/apps/tasklist/Index.vue'), name: 'Index', meta: { requiresAuth: true, title: 'Tâches', need: ['editor', 'admin'] } },
-  { path: '/chat', component: () => import('@/views/apps/chat/IndexChat.vue'), name: 'IndexChat', meta: { requiresAuth: true } },
+  { path: '/chat', redirect: '/feed' },
   { path: '/files', redirect: '/feed' },
   { path: '/mail', redirect: '/feed' },
   { path: '/notes', component: () => import('@/views/apps/notes/NotesWorkspaceView.vue'), name: 'NotesWorkspaceView', meta: { requiresAuth: true, title: 'Notes' } },
