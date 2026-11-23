@@ -66,3 +66,9 @@ export function isSITeacherProfile(profile) {
 
 export const filterStudentProfiles = profiles => (profiles || []).filter(isStudentProfile)
 export const filterSITeacherProfiles = profiles => (profiles || []).filter(isSITeacherProfile)
+
+// Un compte peut être enseignant en rôle principal et admin par ses permissions.
+export function hasAdminNavigationAccess(profile) {
+  return [profile?.role, ...normalizePermissions(profile?.permissions)]
+    .some(permission => permission === 'admin' || permission === 'super.all')
+}

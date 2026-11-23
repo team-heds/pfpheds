@@ -96,6 +96,7 @@ import Dialog from 'primevue/dialog';
 import GlobalSearch from '@/components/common/utils/GlobalSearch.vue';
 import hedsIcon from '@/assets/images/hespicto.png';
 import { getVotationDestination } from '@/composables/useNavigationDestinations';
+import { hasAdminNavigationAccess } from '@/utils/userAudience';
 
 const router = useRouter();
 const route = useRoute();
@@ -218,7 +219,7 @@ const updateUserState = async () => {
 
       permissions.value = Array.isArray(profilePermissions) ? profilePermissions : [];
       userRoles.value = { user: true }; // Rôle par défaut
-      hasAdminAccess.value = userProfile?.role === 'admin';
+      hasAdminAccess.value = hasAdminNavigationAccess(userProfile);
     }
   } else {
     userRoles.value = null;
