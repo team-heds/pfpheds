@@ -35,6 +35,9 @@
         />
       </div>
 
+      <!-- Invitation au quiz, pour les joueurs sans maison (le profil a déjà la sienne) -->
+      <HouseQuizSidebarPrompt v-if="houseQuizPromptEnabled && !hideGamification" />
+
       <!-- Liens supplémentaires -->
       <nav class="profile-links" aria-label="Raccourcis personnels">
         <button type="button" class="profile-action" @click="goToDocumentPFP">
@@ -176,6 +179,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
 import supabaseStorageService from '@/service/supabaseStorageService';
 import QuestsSidebarCard from '@/components/gamification/QuestsSidebarCard.vue';
+import HouseQuizSidebarPrompt from '@/components/gamification/HouseQuizSidebarPrompt.vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import { gamificationFeatures } from '@/config/gamificationFeatures';
@@ -188,7 +192,7 @@ import defaultAvatar from '@/assets/images/avatar/01.jpg';
 
 export default {
   name: "LeftSidebar",
-  components: { UserCard, Toast, AsyncEventDetail, Dialog, Button, QuestsSidebarCard },
+  components: { UserCard, Toast, AsyncEventDetail, Dialog, Button, QuestsSidebarCard, HouseQuizSidebarPrompt },
   props: {
     // Masque la carte gamification du sidebar (utilisé sur le profil pour la présentation)
     hideGamification: { type: Boolean, default: false }
@@ -202,6 +206,7 @@ export default {
       authStore,
       userStore,
       gamificationUserJourneyEnabled: gamificationFeatures.userJourney,
+      houseQuizPromptEnabled: gamificationFeatures.userJourney && gamificationFeatures.houseQuiz,
       eventCheckinEnabled: gamificationFeatures.eventCheckin,
       mentoringEnabled: gamificationFeatures.mentoring,
       // upcomingEvents: computed(() => eventStore.upcomingEvents) // Supprimé car dupliqué
