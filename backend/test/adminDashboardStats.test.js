@@ -147,15 +147,24 @@ function createFakeClient(options = {}) {
     return query
   }
 
-  const auth = {
-    admin: {
-      listUsers: async () => ({
-        data: { users: options.authUsers || [{ id: 'student-1', last_sign_in_at: '2026-08-20T07:00:00Z' }, { id: 'teacher-1', last_sign_in_at: '2026-01-01T07:00:00Z' }] },
-        error: null
-      })
+  const rpc = (name, args) => {
+    const sinceMs = Date.parse(args.p_since)
+    const signIns = options.signIns || [
+      { user_id: 'student-1', last_sign_in_at: '2026-08-20T07:00:00Z' },
+      { user_id: 'teacher-1', last_sign_in_at: '2026-01-01T07:00:00Z' }
+    ]
+    const query = {
+      range: () => query,
+      then(resolve, reject) {
+        const data = name === 'admin_recent_sign_in_user_ids'
+          ? signIns.filter((row) => Date.parse(row.last_sign_in_at) >= sinceMs).map(({ user_id }) => ({ user_id }))
+          : []
+        return Promise.resolve({ data, error: null }).then(resolve, reject)
+      }
     }
+    return query
   }
-  return { client: { from: builder, auth }, queries }
+  return { client: { from: builder, rpc }, queries }
 }
 
 async function listen(app, callback) {

@@ -136,17 +136,18 @@ async function countPendingPfpValidations(client, filters = {}) {
   )
 }
 
+// L'API d'administration ignore les comptes dont auth.users.aud est vide : on lit via une
+// fonction réservée au backend.
 async function loadRecentAuthUsers(client, sinceMs) {
   const ids = new Set()
-  for (let page = 1; ; page += 1) {
-    const { data, error } = await client.auth.admin.listUsers({ page, perPage: AUTH_PAGE_SIZE })
-    if (error) throw queryError('auth.users', error)
-    const users = data?.users || []
-    for (const user of users) {
-      const signedInAt = Date.parse(user?.last_sign_in_at || '')
-      if (Number.isFinite(signedInAt) && signedInAt >= sinceMs) ids.add(user.id)
-    }
-    if (users.length < AUTH_PAGE_SIZE) return ids
+  for (let offset = 0; ; offset += AUTH_PAGE_SIZE) {
+    const { data, error } = await client
+      .rpc('admin_recent_sign_in_user_ids', { p_since: new Date(sinceMs).toISOString() })
+      .range(offset, offset + AUTH_PAGE_SIZE - 1)
+    if (error) throw queryError('admin_recent_sign_in_user_ids', error)
+    const rows = data || []
+    for (const row of rows) ids.add(row.user_id)
+    if (rows.length < AUTH_PAGE_SIZE) return ids
   }
 }
 
