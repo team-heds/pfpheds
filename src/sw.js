@@ -1,8 +1,9 @@
 /// <reference lib="webworker" />
 /* eslint-disable no-undef */
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
+import { precacheAndRoute, cleanupOutdatedCaches, matchPrecache } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
 import { NetworkFirst, NetworkOnly } from 'workbox-strategies'
+import { createNavigationHandler } from '@/utils/navigationFallback'
 
 // ── Workbox Precache ──
 // self.__WB_MANIFEST is injected by VitePWA injectManifest. Its revisions
@@ -45,12 +46,16 @@ registerRoute(
 
 // Only HTML navigations use a runtime cache. Versioned build assets are
 // already handled by the precache manifest, avoiding mixed application
-// bundles after a deployment.
+// bundles after a deployment. Sans réseau, une page jamais visitée reçoit la
+// coque précachée : c'est l'application qui affiche alors l'écran « Hors ligne ».
 registerRoute(
   ({ request, url }) => request.mode === 'navigate' && url.origin === self.location.origin,
-  new NetworkFirst({
-    cacheName: NAVIGATION_CACHE,
-    networkTimeoutSeconds: 5,
+  createNavigationHandler({
+    strategy: new NetworkFirst({
+      cacheName: NAVIGATION_CACHE,
+      networkTimeoutSeconds: 5,
+    }),
+    matchShell: () => matchPrecache('/index.html'),
   })
 )
 
