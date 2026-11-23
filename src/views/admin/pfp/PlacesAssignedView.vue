@@ -444,6 +444,7 @@
 </template>
 
 <script setup>
+import { joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
@@ -732,11 +733,9 @@ const enrichedRows = computed(() => {
     const praticiensList = Array.isArray(place?.praticiensFormateurs)
       ? place.praticiensFormateurs
       : []
-    const praticienAssigned = a.assigned_praticien_id
-      ? praticiensById.value.get(a.assigned_praticien_id) ||
-        praticiensById.value.get(String(a.assigned_praticien_id)) ||
-        null
-      : null
+    const praticienAssigned = joinAssignedPraticiens(a, (id) =>
+      praticiensById.value.get(id) || praticiensById.value.get(String(id))
+    ) || null
     const praticienFromPlace = praticiensList.length
       ? praticiensList
           .map((pid) => praticiensById.value.get(pid) || praticiensById.value.get(String(pid)))

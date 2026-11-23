@@ -246,6 +246,7 @@
 </template>
 
 <script setup>
+import { joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, onMounted, computed, watch } from 'vue'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentDirectoryService'
@@ -740,10 +741,9 @@ const loadPublishedAssignments = async () => {
         place?.institution_name ||
         (place?.InstitutionId ? (institutionsById.get(place.InstitutionId) || null) : null)
 
-      const assignedPraticienId = a?.assigned_praticien_id
-      const praticienNameFromAssignment = assignedPraticienId
-        ? (praticiensById.get(assignedPraticienId) || praticiensById.get(String(assignedPraticienId)) || null)
-        : null
+      const praticienNameFromAssignment = joinAssignedPraticiens(a, (id) =>
+        praticiensById.get(id) || praticiensById.get(String(id))
+      ) || null
 
       const praticiensList = Array.isArray(place?.praticiensFormateurs) ? place.praticiensFormateurs : []
       const praticienNameFromPlace = praticiensList.length

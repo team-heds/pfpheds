@@ -261,6 +261,7 @@
 </template>
 
 <script setup>
+import { joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
@@ -482,7 +483,7 @@ const loadPublishedAssignments = async () => {
     // 1. Récupérer les assignations avec toutes les infos directement
     const { data: assignments, error } = await supabase
       .from('student_result_vote')
-      .select('id,user_id,pfp_type,year,assigned_place_id,assigned_place_name,assigned_institution_name,assigned_rank,status,assigned_praticien_id,repondant_hes,signataire_hes,lieu_signature,is_validated')
+      .select('id,user_id,pfp_type,year,assigned_place_id,assigned_place_name,assigned_institution_name,assigned_rank,status,assigned_praticien_id,assigned_praticien_2_id,repondant_hes,signataire_hes,lieu_signature,is_validated')
       .eq('status', 'published')
 
     if (error) throw error
@@ -527,9 +528,9 @@ const loadPublishedAssignments = async () => {
       const studentPhysioClass = physioByUserId.get(a.user_id)?.class || null
       const studentClass = studentPhysioClass || s?.Classe || s?.classe || null
 
-      const praticienFormateur = a.assigned_praticien_id
-        ? praticiensById.get(a.assigned_praticien_id) || praticiensById.get(String(a.assigned_praticien_id))
-        : null
+      const praticienFormateur = joinAssignedPraticiens(a, (id) =>
+        praticiensById.get(id) || praticiensById.get(String(id))
+      ) || null
 
       const studentPhysio = physioByUserId.get(a.user_id)
 

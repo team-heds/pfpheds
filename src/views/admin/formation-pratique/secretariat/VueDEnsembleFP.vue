@@ -377,6 +377,7 @@
 </template>
 
 <script setup>
+import { joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/supabase'
 
@@ -823,11 +824,8 @@ const fetchAllData = async () => {
           placeName = assignment.assigned_place_name || placeInfo?.name || ''
           institutionName = assignment.assigned_institution_name || placeInfo?.institution || ''
           year = assignment.year || ''
-          if (assignment.assigned_praticien_id) {
-            const praticienInfo = pratMap.get(String(assignment.assigned_praticien_id))
-            praticienName = praticienInfo?.name || ''
-            praticienMail = praticienInfo?.mail || ''
-          }
+          praticienName = joinAssignedPraticiens(assignment, (id) => pratMap.get(String(id))?.name)
+          praticienMail = joinAssignedPraticiens(assignment, (id) => pratMap.get(String(id))?.mail)
           if (assignment.assigned_rank === 99) attributionType = 'Aléatoire'
           else if (assignment.assigned_rank >= 1 && assignment.assigned_rank <= 5) attributionType = `Choix ${assignment.assigned_rank}`
 

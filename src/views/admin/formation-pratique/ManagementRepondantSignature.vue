@@ -166,6 +166,7 @@
 </template>
 
 <script setup>
+import { assignedPraticienIds, joinAssignedPraticiens } from '@/utils/assignedPraticiens'
 import { ref, onMounted, watch, computed } from 'vue'
 import { supabase } from '@/supabase'
 import { getAllStudents } from '@/service/studentDirectoryService'
@@ -270,7 +271,8 @@ const fetchAssignedStudents = async (repondantName) => {
         signataire_hes,
         lieu_signature,
         is_validated,
-        assigned_praticien_id
+        assigned_praticien_id,
+        assigned_praticien_2_id
       `)
       .eq('status', 'published')
 
@@ -291,7 +293,7 @@ const fetchAssignedStudents = async (repondantName) => {
     const profiles = (await getAllStudents()).filter((profile) => userIds.includes(profile.user_id))
 
     // 3. Récupérer les détails des praticiens formateurs
-    const praticienIds = [...new Set(matchingAssignments.map(a => a.assigned_praticien_id).filter(id => id))]
+    const praticienIds = [...new Set(matchingAssignments.flatMap(assignedPraticienIds))]
     const { data: praticiens } = await supabase
       .from('praticiens_formateurs')
       .select('id, nom, prenom, mail, institution, localite')
@@ -305,20 +307,23 @@ const fetchAssignedStudents = async (repondantName) => {
       .in('CONCAT(first_name, \' \', last_name)', repondantNames)
 
     const profilesMap = new Map(profiles.map(p => [p.user_id, p]))
-    const praticiensMap = new Map((praticiens || []).map(p => [p.id, p]))
+    const praticiensMap = new Map((praticiens || []).map(p => [String(p.id), p]))
     const repondantsMap = new Map((repondantsDetails || []).map(r => [`${r.first_name} ${r.last_name}`, r]))
 
     assignedStudents.value = matchingAssignments.filter(a => profilesMap.has(a.user_id)).map(a => {
       const p = profilesMap.get(a.user_id)
-      const praticien = praticiensMap.get(a.assigned_praticien_id)
+      const praticienOf = (id) => praticiensMap.get(String(id))
       return {
         ...a,
         pfp_type: normalizePfp(a.pfp_type),
         student_name: p ? `${(p.family_name || '').toUpperCase()} ${p.forname || ''}`.trim() : 'Inconnu',
         student_class: p?.Classe || p?.classe || '-',
         role: respondentLabelIncludes(a.repondant_hes, repondantName) ? 'Répondant' : 'Signataire',
-        praticien_details: praticien ? `${praticien.prenom} ${praticien.nom}` : 'Non assigné',
-        praticien_mail: praticien?.mail || '-',
+        praticien_details: joinAssignedPraticiens(a, (id) => {
+          const praticien = praticienOf(id)
+          return praticien ? `${praticien.prenom} ${praticien.nom}` : ''
+        }) || 'Non assigné',
+        praticien_mail: joinAssignedPraticiens(a, (id) => praticienOf(id)?.mail) || '-',
         signataire_details: (() => {
           const signataire = repondantsMap.get(a.signataire_hes)
           return signataire ? `${signataire.first_name} ${signataire.last_name}` : a.signataire_hes || '-'

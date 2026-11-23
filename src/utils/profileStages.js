@@ -356,6 +356,7 @@ export function buildProgressionProfileStages({ studentResultVotes = [], physioS
       status: { passed: 'validee', failed: 'echec', stopped: 'arret', pending: 'en_attente' }[outcome] || 'a_verifier',
       commentaire_arret: entry.commentaire_arret || entry.commentaireArret || entry.CommentaireArret || null,
       assigned_praticien_id: entry.assigned_praticien_id || null,
+      assigned_praticien_2_id: entry.assigned_praticien_2_id || null,
       year: entry.year || null, startDate, endDate,
       ...Object.fromEntries(PROFILE_CRITERIA_KEYS.map(key => [key, source === 'vote'
         ? parseBooleanFlag(place?.[key])

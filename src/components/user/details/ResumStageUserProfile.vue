@@ -130,6 +130,15 @@
               </a>
             </span>
           </div>
+          <div v-if="getSecondPraticien(place)">
+            <span class="text-600">2e praticien formateur :</span>
+            <b>{{ getSecondPraticien(place).name }}</b>
+            <span v-if="getSecondPraticien(place).mail" class="ml-2">
+              — <a :href="'mailto:' + getSecondPraticien(place).mail" class="text-primary font-bold" style="text-decoration: underline;">
+                {{ getSecondPraticien(place).mail }}
+              </a>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -604,6 +613,7 @@ const legacyDocumentStages = computed(() => {
       commentaire_arret: rv.commentaire_arret || null,
       assigned_rank: rv.assigned_rank || null,
       assigned_praticien_id: rv.assigned_praticien_id || null,
+      assigned_praticien_2_id: rv.assigned_praticien_2_id || null,
       year: rv.year || null
     }
     // Charger les critères depuis la place si disponible
@@ -918,6 +928,12 @@ function getPraticienFormateurContact(place) {
     return list[0].Mail || ''
   }
   return ''
+}
+
+function getSecondPraticien(place) {
+  const praticien = place?.assigned_praticien_2_id && praticienFormateurs.value[place.assigned_praticien_2_id]
+  if (!praticien) return null
+  return { name: `${praticien.Prenom} ${praticien.Nom}`.trim(), mail: praticien.Mail || '' }
 }
 
 const fetchPraticienFormateurs = async () => {
