@@ -476,7 +476,7 @@ function disconnect() {
   width: 32px;
   height: 32px;
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border-radius: 50%;
   display: flex;
   align-items: center;

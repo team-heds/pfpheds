@@ -1810,7 +1810,7 @@ function getRoundName(roundNum, totalRounds) {
   width: 30px;
   height: 30px;
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   border-radius: 50%;
   font-weight: 700;
 }

@@ -664,7 +664,7 @@ export default {
   border: 2px solid var(--surface-card);
   border-radius: 50%;
   background: var(--primary-color);
-  color: #fff;
+  color: var(--app-color-on-brand);
   font-size: 0.65rem;
 }
 

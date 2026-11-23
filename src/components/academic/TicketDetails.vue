@@ -1644,7 +1644,7 @@ function handleAvatarError(event) {
   height: 32px;
   border-radius: 50%;
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
   display: flex;
   align-items: center;
   justify-content: center;
