@@ -2,7 +2,7 @@
   <TheNavbar />
   <div class="p-4">
     <h1 class="text-3xl mb-4">Calendrier Module — Édition</h1>
-    <p class="text-700 mb-3">Réservé aux administrateurs et responsables de module (rmodule).</p>
+    <p class="text-700 mb-3">Réservé aux administrateurs et responsables de module.</p>
 
     <div class="grid" style="row-gap:1rem">
       <div class="col-12 md:col-4">

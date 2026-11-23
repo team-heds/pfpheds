@@ -1,19 +1,19 @@
 ﻿<template>
-  <div class="access-container">
-    <h2>Access</h2>
-    <p>Composant en cours de développement</p>
-  </div>
+  <StatusPage :title="message.title" :description="message.description" :icon="message.icon">
+    <Button label="Retour à l’accueil" icon="pi pi-home" @click="router.push('/')" />
+    <Button v-if="canGoBack" label="Page précédente" icon="pi pi-arrow-left" outlined @click="router.back()" />
+  </StatusPage>
 </template>
 
-<script>
-export default {
-  name: 'AccessView'
-}
-</script>
+<script setup>
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import Button from 'primevue/button'
+import StatusPage from '@/components/common/feedback/StatusPage.vue'
+import { accessMessage } from '@/utils/accessMessages'
 
-<style scoped>
-.access-container {
-  padding: 20px;
-  text-align: center;
-}
-</style>
+const route = useRoute()
+const router = useRouter()
+const message = computed(() => accessMessage(route.query.reason))
+const canGoBack = computed(() => Boolean(window.history.state?.back))
+</script>
