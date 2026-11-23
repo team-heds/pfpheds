@@ -3,7 +3,6 @@
   <ProfileInfo v-if="activeTab === 0" />
   <AsyncDocumentsUserProfile v-if="activeTab === 1" />
   <AsyncResumStageUserProfile v-if="activeTab === 2" />
-  <AsyncChatProfil v-if="activeTab === 3" />
 </template>
 
 <script>
@@ -17,9 +16,6 @@ const AsyncResumStageUserProfile = defineAsyncComponent(
 const AsyncDocumentsUserProfile = defineAsyncComponent(
   () => import('@/components/user/details/DocumentsUserProfile.vue')
 )
-const AsyncChatProfil = defineAsyncComponent(
-  () => import('@/components/user/details/ChatProfil.vue')
-)
 
 export default {
   name: 'ProfileView',
@@ -28,7 +24,6 @@ export default {
     ProfileInfo,
     AsyncResumStageUserProfile,
     AsyncDocumentsUserProfile,
-    AsyncChatProfil,
   },
   setup() {
     const activeTab = ref(0);
