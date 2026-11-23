@@ -1,4 +1,5 @@
 import { supabase } from '@/supabase';
+import { CALENDAR_EDIT_ROUTE_NAMES } from '@/config/calendarAccess';
 
 const DEBUG_DYNAMIC_ROUTES = import.meta.env.VITE_DEBUG_DYNAMIC_ROUTES === 'true';
 const debugDynRoutes = (...args) => {
@@ -177,7 +178,8 @@ export async function addDynamicRoutesToRouter(router) {
     'QuizPlayView',
     'QuizManageView',
     'QuizEditorView',
-    'QuizDuelView'
+    'QuizDuelView',
+    ...CALENDAR_EDIT_ROUTE_NAMES
   ];
 
   dynamicRoutes.forEach((route) => {

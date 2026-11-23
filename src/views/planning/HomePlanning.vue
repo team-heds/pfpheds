@@ -28,6 +28,7 @@ import { RouterLink } from 'vue-router'
 import TheNavbar from '@/components/TheNavbar.vue'
 import PlanningLegend from '@/components/common/planning/PlanningLegend.vue'
 import { useRoleStore } from '@/stores/role'
+import { CALENDAR_EDIT_NEED } from '@/config/calendarAccess'
 
 const roleStore = useRoleStore()
 
@@ -42,7 +43,8 @@ const READ_LINKS = [
 
 const ADMIN_LINK = { to: '/calendar/admin', icon: 'pi-cog', label: 'Administration', description: 'Modifier le calendrier de formation' }
 
-const links = computed(() => (roleStore.can('admin') ? [...READ_LINKS, ADMIN_LINK] : READ_LINKS))
+const canEditCalendar = computed(() => roleStore.can([...CALENDAR_EDIT_NEED]))
+const links = computed(() => (canEditCalendar.value ? [...READ_LINKS, ADMIN_LINK] : READ_LINKS))
 </script>
 
 <style scoped>
