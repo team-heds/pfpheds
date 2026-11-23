@@ -62,9 +62,9 @@
   --app-section-gap: clamp(1.25rem, 2vw, 2rem);
 
   /* Shape and elevation */
-  --app-radius-sm: 0.5rem;
-  --app-radius-md: 0.75rem;
-  --app-radius-lg: 0.875rem;
+  --app-radius-sm: 0.375rem;
+  --app-radius-md: 0.5rem;
+  --app-radius-lg: 0.75rem;
   --app-radius-xl: 1rem;
   --app-radius-pill: 999px;
   --app-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.05);
@@ -124,6 +124,11 @@
   --input-height: var(--app-control-height-lg);
   --input-radius: var(--app-control-radius);
   --focus-ring: 0 0 0 0.2rem rgba(62, 207, 142, 0.25);
+}
+
+/* Anneau de focus à 3:1 minimum : brun sur fond clair, jaune sur fond sombre. */
+:root:not([data-theme='light']) {
+  --app-color-focus: #f3c300;
 }
 
 .sr-only {

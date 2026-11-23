@@ -959,7 +959,7 @@ onMounted(async () => {
 
 .view-toggle .p-button.active {
   background: var(--primary-color);
-  color: white;
+  color: var(--app-color-on-brand);
 }
 
 /* Vue par modules */

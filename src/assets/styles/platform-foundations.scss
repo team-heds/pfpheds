@@ -1,6 +1,6 @@
 /* Cross-platform interface foundations: accessible defaults shared by every view. */
 :root {
-  --app-focus-ring: #4c1d95;
+  --app-focus-ring: var(--app-color-focus, #775f00);
   --app-focus-offset: 3px;
   font-size: 100%;
   text-size-adjust: 100%;
@@ -53,6 +53,19 @@ textarea {
   outline-offset: var(--app-focus-offset);
 }
 
+/* Un seul anneau pour tout élément actionnable, même si une page retire le contour.
+   Le décalage reste libre : certains composants dessinent l'anneau vers l'intérieur. */
+:is(a[href], button, input, select, textarea, summary, [role="button"], [role="link"], [role="tab"], [role="menuitem"], [role="checkbox"], [role="radio"], [role="switch"], [role="option"], [tabindex]:not([tabindex="-1"])):focus-visible,
+:is(.p-dropdown, .p-multiselect, .p-checkbox, .p-radiobutton, .p-inputswitch, .p-treeselect, .p-cascadeselect):has(input:focus-visible, [role="combobox"]:focus-visible) {
+  outline-color: var(--app-focus-ring) !important;
+  outline-style: solid !important;
+  outline-width: 3px !important;
+}
+
+.p-hidden-accessible :is(input, select):focus-visible {
+  outline: none !important;
+}
+
 .skip-link {
   position: fixed;
   z-index: 10000;
@@ -60,8 +73,8 @@ textarea {
   inset-inline-start: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  color: #fff;
-  background: #4c1d95;
+  color: var(--app-color-on-brand) !important;
+  background: var(--app-color-brand);
   box-shadow: 0 0.5rem 1.5rem rgba(31, 20, 53, 0.25);
   transform: translateY(-175%);
   transition: transform 160ms cubic-bezier(0.2, 0, 0, 1);
@@ -108,7 +121,46 @@ textarea {
 .p-dropdown,
 .p-multiselect,
 .p-calendar .p-inputtext {
-  min-height: 2.75rem;
+  min-height: var(--app-control-height);
+}
+
+/* Deux hauteurs de contrôle : 44 px, ou 40 px pour les variantes compactes. */
+.p-button:not(.p-button-lg),
+input.p-inputtext,
+.p-dropdown .p-dropdown-label,
+.p-multiselect .p-multiselect-label {
+  padding-block: var(--app-space-2);
+}
+
+.p-button.p-button-icon-only:not(.p-inputgroup *, .p-calendar *, .p-inputnumber *) {
+  flex-shrink: 0;
+  inline-size: var(--app-control-height);
+  block-size: var(--app-control-height);
+  min-inline-size: var(--app-control-height);
+}
+
+.p-button.p-button-sm.p-button-icon-only:not(.p-inputgroup *, .p-calendar *, .p-inputnumber *) {
+  inline-size: var(--app-control-height-sm);
+  block-size: var(--app-control-height-sm);
+  min-inline-size: var(--app-control-height-sm);
+}
+
+.p-button.p-button-sm,
+.p-inputtext.p-inputtext-sm,
+.p-inputtext-sm .p-inputtext {
+  min-height: var(--app-control-height-sm);
+}
+
+.p-dropdown .p-dropdown-label,
+.p-multiselect .p-multiselect-label {
+  display: flex;
+  align-items: center;
+  min-height: calc(var(--app-control-height) - 2px);
+}
+
+/* Rayon commun, sauf les contrôles arrondis ou accolés dans un groupe. */
+:is(.p-button:not(.p-button-rounded), .p-inputtext, .p-dropdown, .p-multiselect):not(.p-inputgroup *, .p-calendar-w-btn *, .p-splitbutton *, .p-selectbutton *, .p-buttonset *, .p-inputnumber-buttons-stacked *, .p-dropdown *, .p-multiselect *) {
+  border-radius: var(--app-control-radius);
 }
 
 .p-button {
@@ -207,7 +259,7 @@ form .p-field > label {
 /* Shared form language for legacy views and the new form primitives. */
 .app-form,
 form.p-fluid {
-  --form-control-height: 2.875rem;
+  --form-control-height: var(--app-control-height);
   display: grid;
   gap: 1.25rem;
   width: 100%;
