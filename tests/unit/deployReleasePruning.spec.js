@@ -25,7 +25,8 @@ function releasesDir(names) {
   return dir
 }
 
-const run = (target, keep) => execFileSync('bash', ['-c', `sudo() { "$@"; }\n${prune}\nprune_releases "$1" "$2"`, 'test', target, String(keep)], { encoding: 'utf8' })
+// Sur macOS, CLICOLOR_FORCE colore la sortie de ls même dans un pipe. Le serveur (GNU ls) l'ignore.
+const run = (target, keep) => execFileSync('bash', ['-c', `sudo() { "$@"; }\n${prune}\nprune_releases "$1" "$2"`, 'test', target, String(keep)], { encoding: 'utf8', env: { ...process.env, CLICOLOR_FORCE: undefined } })
 
 describe('déploiement : sauvegardes gardées sur le serveur', () => {
   it('ne garde que les 4 sauvegardes les plus récentes', () => {
