@@ -503,9 +503,10 @@ const menu = ref(adminMenu);
   padding: 1.5rem;
   border: 1px solid var(--surface-border, rgba(148, 163, 184, 0.2));
   border-radius: 1.2rem;
-  width: 300px;
-  min-width: 260px;
-  max-width: 320px;
+  /* La colonne du gabarit fixe la largeur : 288 px, ou 256 px en mode large. */
+  width: 100%;
+  min-width: 0;
+  max-width: none;
   box-sizing: border-box;
   position: relative;
   top: auto;
@@ -523,9 +524,9 @@ const menu = ref(adminMenu);
 }
 
 .admin-sidebar {
-  width: 300px;
-  min-width: 260px;
-  max-width: 320px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
 }
 
 /* Pour garantir que le parent ne décale pas la sidebar */

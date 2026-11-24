@@ -26,5 +26,5 @@ export default [
   { path: '/gamification/quests', redirect: { name: 'QuestsPage' } },
   { path: '/gamification/achievements', redirect: { name: 'AchievementsPage' } },
   { path: '/gamification/challenges', redirect: { name: 'ChallengesPage' } },
-  { path: '/diagnostic-gamification', component: () => import('@/views/DiagnosticGamificationView.vue'), name: 'DiagnosticGamificationView', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
+  { path: '/diagnostic-gamification', component: () => import('@/views/DiagnosticGamificationView.vue'), name: 'DiagnosticGamificationView', meta: { requiresAuth: true, need: ['super.all'] } },
 ]

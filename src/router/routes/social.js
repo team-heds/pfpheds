@@ -3,7 +3,7 @@ import { loadWhenShown } from '@/router/loadWhenShown'
 // Routes social & communication
 export default [
   { path: '/feed', component: loadWhenShown(() => import('@/views/social/FeedView.vue'), 'FeedView'), name: 'FeedView', props: true, meta: { requiresAuth: true } },
-  { path: '/mention/:group', component: () => import('@/views/social/MentionView.vue'), name: 'MentionView', props: true, meta: { requiresAuth: true } },
+  { path: '/mention/:group', component: () => import('@/views/social/MentionView.vue'), name: 'MentionView', props: true, meta: { title: 'Mentions', requiresAuth: true } },
   { path: '/hashtag/:hashtag', redirect: '/feed' },
   { path: '/communities', component: () => import('@/views/social/CommunitiesView.vue'), name: 'CommunitiesView', props: true, meta: { requiresAuth: true } },
   // Ancienne page Firebase : la fiche Supabase la remplace.

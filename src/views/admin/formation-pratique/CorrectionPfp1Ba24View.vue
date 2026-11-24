@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <Toast />
+    <Toast group="page-local" />
     <div class="p-4">
       <div class="breadcrumb-section mb-3">
         <router-link to="/admin/dashboard-pfp" class="text-600 no-underline hover:text-primary">

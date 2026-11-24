@@ -1,6 +1,7 @@
 
 
     import { createClient } from '@supabase/supabase-js'
+    import { trackedFetch } from '@/service/pageHealth'
     import { getPasswordRecoveryCallbackTarget } from '@/service/passwordRecoveryService'
 
     // ✅ Lis les variables d’environnement de Vite
@@ -44,6 +45,8 @@
 
     // ✅ Crée le client avec options recommandées (Realtime désactivé)
     export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    // Compte les échecs serveur pour proposer « Réessayer » sur une page restée vide.
+    global: { fetch: trackedFetch() },
     auth: {
         persistSession: true,       // garde la session même après refresh
         autoRefreshToken: true,     // refresh automatique des tokens

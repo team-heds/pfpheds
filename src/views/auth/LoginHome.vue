@@ -56,7 +56,7 @@
       </div>
     </div>
 
-    <Toast />
+    <Toast group="page-local" />
   </div>
 </template>
 

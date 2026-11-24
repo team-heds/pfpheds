@@ -143,7 +143,7 @@
                   <div class="module-details">
                     <h4>{{ module.title }}</h4>
                     <div class="module-meta">
-                      <Tag :value="`Année ${module.year}`" severity="info" />
+                      <Tag v-if="module.year" :value="`Année ${module.year}`" severity="info" />
                       <Tag v-if="module.credits" :value="`${module.credits} ECTS`" />
                       <Tag v-if="module.heures_contact" :value="`${module.heures_contact}h`" severity="warning" />
                     </div>

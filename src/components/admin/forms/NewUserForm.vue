@@ -59,7 +59,7 @@
       </template>
     </FormShell>
 
-    <Toast />
+    <Toast group="page-local" />
   </div>
 </template>
 

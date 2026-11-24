@@ -1,6 +1,6 @@
 <template>
   <div class="sidebar">
-    <Toast ref="toast" />
+    <Toast group="page-local" ref="toast" />
     <!-- Partie supérieure fixe -->
     <div class="fixed-content">
       <!-- Profil utilisateur -->

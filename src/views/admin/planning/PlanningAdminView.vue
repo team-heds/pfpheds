@@ -21,7 +21,7 @@
                 label="Initialiser"
                 icon="pi pi-database" 
                 @click="initializePlanning" 
-                severity="warning"
+                severity="secondary" outlined
                 v-tooltip="'Créer la structure par défaut'"
               />
               
@@ -29,7 +29,7 @@
                 label="Migrer N° Modules"
                 icon="pi pi-sync" 
                 @click="migrateModuleNumbers" 
-                severity="info"
+                severity="secondary" outlined
                 v-tooltip="'Ajouter les numéros de module aux codes existants'"
               />
               
@@ -52,7 +52,7 @@
                 label="Planning Hebdomadaire" 
                 icon="pi pi-calendar" 
                 @click="goToWeeklyPlanning" 
-                severity="help"
+                severity="secondary" outlined
                 v-tooltip="'Gérer les horaires détaillés par semaine'"
               />
               
@@ -261,7 +261,7 @@
           label="Enregistrer" 
           icon="pi pi-check" 
           @click="saveCell" 
-          class="p-button-success"
+          class=""
         />
       </template>
     </Dialog>
@@ -283,7 +283,7 @@
             icon="pi pi-plus" 
             @click="showCourseCodeDialog = true"
             size="small"
-            severity="success"
+           
           />
         </div>
       </template>
@@ -340,7 +340,7 @@
             <div class="flex gap-2">
               <Button aria-label="Éditer" 
                 icon="pi pi-pencil" 
-                severity="info"
+                severity="secondary"
                 text
                 rounded
                 @click="editCourseCode(slotProps.data)"
@@ -424,12 +424,12 @@
           label="Enregistrer" 
           icon="pi pi-check" 
           @click="saveCourseCode" 
-          class="p-button-success"
+          class=""
         />
       </template>
     </Dialog>
 
-    <Toast />
+    <Toast group="page-local" />
   </AdminLayout>
 </template>
 
@@ -1351,7 +1351,7 @@ onMounted(async () => {
 
 .planning-grid {
   overflow-x: auto;
-  border: 1px solid #ddd;
+  border: 1px solid var(--app-color-border);
 }
 
 .grid-header {
@@ -1400,12 +1400,12 @@ onMounted(async () => {
 
 .grid-row {
   display: flex;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--app-color-border);
 }
 
 .distance-row .grid-cell {
-  background-color: #f8f9fa;
-  border-top: 1px dashed #dee2e6;
+  background-color: var(--app-color-section);
+  border-top: 1px dashed var(--app-color-border);
 }
 
 .day-label {
@@ -1413,11 +1413,11 @@ onMounted(async () => {
   width: 60px;
   background: #ecf0f1;
   font-weight: bold;
-  color: #2c3e50;
+  color: var(--app-color-text);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--app-color-border);
   font-size: 0.9rem;
   position: sticky;
   left: 0;
@@ -1426,16 +1426,16 @@ onMounted(async () => {
 
 .distance-label {
   font-size: 0.8rem;
-  color: #6c757d;
+  color: var(--app-color-text-muted);
   font-style: italic;
-  background-color: #f8f9fa;
+  background-color: var(--app-color-section);
 }
 
 .grid-cell {
   min-width: 50px;
   width: 50px;
   min-height: 50px;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--app-color-border);
   display: flex;
   align-items: center;
   justify-content: center;

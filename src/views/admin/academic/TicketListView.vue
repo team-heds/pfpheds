@@ -253,7 +253,7 @@
       />
     </Dialog>
 
-    <Toast />
+    <Toast group="page-local" />
     </div>
   </AdminLayout>
 </template>

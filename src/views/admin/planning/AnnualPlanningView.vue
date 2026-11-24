@@ -22,7 +22,7 @@
                 label="Vue Hebdomadaire"
                 icon="pi pi-calendar"
                 @click="$router.push('/admin/planning/weekly')"
-                severity="info"
+                severity="secondary" outlined
               />
             </div>
           </div>
@@ -49,21 +49,21 @@
               label="Exporter Année Complète"
               icon="pi pi-file-excel"
               @click="exportAnnualToExcel"
-              severity="success"
+              severity="secondary" outlined
             />
             
             <Button 
               label="Exporter Semestre 1"
               icon="pi pi-file-excel"
               @click="exportSemesterToExcel(1)"
-              severity="info"
+              severity="secondary" outlined
             />
             
             <Button 
               label="Exporter Semestre 2"
               icon="pi pi-file-excel"
               @click="exportSemesterToExcel(2)"
-              severity="warning"
+              severity="secondary" outlined
             />
           </div>
         </template>
@@ -191,7 +191,7 @@
                         @click="editWeek(slotProps.data.weekNumber)"
                         text
                         rounded
-                        severity="info"
+                        severity="secondary"
                         v-tooltip="'Éditer'"
                       />
                       <Button aria-label="Voir" 
@@ -253,7 +253,7 @@
                         @click="editWeek(slotProps.data.weekNumber)"
                         text
                         rounded
-                        severity="info"
+                        severity="secondary"
                         v-tooltip="'Éditer'"
                       />
                       <Button aria-label="Voir" 

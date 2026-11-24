@@ -4,7 +4,7 @@ export default [
   { path: '/home', component: () => import('@/views/auth/LoginHome.vue'), name: 'LoginHome', props: true, meta: { hideMobileNav: true } },
   { path: '/new-password', redirect: to => ({ path: '/reset-password', query: to.query, hash: to.hash }) },
   { path: '/login', redirect: '/home' },
-  { path: '/register', component: () => import('@/views/auth/RegisterView.vue'), name: 'RegisterView' },
+  { path: '/register', component: () => import('@/views/auth/RegisterView.vue'), name: 'RegisterView', meta: { title: 'Créer un compte' } },
   { path: '/reset-password', component: () => import('@/views/pages/ResetPassword.vue'), name: 'ResetPassword', meta: { requiresAuth: false, hideMobileNav: true } },
   { path: '/verification', redirect: '/home' },
   { path: '/lock-screen', redirect: '/home' },

@@ -151,7 +151,7 @@ import PageHeader from '@/components/admin/common/PageHeader.vue';
 }
 
 .info-box {
-  background: var(--blue-50);
+  background: color-mix(in srgb, var(--blue-500) 14%, var(--app-color-surface));
   border: 1px solid var(--blue-200);
   border-radius: 8px;
   padding: 1rem;
@@ -167,6 +167,6 @@ import PageHeader from '@/components/admin/common/PageHeader.vue';
 
 .info-box p {
   margin: 0;
-  color: var(--blue-900);
+  color: var(--app-color-text);
 }
 </style>

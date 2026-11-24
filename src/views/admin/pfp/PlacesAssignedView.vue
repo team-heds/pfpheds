@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <Toast />
+    <Toast group="page-local" />
     <div class="places-assigned-page p-4">
       <!-- Header -->
       <div class="surface-card p-4 border-round shadow-2 mb-4">

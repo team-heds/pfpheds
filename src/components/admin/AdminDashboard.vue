@@ -237,7 +237,7 @@
     </div>
 
     <!-- Toast for notifications -->
-    <Toast ref="toast" />
+    <Toast group="page-local" ref="toast" />
   </div>
 </template>
 

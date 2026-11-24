@@ -37,11 +37,11 @@
           <template #body="slotProps">
             <div v-if="slotProps.data.choix1" style="padding: 8px; background: #e3f2fd; border-left: 4px solid #2196F3; border-radius: 4px;">
               <div style="font-weight: 600; color: #1976d2;">{{ slotProps.data.choix1 }}</div>
-              <div v-if="slotProps.data.choix1Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+              <div v-if="slotProps.data.choix1Institution" style="font-size: 0.85em; color: var(--app-color-text-muted); margin-top: 4px;">
                 {{ slotProps.data.choix1Institution }}
               </div>
             </div>
-            <span v-else style="color: #999;">-</span>
+            <span v-else style="color: var(--app-color-text-muted);">-</span>
           </template>
         </Column>
         
@@ -49,11 +49,11 @@
           <template #body="slotProps">
             <div v-if="slotProps.data.choix2" style="padding: 8px; background: #e0f2f1; border-left: 4px solid #00bcd4; border-radius: 4px;">
               <div style="font-weight: 600; color: #00838f;">{{ slotProps.data.choix2 }}</div>
-              <div v-if="slotProps.data.choix2Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+              <div v-if="slotProps.data.choix2Institution" style="font-size: 0.85em; color: var(--app-color-text-muted); margin-top: 4px;">
                 {{ slotProps.data.choix2Institution }}
               </div>
             </div>
-            <span v-else style="color: #999;">-</span>
+            <span v-else style="color: var(--app-color-text-muted);">-</span>
           </template>
         </Column>
         
@@ -61,35 +61,35 @@
           <template #body="slotProps">
             <div v-if="slotProps.data.choix3" style="padding: 8px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px;">
               <div style="font-weight: 600; color: #e65100;">{{ slotProps.data.choix3 }}</div>
-              <div v-if="slotProps.data.choix3Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+              <div v-if="slotProps.data.choix3Institution" style="font-size: 0.85em; color: var(--app-color-text-muted); margin-top: 4px;">
                 {{ slotProps.data.choix3Institution }}
               </div>
             </div>
-            <span v-else style="color: #999;">-</span>
+            <span v-else style="color: var(--app-color-text-muted);">-</span>
           </template>
         </Column>
         
         <Column header="Choix 4" style="min-width: 250px;">
           <template #body="slotProps">
-            <div v-if="slotProps.data.choix4" style="padding: 8px; background: #f5f5f5; border-left: 4px solid #9e9e9e; border-radius: 4px;">
+            <div v-if="slotProps.data.choix4" style="padding: 8px; background: var(--app-color-section); border-left: 4px solid #9e9e9e; border-radius: 4px;">
               <div style="font-weight: 600; color: #424242;">{{ slotProps.data.choix4 }}</div>
-              <div v-if="slotProps.data.choix4Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+              <div v-if="slotProps.data.choix4Institution" style="font-size: 0.85em; color: var(--app-color-text-muted); margin-top: 4px;">
                 {{ slotProps.data.choix4Institution }}
               </div>
             </div>
-            <span v-else style="color: #999;">-</span>
+            <span v-else style="color: var(--app-color-text-muted);">-</span>
           </template>
         </Column>
         
         <Column header="Choix 5" style="min-width: 250px;">
           <template #body="slotProps">
-            <div v-if="slotProps.data.choix5" style="padding: 8px; background: #f5f5f5; border-left: 4px solid #757575; border-radius: 4px;">
+            <div v-if="slotProps.data.choix5" style="padding: 8px; background: var(--app-color-section); border-left: 4px solid #757575; border-radius: 4px;">
               <div style="font-weight: 600; color: #424242;">{{ slotProps.data.choix5 }}</div>
-              <div v-if="slotProps.data.choix5Institution" style="font-size: 0.85em; color: #666; margin-top: 4px;">
+              <div v-if="slotProps.data.choix5Institution" style="font-size: 0.85em; color: var(--app-color-text-muted); margin-top: 4px;">
                 {{ slotProps.data.choix5Institution }}
               </div>
             </div>
-            <span v-else style="color: #999;">-</span>
+            <span v-else style="color: var(--app-color-text-muted);">-</span>
           </template>
         </Column>
         
@@ -565,7 +565,7 @@ ul li {
   text-align: center;
 }
 pre {
-  background: #f5f5f5;
+  background: var(--app-color-section);
   padding: 10px;
   overflow-x: auto;
 }

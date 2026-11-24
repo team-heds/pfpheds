@@ -12,7 +12,7 @@
           </div>
           <div class="flex gap-2">
             <Button aria-label="Actualiser" icon="pi pi-refresh" outlined @click="loadPlaces" />
-            <Button icon="pi pi-plus" label="Nouvelle Place" severity="success" @click="showDialog = true" />
+            <Button icon="pi pi-plus" label="Nouvelle Place" @click="showDialog = true" />
           </div>
         </div>
       </div>
@@ -136,7 +136,7 @@
           <Column header="Actions">
             <template #body="slotProps">
               <Button aria-label="Voir" icon="pi pi-eye" class="p-button-text p-button-sm mr-2" @click="viewDetails(slotProps.data)" />
-              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="success" />
+              <Button aria-label="Modifier" icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" severity="secondary" />
               <Button aria-label="Supprimer" icon="pi pi-trash" class="p-button-text p-button-sm" severity="danger" />
             </template>
           </Column>
@@ -171,7 +171,7 @@
         </div>
         <template #footer>
           <Button label="Annuler" @click="showDialog = false" text />
-          <Button label="Créer" @click="createPlace" severity="success" />
+          <Button label="Créer" @click="createPlace" />
         </template>
       </Dialog>
     </div>

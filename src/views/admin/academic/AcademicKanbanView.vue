@@ -188,7 +188,7 @@
 
         <!-- Confirmation de suppression -->
         <ConfirmDialog />
-        <Toast />
+        <Toast group="page-local" />
       </div>
     </div>
   </AdminLayout>

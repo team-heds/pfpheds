@@ -47,7 +47,7 @@
       </div>
     </div>
     <AppDarkAndLightMode simple />
-    <Toast />
+    <Toast group="page-local" />
   </div>
 </template>
 

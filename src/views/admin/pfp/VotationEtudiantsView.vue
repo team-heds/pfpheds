@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <Toast />
+    <Toast group="page-local" />
     <div class="votation-etudiants-page p-4">
       <!-- En-tête avec design moderne sans fond blanc -->
       <div class="header-card p-4 border-round mb-4">
@@ -1279,7 +1279,7 @@ onMounted(async () => {
 
 /* Cellules de choix avec fond blanc pour contraste */
 .choice-cell {
-  background-color: white !important;
+  background-color: var(--app-color-surface) !important;
   transition: all 0.2s ease;
 }
 
@@ -1289,22 +1289,22 @@ onMounted(async () => {
 
 /* Style pour les colonnes de choix */
 .bg-blue-50 {
-  background-color: white !important;
+  background-color: var(--app-color-surface) !important;
   border-left: 4px solid #3b82f6;
 }
 
 .bg-cyan-50 {
-  background-color: white !important;
+  background-color: var(--app-color-surface) !important;
   border-left: 4px solid #06b6d4;
 }
 
 .bg-orange-50 {
-  background-color: white !important;
+  background-color: var(--app-color-surface) !important;
   border-left: 4px solid #f97316;
 }
 
 .bg-gray-50 {
-  background-color: white !important;
+  background-color: var(--app-color-surface) !important;
   border-left: 4px solid #6b7280;
 }
 
@@ -1340,11 +1340,11 @@ onMounted(async () => {
 
 /* Texte dans les choix */
 .choice-cell .text-900 {
-  color: #111827 !important;
+  color: var(--app-color-text) !important;
 }
 
 .choice-cell .text-600 {
-  color: #4b5563 !important;
+  color: var(--app-color-text-muted) !important;
 }
 
 /* Warning banner */

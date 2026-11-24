@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <Toast />
+    <Toast group="page-local" />
     <div class="assignment-page p-4">
       <div class="surface-card p-4 border-round shadow-2 mb-4">
         <div class="flex align-items-center justify-content-between flex-wrap gap-3">

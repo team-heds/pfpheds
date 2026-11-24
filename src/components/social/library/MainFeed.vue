@@ -1,7 +1,7 @@
 <!-- src/components/social/library/MainFeed.vue -->
 <template>
   <div class="main-feed" ref="mainFeedRef">
-    <Toast />
+    <Toast group="page-local" />
     <div v-if="isMobile" class="mainfeed-mobile">
       <transition name="fade">
         <div v-show="showHeaderIcons">

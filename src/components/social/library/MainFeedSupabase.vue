@@ -1,6 +1,6 @@
 <template>
   <div class="main-feed" :class="{ 'community-mode': !!communityId }" ref="mainFeedRef">
-    <Toast />
+    <Toast group="page-local" />
     <div v-if="isMobile" class="mainfeed-mobile">
       <transition name="fade">
         <div v-show="showHeaderIcons">
