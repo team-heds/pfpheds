@@ -224,6 +224,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
 import { useUserStore } from '@/stores/userStore'
+import { hasAdminAccess } from '@/utils/adminAccess'
 import studentsService from '@/service/studentDirectoryService'
 import AdminLayout from '@/components/admin/layouts/AdminLayout.vue'
 import Dropdown from 'primevue/dropdown'
@@ -320,7 +321,7 @@ const classFilterOptions = computed(() => {
 // Profil du répondant connecté
 const currentRepondantProfile = ref(null)
 const isActualRepondant = computed(() => !!currentRepondantProfile.value)
-const isAdmin = computed(() => userStore.profile?.roles?.includes('admin'))
+const isAdmin = computed(() => hasAdminAccess())
 
 const effectiveRepondantName = computed(() => {
   if (selectedRepondant.value) return selectedRepondant.value.value

@@ -86,6 +86,13 @@ jobs:
       - name: Run P0 security tests
         run: npm run test:security
 
+      - name: Run frontend unit tests
+        env:
+          # Valeurs factices : les tests unitaires ne doivent jamais joindre Supabase.
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_KEY: unit-test-anon-key
+        run: npm run test:unit
+
       - name: Verify Supabase schema baseline and migration guards
         env:
           SCHEMA_GUARD_BASE_REF: ${{ github.event_name == 'push' && github.event.before || format('origin/{0}', github.base_ref) }}

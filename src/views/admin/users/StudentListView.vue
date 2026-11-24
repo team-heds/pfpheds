@@ -216,6 +216,7 @@ import { supabase } from '@/supabase';
 import StudentEditDialog from '@/components/admin/forms/StudentEditDialog.vue';
 import StudentCreateDialog from '@/components/admin/forms/StudentCreateDialog.vue';
 import { useUserStore } from '@/stores/userStore';
+import { hasAdminAccess } from '@/utils/adminAccess';
 import DataTableToolbar from '@/components/common/tables/DataTableToolbar.vue';
 import ErrorState from '@/components/common/states/ErrorState.vue';
 
@@ -281,7 +282,7 @@ export default {
       return this.currentRepondantProfile ? `${this.currentRepondantProfile.first_name} ${this.currentRepondantProfile.last_name}` : null;
     },
     isAdmin() {
-      return this.userStore.profile?.roles?.includes('admin');
+      return hasAdminAccess();
     },
     filteredEtudiants() {
       const searchLower = (this.globalFilter || '').toLowerCase();
