@@ -164,7 +164,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', handleEscape))
   box-sizing: border-box;
   margin-inline: auto;
   display: grid;
-  grid-template-columns: minmax(16rem, 18.75rem) minmax(0, 1fr);
+  /* Menu fixe : 288 px à 24 px du bord, contenu à 336 px. */
+  grid-template-columns: 18rem minmax(0, 1fr);
   gap: var(--space-6, 1.5rem);
   padding: var(--space-6, 1.5rem);
   height: calc(100dvh - var(--navbar-h, 64px) - (2 * var(--space-6, 1.5rem)));
@@ -187,7 +188,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', handleEscape))
 }
 
 .admin-layout.is-wide:not(.has-feed):not(.no-sidebar) {
-  grid-template-columns: minmax(14rem, 16rem) minmax(0, 1fr);
+  grid-template-columns: 16rem minmax(0, 1fr);
   gap: var(--space-4, 1rem);
   padding-inline: var(--space-4, 1rem);
 }

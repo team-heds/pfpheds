@@ -217,7 +217,7 @@
         </section>
       </template>
     </main>
-    <Toast />
+    <Toast group="page-local" />
   </AdminLayout>
 </template>
 

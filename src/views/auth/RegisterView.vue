@@ -142,5 +142,5 @@ const handleSignUp = async () => {
         </div>
     </div>
     <AppConfig simple />
-    <Toast />
+    <Toast group="page-local" />
 </template>

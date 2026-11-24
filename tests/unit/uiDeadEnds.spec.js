@@ -47,7 +47,7 @@ describe('anciennes adresses de gabarit', () => {
   })
 
   it('réserve le diagnostic gamification aux administrateurs', () => {
-    expect(findRoute(profileRoutes, '/diagnostic-gamification').meta.need).toEqual(['super.all', 'admin'])
+    expect(findRoute(profileRoutes, '/diagnostic-gamification').meta.need).toEqual(['super.all'])
   })
 })
 

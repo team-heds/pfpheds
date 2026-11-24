@@ -9,7 +9,7 @@
     @hide="closeDialog"
   >
     <div class="p-fluid">
-      <Toast />
+      <Toast group="page-local" />
       
       <!-- Form -->
       <form id="student-create-form" class="app-form" @submit.prevent="createStudent">

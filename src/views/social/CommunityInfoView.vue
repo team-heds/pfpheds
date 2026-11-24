@@ -28,7 +28,7 @@
     </template>
   </SocialThreeColumnLayout>
 
-  <Toast />
+  <Toast group="page-local" />
 </template>
 
 <script>

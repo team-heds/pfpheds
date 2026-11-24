@@ -16,9 +16,11 @@
       <!-- Téléphone, connecté : application mobile (coque et onglets).
            Sinon : les pages habituelles, inchangées. -->
       <!-- Démarrage sans réseau : un seul écran, sans page vide derrière. -->
+      <AutoPageHeading v-if="!mobileAppActive && !startupOffline" />
       <OfflineScreen v-if="startupOffline" />
       <MobileAppShell v-else-if="mobileAppActive" />
       <router-view v-else />
+      <PageLoadFallback v-if="!mobileAppActive && !startupOffline" />
       <VersionningComponent v-if="!isImmersiveRoute && !startupOffline && !mobileAppActive" />
       <PwaInstallPrompt v-if="installPromptAllowed" />
       <OfflineBanner v-if="!startupOffline" />
@@ -63,6 +65,9 @@ import gamificationIntegration from '@/service/gamificationIntegration';
 import { recordDailyVisit } from '@/utils/dailyVisit';
 import { isInstallPromptAllowed } from '@/utils/pwaInstall';
 import { installToastAnnouncements } from '@/utils/announcementQueue';
+import { installToastDedupe } from '@/utils/toastDedupe';
+import AutoPageHeading from '@/components/common/utils/AutoPageHeading.vue';
+import PageLoadFallback from '@/components/common/states/PageLoadFallback.vue';
 import ToastEventBus from 'primevue/toasteventbus';
 import { installStandaloneViewportFix } from '@/mobile/shell/standaloneViewport';
 
@@ -79,6 +84,8 @@ export default {
     OfflineScreen,
     PwaUpdatePrompt,
     GamificationNotification,
+    AutoPageHeading,
+    PageLoadFallback,
   },
   setup() {
     return { isMobileViewport: useMobileViewport(), startupOffline };
@@ -166,6 +173,7 @@ export default {
   mounted() {
     // iPhone, application installée : hauteur de l'écran entier (voir standaloneViewport.js).
     this.removeStandaloneViewportFix = installStandaloneViewportFix();
+    this.removeToastDedupe = installToastDedupe(ToastEventBus);
     this.removeToastAnnouncements = installToastAnnouncements(ToastEventBus);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     // Simuler un chargement de données (par exemple, lors du démarrage de l'application)
@@ -179,6 +187,7 @@ export default {
   beforeUnmount() {
     this.removeStandaloneViewportFix?.();
     this.removeToastAnnouncements?.();
+    this.removeToastDedupe?.();
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     // 🛑 Arrêter proprement la vérification à la fermeture de l'app
     if (this.expirationCheckInterval) {

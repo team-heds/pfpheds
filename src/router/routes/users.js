@@ -4,7 +4,7 @@ import { loadWhenShown } from '@/router/loadWhenShown'
 export default [
   // Listes utilisateurs
   { path: '/user_list', component: () => import('@/views/admin/users/UserListView.vue'), name: 'UserListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
-  { path: '/etudiant_list', component: () => import('@/views/admin/users/StudentListView.vue'), name: 'StudentListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/etudiant_list', component: () => import('@/views/admin/users/StudentListView.vue'), name: 'StudentListView', meta: { title: 'Étudiants', requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/etudiant_stats', component: () => import('@/views/admin/users/StudentStatsView.vue'), name: 'StudentStatsView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/enseignent_list', component: () => import('@/views/admin/users/TeacherListView.vue'), name: 'TeacherListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/praticien_formateur_list', component: () => import('@/views/admin/users/TrainerListView.vue'), name: 'TrainerListView', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
@@ -20,14 +20,14 @@ export default [
   { path: '/praticien_formateur_form', component: () => import('@/components/admin/forms/PraticienFormateurForm.vue'), name: 'PraticienFormateurForm', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/praticien_formateur_form_modif/:praticienFormateurId', component: () => import('@/components/admin/forms/PraticienFormateurFormModif.vue'), name: 'PraticienFormateurFormModif', props: true, meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/institution_form', component: () => import('@/components/admin/forms/InstitutionForm.vue'), name: 'InstitutionForm', props: true, meta: { requiresAuth: true, need: ['admin', 'editor'] } },
-  { path: '/institution_form_modif/:id', component: () => import('@/components/admin/forms/InstitutionFormModif.vue'), name: 'InstitutionFormModif', props: true, meta: { requiresAuth: true, need: ['admin', 'editor'] } },
+  { path: '/institution_form_modif/:id', component: () => import('@/components/admin/forms/InstitutionFormModif.vue'), name: 'InstitutionFormModif', props: true, meta: { title: 'Modifier l’institution', requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/affectation_stage_etudiant', component: () => import('@/components/admin/forms/AffectationStageEtudiant.vue'), name: 'AffectationStageEtudiant', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
   { path: '/affectation_stage_etudiant_ba24', component: () => import('@/components/admin/forms/AffectationStageEtudiantBA24.vue'), name: 'AffectationStageEtudiantBA24', meta: { requiresAuth: true, need: ['admin', 'editor'] } },
 
   // Institutions & détails
   { path: '/institution/:id', component: loadWhenShown(() => import('@/views/institutions/InstitutionView.vue'), 'InstitutionView'), name: 'InstitutionView', props: true, meta: { requiresAuth: true } },
   { path: '/institution_details/:id', component: () => import('@/views/admin/institutions/InstitutionDetailsView.vue'), name: 'InstitutionDetails', props: true, meta: { requiresAuth: true } },
-  { path: '/etudiant/:id/details', component: () => import('@/components/admin/details/EtudiantDetails.vue'), name: 'EtudiantDetails', props: true, meta: { requiresAuth: true } },
+  { path: '/etudiant/:id/details', component: () => import('@/components/admin/details/EtudiantDetails.vue'), name: 'EtudiantDetails', props: true, meta: { title: 'Fiche étudiant', requiresAuth: true } },
   { path: '/place_details', component: () => import('@/components/admin/details/PlaceDetails.vue'), name: 'place-details', meta: { requiresAuth: true } },
   { path: '/pfp_details', component: () => import('@/components/admin/details/PFPDetails.vue'), name: 'pfp-details', meta: { requiresAuth: true } },
 ]

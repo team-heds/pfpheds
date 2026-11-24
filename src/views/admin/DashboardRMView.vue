@@ -512,7 +512,7 @@
       </div>
     </div>
 
-    <Toast />
+    <Toast group="page-local" />
   </AdminLayout>
 </template>
 
@@ -1859,7 +1859,7 @@ function generateAlerts() {
 }
 .stat-pill--green { background: #dcfce7; color: #16a34a; }
 .stat-pill--amber { background: #fef3c7; color: #d97706; }
-.stat-pill--slate { background: #f1f5f9; color: #64748b; }
+.stat-pill--slate { background: var(--app-color-section); color: var(--app-color-text-muted); }
 
 .progress-track { width: 100%; height: 6px; background: var(--surface-200); border-radius: 3px; overflow: hidden; margin-top: 0.5rem; }
 .progress-track__fill { height: 100%; border-radius: 3px; background: currentColor; transition: width 0.5s ease; }
@@ -2180,15 +2180,15 @@ function generateAlerts() {
   display: flex; align-items: flex-start; gap: 0.75rem;
   padding: 0.85rem 1rem; border-radius: 10px; border-left: 4px solid transparent;
 }
-.alert-card--warning { background: #fffbeb; border-left-color: #f59e0b; }
+.alert-card--warning { background: color-mix(in srgb, #f59e0b 14%, var(--app-color-surface)); border-left-color: #f59e0b; }
 .alert-card--warning .alert-card__icon { color: #f59e0b; }
-.alert-card--info    { background: #eff6ff; border-left-color: #3b82f6; }
+.alert-card--info    { background: color-mix(in srgb, #3b82f6 14%, var(--app-color-surface)); border-left-color: #3b82f6; }
 .alert-card--info .alert-card__icon    { color: #3b82f6; }
 .alert-card--danger,
-.alert-card--error   { background: #fef2f2; border-left-color: #ef4444; }
+.alert-card--error   { background: color-mix(in srgb, #ef4444 14%, var(--app-color-surface)); border-left-color: #ef4444; }
 .alert-card--danger .alert-card__icon,
 .alert-card--error .alert-card__icon   { color: #ef4444; }
-.alert-card--success { background: #f0fdf4; border-left-color: #10b981; }
+.alert-card--success { background: color-mix(in srgb, #10b981 14%, var(--app-color-surface)); border-left-color: #10b981; }
 .alert-card--success .alert-card__icon { color: #10b981; }
 
 .alert-card__icon { font-size: 1.1rem; margin-top: 2px; }

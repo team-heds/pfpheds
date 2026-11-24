@@ -15,7 +15,7 @@
         @click="goBackToProfile"
       />
       <!-- Affichage du profil étudiant -->
-      <h1>L'état de vos critères :   </h1>
+      <h2>L'état de vos critères :</h2>
       <div
         class="w-full flex-auto"
         v-if="userProfile && Object.keys(userProfile).length"

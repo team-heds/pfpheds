@@ -1,6 +1,6 @@
 <template>
   <AdminLayout>
-    <Toast />
+    <Toast group="page-local" />
     <main class="personalized-dashboard">
       <!-- Header personnalisé -->
       <header class="dashboard-welcome">
@@ -492,6 +492,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+
+const ONBOARDING_KEY = 'heds.admin-dashboard.onboarding-shown'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
@@ -896,14 +898,26 @@ onMounted(async () => {
   migrateLegacyDashboardStorage()
   await Promise.allSettled([dashboardFilters.loadOptions(), dashboardStats.load()])
   
-  // Message de bienvenue
-  toast.add({
-    severity: 'info',
-    summary: `Bienvenue ${userName.value}!`,
-    detail: 'Personnalisez votre dashboard avec drag & drop',
-    life: 4000
-  })
+  // Message de bienvenue : une seule fois par navigateur, pas à chaque chargement.
+  if (!onboardingShown()) {
+    toast.add({
+      severity: 'info',
+      summary: `Bienvenue ${userName.value} !`,
+      detail: 'Vous pouvez réorganiser les indicateurs en les faisant glisser.',
+      life: 4000
+    })
+  }
 })
+
+function onboardingShown() {
+  try {
+    if (window.localStorage.getItem(ONBOARDING_KEY)) return true
+    window.localStorage.setItem(ONBOARDING_KEY, '1')
+  } catch {
+    return false
+  }
+  return false
+}
 </script>
 
 <style scoped>
@@ -923,7 +937,7 @@ onMounted(async () => {
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   margin-block-end: 1.25rem;
 }
-.dashboard-welcome__inner{display:flex;align-items:center;justify-content:space-between;gap:1.5rem}.dashboard-welcome__identity{display:flex;align-items:center;gap:1rem;min-width:0}.dashboard-welcome__actions{display:flex;align-items:center;justify-content:flex-end;gap:.625rem;flex-wrap:wrap}.dashboard-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-block-end:1rem}.dashboard-section-heading h2{margin:0;color:var(--text-color);font-size:1.25rem;line-height:1.2}.dashboard-section-heading p{margin:.25rem 0 0;color:var(--text-color-secondary);font-size:.875rem}
+.dashboard-welcome__inner{display:flex;align-items:center;justify-content:space-between;gap:1.5rem}.dashboard-welcome__identity{display:flex;align-items:center;gap:1rem;min-width:0}.dashboard-welcome__identity :deep(.p-avatar){flex-shrink:0}.dashboard-welcome__actions{display:flex;align-items:center;justify-content:flex-end;gap:.625rem;flex-wrap:wrap}.dashboard-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-block-end:1rem}.dashboard-section-heading h2{margin:0;color:var(--text-color);font-size:1.25rem;line-height:1.2}.dashboard-section-heading p{margin:.25rem 0 0;color:var(--text-color-secondary);font-size:.875rem}
 
 .dashboard-welcome h1 {
   color: var(--text-color) !important;

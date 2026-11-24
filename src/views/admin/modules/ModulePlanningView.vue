@@ -264,7 +264,7 @@
 
       <!-- Confirm Dialog -->
       <ConfirmDialog />
-      <Toast />
+      <Toast group="page-local" />
     </div>
   </AdminLayout>
 </template>

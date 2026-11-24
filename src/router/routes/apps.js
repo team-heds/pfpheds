@@ -27,7 +27,7 @@ export default [
   { path: '/tools', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true } },
   { path: '/tools/formations', component: () => import('@/views/apps/tools/AdminTrainingHubView.vue'), name: 'AdminTrainingHub', meta: { requiresAuth: true, need: ['admin'] } },
   { path: '/tools/formations/:slug', component: () => import('@/views/apps/tools/AdminTrainingDetailView.vue'), name: 'AdminTrainingDetail', meta: { requiresAuth: true, need: ['admin'] } },
-  { path: '/tools/ftp-upload', component: () => import('@/views/apps/tools/FTPUploadTestView.vue'), name: 'FTPUploadTest', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
+  { path: '/tools/ftp-upload', component: () => import('@/views/apps/tools/FTPUploadTestView.vue'), name: 'FTPUploadTest', meta: { requiresAuth: true, need: ['super.all'] } },
   { path: '/game', component: () => import('@/views/apps/tools/GameView.vue'), name: 'GameView', beforeEnter: featureGuard('gamesHub'), meta: { requiresAuth: true } },
   { path: '/quiz', component: () => import('@/views/apps/quiz/QuizListView.vue'), name: 'QuizListView', beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true } },
   { path: '/quiz/gestion', component: () => import('@/views/apps/quiz/QuizManageView.vue'), name: 'QuizManageView', beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true } },
@@ -35,13 +35,13 @@ export default [
   { path: '/quiz/:id', component: () => import('@/views/apps/quiz/QuizPlayView.vue'), name: 'QuizPlayView', props: true, beforeEnter: featureGuard('quizzes'), meta: { requiresAuth: true, mobileImmersive: true } },
   { path: '/duels', component: () => import('@/views/apps/quiz/QuizDuelView.vue'), name: 'QuizDuelView', beforeEnter: featureGuard('quizDuel'), meta: { requiresAuth: true, title: 'Duels de quiz' } },
   { path: '/rom-runner', component: () => import('@/views/apps/rom-runner/RomRunnerView.vue'), name: 'RomRunnerView', beforeEnter: featureGuard('romRunner'), meta: { requiresAuth: true } },
-  { path: '/chatbot', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotView', meta: { requiresAuth: true } },
+  { path: '/chatbot', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotView', meta: { title: 'Assistant', requiresAuth: true } },
   { path: '/tournois', component: () => import('@/views/apps/tools/TournoisView.vue'), name: 'TournoisView', beforeEnter: featureGuard('tournaments'), meta: { requiresAuth: true } },
   { path: '/tournois/:id', component: () => import('@/views/apps/tools/TournoiDetailsView.vue'), name: 'TournoiDetailsView', beforeEnter: featureGuard('tournaments'), meta: { requiresAuth: true } },
   { path: '/mobile-tools', component: () => import('@/views/apps/tools/MobileToolsView.vue'), name: 'MobileToolsLegacy', meta: { requiresAuth: true, title: 'Mon espace' } },
-  { path: '/mobile-lang-apps', component: () => import('@/views/apps/tools/MobileLangAppsView.vue'), name: 'MobileLangApps', meta: { mobileOnly: true } },
-  { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true, need: ['super.all', 'admin'] } },
-  { path: '/care-convers', component: () => import('@/views/pages/CareConvers.vue'), name: 'CareConvers', meta: { requiresAuth: true } },
+  { path: '/mobile-lang-apps', component: () => import('@/views/apps/tools/MobileLangAppsView.vue'), name: 'MobileLangApps', meta: { title: 'Applications de langues', mobileOnly: true } },
+  { path: '/supabase-demo', component: () => import('@/views/pages/Supabase.vue'), name: 'SupabaseDemo', meta: { requiresAuth: true, need: ['super.all'] } },
+  { path: '/care-convers', component: () => import('@/views/pages/CareConvers.vue'), name: 'CareConvers', meta: { title: 'Care Convers', requiresAuth: true } },
 
   // Capsules insuffisance rénale
   { path: '/capsules-insuffisance-renale', component: () => import('@/views/capsulesInsuffiance/CapsulesInsuffisanceRenaleTableDesMatieresView.vue'), name: 'CapsulesInsuffisanceRenale', meta: { requiresAuth: true } },
@@ -71,7 +71,7 @@ export default [
   { path: '/outils', component: () => import('@/views/apps/tools/ToolsView.vue'), name: 'ToolsView', meta: { requiresAuth: true, title: 'Outils' } },
   { path: '/outils/formations', component: () => import('@/views/apps/tools/AdminTrainingHubView.vue'), name: 'AdminTrainingHubFr', meta: { requiresAuth: true, need: ['admin'] } },
   { path: '/outils/formations/:slug', component: () => import('@/views/apps/tools/AdminTrainingDetailView.vue'), name: 'AdminTrainingDetailFr', meta: { requiresAuth: true, need: ['admin'] } },
-  { path: '/chatbotsi', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotSI', meta: { requiresAuth: true, requiredRole: ['admin', 'chatbotSi'] } },
+  { path: '/chatbotsi', component: () => import('@/views/apps/tools/ChatBotView.vue'), name: 'ChatBotSI', meta: { title: 'Assistant soins infirmiers', requiresAuth: true, requiredRole: ['admin', 'chatbotSi'] } },
 
   // Catch-all
   { path: '/:pathMatch(.*)*', component: () => import('@/components/common/utils/Error404.vue'), name: 'Error404' }

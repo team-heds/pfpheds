@@ -256,7 +256,7 @@
       </Dialog>
     </div>
     <ConfirmDialog></ConfirmDialog>
-    <Toast />
+    <Toast group="page-local" />
   </AdminLayout>
 </template>
 

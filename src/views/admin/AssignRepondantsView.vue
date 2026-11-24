@@ -1,6 +1,6 @@
 <template>
   <div class="assign-repondants-page">
-    <Toast />
+    <Toast group="page-local" />
     <Navbar />
     
     <div class="page-container">
@@ -544,7 +544,7 @@ onMounted(async () => {
 
 .page-header h1 {
   margin: 0;
-  color: #1e293b;
+  color: var(--app-color-text);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -557,7 +557,7 @@ onMounted(async () => {
 
 .subtitle {
   margin: 0.5rem 0 0 0;
-  color: #64748b;
+  color: var(--app-color-text-muted);
   font-size: 1rem;
 }
 
@@ -595,14 +595,14 @@ onMounted(async () => {
 
 .stat-label {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--app-color-text-muted);
   margin-bottom: 0.25rem;
 }
 
 .stat-value {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--app-color-text);
 }
 
 .actions-bar {
@@ -625,12 +625,12 @@ onMounted(async () => {
 
 .table-header {
   padding: 1rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--app-color-section);
+  border-bottom: 1px solid var(--app-color-border);
 }
 
 .email-text {
-  color: #64748b;
+  color: var(--app-color-text-muted);
   font-size: 0.875rem;
 }
 
@@ -645,7 +645,7 @@ onMounted(async () => {
 }
 
 .option-classes {
-  color: #64748b;
+  color: var(--app-color-text-muted);
   font-size: 0.75rem;
 }
 

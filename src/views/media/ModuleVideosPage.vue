@@ -202,7 +202,7 @@
     </div>
 
     <!-- Toast pour notifications -->
-    <Toast />
+    <Toast group="page-local" />
   </div>
   </AdminLayout>
 </template>

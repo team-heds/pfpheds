@@ -353,17 +353,17 @@ const generateClassesForYear = async () => {
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--app-color-section);
   border-radius: 8px;
 }
 
 .year-info h2 {
   margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  color: var(--app-color-text);
 }
 
 .year-info p {
   margin: 0;
-  color: #6c757d;
+  color: var(--app-color-text-muted);
 }
 </style>

@@ -199,7 +199,7 @@
         </DataTable>
       </div>
     </div>
-    <Toast />
+    <Toast group="page-local" />
   </AdminLayout>
 </template>
 

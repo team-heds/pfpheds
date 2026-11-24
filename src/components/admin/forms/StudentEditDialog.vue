@@ -9,7 +9,7 @@
     @hide="closeDialog"
   >
     <div class="p-fluid">
-      <Toast />
+      <Toast group="page-local" />
       
       <!-- Loading state -->
       <div v-if="loading" class="flex justify-content-center align-items-center" style="min-height: 300px;">

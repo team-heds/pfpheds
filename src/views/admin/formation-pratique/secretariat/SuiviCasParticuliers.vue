@@ -950,7 +950,7 @@
         </div>
       </div>
     </Dialog>
-    <Toast />
+    <Toast group="page-local" />
   </AdminLayout>
 </template>
 

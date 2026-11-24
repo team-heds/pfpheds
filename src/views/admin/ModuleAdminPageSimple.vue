@@ -214,7 +214,7 @@
     </Dialog>
 
     <!-- Messages de feedback -->
-    <Toast />
+    <Toast group="page-local" />
   </div>
 </template>
 

@@ -218,7 +218,7 @@
     </div>
 
     <!-- Toast pour notifications -->
-    <Toast />
+    <Toast group="page-local" />
   </AdminLayout>
 </template>
 
@@ -503,7 +503,7 @@ const formatDate = (date) => {
   gap: 1.5rem;
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--app-color-border);
 }
 
 .header-info {
@@ -512,7 +512,7 @@ const formatDate = (date) => {
 
 .header-info h1 {
   font-size: 1.75rem;
-  color: #1f2937;
+  color: var(--app-color-text);
   margin-bottom: 0.5rem;
 }
 
@@ -520,7 +520,7 @@ const formatDate = (date) => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #6b7280;
+  color: var(--app-color-text-muted);
   font-size: 0.875rem;
 }
 
@@ -559,7 +559,7 @@ const formatDate = (date) => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #6b7280;
+  color: var(--app-color-text-muted);
 }
 
 .video-placeholder i {
@@ -568,7 +568,7 @@ const formatDate = (date) => {
 }
 
 .video-details {
-  background: white;
+  background: var(--app-color-surface);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -588,11 +588,11 @@ const formatDate = (date) => {
 
 .label {
   font-weight: 500;
-  color: #6b7280;
+  color: var(--app-color-text-muted);
 }
 
 .value {
-  color: #1f2937;
+  color: var(--app-color-text);
 }
 
 .validation-section {
@@ -605,7 +605,7 @@ const formatDate = (date) => {
 .validation-actions,
 .comment-form,
 .comments-list {
-  background: white;
+  background: var(--app-color-surface);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -616,7 +616,7 @@ const formatDate = (date) => {
 .comment-form h3,
 .comments-list h3 {
   margin-bottom: 1rem;
-  color: #1f2937;
+  color: var(--app-color-text);
   font-size: 1.125rem;
 }
 
@@ -668,13 +668,13 @@ const formatDate = (date) => {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--app-color-text);
 }
 
 .no-comments {
   text-align: center;
   padding: 2rem;
-  color: #6b7280;
+  color: var(--app-color-text-muted);
 }
 
 .no-comments i {
@@ -714,12 +714,12 @@ const formatDate = (date) => {
 
 .author-name {
   font-weight: 500;
-  color: #1f2937;
+  color: var(--app-color-text);
 }
 
 .comment-date {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--app-color-text-muted);
 }
 
 .comment-meta {
@@ -730,14 +730,14 @@ const formatDate = (date) => {
 
 .timecode {
   font-size: 0.875rem;
-  color: #6b7280;
-  background: #f3f4f6;
+  color: var(--app-color-text-muted);
+  background: var(--app-color-section);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 }
 
 .comment-content {
-  color: #374151;
+  color: var(--app-color-text);
   line-height: 1.5;
   margin-bottom: 0.75rem;
 }
@@ -757,7 +757,7 @@ const formatDate = (date) => {
 .audio-tag { background: #fef3c7; color: #92400e; }
 .editing-tag { background: #e0e7ff; color: #3730a3; }
 .correction-tag { background: #fee2e2; color: #991b1b; }
-.general-tag { background: #f3f4f6; color: #374151; }
+.general-tag { background: var(--app-color-section); color: var(--app-color-text); }
 
 @media (max-width: 1024px) {
   .content-layout {
