@@ -16,9 +16,10 @@
           <router-link
             :to="tocTo"
             class="capsules-ir-nav__btn capsules-ir-nav__btn--secondary"
+            aria-label="Sommaire"
           >
             <i class="pi pi-list" aria-hidden="true"></i>
-            <span>Sommaire</span>
+            <span class="capsules-ir-nav__label">Sommaire</span>
           </router-link>
 
           <router-link
@@ -34,7 +35,7 @@
         <div v-if="progressLabel" class="capsules-ir-nav__progress">
           <div class="text-700 text-sm">
             <span class="text-900">{{ progressLabel }}</span>
-            <span class="ml-2 text-600">{{ currentStepLabel }}</span>
+            <span class="ml-2 text-600 capsules-ir-nav__step">{{ currentStepLabel }}</span>
           </div>
           <div class="capsules-ir-nav__bar" role="progressbar" :aria-valuenow="progressPercent" aria-valuemin="0" aria-valuemax="100">
             <div class="capsules-ir-nav__barFill" :style="{ width: progressPercent + '%' }"></div>
@@ -152,5 +153,41 @@ const progressPercent = computed(() => (currentIndex.value >= 0 ? Math.round(((c
   height: 100%;
   background: var(--primary-color);
   border-radius: 999px;
+}
+
+/* Téléphone : Précédent, Sommaire et Suivant sur une ligne, sous une barre de progression fine. */
+@media (max-width: 768px) {
+  .capsules-ir-nav__inner {
+    padding: 0.5rem;
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+  .capsules-ir-nav__inner > div {
+    flex-direction: column-reverse;
+    align-items: stretch !important;
+    flex-wrap: nowrap !important;
+    gap: 0.5rem !important;
+  }
+  .capsules-ir-nav__inner > div > div:first-child {
+    flex-wrap: nowrap !important;
+  }
+  .capsules-ir-nav__btn {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .capsules-ir-nav__btn--secondary {
+    flex: 0 0 44px;
+    padding: 0;
+  }
+  .capsules-ir-nav__label,
+  .capsules-ir-nav__step {
+    display: none;
+  }
+  .capsules-ir-nav__progress {
+    min-width: 0;
+  }
+  .capsules-ir-nav__progress > div:first-child {
+    display: none;
+  }
 }
 </style>

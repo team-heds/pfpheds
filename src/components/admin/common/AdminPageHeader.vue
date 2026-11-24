@@ -56,6 +56,10 @@ defineProps({
 }
 
 @media (max-width: 48rem) {
+  /* Sur téléphone, le retour de l'application remplace le fil d'Ariane. */
+  .breadcrumbs {
+    display: none;
+  }
   .header-main { grid-template-columns: minmax(0, 1fr); }
   .header-actions { justify-content: flex-start; }
   .header-actions :deep(.p-button) { flex: 1 1 auto; }
