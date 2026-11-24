@@ -55,3 +55,42 @@ describe('déploiement : sauvegardes gardées sur le serveur', () => {
     expect(prunedAt).toBeLessThan(script.indexOf('Publication effectuée'))
   })
 })
+
+describe('déploiement : anciens fichiers de build', () => {
+  const pruneAssets = script.match(/prune_stale_assets\(\) \{[\s\S]*?\n\}\n/)[0]
+  const days = 30
+
+  const setup = () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'assets-'))
+    const live = path.join(dir, 'live', 'assets')
+    const fresh = path.join(dir, 'fresh', 'assets')
+    fs.mkdirSync(live, { recursive: true })
+    fs.mkdirSync(fresh, { recursive: true })
+    const old = Date.now() / 1000 - 40 * 86400
+    const write = (name, stale) => {
+      const file = path.join(live, name)
+      fs.writeFileSync(file, 'x')
+      if (stale) fs.utimesSync(file, old, old)
+    }
+    write('old-AbCd1234.js', true)
+    write('old-style-AbCd1234.css', true)
+    write('recent-EfGh5678.js', false)
+    write('current-IjKl9012.js', true)
+    write('logo.png', true)
+    write('stable-file.js', true)
+    fs.writeFileSync(path.join(fresh, 'current-IjKl9012.js'), 'x')
+    return { live: path.dirname(live), fresh: path.dirname(fresh), assets: live }
+  }
+
+  it('retire seulement les vieux fichiers hachés absents du nouveau build', () => {
+    const { live, fresh, assets } = setup()
+    const output = execFileSync('bash', ['-c', `set -euo pipefail\nsudo() { "$@"; }\n${pruneAssets}\nprune_stale_assets "$1" "$2" "$3"`, 'test', live, fresh, String(days)], { encoding: 'utf8', env: { ...process.env, CLICOLOR_FORCE: undefined } })
+    expect(output).toMatch(/Anciens fichiers de build retirés : 2/)
+    expect(fs.readdirSync(assets).sort()).toEqual(['current-IjKl9012.js', 'logo.png', 'recent-EfGh5678.js', 'stable-file.js'])
+  })
+
+  it('fait le ménage après la publication, sans bloquer un site déjà en ligne', () => {
+    expect(script.indexOf('prune_stale_assets "$app"')).toBeGreaterThan(script.indexOf('sudo cp -a "$source_dir/frontend/." "$app/"'))
+    expect(script).toContain("|| echo 'Ménage des anciens fichiers à reprendre.'")
+  })
+})
