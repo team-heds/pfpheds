@@ -723,13 +723,13 @@
     width: 100%;
     max-width: 1200px;
     display: grid;
-    grid-template-columns: 1fr 1.2fr; /* left media smaller, right interaction bigger */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); /* left media smaller, right interaction bigger */
     gap: 24px;
     align-items: start;
   }
   @media (max-width: 1024px) {
     .main-layout { 
-      grid-template-columns: 1fr; 
+      grid-template-columns: minmax(0, 1fr);
       gap: 24px;
     }
     .interaction-column { order: 1; }
@@ -747,6 +747,22 @@
   .media-column {
     display: flex;
     flex-direction: column;
+  }
+
+  /* Une seule colonne sur téléphone : aucun bloc ne dépasse l'écran. */
+  .main-layout > * {
+    min-width: 0;
+  }
+  @media (max-width: 768px) {
+    .interaction-column {
+      padding: 16px;
+    }
+    .avatar-container {
+      width: 100%;
+      max-width: 300px;
+      aspect-ratio: 1;
+      height: auto;
+    }
   }
 
   /* Start bar */
@@ -947,6 +963,14 @@
   .step-tracker li {
     color: #aaa;
     font-weight: bold;
+  }
+
+  @media (max-width: 768px) {
+    .step-tracker {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 6px 12px;
+    }
   }
 
   .step-tracker .active-step {

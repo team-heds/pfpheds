@@ -11,6 +11,7 @@
         <section class="qr-preview" aria-label="Aperçu du QR code">
           <canvas ref="canvas" :width="size" :height="size"></canvas>
           <p v-if="renderError" class="qr-error" role="alert">{{ renderError }}</p>
+          <p v-else-if="rendering" class="qr-preview-help" role="status">Génération du QR code…</p>
           <p v-else class="qr-preview-help">Aperçu actualisé automatiquement</p>
         </section>
 
@@ -56,7 +57,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { onActivated, onMounted, ref, watch } from 'vue'
 import QRCode from 'qrcode'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
@@ -81,6 +82,7 @@ const fgColor = ref(props.initialForeground)
 const bgColor = ref(props.initialBackground)
 const transparentBg = ref(props.initialTransparent)
 const renderError = ref('')
+const rendering = ref(true)
 
 const normalizeHex = (value) => {
   if (!value) return null
@@ -89,14 +91,19 @@ const normalizeHex = (value) => {
 }
 
 const renderQr = async () => {
-  if (!canvas.value || !url.value) return
+  if (!canvas.value || !url.value) {
+    rendering.value = false
+    return
+  }
   const dark = normalizeHex(fgColor.value)
   const light = normalizeHex(bgColor.value)
   if (!dark || (!transparentBg.value && !light)) {
     renderError.value = 'Utilisez une couleur hexadécimale à six caractères, par exemple #071426.'
+    rendering.value = false
     return
   }
 
+  rendering.value = true
   try {
     renderError.value = ''
     await QRCode.toCanvas(canvas.value, url.value, {
@@ -107,11 +114,15 @@ const renderQr = async () => {
     })
   } catch {
     renderError.value = 'Le QR code ne peut pas être généré avec ces informations.'
+  } finally {
+    rendering.value = false
   }
 }
 
 watch([url, size, fgColor, bgColor, transparentBg], renderQr)
 onMounted(renderQr)
+// Écran gardé en mémoire par l'application mobile : on redessine au retour.
+onActivated(renderQr)
 
 async function downloadPng() {
   if (!canvas.value || renderError.value) return
