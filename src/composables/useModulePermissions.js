@@ -3,12 +3,14 @@
  * Permet de vérifier si un utilisateur peut voir/éditer un module
  */
 
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
-import { supabase } from '@/supabase'
+import { useRoleStore } from '@/stores/role'
+import { hasAdminAccess } from '@/utils/adminAccess'
 
 export function useModulePermissions() {
   const authStore = useAuthStore()
+  const roleStore = useRoleStore()
 
   /**
    * Email de l'utilisateur connecté
@@ -17,12 +19,10 @@ export function useModulePermissions() {
     return authStore.user?.email || null
   })
 
-  const userRoles = ref([])
-
   /**
-   * Vérifie si l'utilisateur est admin à partir de ses rôles en base.
+   * Admin : permissions de la plateforme (rôle principal, permissions, super.all).
    */
-  const isAdmin = computed(() => userRoles.value.includes('admin'))
+  const isAdmin = computed(() => hasAdminAccess(roleStore))
 
   /**
    * Vérifie si l'utilisateur est responsable d'un module spécifique
@@ -100,53 +100,26 @@ export function useModulePermissions() {
   }
 
   /**
-   * Récupère les rôles de l'utilisateur depuis Supabase
+   * Permissions de l'utilisateur, chargées par le role store.
    * @returns {Promise<Array>}
    */
   const getUserRoles = async () => {
-    const userId = authStore.user?.id
-    if (!userId) {
-      userRoles.value = []
-      return []
-    }
-
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-
-      if (error) {
-        console.error('Erreur récupération rôles:', error)
-        userRoles.value = []
-        return []
-      }
-
-      userRoles.value = (data || []).map((role) => role.role)
-      return userRoles.value
+      await roleStore.init()
     } catch (error) {
-      console.error('Erreur getUserRoles:', error)
-      userRoles.value = []
-      return []
+      console.error('Erreur récupération permissions:', error)
     }
+    return [...roleStore.perms]
   }
 
-  watch(
-    () => authStore.user?.id,
-    () => {
-      getUserRoles()
-    },
-    { immediate: true }
-  )
-
   /**
-   * Vérifie si l'utilisateur a un rôle spécifique
-   * @param {String} role - Le rôle à vérifier
+   * Vérifie si l'utilisateur a une permission donnée
+   * @param {String} role
    * @returns {Promise<Boolean>}
    */
   const hasRole = async (role) => {
-    const roles = await getUserRoles()
-    return roles.includes(role)
+    await getUserRoles()
+    return roleStore.can(role)
   }
 
   /**

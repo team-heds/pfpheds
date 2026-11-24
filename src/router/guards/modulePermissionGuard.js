@@ -5,6 +5,7 @@
 
 import { useAuthStore } from '@/stores/authStore'
 import { supabase } from '@/supabase'
+import { resolveAdminAccess } from '@/utils/adminAccess'
 
 export async function modulePermissionGuard(to, from, next) {
   const authStore = useAuthStore()
@@ -35,12 +36,7 @@ export async function modulePermissionGuard(to, from, next) {
         return
       }
 
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_email', userEmail)
-
-      const isAdmin = roles?.some((r) => r.role === 'admin')
+      const isAdmin = await resolveAdminAccess()
       const isOwner = module.responsable_email === userEmail
 
       let isCoordinateur = false
@@ -90,18 +86,7 @@ export async function adminOnlyGuard(to, from, next) {
   }
 
   try {
-    const { data: roles, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_email', userEmail)
-
-    if (error) {
-      console.error('Erreur vérification rôle admin:', error)
-      next({ path: '/admin/dashboard-rm', query: { error: 'Erreur de vérification' } })
-      return
-    }
-
-    const isAdmin = roles?.some((r) => r.role === 'admin')
+    const isAdmin = await resolveAdminAccess()
 
     if (isAdmin) {
       next()
