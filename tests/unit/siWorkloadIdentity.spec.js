@@ -83,6 +83,31 @@ describe('SI workload canonical teacher identities', () => {
     })
   })
 
+  it('loads personal workload only through the self-scoped RPC and calculates matching semester totals', async () => {
+    const ownAutumnSlot = { ...baseSlot, id: 'own-autumn', teachers: ['teacher-one'], start_time: '08:00', end_time: '09:30' }
+    const ownSpringSlot = { ...baseSlot, id: 'own-spring', week_number: 10, teachers: ['teacher-one'], activity_type: 'Atelier' }
+    vi.spyOn(workloadService, 'getMyTeacherProfile').mockResolvedValue({
+      id: 'teacher-one', name: 'Teacher One', email: 'teacher.one@hevs.ch'
+    })
+    vi.spyOn(workloadService, 'getTeachers').mockImplementation(() => {
+      throw new Error('personal workload must not load the teacher directory')
+    })
+    vi.spyOn(workloadService, 'getMyWorkloadSlots').mockResolvedValue([ownAutumnSlot, ownSpringSlot])
+    vi.spyOn(workloadService, 'getClassesWithStudentCount').mockResolvedValue([
+      { id: 'class-1', code: 'BAC25', academic_year_id: 'year-1' }
+    ])
+    vi.spyOn(workloadService, 'getModuleNames').mockResolvedValue({ 'SI-101': 'Soins 101' })
+
+    const result = await workloadService.computeWorkload('all', null, { personal: true })
+
+    expect(workloadService.getMyWorkloadSlots).toHaveBeenCalledOnce()
+    expect(result.teachers).toHaveLength(1)
+    expect(result.teachers[0].teacher.id).toBe('teacher-one')
+    expect(result.teachers[0].slots.map(slot => slot.coefficient)).toEqual([4, 1.6])
+    expect(result.teachers[0].totalPresencePeriods).toBe(3)
+    expect(result.teachers[0].totalWeightedPeriods).toBe(9.6)
+  })
+
   it('never merges an ambiguous display name into an arbitrary canonical teacher', async () => {
     vi.spyOn(workloadService, 'getTeachers').mockResolvedValue([
       { id: 'teacher-line-1', name: 'Line Martin', email: 'line.one@hevs.ch' },

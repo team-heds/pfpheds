@@ -83,6 +83,62 @@
           </div>
         </section>
 
+        <section v-if="!isPreviewMode" class="section-card personal-workload-section">
+          <div class="section-header-row">
+            <div class="section-heading">
+              <h3><i class="pi pi-chart-bar"></i> Ma feuille de charge</h3>
+              <p class="section-subtitle">Mes créneaux et périodes pondérées — {{ activeAcademicYear?.name || 'année académique active' }}</p>
+            </div>
+            <Tag :value="`${personalWorkload.totalWeightedPeriods} périodes pondérées`" severity="success" />
+          </div>
+
+          <div v-if="workloadLoading" class="workload-loading" role="status">
+            <ProgressSpinner style="width: 2rem; height: 2rem" />
+            <span>Calcul de votre feuille de charge…</span>
+          </div>
+          <div v-else-if="workloadError" class="workload-message" role="alert">
+            {{ workloadError }}
+          </div>
+          <div v-else>
+            <div class="workload-semester-grid">
+              <Card v-for="semester in personalWorkload.semesters" :key="semester.key" class="workload-semester-card">
+                <template #title>{{ semester.label }}</template>
+                <template #content>
+                  <div class="workload-semester-total">{{ semester.totalWeightedPeriods }}p</div>
+                  <div class="text-500 text-sm">{{ semester.totalPresencePeriods }} périodes présence · {{ semester.slots.length }} créneaux</div>
+                </template>
+              </Card>
+            </div>
+
+            <DataTable
+              :value="personalWorkload.slots"
+              :rows="10"
+              :paginator="personalWorkload.slots.length > 10"
+              responsiveLayout="scroll"
+              stripedRows
+              class="personal-workload-table"
+              sortField="weekNumber"
+              :sortOrder="1"
+            >
+              <Column field="weekNumber" header="Sem." sortable />
+              <Column field="day" header="Jour" />
+              <Column header="Horaire">
+                <template #body="{ data }">{{ data.startTime || 'Asynchrone' }}<span v-if="data.endTime"> – {{ data.endTime }}</span></template>
+              </Column>
+              <Column field="courseTitle" header="Cours" />
+              <Column field="moduleName" header="Module" />
+              <Column field="classCode" header="Classe" />
+              <Column header="Coefficient">
+                <template #body="{ data }"><Tag :value="data.coeffLabel" :severity="data.isAtelier ? 'warning' : 'info'" /></template>
+              </Column>
+              <Column header="Périodes pondérées">
+                <template #body="{ data }"><strong>{{ data.weightedPeriods }}p</strong></template>
+              </Column>
+              <template #empty><div class="text-center py-4">Aucun créneau ne vous est attribué pour cette année.</div></template>
+            </DataTable>
+          </div>
+        </section>
+
         <div class="dashboard-sections">
 
           <section class="section-card quick-actions-section full-width">
@@ -440,6 +496,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
+import Card from 'primevue/card';
 import { loadEnseignantDashboard } from '@/service/enseignantDashboardService';
 import { getSITeachers } from '@/service/academicKpiService';
 import workloadService, { teacherKey, normalizeTeacherName } from '@/service/workloadService';
@@ -479,6 +536,14 @@ const courseSort = ref('date-asc');
 const workloadMetrics = ref({
   totalPresencePeriods: 0,
   totalWeightedPeriods: 0
+});
+const workloadLoading = ref(false);
+const workloadError = ref('');
+const personalWorkload = ref({
+  slots: [],
+  totalPresencePeriods: 0,
+  totalWeightedPeriods: 0,
+  semesters: []
 });
 
 const courseSortOptions = [
@@ -682,7 +747,10 @@ const totalCoursesHours = computed(() => {
 })
 
 async function loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning, planningSlots = null) {
-  const data = await workloadService.computeWorkload('all', activeAcademicYear.value?.id || null, { planningSlots });
+  const data = await workloadService.computeWorkload('all', activeAcademicYear.value?.id || null, {
+    planningSlots,
+    personal: !isPreviewMode.value
+  });
   const allTeachers = data?.teachers || [];
 
   const currentTeacherId = String(targetUserId || '').trim();
@@ -703,6 +771,27 @@ async function loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacher
   workloadMetrics.value = {
     totalPresencePeriods: matched?.totalPresencePeriods || 0,
     totalWeightedPeriods: matched?.totalWeightedPeriods || 0
+  };
+
+  const slots = matched?.slots || [];
+  const summarizeSemester = (key, label, predicate) => {
+    const semesterSlots = slots.filter(predicate);
+    return {
+      key,
+      label,
+      slots: semesterSlots,
+      totalPresencePeriods: semesterSlots.reduce((sum, slot) => sum + (Number(slot.periods) || 0), 0),
+      totalWeightedPeriods: Math.round(semesterSlots.reduce((sum, slot) => sum + (Number(slot.weightedPeriods) || 0), 0) * 10) / 10
+    };
+  };
+  personalWorkload.value = {
+    slots,
+    totalPresencePeriods: matched?.totalPresencePeriods || 0,
+    totalWeightedPeriods: matched?.totalWeightedPeriods || 0,
+    semesters: [
+      summarizeSemester('autumn', 'Semestre d’automne', slot => Number(slot.weekNumber) >= 38 || Number(slot.weekNumber) <= 7),
+      summarizeSemester('spring', 'Semestre de printemps', slot => Number(slot.weekNumber) >= 8 && Number(slot.weekNumber) <= 37)
+    ]
   };
 }
 
@@ -748,6 +837,9 @@ const filteredAndSortedCourses = computed(() => {
  */
 async function loadTeacherData() {
   loading.value = true;
+  workloadLoading.value = true;
+  workloadError.value = '';
+  personalWorkload.value = { slots: [], totalPresencePeriods: 0, totalWeightedPeriods: 0, semesters: [] };
   audienceError.value = '';
   
   try {
@@ -797,7 +889,7 @@ async function loadTeacherData() {
     weekSchedule.value = data.weekPlanning;
     upcomingSessions.value = data.upcomingSessions || [];
     allMySlots.value = data.allSlots || [];
-    await loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning, data.planningSlots || []);
+    await loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning, isPreviewMode.value ? (data.planningSlots || []) : null);
     
     console.log('✅ Données enseignant chargées:', {
       courses: myCourses.value.length,
@@ -805,8 +897,11 @@ async function loadTeacherData() {
     });
   } catch (error) {
     console.error('❌ Erreur chargement données enseignant:', error);
+    personalWorkload.value = { slots: [], totalPresencePeriods: 0, totalWeightedPeriods: 0, semesters: [] };
+    workloadError.value = 'Impossible de charger votre feuille de charge. Réessayez ultérieurement.';
   } finally {
     loading.value = false;
+    workloadLoading.value = false;
   }
 }
 

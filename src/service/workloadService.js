@@ -358,6 +358,34 @@ class WorkloadService {
   }
 
   /**
+   * Récupère uniquement les créneaux de l'enseignant identifié par auth.uid().
+   * Le périmètre est imposé par la fonction PostgreSQL, sans identifiant cible.
+   */
+  async getMyWorkloadSlots() {
+    const { data, error } = await supabase.rpc('get_my_si_workload_slots')
+    if (error) throw error
+    return data || []
+  }
+
+  async getMyTeacherProfile() {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError) throw authError
+    if (!user?.id) return null
+
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('user_id, display_name, forname, family_name, email')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (error) throw error
+    return data ? {
+      id: data.user_id,
+      name: data.display_name || `${data.forname || ''} ${data.family_name || ''}`.trim(),
+      email: data.email
+    } : null
+  }
+
+  /**
    * Calcule la feuille de charges complète pour tous les enseignants
    * 
    * @param {string} semester - 'autumn', 'spring', ou 'all'
@@ -377,22 +405,36 @@ class WorkloadService {
     return map
   }
 
-  async computeWorkload(semester, academicYearId, { planningSlots = null } = {}) {
-    // 1. Charger les données
+  async computeWorkload(semester, academicYearId, { planningSlots = null, personal = false } = {}) {
+    // En mode personnel, l'identifiant sert uniquement à choisir le profil canonique
+    // attendu; la liste des créneaux vient du RPC scoped à auth.uid().
+    const personalWorkload = Boolean(personal)
     const [teachers, classes, moduleNames] = await Promise.all([
-      this.getTeachers(),
+      personalWorkload ? this.getMyTeacherProfile().then(teacher => teacher ? [teacher] : []) : this.getTeachers(),
       this.getClassesWithStudentCount(academicYearId),
       this.getModuleNames()
     ])
+    const workloadTeachers = teachers
 
-    const identityResolver = createTeacherIdentityResolver(teachers)
+    const identityResolver = createTeacherIdentityResolver(workloadTeachers)
 
     // 2. Filtrer les créneaux sur les classes de l'année académique active
     // (sinon on mélange plusieurs cohortes/années et les heures deviennent fausses)
     const classCodeSet = buildAcademicYearClassCodeSet(classes)
     let allSlotsRaw = Array.isArray(planningSlots)
       ? planningSlots
-      : await this._getAllSlots()
+      : personalWorkload
+        ? await this.getMyWorkloadSlots()
+        : await this._getAllSlots()
+
+    if (personalWorkload) {
+      allSlotsRaw = (allSlotsRaw || []).filter(slot => {
+        const resolvedTeachers = (Array.isArray(slot.teachers) ? slot.teachers : [])
+          .map(rawTeacher => identityResolver.resolve(rawTeacher))
+          .filter(resolution => resolution.status === 'resolved')
+        return resolvedTeachers.some(resolution => String(resolution.teacher?.id || '') === String(teachers[0]?.id || ''))
+      })
+    }
 
     if (semester === 'spring') {
       allSlotsRaw = allSlotsRaw.filter(slot => Number(slot.week_number) >= 8 && Number(slot.week_number) <= 37)
