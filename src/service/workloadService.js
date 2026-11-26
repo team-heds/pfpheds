@@ -405,7 +405,7 @@ class WorkloadService {
     return map
   }
 
-  async computeWorkload(semester, academicYearId, { planningSlots = null, personal = false } = {}) {
+  async computeWorkload(semester, academicYearId, { planningSlots = null, personal = false, debug = false, targetTeacherId = null } = {}) {
     // En mode personnel, l'identifiant sert uniquement à choisir le profil canonique
     // attendu; la liste des créneaux vient du RPC scoped à auth.uid().
     const personalWorkload = Boolean(personal)
@@ -421,18 +421,77 @@ class WorkloadService {
     // 2. Filtrer les créneaux sur les classes de l'année académique active
     // (sinon on mélange plusieurs cohortes/années et les heures deviennent fausses)
     const classCodeSet = buildAcademicYearClassCodeSet(classes)
+    const planningSource = Array.isArray(planningSlots)
+      ? 'provided'
+      : personalWorkload
+        ? 'personal_rpc'
+        : 'all_slots'
     let allSlotsRaw = Array.isArray(planningSlots)
       ? planningSlots
       : personalWorkload
         ? await this.getMyWorkloadSlots()
         : await this._getAllSlots()
+    const sourceSlotCount = allSlotsRaw?.length || 0
+    const personalIdentityDiagnostics = {
+      slotsWithMatchingTeacherIdentity: 0,
+      resolvedById: 0,
+      resolvedByEmail: 0,
+      resolvedByName: 0,
+      unresolved: 0,
+      ambiguous: 0,
+      excluded: 0,
+      rawTeacherFieldNotArray: 0,
+      samples: []
+    }
 
-    if (personalWorkload) {
+    if (personalWorkload || debug) {
+      const diagnosticTeacher = personalWorkload ? teachers[0] : teachers.find(teacher => String(teacher.id) === String(targetTeacherId))
+      const diagnosticResolver = personalWorkload ? identityResolver : createTeacherIdentityResolver(diagnosticTeacher ? [diagnosticTeacher] : [])
       allSlotsRaw = (allSlotsRaw || []).filter(slot => {
-        const resolvedTeachers = (Array.isArray(slot.teachers) ? slot.teachers : [])
-          .map(rawTeacher => identityResolver.resolve(rawTeacher))
-          .filter(resolution => resolution.status === 'resolved')
-        return resolvedTeachers.some(resolution => String(resolution.teacher?.id || '') === String(teachers[0]?.id || ''))
+        if (!Array.isArray(slot.teachers)) personalIdentityDiagnostics.rawTeacherFieldNotArray++
+        const resolutions = (Array.isArray(slot.teachers) ? slot.teachers : [])
+          .map(rawTeacher => ({ rawTeacher, resolution: diagnosticResolver.resolve(rawTeacher) }))
+        const matchingResolutions = diagnosticTeacher
+          ? resolutions.filter(({ resolution }) =>
+            resolution.status === 'resolved'
+            && String(resolution.teacher?.id || '') === String(diagnosticTeacher.id || '')
+          )
+          : []
+        resolutions.forEach(({ resolution }) => {
+          if (resolution.status === 'resolved' && resolution.source === 'id') personalIdentityDiagnostics.resolvedById++
+          else if (resolution.status === 'resolved' && resolution.source === 'email') personalIdentityDiagnostics.resolvedByEmail++
+          else if (resolution.status === 'resolved' && resolution.source === 'name') personalIdentityDiagnostics.resolvedByName++
+          else if (resolution.status === 'unresolved') personalIdentityDiagnostics.unresolved++
+          else if (resolution.status === 'ambiguous') personalIdentityDiagnostics.ambiguous++
+          else if (resolution.status === 'excluded') personalIdentityDiagnostics.excluded++
+        })
+        if (matchingResolutions.length) {
+          personalIdentityDiagnostics.slotsWithMatchingTeacherIdentity++
+        }
+        if (debug && personalIdentityDiagnostics.samples.length < 12 && (
+          matchingResolutions.length || personalIdentityDiagnostics.samples.length < 5
+        )) {
+          personalIdentityDiagnostics.samples.push({
+            slot: {
+              id: slot.id,
+              week: slot.week_number,
+              classCode: slot.class_code,
+              moduleCode: slot.module_code,
+              courseTitle: slot.course_title,
+              startTime: slot.start_time,
+              endTime: slot.end_time
+            },
+            rawTeachers: Array.isArray(slot.teachers) ? slot.teachers : slot.teachers,
+            resolutions: resolutions.map(({ resolution }) => ({
+              status: resolution.status,
+              source: resolution.source,
+              resolvedTeacherId: resolution.teacher?.id || null,
+              displayName: resolution.displayName,
+              candidateIds: resolution.candidates?.map(candidate => candidate.id) || []
+            }))
+          })
+        }
+        return personalWorkload ? matchingResolutions.length > 0 : true
       })
     }
 
@@ -441,9 +500,30 @@ class WorkloadService {
     } else if (semester === 'autumn') {
       allSlotsRaw = allSlotsRaw.filter(slot => Number(slot.week_number) >= 38 || Number(slot.week_number) <= 7)
     }
+    const identityMatchedSlotCount = allSlotsRaw?.length || 0
     const allSlots = academicYearId
       ? (allSlotsRaw || []).filter(slot => classCodeSet.has(normalizeClassCode(slot.class_code)))
       : (allSlotsRaw || [])
+
+    if (debug) {
+      console.groupCollapsed('[SI teacher debug] Source des périodes')
+      console.log({
+        mode: personalWorkload ? 'profil connecté (RPC personnel)' : planningSource,
+        profile: (personalWorkload ? teachers[0] : teachers.find(teacher => String(teacher.id) === String(targetTeacherId))) ? {
+          id: (personalWorkload ? teachers[0] : teachers.find(teacher => String(teacher.id) === String(targetTeacherId))).id,
+          name: (personalWorkload ? teachers[0] : teachers.find(teacher => String(teacher.id) === String(targetTeacherId))).name,
+          email: (personalWorkload ? teachers[0] : teachers.find(teacher => String(teacher.id) === String(targetTeacherId))).email
+        } : null,
+        academicYearId,
+        academicYearClassCount: classes.length,
+        academicYearClassCodes: [...classCodeSet],
+        sourceSlotCount,
+        slotsAfterIdentityMatch: identityMatchedSlotCount,
+        slotsAfterAcademicYearClassFilter: allSlots.length,
+        identityDiagnostics: personalIdentityDiagnostics
+      })
+      console.groupEnd()
+    }
 
     // 3. Construire la feuille de charges par enseignant (groupé par teacherKey)
     // keyMap: teacherKey → { teacher, workload }
@@ -824,6 +904,42 @@ class WorkloadService {
 
     diagnostics.unresolvedTeachers = [...unresolvedTeacherNames].filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'))
     diagnostics.ambiguousTeachers = [...ambiguousTeacherNames].filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'))
+
+    if (debug) {
+      const debugTargetTeacherId = personalWorkload ? teachers[0]?.id : targetTeacherId
+      const debugTargetWorkload = result.find(row => String(row.teacher?.id || '') === String(debugTargetTeacherId || ''))
+      console.groupCollapsed('[SI teacher debug] Résultat calcul périodes')
+      console.log({
+        summary: {
+          teachersWithWorkload: result.length,
+          totalPresencePeriods: summary.totalPresencePeriods,
+          totalWeightedPeriods: summary.totalWeightedPeriods,
+          totalSlots: summary.totalSlots
+        },
+        targetTeacher: debugTargetWorkload ? {
+          teacher: debugTargetWorkload.teacher,
+          totalPresencePeriods: debugTargetWorkload.totalPresencePeriods,
+          totalWeightedPeriods: debugTargetWorkload.totalWeightedPeriods,
+          slots: debugTargetWorkload.slots
+        } : null,
+        diagnostics: {
+          scannedSlots: diagnostics.scannedSlots,
+          slotsWithoutTeachers: diagnostics.slotsWithoutTeachers,
+          slotsWithNoValidTeacher: diagnostics.slotsWithNoValidTeacher,
+          slotsWithInvalidTime: diagnostics.slotsWithInvalidTime,
+          resolvedTeacherEntries: diagnostics.resolvedTeacherEntries,
+          resolvedById: diagnostics.resolvedById,
+          resolvedByEmail: diagnostics.resolvedByEmail,
+          resolvedByName: diagnostics.resolvedByName,
+          unresolvedTeacherEntries: diagnostics.unresolvedTeacherEntries,
+          ambiguousTeacherEntries: diagnostics.ambiguousTeacherEntries,
+          excludedTeacherEntries: diagnostics.excludedTeacherEntries,
+          unresolvedTeachers: diagnostics.unresolvedTeachers,
+          ambiguousTeachers: diagnostics.ambiguousTeachers
+        }
+      })
+      console.groupEnd()
+    }
 
     return { teachers: result, summary, classes, diagnostics }
   }

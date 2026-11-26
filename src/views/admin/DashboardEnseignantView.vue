@@ -747,10 +747,23 @@ const totalCoursesHours = computed(() => {
 })
 
 async function loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacherNameForPlanning, planningSlots = null) {
-  const data = await workloadService.computeWorkload('all', activeAcademicYear.value?.id || null, {
-    planningSlots,
-    personal: !isPreviewMode.value
-  });
+  const teacherDebugEnabled = import.meta.env.DEV && typeof window !== 'undefined' && window.__SI_TEACHER_DEBUG__ === true;
+  let data;
+  try {
+    data = await workloadService.computeWorkload('all', activeAcademicYear.value?.id || null, {
+      planningSlots,
+      personal: !isPreviewMode.value,
+      debug: teacherDebugEnabled,
+      targetTeacherId: targetUserId
+    });
+  } catch (error) {
+    if (teacherDebugEnabled) {
+      console.groupCollapsed('[SI teacher debug] Échec du calcul des périodes');
+      console.error(error);
+      console.groupEnd();
+    }
+    throw error;
+  }
   const allTeachers = data?.teachers || [];
 
   const currentTeacherId = String(targetUserId || '').trim();
@@ -793,6 +806,23 @@ async function loadTeacherWorkloadMetrics(targetUserId, targetUserEmail, teacher
       summarizeSemester('spring', 'Semestre de printemps', slot => Number(slot.weekNumber) >= 8 && Number(slot.weekNumber) <= 37)
     ]
   };
+
+  if (teacherDebugEnabled) {
+    console.groupCollapsed('[SI teacher debug] Correspondance affichée dans le dashboard');
+    console.log({
+      requestedTeacher: {
+        id: currentTeacherId,
+        email: currentTeacherEmail,
+        name: teacherNameForPlanning,
+        normalizedNameKey: currentTeacherKey
+      },
+      matchedWorkloadTeacher: matched?.teacher || null,
+      matchedWorkloadSlotCount: slots.length,
+      displayedPresencePeriods: workloadMetrics.value.totalPresencePeriods,
+      displayedWeightedPeriods: workloadMetrics.value.totalWeightedPeriods
+    });
+    console.groupEnd();
+  }
 }
 
 const courseModuleOptions = computed(() => {
@@ -875,6 +905,32 @@ async function loadTeacherData() {
     targetUserId = matchedTeacher.id;
     targetUserEmail = matchedTeacher.email;
     teacherNameForPlanning = matchedTeacher.name;
+
+    const teacherDebugEnabled = import.meta.env.DEV && typeof window !== 'undefined' && window.__SI_TEACHER_DEBUG__ === true;
+    if (teacherDebugEnabled) {
+      console.groupCollapsed('[SI teacher debug] Profil sélectionné');
+      console.log({
+        previewMode: isPreviewMode.value,
+        authUserId: currentUserId || null,
+        authUserEmail: currentUserEmail || null,
+        authDisplayName: currentDisplayName || null,
+        requestedProfile: {
+          id: requestedId || null,
+          email: requestedEmail || null,
+          normalizedName: requestedName || null
+        },
+        matchedProfile: {
+          id: matchedTeacher.id || null,
+          email: matchedTeacher.email || null,
+          name: matchedTeacher.name || null
+        },
+        activeAcademicYear: activeAcademicYear.value ? {
+          id: activeAcademicYear.value.id,
+          name: activeAcademicYear.value.name
+        } : null
+      });
+      console.groupEnd();
+    }
     
     console.log('🔄 Chargement données enseignant pour:', targetUserEmail || teacherNameForPlanning);
     
