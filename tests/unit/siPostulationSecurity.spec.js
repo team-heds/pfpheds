@@ -7,6 +7,19 @@ const root = process.cwd()
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'utf8')
 
 describe('HEDS25-628 SI postulation access matrix', () => {
+  it('enqueues one server-side push for new votes to an active module responsible only', () => {
+    const migration = read('supabase/migrations/20261127100000_notify_si_module_postulations.sql')
+
+    expect(migration).toContain('after insert on public.planning_slot_votes')
+    expect(migration).toContain('lower(trim(profile.email)) = lower(trim(m.responsable_email))')
+    expect(migration).toContain('coalesce(profile.is_active, true)')
+    expect(migration).toContain('insert into public.push_outbox (user_id, title, body, url)')
+    expect(migration).toContain("'Nouvelle postulation'")
+    expect(migration).toContain("'/admin/soins-infirmiers/cours-postulation'")
+    expect(migration).toContain('when others then')
+    expect(migration).not.toContain('coordinateur')
+  })
+
   it('does not let every authenticated user enter the postulation route', () => {
     const routes = read('src/router/routes/admin.js')
     const route = routes.match(/\{ path: '\/admin\/soins-infirmiers\/cours-postulation'.+\}/)?.[0] || ''

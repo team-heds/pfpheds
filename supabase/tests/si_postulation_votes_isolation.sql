@@ -13,7 +13,9 @@ values
   ('62800000-0000-4000-8000-000000000003', '00000000-0000-0000-0000-000000000000', 'rm.owner.628@example.invalid', crypt('test-only', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated', 'authenticated'),
   ('62800000-0000-4000-8000-000000000004', '00000000-0000-0000-0000-000000000000', 'rm.other.628@example.invalid', crypt('test-only', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated', 'authenticated'),
   ('62800000-0000-4000-8000-000000000005', '00000000-0000-0000-0000-000000000000', 'admin.628@example.invalid', crypt('test-only', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated', 'authenticated'),
-  ('62800000-0000-4000-8000-000000000006', '00000000-0000-0000-0000-000000000000', 'outsider.628@example.invalid', crypt('test-only', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated', 'authenticated');
+  ('62800000-0000-4000-8000-000000000006', '00000000-0000-0000-0000-000000000000', 'outsider.628@example.invalid', crypt('test-only', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated', 'authenticated'),
+  ('62800000-0000-4000-8000-000000000007', '00000000-0000-0000-0000-000000000000', 'rm.no.profile.628@example.invalid', crypt('test-only', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated', 'authenticated'),
+  ('62800000-0000-4000-8000-000000000008', '00000000-0000-0000-0000-000000000000', 'rm.inactive.628@example.invalid', crypt('test-only', gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}', '{}', false, 'authenticated', 'authenticated');
 
 insert into public.user_profiles (user_id, email, role, is_active, permissions)
 values
@@ -22,7 +24,8 @@ values
   ('62800000-0000-4000-8000-000000000003', 'rm.owner.628@example.invalid', 'RMSoins', true, '[]'),
   ('62800000-0000-4000-8000-000000000004', 'rm.other.628@example.invalid', 'user', true, '["RMSoins"]'),
   ('62800000-0000-4000-8000-000000000005', 'admin.628@example.invalid', 'admin', true, '[]'),
-  ('62800000-0000-4000-8000-000000000006', 'outsider.628@example.invalid', 'EtudiantSoins', true, '[]')
+  ('62800000-0000-4000-8000-000000000006', 'outsider.628@example.invalid', 'EtudiantSoins', true, '[]'),
+  ('62800000-0000-4000-8000-000000000008', 'rm.inactive.628@example.invalid', 'RMSoins', false, '[]')
 on conflict (user_id) do update
 set email = excluded.email,
     role = excluded.role,
@@ -40,7 +43,10 @@ set name = excluded.name,
 insert into public.modules (id, code, title, responsable_email)
 values
   (962801, 'HEDS25-628-A', 'Module owned by first RM', 'rm.owner.628@example.invalid'),
-  (962802, 'HEDS25-628-B', 'Module owned by second RM', 'rm.other.628@example.invalid');
+  (962802, 'HEDS25-628-B', 'Module owned by second RM', 'rm.other.628@example.invalid'),
+  (962803, 'HEDS25-628-NO-EMAIL', 'Module without responsible email', null),
+  (962804, 'HEDS25-628-NO-PROFILE', 'Module without responsible profile', 'rm.no.profile.628@example.invalid'),
+  (962805, 'HEDS25-628-INACTIVE-PROFILE', 'Module with inactive responsible profile', 'rm.inactive.628@example.invalid');
 
 insert into public.planning_time_slots (
   id, class_code, week_number, day, day_index, module_code, teachers
@@ -48,7 +54,10 @@ insert into public.planning_time_slots (
 values
   (9628001, 'BAC99', 40, 'lundi', 0, 'HEDS25-628-A', array['postulation']),
   (9628002, 'BAC99', 40, 'mardi', 1, 'HEDS25-628-B', array['postulation']),
-  (9628003, 'BAC99', 40, 'mercredi', 2, 'HEDS25-628-A', array['postulation']);
+  (9628003, 'BAC99', 40, 'mercredi', 2, 'HEDS25-628-A', array['postulation']),
+  (9628004, 'BAC99', 40, 'jeudi', 3, 'HEDS25-628-NO-EMAIL', array['postulation']),
+  (9628005, 'BAC99', 40, 'vendredi', 4, 'HEDS25-628-NO-PROFILE', array['postulation']),
+  (9628006, 'BAC99', 40, 'lundi', 0, 'HEDS25-628-INACTIVE-PROFILE', array['postulation']);
 
 insert into public.planning_slot_votes (slot_id, teacher_id)
 values
@@ -84,6 +93,34 @@ begin
   insert into public.planning_slot_votes (slot_id, teacher_id)
   values (9628002, '62800000-0000-4000-8000-000000000001');
 
+  if not exists (
+    select 1 from public.push_outbox
+    where user_id = '62800000-0000-4000-8000-000000000004'
+      and title = 'Nouvelle postulation'
+      and body like '%HEDS25-628-B%'
+      and body like '%BAC99%'
+  ) then
+    raise exception 'new postulation did not enqueue push for the active module responsible';
+  end if;
+
+  if exists (select 1 from public.push_outbox where user_id = '62800000-0000-4000-8000-000000000003') then
+    raise exception 'postulation push was sent to a different module responsible';
+  end if;
+
+  insert into public.planning_slot_votes (slot_id, teacher_id)
+  values
+    (9628004, '62800000-0000-4000-8000-000000000001'),
+    (9628005, '62800000-0000-4000-8000-000000000001'),
+    (9628006, '62800000-0000-4000-8000-000000000001');
+
+  if exists (select 1 from public.push_outbox where title = 'Nouvelle postulation' and user_id = '62800000-0000-4000-8000-000000000007') then
+    raise exception 'postulation push was sent without an active user profile';
+  end if;
+
+  if (select count(*) from public.push_outbox where title = 'Nouvelle postulation') <> 1 then
+    raise exception 'a module without one active matching responsible profile unexpectedly got a push';
+  end if;
+
   update public.planning_slot_votes set created_at = created_at
   where slot_id = 9628002 and teacher_id = '62800000-0000-4000-8000-000000000001';
   get diagnostics v_rows = row_count;
@@ -98,6 +135,12 @@ begin
   where teacher_id = '62800000-0000-4000-8000-000000000002';
   get diagnostics v_rows = row_count;
   if v_rows <> 0 then raise exception 'teacher deleted another teacher vote'; end if;
+
+  delete from public.planning_slot_votes
+  where slot_id = 9628002 and teacher_id = '62800000-0000-4000-8000-000000000001';
+  if (select count(*) from public.push_outbox where title = 'Nouvelle postulation') <> 1 then
+    raise exception 'removing a vote created an additional push notification';
+  end if;
 
   begin
     insert into public.planning_slot_votes (slot_id, teacher_id)
